@@ -432,9 +432,9 @@ canvas{display:block}
   <b>Trucks</b>: right-click a pile to harvest it; right-click your <b>HQ</b> to force them to unload right now. Destroyed units leave a salvageable <b>scrap wreck</b> worth <span data-tune="salvagePct"></span>% of their plastic cost — send a truck to pick it up.<br><br>
   Build a <b>Barracks</b> for infantry, a <b>Garage</b> for vehicles, a <b>Helipad</b> for choppers. With a production building selected, right-click sets its rally point. Every building (barricades included) must be placed within <b><span data-tune="hqR"></span> tiles of one of your HQs</b> or <b><span data-tune="opR"></span> tiles of one of your Outposts</b> — only the HQ and Outpost themselves are exempt: they can go anywhere you can see (even far from base, but not into the fog of war). Nobody can build within <b><span data-tune="foeR"></span> tiles of an enemy HQ</b>, and every structure needs <b><span data-tune="gap"></span> clear <span data-tune="gapT"></span></b> between it and any other structure so your units can always drive out of your own base; barricades are exempt from each other, so walls still lay solid. Build an <b>Outpost</b> to push your borders out: it builds Dump Trucks, acts as a resource drop-off so trucks don't have to drive all the way home, and opens a <span data-tune="opR"></span>-tile build zone for a forward defensive line.<br><br>
   <b>Machine Gunner</b> (Barracks): tough, heavy MG. Select him and hit <b>Entrench</b>, then click to aim — he digs in and fires <span data-tune="entrench"></span>× as fast inside a 100° cone (shown on the ground). Give him a move order to pack up.<br><br>
-  <b>Radio Tower</b> (Lab unlock, 1 per army): a static uplink that opens the call-down panel on the right — <b><span data-tune="radioList"></span></b>. Napalm rains fire and a lingering burn across a 10×10 area; the Artillery Barrage walks <span data-tune="barrN"></span> off-map shells through a <span data-tune="barrBox"></span> box, <span data-tune="barrGap"></span>s apart, at <span data-tune="barrDmg"></span> damage inside a <span data-tune="barrR"></span>-tile blast (×<span data-tune="barrInf"></span> against infantry). Those <span data-tune="radioVis"></span> need vision. Paradrop puts 5 elite Paratroopers anywhere, even in fog — SMGs shred infantry, AT grenades crack vehicles, slow HE charges level buildings. Click an ability, then click the map (right-click cancels). One shared <span data-tune="radioCd"></span> cooldown.<br><br>
+  <b>Radio Tower</b> (Lab unlock, 1 per army): a static uplink that opens the call-down panel on the right — <b><span data-tune="radioList"></span></b>. Napalm rains fire and a lingering burn across a <span data-tune="napBox"></span>×<span data-tune="napBox"></span> area; the Artillery Barrage walks <span data-tune="barrN"></span> off-map shells through a <span data-tune="barrBox"></span> box, <span data-tune="barrGap"></span>s apart, at <span data-tune="barrDmg"></span> damage inside a <span data-tune="barrR"></span>-tile blast (×<span data-tune="barrInf"></span> against infantry). Those <span data-tune="radioVis"></span> need vision. Paradrop puts <span data-tune="paraN"></span> elite Paratroopers anywhere, even in fog — SMGs shred infantry, AT grenades crack vehicles, slow HE charges level buildings. Click an ability, then click the map (right-click cancels). One shared <span data-tune="radioCd"></span> cooldown.<br><br>
   <b>Green Army exclusives.</b> <b>Sarge</b> patches himself up at <span data-tune="sargeRegen"></span> HP/sec once he has been out of contact for <span data-tune="sargeCalm"></span> seconds, and his <b>On Me!</b> toggle gives allied infantry within <span data-tune="sargeR"></span> tiles +<span data-tune="sargeAura"></span>% damage while cutting his own by <span data-tune="sargeSelf"></span>%. <b>Mortar Squads</b> ramp +<span data-tune="wfStep"></span>% per consecutive shell on one target up to +<span data-tune="wfCap"></span>%, and their <b>Smoke Rounds</b> toggle shells your own men instead: no damage, but a <span data-tune="smokeR"></span>-tile cloud that cuts damage taken by <span data-tune="smokeRed"></span>% for <span data-tune="smokeT"></span> seconds. The <b>Radar Tent</b>'s <b>Target Uplink</b> gives your whole army +<span data-tune="upRg"></span> range and +<span data-tune="upVi"></span> sight for <span data-tune="upT"></span> seconds on a <span data-tune="upCd"></span>-second cooldown.<br><br>
-  <b>Tan Army exclusives.</b> The <b>Flamethrower</b> leaves everything he touches burning for <span data-tune="cookDps"></span> damage/sec, and his <b>Pressure Valve</b> toggle adds <span data-tune="valveDmg"></span>% damage and +<span data-tune="valveRg"></span> range at the price of <span data-tune="valveBack"></span>% of the damage he deals being taken by the man holding the hose. The <b>&quot;Bull&quot; Heavy Tank</b>'s ablative plate ignores small-arms fire completely, which is to say <span data-tune="plateRow"></span> cannot hurt it at all, and its <b>Full Throttle</b> toggle adds <span data-tune="thrSpd"></span>% speed and crushes enemy infantry and barricades it drives over, but silences both its weapons while it rolls. The <b>Munitions Dump</b>'s <b>Scuttle</b> blows the building itself for <span data-tune="scDm"></span> damage across <span data-tune="scR"></span> tiles, and your own units and structures take <span data-tune="scFf"></span>% of it.<br><br>
+  <b>Tan Army exclusives.</b> The <b>Flamethrower</b>'s <b>Cook-Off</b> leaves everything he touches burning for <span data-tune="cookDps"></span> damage/sec, and his <b>Pressure Valve</b> toggle adds <span data-tune="valveDmg"></span>% damage and +<span data-tune="valveRg"></span> range at the price of <span data-tune="valveBack"></span>% of the damage he deals being taken by the man holding the hose. The <b>&quot;Bull&quot; Heavy Tank</b>'s ablative plate ignores small-arms fire completely, which is to say <span data-tune="plateRow"></span> cannot hurt it at all, and its <b>Full Throttle</b> toggle adds <span data-tune="thrSpd"></span>% speed and crushes enemy infantry and barricades it drives over, but silences both its weapons while it rolls. The <b>Munitions Dump</b>'s <b>Scuttle</b> blows the building itself for <span data-tune="scDm"></span> damage across <span data-tune="scR"></span> tiles, and your own units and structures take <span data-tune="scFf"></span>% of it.<br><br>
   <b>Gray Army exclusives.</b> The <b>Sniper</b> cannot be picked as a target at all until he fires, and drops back out of sight <span data-tune="camoT"></span> seconds after his last shot — an approach tool above all, since it covers him on the way in rather than through a firefight — and his <b>Called Shot</b> toggle adds <span data-tune="csDmg"></span>% damage but restricts him to enemy infantry for as long as it runs. <b>Rocket Artillery</b> shell-shocks whoever lives through the blast, adding <span data-tune="shockSet"></span> <span data-tune="shockSetT"></span> to a survivor's reload on top of whatever it already reads, and its <b>Ripple Fire</b> toggle trades the single shell for a salvo of <span data-tune="ripN"></span> rockets at <span data-tune="ripDm"></span>% damage each, bursting wider and scattered across the target, paid for with <span data-tune="ripRt"></span>% more reload. The <b>Bunker</b> garrisons <span data-tune="bunkGar"></span> infantry who fire from cover and cannot be caught by splash, and its <b>Lockdown</b> buttons them up: the garrison stops firing entirely, but the bunker takes <span data-tune="lockRed"></span>% less damage for <span data-tune="lockT"></span> seconds, on a <span data-tune="lockCd"></span>-second cooldown.<br><br>
   <b>Blue Army exclusives.</b> The <b>Scout Bike</b> is evasive, taking <span data-tune="evadeRed"></span>% less damage in any moment he is genuinely moving — which is worth nothing while he sits still trading shots, and that is where most of his damage is taken — and his <b>Flat Out</b> toggle adds <span data-tune="flatSpd"></span>% speed and +<span data-tune="flatVi"></span> sight, but holds his fire completely and refuses attack orders while it runs. The <b>Chinook</b> lifts <span data-tune="chinCap"></span> infantry and makes friendly infantry near it hit <span data-tune="chinAura"></span>% harder, and its <b>Air Assault</b> toggle opens the hold so the squad fires out at whatever it can reach — they can be shot back at while they do it, and the aircraft cannot move at all until you close it again. The <b>Wind Turbine</b>'s <b>Overdrive</b> runs it at ×<span data-tune="overMul"></span> output for <span data-tune="overT"></span> seconds and then produces nothing whatsoever for <span data-tune="overOff"></span> seconds, on a <span data-tune="overCd"></span>-second cooldown; across the full cycle that is less electricity than leaving it alone, so it buys the power earlier rather than cheaper.<br><br>
   <b>APC</b> (Garage): unarmed transport carrying 10 infantry — right-click it with infantry selected to load, press <b>U</b> (or the panel button) to unload. It shields itself and nearby allied infantry (−25% damage); if destroyed, the squad bails out losing only 15% health.<br><br>
@@ -938,6 +938,10 @@ const HELP_TUNE={
  /* Shell Shock is the one ability figure that reads as a bare "1", so it needs
     the plural handled the way BUILD_GAP's gapT already does it. */
  shockSetT:()=>SHOCK_SET===1?'second':'seconds',
+ /* The napalm grid and the paradrop headcount, which the help prose used to type
+    out. Declared far below this table, which is fine: a slot body only runs when
+    applyHelpTune calls it, exactly as plateRow already reaches wcRoster. */
+ napBox:()=>NAPALM_BOX, paraN:()=>PARA_N,
  plateRow:()=>wcRoster('b')
 };
 function helpTuneValue(k){const f=HELP_TUNE[k];return f?f():null}
@@ -1896,7 +1900,7 @@ const U={
  heli:{n:'Huey',a:'heli',hp:155,dm:12,rg:4.6,rt:.55,sp:4.2,vi:8,cp:200,ce:70,bt:13,w:'b',fly:1,tech:'u_heli',d:'Fast flying gunner'},
  sarge:{n:'Sarge',a:'inf',hp:210,dm:15,rg:4.2,rt:.42,sp:2.6,vi:7,cp:260,ce:60,bt:16,w:'b',lim:1,rally:1,regen:1,tech:'u_sarge',d:`Hero commando (1 max). Heals ${SARGE_REGEN} HP/s after ${SARGE_CALM}s out of contact; "On Me!" gives allied infantry within ${SARGE_AURA_R} tiles +${Math.round(SARGE_AURA*100)}% damage for half his own`},
  mortar:{n:'Mortar Squad',a:'inf',hp:52,dm:36,rg:7.5,mrg:2,rt:3.4,sp:1.9,vi:6,cp:150,ce:0,bt:9,w:'m',spl:1.5,ex:1,wf:1,smokeCap:1,tech:'u_mortar',d:`Long-range arcing shells. Consecutive shells on one target ramp +${Math.round(MORT_WF_STEP*100)}% each to +${Math.round(MORT_WF_CAP*100)}%; Smoke Rounds shell friendlies instead, cutting damage taken by ${Math.round(SMOKE_RED*100)}%`},
- flamer:{n:'Flamethrower',a:'inf',hp:72,dm:13,rg:2.3,rt:.5,sp:2.2,vi:5,cp:120,ce:0,bt:8,w:'f',spl:.625,ex:1,cook:1,valve:1,tech:'u_flamer',d:`Melts infantry up close; everything he touches burns for ${COOK_DPS}/s. Pressure Valve adds ${Math.round(VALVE_DMG*100)}% damage and +${VALVE_RG} range, but ${Math.round(VALVE_BACK*100)}% of the damage he deals is taken by the man holding the hose`},
+ flamer:{n:'Flamethrower',a:'inf',hp:72,dm:13,rg:2.3,rt:.5,sp:2.2,vi:5,cp:120,ce:0,bt:8,w:'f',spl:.625,ex:1,cook:1,valve:1,tech:'u_flamer',d:`Melts infantry up close; Cook-Off leaves everything he touches burning for ${COOK_DPS}/s. Pressure Valve adds ${Math.round(VALVE_DMG*100)}% damage and +${VALVE_RG} range, but ${Math.round(VALVE_BACK*100)}% of the damage he deals is taken by the man holding the hose`},
  bulltank:{n:'"Bull" Heavy Tank',a:'tank',hp:430,dm:60,rg:5,rt:3,sp:1.9,vi:6,cp:391,ce:80.5,bt:18,w:'s',spl:1.25,ex:1,big:1,plate:1,throttle:1,sec:{w:'f',wc:'f',k:.15,rt:.55,rg:2.6,spl:.625},tech:'u_bulltank',d:`Slow rolling fortress. The hull flamethrower handles infantry & wildlife; the cannon handles everything else, both at once. Ablative plate ignores small-arms fire completely; Full Throttle adds ${Math.round(THROTTLE_SPD*100)}% speed and crushes infantry & barricades, but the Bull cannot fire at all while it rolls`},
  sniper:{n:'Sniper',a:'inf',hp:46,dm:55,rg:7.2,rt:3,sp:2.1,vi:9,cp:170,ce:0,bt:9,w:'b',camo:1,cshot:1,tech:'u_sniper',d:'Picks off infantry far away; unseen until he fires'},
  arty:{n:'Rocket Artillery',a:'arty',hp:95,dm:70,rg:9,mrg:3,rt:5,sp:1.7,vi:6,cp:320,ce:90,bt:18,w:'m',spl:2.8125,ex:1,shock:1,ripple:1,tech:'u_arty',d:'Devastating siege rockets; survivors reload slower'},
@@ -6926,6 +6930,13 @@ function radioCD(){return (G&&G.test)?0:RADIO_CD;}
    the temporal dead zone until its own declaration runs. */
 const BARRAGE_N=7, BARRAGE_GAP=2.0, BARRAGE_FLY=1.6;
 const BARRAGE_DMG=105, BARRAGE_R=3, BARRAGE_BOX=10;
+/* The barrage row below has always built its panel string out of BARRAGE_N and
+   BARRAGE_BOX. Napalm and Paradrop were the two that still typed their figures
+   into the prose instead, in three places each - the panel row, the help-panel
+   sentence and, for the paradrop, the message it prints on arrival. Naming them
+   here puts all three call-downs on the same footing. */
+const NAPALM_BOX=10;  // napalm bomblet grid, NAPALM_BOX x NAPALM_BOX tiles centred on the target
+const PARA_N=5;       // paratroopers per drop
 /* v76: ONE table of the tower's call-downs. The right-hand panel, the Field Manual
    info card, the help-panel prose and the vision gate all read it, so adding or
    removing an ability could not leave one surface claiming a different count.
@@ -6935,9 +6946,9 @@ const BARRAGE_DMG=105, BARRAGE_R=3, BARRAGE_BOX=10;
    template literal for the same reason the manual slots are: it was a hand-typed
    shell count and would have gone stale the moment BARRAGE_N moved. */
 const RADIO_ABILITIES=[
- {mode:'napalm',  icon:'\ud83d\udd25',name:'Napalm Strike',   short:'Napalm',  panel:'Heavy fire + burn, 10\u00d710 (needs vision)',   vision:true},
+ {mode:'napalm',  icon:'\ud83d\udd25',name:'Napalm Strike',   short:'Napalm',  panel:'Heavy fire + burn, '+NAPALM_BOX+'\u00d7'+NAPALM_BOX+' (needs vision)', vision:true},
  {mode:'barrage', icon:'\ud83c\udfaf',name:'Artillery Barrage',short:'Barrage',panel:BARRAGE_N+' heavy shells, '+BARRAGE_BOX+'\u00d7'+BARRAGE_BOX+' (needs vision)', vision:true},
- {mode:'paradrop',icon:'\ud83e\ude82',name:'Paradrop',        short:'Paradrop',panel:'5 Paratroopers anywhere, even in fog',           vision:false}
+ {mode:'paradrop',icon:'\ud83e\ude82',name:'Paradrop',        short:'Paradrop',panel:PARA_N+' Paratroopers anywhere, even in fog',      vision:false}
 ];
 function radioAbility(m){return RADIO_ABILITIES.find(a=>a.mode===m)||null;}
 function radioNeedsVision(m){const a=radioAbility(m);return !!(a&&a.vision);}
@@ -6969,11 +6980,11 @@ function pVision(p,x,y){
  return false;
 }
 // NAPALM STRIKE (v30 buffed): incendiary bomblets rain onto a random ~70% subset
-// of a 10×10 tile grid centred on the target; each cell erupts, scorches the
+// of a NAPALM_BOX-square tile grid centred on the target; each cell erupts, scorches the
 // ground and keeps BURNING for 3 seconds after the bomblet lands.
 function radioNapalm(u,cx,cy){
  const cells=[];
- for(let gy=0;gy<10;gy++)for(let gx=0;gx<10;gx++)if(srand()<0.7)cells.push({x:Math.floor(cx)-5+gx+.5,y:Math.floor(cy)-5+gy+.5});
+ for(let gy=0;gy<NAPALM_BOX;gy++)for(let gx=0;gx<NAPALM_BOX;gx++)if(srand()<0.7)cells.push({x:Math.floor(cx)-NAPALM_BOX/2+gx+.5,y:Math.floor(cy)-NAPALM_BOX/2+gy+.5});
  // shuffle for a staggered drop order
  for(let i=cells.length-1;i>0;i--){const j=Math.floor(srand()*(i+1));[cells[i],cells[j]]=[cells[j],cells[i]];}
  G.strikes.push({kind:'napalm',owner:u,cells,i:0,t:0,every:0.045,burn:[]}); // v30: burn[] tracks lingering ground fire
@@ -6983,10 +6994,10 @@ function radioNapalm(u,cx,cy){
 // point — anywhere on the map, including unexplored fog. They scatter on landing.
 function radioParadrop(u,x,y){
  const drops=[];
- for(let i=0;i<5;i++){const a=i*2.39996,r=.6+.5*Math.sqrt(i);drops.push({x:clamp(x+dcos(a)*r,2,G.map.N-3),y:clamp(y+dsin(a)*r,2,G.map.N-3),delay:i*0.18});}
+ for(let i=0;i<PARA_N;i++){const a=i*2.39996,r=.6+.5*Math.sqrt(i);drops.push({x:clamp(x+dcos(a)*r,2,G.map.N-3),y:clamp(y+dsin(a)*r,2,G.map.N-3),delay:i*0.18});}
  G.strikes.push({kind:'paradrop',owner:u,drops,t:0});
  u.abilityCool=radioCD();
- if(u.p.human)msg('Paradrop inbound — 5 Paratroopers deploying.');
+ if(u.p.human)msg(`Paradrop inbound — ${PARA_N} Paratroopers deploying.`);
 }
 // land one Paratrooper with a little dust puff
 function dropTrooper(p,x,y){
