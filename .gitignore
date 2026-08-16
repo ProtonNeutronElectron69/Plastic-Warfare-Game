@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------------------
+# Files that are GENERATED, not written by hand. They are rebuilt on demand from
+# plastic-warfare.html, so keeping them out of the repo means there is exactly
+# one copy of the game and no way to edit the wrong one by mistake.
+# ---------------------------------------------------------------------------
+
+# The game's script block, extracted for the headless tests (harness/build.sh)
+harness/game.js
+
+# The assembled test bundles that run.sh / seg.sh concatenate before running
+harness/harness.js
+harness/harness_ms.js
+harness/harness_full.js
+harness/seg1.js
+harness/seg2a.js
+harness/seg2b.js
+harness/seg2c.js
+harness/seg3.js
+harness/rc.js
+
+# ---------------------------------------------------------------------------
+# Ordinary clutter your computer creates on its own
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# If Node packages ever get installed here (e.g. for the canvas render tests)
+node_modules/
+package-lock.json
