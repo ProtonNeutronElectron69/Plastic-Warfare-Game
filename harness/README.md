@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v82)
+# Plastic Warfare headless test harness (updated at v83)
 
 Upload this bundle at the start of a session so the harness does not need rebuilding.
 
@@ -331,6 +331,106 @@ Two are not:
 `recut_v76b.js` + `repin_v76b.py` are the correction record. This is the v68
 lesson one layer down: the cfgs are not interchangeable and neither are the
 capture preambles. A recut script must mirror each fixture verbatim.
+
+## v83 note: the depot change deletes an equality on purpose, in three places
+
+DEPOT_SUP went 10 -> 15 with SUP_CAP left alone at 110. The point was base
+FOOTPRINT, not army size: the ceiling now costs seven depots where it cost ten,
+and the three that come back are buildable ground in a base that was cluttered
+with them.
+
+What that costs is the clean relation v69 chose the 110 ceiling FOR. Six depots
+reach 100 and the seventh crosses with 5 of its 15 unused, so "an HQ plus N
+depots reaches the ceiling exactly" is simply no longer true. Three checks
+asserted that equality and all three were rewritten to assert the bracket and the
+COUNT instead - T35.B and T35.C in tail_v54, and T40.D in tail_v61, which is a
+second copy of the same invariant in a different tail and was found only because
+segment 2c was run. A release that touches supply must expect to edit both.
+
+Rejected: raising SUP_CAP to 115 to restore the exact relation on seven depots.
+It is a one-line change and it does restore the tidiness, but it also hands every
+army 5 more supply, which is a balance change nobody asked for. The waste is the
+honest price of the footprint, and it is recorded here rather than tuned away.
+
+## v83 note: the bot's hedgehog clearing is a FALLBACK SLOT, not a near target
+
+The obvious way to let a CPU army clear the map's neutral barricades is to drop
+the `if(b.p===G.neutral)continue` in nearestEnemy and let them compete on
+distance like anything else. That would have been wrong: a hedgehog two tiles
+away would then outrank a soldier ten tiles away, and a bot would spend its
+attack walking into scenery.
+
+They are collected in a slot of their own - nbarr/nbd, bounded by BARR_CLEAR2 -
+and the function returns `best||nbarr`. A barricade is therefore answered only by
+a unit that found nothing else AT ALL in range, which is what "low priority"
+actually means. Only a bot sees them (`u.p&&u.p.ai`), and only one unit id in
+BARR_CLEAR_SHARE, so an army thins clutter as it passes instead of every man
+stopping at once.
+
+Keyed on u.id, never on srand(). A targeting scan that consumed the sim RNG would
+move every trail in the suite for no gameplay reason, and would make the next
+release's trail diff unreadable.
+
+## v83 note: the out-of-bounds placement bug was a row-major WRAP, and only two edges leaked
+
+placeDeny swept a footprint against G.map.pass with no bounds check at all,
+resting on the idea that an out-of-range read comes back undefined. That is true
+for a ROW and false for a COLUMN. pass is flat and row-major, so at tx+x === N
+the index (ty+y)*N+(tx+x) is exactly (ty+y+1)*N - the first tile of the next row -
+and tx = -1 lands on the last tile of the previous one. Where the tile it wrapped
+onto happened to be passable, the placement was allowed and the building went up
+off the map.
+
+Measured on backyard before the fix: tx=N-1 and tx=-1 both passed the gate, and
+every out-of-range ty was already refused. So it is the EAST and WEST edges that
+leaked, and the corners are simply where a player notices, not where the fault
+lives. One `if(tx<0||ty<0||tx+sz>N||ty+sz>N)` up front is the whole fix.
+
+## v83 traps learned
+
+  - T23.E is a DIFFERENTIAL test, not a trail. It reimplements nearestEnemy as an
+    independent reference and asserts the real one matches over 60 units x 3
+    ranges x 4 cone directions. A change to the real function fails it, and the
+    fix is to mirror the new rule in the reference - exempting the reference from
+    barricades would have made it stop testing the branch v83 just added. It is
+    the only check in the suite that behaves this way; everything else that broke
+    was a pinned number.
+  - The supply invariant lives in TWO tails. T35.B/T35.C (tail_v54) and T40.D
+    (tail_v61) assert the same relation from different fixtures, and only the
+    first pair is in segment 2a. Running the segments the change "obviously"
+    touches is how the second one gets missed.
+  - Five trail tables, four files, and tail_v44_1 is not one of them: T25.F reads
+    tail_v44's BASE45_AI rather than carrying its own. Repinning by "one table per
+    failing check" would have looked for a sixth table that does not exist.
+  - The layout gate is 42 pins, not 30. recut_v78's gate covered tail_v43 and
+    tail_v62; tail_v28 carries a third table of 12 with a different config (always
+    dm, always 3 opponents, no desk). tail_v72's note already counted all three.
+
+## v83 repin: the tables, the gate, and what the one-shots are
+
+`recut_v83.js` cut five tables and `repin_v83.py` wrote them into four tails:
+
+    BASE45_TRAILS   tail_v43   T23.A
+    BASE45_AI       tail_v44   T24.I, and tail_v44_1's T25.F reads the same one
+    BASE43_DESK     tail_v45   T26.G, the Gunner-at-90 fixture
+    BASE48_TRAILS   tail_v49   T30.A, block-scoped and faction 'green'
+    BASE62_TRAILS   tail_v62   T41.A, the same run as BASE45_TRAILS
+
+Two guards, both learned from the v76 repin that cut two of five tables wrong:
+
+  1. The layout gate runs BEFORE the first trail and emits nothing if any of the
+     42 pins moved. v83 writes no prop, node or nest, so a moved layout hash would
+     mean the release is not what it says it is, and repinning on top of that
+     would bury the evidence. All 42 held.
+  2. BASE45_TRAILS and BASE62_TRAILS are cut INDEPENDENTLY and then asserted
+     equal. They are the same run pinned twice; if they ever disagree, one of the
+     two tails is lying about what it tests. repin_v83.py re-checks the equality
+     from the JSON before writing, along with every key set and sample count.
+
+The v76 lesson is the reason both exist: a recut that assumes every table is
+"boot a match and hash it" gets BASE43_DESK wrong (it needs the Gunner at 90 and
+RESEARCH.u_gunner rebuilt from that price) and BASE45_AI wrong (it needs the
+human seat handed to the AI first). Both are reproduced explicitly.
 
 ## v82 note: firing out of the Chinook was never blocked on what the roadmap said
 

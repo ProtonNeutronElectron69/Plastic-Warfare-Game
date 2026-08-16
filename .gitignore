@@ -21,6 +21,8 @@ harness/seg2b.js
 harness/seg2c.js
 harness/seg3.js
 harness/rc.js
+harness/rc83.js
+harness/cut_v83.json
 
 # ---------------------------------------------------------------------------
 # Ordinary clutter your computer creates on its own

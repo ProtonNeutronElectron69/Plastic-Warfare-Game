@@ -153,11 +153,16 @@ function roundTrip61(seed,type){
  const p=G.human,hq=p.blds[0];
  ok('T40.D a fresh base still opens on the HQ alone',supCap(p)===B.hq.sup);
  /* v69: 80 -> 110, so the clean HQ-plus-N-depots relation the v61 ceiling had at
-    seven now sits at ten. The relation is what is being pinned, not the seven. */
- for(let i=0;i<10;i++){const b=makeBuilding('supply',p,Math.floor(hq.tx)-7,Math.floor(hq.ty)+i*2-9,true);b.prog=1}
- ok('T40.D an HQ plus ten depots reaches the ceiling exactly',supCap(p)===SUP_CAP&&B.hq.sup+10*B.supply.sup===SUP_CAP);
- const b11=makeBuilding('supply',p,Math.floor(hq.tx)+8,Math.floor(hq.ty),true);b11.prog=1;
- ok('T40.D ...and an eleventh depot adds nothing',supCap(p)===SUP_CAP);
+    seven now sits at ten. The relation is what is being pinned, not the seven.
+    v83: DEPOT_SUP 10 -> 15 breaks that equality outright - six depots reach 100
+    and the seventh crosses with 5 of its 15 unused - so what is pinned here is
+    the COUNT instead: the ceiling is still reached, and reached on seven. */
+ const need61=Math.ceil((SUP_CAP-B.hq.sup)/B.supply.sup);
+ ok('T40.D seven depots are what the ceiling now costs',need61===7);
+ for(let i=0;i<need61;i++){const b=makeBuilding('supply',p,Math.floor(hq.tx)-7,Math.floor(hq.ty)+i*2-9,true);b.prog=1}
+ ok('T40.D an HQ plus seven depots reaches the ceiling',supCap(p)===SUP_CAP);
+ const bX=makeBuilding('supply',p,Math.floor(hq.tx)+8,Math.floor(hq.ty),true);bX.prog=1;
+ ok('T40.D ...and one more adds nothing',supCap(p)===SUP_CAP);
  ok('T40.D the ceiling is 30 above the v61 figure',SUP_CAP===110);
 }
 
