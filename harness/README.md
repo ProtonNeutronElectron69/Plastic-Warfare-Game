@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v83)
+# Plastic Warfare headless test harness (updated at v84)
 
 Upload this bundle at the start of a session so the harness does not need rebuilding.
 
@@ -331,6 +331,111 @@ Two are not:
 `recut_v76b.js` + `repin_v76b.py` are the correction record. This is the v68
 lesson one layer down: the cfgs are not interchangeable and neither are the
 capture preambles. A recut script must mirror each fixture verbatim.
+
+## v84 note: T43's voice-distinctness checks are flaky, and it is not v84's doing
+
+Adding tail_v84 to segment 3 appeared to break two audio checks - once as T43.C
+"all eight gun voices are distinct [7/8]", once as T43.M with
+"collisions: gun:smg/gun:amg". A tail that runs LAST cannot fail a check that ran
+earlier, so it was worth chasing rather than repinning around.
+
+It is a pre-existing flake. The audio path uses Math.random deliberately and by
+design (it must never touch srand - T43.J pins that), and tail_v64's own comment
+at the humanisation section states the hazard outright: the jitter is JIT_F=0.06
+while "the recipe's nominal f0 values sit ~6% apart". The jitter is the same
+magnitude as the spacing between voices, so two recipes can land on top of each
+other by chance, and which check catches it depends on which pair collided.
+
+Measured: three runs of segment 3 WITHOUT tail_v84 - clean, clean, clean. Three
+runs WITH it - clean, clean, clean, at 1,362. The two failures came from runs
+launched through seg.sh, and a suite that is now run in parallel simply gets more
+rolls of that die.
+
+Not fixed here, because it is a test-fragility question rather than a v84 one.
+The fix, if it is wanted, is the pattern tail_v64 ALREADY uses fifty lines further
+down for its jitter-off mutation arm: pin Math.random to a fixed value (or a
+seeded generator) across the fingerprint capture, so the distinctness claim is
+about the RECIPES rather than about one lucky roll of the humanisation.
+
+## v84: the encounter ledger, and what was ALREADY there
+
+The brief was "make the AI react to what it keeps meeting". Most of that already
+existed and it is worth writing down before anyone builds it a second time.
+aiPickUnit has scored counters since v51:
+
+    let eff=0; for(const ar in mix) eff += mix[ar]*dmgMulFor(k,t.w,ar);
+    let s = dps*eff/(t.cp+t.ce*0.5);        // offensive counter
+    s *= Math.sqrt(ehp/U.grunt.hp);          // defensive counter, vs the foe's rows
+    s *= clamp(1+2.2*(want[c]-have[c]),0.35,2.6);
+    s /= 1+AI_SAT_A*(kshare[k]||0);
+
+Against a pure-infantry foe that already prices the Flamethrower at 0.1181
+damage-per-plastic against the Tank's 0.0209 - 5.6x - and the draw is
+proportional to the SQUARE of the score. "Tan builds more flamers, Green builds
+fewer tanks" was shipped behaviour, not a gap.
+
+The gap was the INPUT. aiFoeArmorMix read a live census of ai.grudge's surviving
+units: perfect intel on one rival, nothing from the other two in a three-army
+match, and no memory at all - an infantry wave that wipes a bot's army stops
+counting the instant it dies.
+
+So v84 changes what the mix is made of, not what is done with it. p.ai.enc is
+damage TAKEN per armour class, decaying on ENC_HALF, written at the single
+defender-side door in applyDmg and blended over the live census with a weight
+that grows as evidence accumulates. No new term joins the scoring.
+
+Three properties fell out of the existing machinery rather than needing work:
+persistence (_encAi copies every key it does not special-case, and loadState
+spreads the decoded brain back, so the ledger survives a save with no encoder
+edit - which T3 requires), determinism (applyDmg is deterministic sim and the
+ledger reads no rng, so lockstep clients compute the same figures), and multi-
+rival coverage (damage arrives from whoever actually attacks, grudge or not).
+
+## v84 measurement: what actually moved, and what did not
+
+measure_v84.js runs a bot against a scripted opponent fed one armour class, and
+reports what it produced. Three seeds, 14,000 ticks, before and after:
+
+    vs air     AA Missile Truck   0.9% -> 8.7%   (+7.8)   the dedicated answer
+    vs heavy   Bazooka Man       11.1% -> 17.0%  (+5.9)   1.76x into heavy
+    vs heavy   Grunt             45.1% -> 36.3%  (-8.8)   0.60x into heavy
+    vs medium  Bazooka Man        5.5% ->  9.8%  (+4.3)   1.35x into medium
+    vs heavy   Flamethrower      15.9% -> 12.9%  (-3.0)   0.45x into heavy
+    vs air     Flamethrower      20.7% -> 18.0%  (-2.7)   0.50x into air
+
+AND AGAINST INFANTRY, NOTHING MOVED AT ALL. Not "moved a little" - the rosters
+came out byte-identical. That is not a failure and it is worth understanding:
+the pre-v84 no-intel fallback was already `mix.inf=1`, so blending an
+infantry-only ledger over an assume-infantry guess is an identity. The ledger can
+only add information where the old default was WRONG, which is every diet except
+the one it happened to guess. Anyone who later wants the infantry case to move
+should change that fallback, not the ledger.
+
+That finding also set the cap rule. Capping earned evidence at ENC_CAP against a
+census that does not exist would leave a bot which has taken nothing but tank
+fire still reading a quarter infantry, purely from the guess. So the cap lifts
+when tot===0: evidence beats a guess outright, and it only shares the mix with a
+census the bot can actually see. Lifting it took the air row from +4.8 to +7.8
+and the medium row from +2.3 to +4.3.
+
+## v84 trap: a measurement harness can be wrong in the direction you want
+
+The first cut of measure_v84 spawned six of whatever the diet was. Six grunts is
+216 plastic; six tanks is 1,596. The tank diet applied seven times the pressure,
+the bot's economy collapsed under it, and the run reported 242 units built
+against infantry versus 39 against tanks - of which 92% were grunts. Read
+uncritically that says "tanks make the bot build grunts", which is a counter
+response, and it would have been reported as a result. It is nothing of the sort:
+a bot losing its economy buys the cheapest thing available whatever it is facing.
+Waves are sized by plastic now, so the diets differ in COMPOSITION and not in
+force.
+
+Two smaller ones in the same file: it labelled rows from the config faction while
+measuring the bot (reporting GREEN over a roster of Gray snipers), and the
+human->bot faction mapping it then "measured" to fix that was an artefact of
+running four newGames in one process with state carried between them. The bot
+faction is seed-dependent; the harness now searches the seed space for the army
+it wants and labels every row from bot.fac read at runtime.
 
 ## v83: running the suite for less, without running less of it
 

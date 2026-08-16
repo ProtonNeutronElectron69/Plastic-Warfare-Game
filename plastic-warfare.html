@@ -4412,6 +4412,14 @@ function makeAIBrain(profKey){
  const phase=srand()*40;
  return {
   profile:profKey, pr,
+  /* v84: the encounter ledger. Plain data on the brain, which is all it needs to
+     be persisted - _encAi copies every key it does not special-case and loadState
+     spreads the decoded object straight back, so this survives a save with no
+     encoder edit. It HAS to survive one: T3 asserts a snapshot resumes
+     bit-identical, and a bot reloading with amnesia would pick differently from
+     the run it was cut from. saveState stringifies, so there is no aliasing
+     between the live ledger and a held snapshot to worry about. */
+  enc:{inf:0,light:0,medium:0,heavy:0,air:0},
   phase:'build',
   // timing/size seeded from the profile, then individually jittered
   nextPush:pr.firstPush*(0.8+srand()*0.5)+phase,
@@ -6053,6 +6061,14 @@ function applyDmg(tgt,amt,type,attacker,wc){
     not dealt - a 60-point shell into a 4 HP grunt deals 4. */
  const dealt80=Math.min(amt,tgt.hp);
  tgt.hp-=amt;tgt.lastHit=type;
+ /* v84 ENCOUNTER LEDGER, written here because this is the single defender-side
+    door and amt is final by this line - every multiplier above has been applied,
+    so what lands in the ledger is what the class actually did to us. Deterministic
+    sim, no srand: lockstep clients compute the same ledger from the same fight. */
+ if(attacker&&attacker.kind==='unit'&&tgt.p&&tgt.p.ai&&tgt.p.ai.enc&&!allied(attacker.p,tgt.p)){
+  const ar84=armorOf(attacker);
+  if(tgt.p.ai.enc[ar84]!=null)tgt.p.ai.enc[ar84]+=amt;
+ }
  // v79: seconds-since-damage, read by Sarge's regen and by a smoking mortar's target pick
  if(tgt.kind==='unit')tgt.calmT=0;
  // v25: hitting a wildlife nest structure wakes its swarm (see updateNeutrals)
@@ -7975,6 +7991,25 @@ function aiFoeArmorMix(p){
   mix[ar]+=u.hp;tot+=u.hp;
  }
  if(tot>0)for(const k in mix)mix[k]/=tot;else mix.inf=1; // no intel yet: assume soft targets
+ /* v84: earned intel blended OVER the live census rather than replacing it. The
+    weight grows with the evidence, so a bot that has fought nobody behaves exactly
+    as it did before v84, and ENC_CAP keeps the live read a say even at full
+    confidence. Replacing outright was rejected: the census is perfect intel on the
+    grudge target, and discarding it would make the bot WORSE at the one thing it
+    was already good at. */
+ const enc84=ai&&ai.enc;
+ if(enc84){
+  let et=0;for(const k in enc84)et+=enc84[k];
+  if(et>0){
+   /* ENC_CAP holds the live census a say - but only when there IS one. With the
+      grudge target's army dead or unbuilt, tot was 0 and the line above fell back
+      to the flat guess mix.inf=1; capping earned evidence against a guess would
+      have a bot that has taken nothing but tank fire still read a quarter
+      infantry. Evidence beats a guess outright, so the cap lifts exactly there. */
+   const w=(tot>0)?Math.min(1,et/ENC_FULL)*ENC_CAP:1;
+   for(const k in mix)mix[k]=(1-w)*mix[k]+w*(enc84[k]/et);
+  }
+ }
  return mix;
 }
 /* v59: composition class of a unit key. Air is tested first because a chopper is
@@ -8077,6 +8112,21 @@ function aiArmyCap(p){
                own price and reload have moved twice since. Deliberately
                profile-independent - every personality wants the same 18%. */
 const AI_EXPLORE=0.08, AI_SAT_A=0.6, AI_RICH_P=1200, AI_FAC_FLOOR=0.18;
+/* v84 ENCOUNTER LEDGER. aiFoeArmorMix has always read a LIVE census of the grudge
+   target's surviving units: perfect intel on one rival, no memory, and nothing at
+   all from the other two in a three-opponent match. A wave of infantry that wipes
+   a bot's army leaves no trace the moment it dies, which is exactly the signal a
+   player means by "they keep coming at me with infantry".
+   The ledger is damage TAKEN, per armour class, decaying. Damage rather than
+   headcount because it is self-limiting - a unit that never fires never distorts
+   the mix - and because it needs no new scan: applyDmg is already the one
+   defender-side door. It feeds the SAME mix the scoring already consumes, so no
+   new term joins aiPickUnit and the counter matrix does the work it always did. */
+const ENC_HALF=75;    // seconds for a class's weight to fall by half
+const ENC_FULL=1200;  // damage from one class before the ledger is trusted as far as ENC_CAP
+const ENC_CAP=0.75;   // ...and the most of the mix it may ever supply, so live intel always keeps a say
+const ENC_DECAY=Math.pow(0.5,(18/30)/ENC_HALF); // per AI tick, and aiTick runs every 18 sim ticks at 30Hz. Derived, never typed: a hand-written figure would drift the moment either cadence moved
+
 /* v59: the incoming half of the intel picture. aiFoeArmorMix says what the grudge
    target is MADE of; this says what it SHOOTS with, as DPS shares keyed by unit so
    the UVA overrides (the Huey's 1.30 on infantry, the Sniper's 0.35 on medium) are
@@ -8316,6 +8366,7 @@ function aiTick(p){
  const ai=p.ai;if(!p.alive)return;
  const pr=ai.pr||AI_PROFILES.balanced; // behavior profile (fallback for safety)
  ai.t++;
+ if(ai.enc)for(const k in ai.enc)ai.enc[k]*=ENC_DECAY; // v84: old intel fades, so the mix tracks the fight rather than the whole match
  // ---- MOOD SHIFT (v22): one per bot per match, so personalities bend mid-game.
  // Passive profiles get a surprise all-in window; aggressive ones pause to mass up.
  if(!ai.moodDone&&ai.t>ai.moodAt){
@@ -12146,6 +12197,11 @@ function hashState(){
  for(const p of G.players){
   h=hF(h,p.res.p);h=hF(h,p.res.e);h=hI(h,p.alive?1:0);h=hI(h,p.score);h=hF(h,p.kothScore);
   h=hI(h,p.tech.size);h=hI(h,p.techDone.size);h=hI(h,p.units.length);h=hI(h,p.blds.length);h=hI(h,p.team||0);
+  /* v84: the ledger steers production, so it is hashed. It would surface anyway
+     three tables later as a unit-count difference; hashing it says so at the tick
+     it diverged instead. Key order is the object literal's insertion order in
+     makeAIBrain, which is fixed, so the walk is deterministic. */
+  if(p.ai&&p.ai.enc)for(const k in p.ai.enc)h=hF(h,p.ai.enc[k]);
  }
  for(const u of G.units){h=hI(h,u.id);h=hF(h,u.x);h=hF(h,u.y);h=hF(h,u.hp);h=hF(h,u.cool);h=hS(h,u.state);h=hF(h,u.cargo||0);h=hF(h,u.face);h=hI(h,u.entrenched?1:0);h=hI(h,u.garrisoned?1:0);h=hI(h,u.kl||0);h=hI(h,u.hold?1:0);h=hI(h,u.oq?u.oq.length:0);h=hI(h,u.patrol?u.patrol.leg+1:0);h=hF(h,u.burnT||0);h=hI(h,u.salv||0);h=hF(h,u.cool2||0);h=hF(h,u.calmT||0);h=hI(h,u.onMe?1:0);h=hI(h,u.smoke?1:0);h=hI(h,u.wf||0);h=hI(h,u.wfT||0);h=hI(h,u.valve?1:0);h=hI(h,u.thr?1:0);h=hI(h,u.vrt||0);h=hF(h,u.burnDps||0);h=hF(h,u.shotT||0);h=hI(h,u.cs?1:0);h=hI(h,u.rip?1:0);h=hI(h,u.flat?1:0);h=hI(h,u.aslt?1:0);h=hI(h,u.fo?1:0);h=hI(h,u.mvg?1:0)} // v51: salvo counter & secondary cooldown are sim state. v79: calm timer, the two Green toggles and the Walking Fire streak. v80: the two Tan toggles, and the burn RATE - hashed now that Cook-Off is a second writer of it at a different value from the fire ant's. v81: the shot clock the concealment test reads, and the two Gray toggles. v82: the two Blue toggles, the per-passenger firing-out flag its carrier writes, and the movement flag Evasive multiplies damage by
  for(const b of G.blds){h=hI(h,b.id);h=hF(h,b.hp);h=hF(h,b.prog);h=hI(h,b.queue.length);h=hF(h,b.prodT);h=hF(h,b.techT||0);h=hS(h,b.techCur||'');h=hI(h,b.garrison.length);h=hF(h,b.abilityCool||0);h=hF(h,b.burnT||0);h=hF(h,b.upT||0)} // v30: tower cooldown is sim state. v79: so is the uplink's remaining duration

@@ -1,15 +1,16 @@
-/* recut_v83.js - regenerate the hash-trail baselines that v83 moved.
+/* recut_v84.js - regenerate the hash-trail baselines that v84 moved.
  *
- *   cat shim_head.js game.js recut_v83.js > rc83.js && node rc83.js
+ *   cat shim_head.js game.js recut_v84.js > rc84.js && node rc84.js
  *
- * v83 is three gameplay changes - a 15-supply depot, a bot that clears the map's
- * neutral hedgehogs, and a bounds check on building placement - so every trail
- * table moves and that is expected. What must NOT move is the map: none of the
- * three writes a prop, a node, a nest or anything that fills M.pass.
+ * v84 is the AI encounter ledger: a decaying record of damage taken per armour
+ * class, blended into the mix aiPickUnit already scores against. It changes what
+ * bots BUY, so every trail table moves and that is expected. What must NOT move
+ * is the map - the ledger writes nothing but a number on a brain, and touches no
+ * prop, node, nest or anything that fills M.pass.
  *
  * THE GATE RUNS FIRST AND EMITS NOTHING IF IT FAILS. All 42 layout pins
  * (12 in tail_v28, 15 in tail_v43, 15 in tail_v62) are recomputed and compared
- * before a single trail is cut - recut_v78 gated on 30, and the third table is
+ * before a single trail is cut - recut_v78 gated on 30, recut_v83 widened it to 42, and the third table is
  * included here because tail_v72's note counts all three when it calls the
  * layout hashes the equality proof. A layout hash that moved would mean
  * this release touched map generation, which would make every trail below it
