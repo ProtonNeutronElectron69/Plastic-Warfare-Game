@@ -13467,8 +13467,16 @@ const INFO={open:false,tab:'units',kind:null,key:null,fake:null,raf:0,t:0,ground
  stub:{tick:0,orgX:0,neutral:null,human:null,units:[],blds:[]}};
 const INFO_UNITS=Object.keys(U);
 const INFO_BLDS=Object.keys(B).filter(k=>k!=='nest'); // nests draw from the map layer, not drawBld
-const INFO_FEXCL_U=['sarge','mortar','flamer','bulltank','sniper','arty','bike','chinook'];
-const INFO_FEXCL_B=['radar','dump','bunker','turbine'];
+/* Read off FAC rather than retyped. These two lists answer "is this entity a
+   faction exclusive", which is a question FAC already answers: uu is an army's
+   exclusive units and ub its exclusive building. The line just below this pair
+   ALREADY searches FAC to decide WHICH army an exclusive belongs to, so a typed
+   copy here meant one table deciding ownership and a hand-kept list deciding
+   membership - they agreed only for as long as someone remembered to edit both.
+   Wildlife contributes nothing: its uu is empty and its ub is the empty string,
+   which the filter drops. */
+const INFO_FEXCL_U=Object.values(FAC).flatMap(f=>f.uu||[]);
+const INFO_FEXCL_B=Object.values(FAC).map(f=>f.ub).filter(Boolean);
 function infoFacOf(kind,key){ // faction exclusives show in their home army's colors
  const mine=(G&&G.human)?G.human.fac:SETUP.fac; // v46: opened mid-match it shows YOUR army
  if(kind==='unit'&&INFO_FEXCL_U.includes(key))return Object.keys(FAC).find(f=>FAC[f].uu&&FAC[f].uu.includes(key))||mine;
