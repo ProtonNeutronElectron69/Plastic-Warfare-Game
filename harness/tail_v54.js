@@ -94,26 +94,33 @@ function bot55(){return G.players.find(p=>p.ai)}
 {
  ok('T35.B HQ grants 10',B.hq.sup===10);
  ok('T35.B Outpost grants 4',B.outpost.sup===4);
- ok('T35.B Supply Depot grants 10',B.supply.sup===10);
+ ok('T35.B Supply Depot grants 15',B.supply.sup===15); // v83: 10 -> 15, to spend fewer footprints on the same ceiling
  ok('T35.B nothing else grants supply',
     Object.keys(B).filter(k=>B[k].sup).sort().join(',')==='hq,outpost,supply');
- ok('T35.B an HQ plus ten depots reaches the ceiling exactly',B.hq.sup+10*B.supply.sup===SUP_CAP); // v69: 110 (was seven at the 80 ceiling)
+ /* v83: the exact relation is GONE and its loss is the feature. Six depots fall
+    short and the seventh crosses with supply to spare, so the claim is now a
+    bracket rather than an equality - and the bracket is what the change bought:
+    SEVEN footprints reach a ceiling that used to cost ten. */
+ ok('T35.B six depots plus an HQ fall SHORT of the ceiling',B.hq.sup+6*B.supply.sup<SUP_CAP);
+ ok('T35.B ...and the seventh crosses it',B.hq.sup+7*B.supply.sup>=SUP_CAP);
+ ok('T35.B ...which is three fewer than the ten the v69 ceiling used to need',
+    Math.ceil((SUP_CAP-B.hq.sup)/B.supply.sup)===7);
 
  G=null;newGame(cfg55('backyard','dm',540001,3));
  const p=G.human;
  ok('T35.B a fresh base opens on the HQ alone',supCap(p)===10);
  ok('T35.B ...holding 2 trucks and 2 grunts, so 4 used and 6 free',
     supUsed(p)===4&&supFree(p)===6);
- // a depot under construction grants NOTHING until it tops out
+ // a depot under construction grants NOTHING until it tops out (v83: 15 each)
  const d=makeBuilding('supply',p,Math.floor(p.blds[0].tx)-6,Math.floor(p.blds[0].ty),false);
  ok('T35.B a depot under construction grants no supply',d.prog<1&&supCap(p)===10);
  d.prog=1;
- ok('T35.B ...and grants its ten the moment it completes',supCap(p)===20);
- for(let i=0;i<9;i++){const b=makeBuilding('supply',p,Math.floor(p.blds[0].tx)-6,Math.floor(p.blds[0].ty)+2+i,true);b.prog=1}
- ok('T35.B ten depots plus an HQ reaches the v69 ceiling exactly',supCap(p)===SUP_CAP&&B.hq.sup+10*B.supply.sup===SUP_CAP);
+ ok('T35.B ...and grants its fifteen the moment it completes',supCap(p)===10+B.supply.sup);
+ for(let i=0;i<6;i++){const b=makeBuilding('supply',p,Math.floor(p.blds[0].tx)-6,Math.floor(p.blds[0].ty)+2+i,true);b.prog=1}
+ ok('T35.B seven depots plus an HQ reach the ceiling',supCap(p)===SUP_CAP);
  // ...and the clamp is still a clamp: an eleventh adds nothing
- {const b11=makeBuilding('supply',p,Math.floor(p.blds[0].tx)+8,Math.floor(p.blds[0].ty),true);b11.prog=1;
-  ok('T35.B an eleventh depot is refused by the ceiling',supCap(p)===SUP_CAP&&B.hq.sup+11*B.supply.sup>SUP_CAP);}
+ {const b8=makeBuilding('supply',p,Math.floor(p.blds[0].tx)+8,Math.floor(p.blds[0].ty),true);b8.prog=1;
+  ok('T35.B an eighth depot is refused by the ceiling',supCap(p)===SUP_CAP&&B.hq.sup+8*B.supply.sup>SUP_CAP);}
 }
 
 /* ---------- C: enforcement ---------- */
@@ -148,18 +155,20 @@ function bot55(){return G.players.find(p=>p.ai)}
  G=null;newGame(cfg55('backyard','dm',540003,3));
  const q=G.human;q.res.p=99999;q.res.e=99999;
  for(const k in RESEARCH){q.tech.add(k);q.techDone.add(k)}
- bld55('supply',q,-5,0);                          // cap 20, 4 used -> 16 free
- ok('T35.C sixteen free with one depot up',supCap(q)===20&&supFree(q)===16);
+ bld55('supply',q,-5,0);                          // v83: cap 25, 4 used -> 21 free (was 20/16 at a 10-supply depot)
+ ok('T35.C twenty-one free with one depot up',supCap(q)===25&&supFree(q)===21);
  const gar=bld55('garage',q,5,0);
  let tanks=0;while(trainUnit(gar,'tank'))tanks++; // 2 supply each, queue caps at 5
  ok('T35.C five tanks queue before the queue limit bites',tanks===5&&gar.queue.length===5);
  // v69: the Tank moved to 3 supply on the ladder, so five queued tanks reserve 15,
  // not 10. The PROPERTY under test is unchanged - queued units are reserved - and
  // the figures move with the ladder rather than the check being loosened.
+ // v83: same again for the 15-supply depot. The reservation is still 15; what moved
+ // is the room LEFT over it, 25 - 4 - 15 = 6 where the 20 cap left exactly 1.
  ok('T35.C ...and all fifteen of their supply is RESERVED while they are still queued',
-    supUsed(q)===4&&supQueued(q)===15&&supFree(q)===1);
+    supUsed(q)===4&&supQueued(q)===15&&supFree(q)===6);
  const qbars=[bld55('barracks',q,0,5),bld55('barracks',q,0,-5)];
- ok('T35.C grunts then fill exactly the reserved remainder',fill55(q,qbars,'grunt')===1);
+ ok('T35.C grunts then fill exactly the reserved remainder',fill55(q,qbars,'grunt')===6); // v83: 6 slots over the reservation, was 1
  ok('T35.C ...and nothing more is accepted from any building',
     supFree(q)===0&&trainUnit(qbars[0],'grunt')===false&&trainUnit(gar,'tank')===false);
 

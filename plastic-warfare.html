@@ -672,6 +672,8 @@ const HAZ_DPS=4.9;
    board; the maps read as clutter rather than as terrain. */
 const BARR_HP=50;                   // barricade hit points (v30: rescaled from 100)
 const BARR_COST=20;                 // plastic per barricade segment
+const BARR_CLEAR2=6.0*6.0;   // v83: how close a BOT unit must be to bother knocking down one of the map's neutral hedgehogs
+const BARR_CLEAR_SHARE=4;    // ...and one unit id in this many will, so an army thins the clutter as it passes instead of every man stopping at once
 const BARR_AGGRO2=3.3*3.3;          // units only auto-target a barricade within this range (lets them break through)
 /* v77 D4: the Munitions Dump aura had THREE copies of itself - a bare 1.30/1.15
    pair at the damage site, prose in B.dump.d and in the upgrade blurb, and an
@@ -1950,6 +1952,7 @@ const MEDIC_CATCHUP=1.25;    // speed allowance while closing on the aim point (
 const MEDIC_REPATH=12;       // ticks between repaths when the aim point is around a corner (keyed on tick+id, never the clock)
 const MEDIC_SETTLE_R=5;      // arrival scan radius (idle escorts count here, unlike in transit)
 const MEDIC_SETTLE_BAND=0.9; // do not re-park on arrival for less than this
+const DEPOT_SUP=15; // v83: 10 -> 15, so a base reaches the ceiling on SEVEN depots instead of ten and gives three footprints of buildable ground back. Named above the table on the same rule as BUNK_GAR below
 const BUNK_GAR=4; // the Bunker's garrison, named ABOVE the table on the same rule as U0AURA: the row cannot read its own literal while it is being written, so its info card would otherwise have to retype the figure the row sets
 const B={
  hq:{n:'HQ',hp:1500,sz:3,cp:500,ce:100,bt:25,vi:8,prod:['truck'],drop:1,anywhere:1,sup:10,d:`Command center & drop-off; anchors a ${BUILD_R_HQ}-tile build zone`},
@@ -1958,7 +1961,7 @@ const B={
  garage:{n:'Garage',hp:720,sz:3,cp:240,ce:20,bt:14,vi:5,req:'barracks',tech:'b_garage',prod:['jeep','tank','aatruck','medic','apc'],d:'Builds vehicles'},
  helipad:{n:'Helipad',hp:520,sz:3,cp:220,ce:60,bt:12,vi:5,req:'garage',tech:'b_helipad',prod:['heli','apache'],d:'Builds helicopters'},
  generator:{n:'Generator',hp:360,sz:2,cp:140,ce:0,bt:8,vi:4,tech:'b_generator',eps:1.6,d:'+1.6 ⚡/sec'},
- supply:{n:'Supply Depot',hp:420,sz:2,cp:120,ce:0,bt:9,vi:4,sup:10,d:'Field supply yard: +10 🪖 supply. No research needed.'},
+ supply:{n:'Supply Depot',hp:420,sz:2,cp:120,ce:0,bt:9,vi:4,sup:DEPOT_SUP,d:`Field supply yard: +${DEPOT_SUP} 🪖 supply. No research needed.`},
  guardtower:{n:'Guard Tower',hp:540,sz:1,cp:170,ce:30,bt:10,vi:9,req:'barracks',tech:'b_guardtower',dm:15,rg:7,rt:.6,tower:1,d:'Tall auto-cannon tower; long sight & range, fires on its own'},
  radar:{n:'Radar Tent',hp:420,sz:2,cp:200,ce:50,bt:10,vi:13,req:'barracks',tech:'b_radar',uplink:1,d:`Huge sight + enemy blips on minimap. Target Uplink: +${UPLINK_RG} range and +${UPLINK_VI} sight to your whole army for ${UPLINK_T}s`},
  radiotower:{n:'Radio Tower',hp:588,sz:2,cp:60,ce:200,bt:12,vi:12,req:'barracks',tech:'b_radiotower',lim:1,radio:1,d:'Static uplink: opens the call-down panel on the right (1 max). Long sight'}, // v30: 293 HP effective; inverted cost (mostly ⚡)
@@ -2018,7 +2021,7 @@ for(const k in B)if(B[k].ce>0)B[k].ce=+(B[k].ce*1.15).toFixed(3);
    by itself; it now moves by changing the unit's RANK rather than by crossing a
    number.
    Pure arithmetic on the tables: no RNG, no clock, no global state. */
-const SUP_CAP=110; // v69: 80 -> 110. HQ (10) plus ten Supply Depots (10 each) reaches it exactly, the same clean relation the 80 ceiling had at seven depots
+const SUP_CAP=110; // v69: 80 -> 110. v83: the ceiling is UNCHANGED, but DEPOT_SUP went 10 -> 15, so the relation is no longer exact: HQ (10) plus SIX depots is 100, and the SEVENTH crosses the ceiling with 5 of its 15 unused. That waste is the point of the change - the base spends three fewer footprints to field the same army
 /* v70 SUPPLY QUARTILES. The trainable roster is sorted by total resource cost
    (cp+ce) and cut into SUP_MAX equal ranks; a unit pays its rank. Evaluated once
    at load, exactly as the median and the ladder were: no RNG, no clock, no entity
@@ -4674,6 +4677,19 @@ function bldGap(key,tx,ty,b){
 }
 function placeDeny(p,key,tx,ty){
  const sz=B[key].sz,N=G.map.N;
+ /* v83 BOUNDS. The footprint sweep below indexes a FLAT row-major array, so an
+    out-of-range column does not read as empty - it wraps onto another row. At
+    tx+x === N the index (ty+y)*N+(tx+x) is exactly (ty+y+1)*N, the first tile of
+    the NEXT row, and a tx of -1 lands on the last tile of the PREVIOUS one. When
+    the tile it wrapped onto happened to be passable the placement was allowed and
+    the building went up off the edge of the map. It is the EAST and WEST edges
+    that leaked: only a column can wrap, because a row out of range walks off the
+    end of the array entirely and reads undefined, which denies correctly. Both
+    leaking edges were measured on backyard before the fix - tx=N-1 and tx=-1 both
+    passed the gate, every out-of-range ty was already refused. Checking the whole
+    footprint up front is the fix; the sweep then only ever sees indices that
+    belong to the row it is asking about. */
+ if(tx<0||ty<0||tx+sz>N||ty+sz>N)return 'terrain';
  for(let y=0;y<sz;y++)for(let x=0;x<sz;x++)if(!G.map.pass[(ty+y)*N+(tx+x)])return 'terrain';
  for(const u of G.units)if(!u.t.fly&&u.x>tx-0.4&&u.x<tx+sz+0.4&&u.y>ty-0.4&&u.y<ty+sz+0.4)return 'unit';
  /* v61 SPACING. Reads G.blds, i.e. EVERY footprint on the map - yours, the
@@ -6558,6 +6574,12 @@ function atkPing(x,y){
    what they returned before. */
 function nearestEnemy(u,r,cone){
  let best=null,bd=r*r;
+ /* v83: the map's neutral barricades are collected SEPARATELY from best/bd and
+    returned only when nothing else was found, which is what makes them a LOW
+    priority rather than a near one: a hedgehog two tiles away can never pull a
+    bot off a soldier ten tiles away, because it never competes on distance at
+    all. It is answered only by a unit with no other target in range. */
+ let nbarr=null,nbd=BARR_CLEAR2;
  const aa=!!(u.t&&u.t.aaOnly); // v51: an air-only weapon never acquires a ground target
  const sec=!!(u.t&&u.t.sec);   // v52: ...and a main gun never acquires its secondary's classes
  const cs=!!(u.t&&u.t.cshot&&u.cs); // v81: Called Shot restricts him to infantry outright
@@ -6575,11 +6597,18 @@ function nearestEnemy(u,r,cone){
    const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<NEST_AGGRO2&&d<bd&&(!cone||inCone(u,b.x,b.y))){bd=d;best=b}
    continue;
   }
-  if(b.key==='barricade'){if(b.p===G.neutral)continue;const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<BARR_AGGRO2&&d<bd&&(!cone||inCone(u,b.x,b.y))){bd=d;best=b}continue;}
+  if(b.key==='barricade'){
+   if(b.p===G.neutral){ // v83: a BOT clears the map's scattered hedgehogs; a player's units still never auto-target them
+    if(!(u.p&&u.p.ai)||(u.id%BARR_CLEAR_SHARE))continue; // keyed on id, never on srand: reading the sim stream from a targeting scan would move every trail
+    const d=(b.x-u.x)**2+(b.y-u.y)**2;
+    if(d<nbd&&(!cone||inCone(u,b.x,b.y))){nbd=d;nbarr=b}
+    continue;
+   }
+   const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<BARR_AGGRO2&&d<bd&&(!cone||inCone(u,b.x,b.y))){bd=d;best=b}continue;}
   const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<bd&&(!cone||inCone(u,b.x,b.y))){bd=d;best=b}}
  // also fire on hostile wildlife that's actively threatening
  for(const cr of (G.neutrals||[])){if(cr.hp<=0||cs||(aa&&!cr.t.fly)||(sec&&secOwns(u,cr)))continue;const d=(cr.x-u.x)**2+(cr.y-u.y)**2;if(d<bd&&(!cone||inCone(u,cr.x,cr.y))){bd=d;best=cr}}
- return best;
+ return best||nbarr; // v83: the hedgehog only when the sweep above found nothing at all
 }
 /* --- TARGET UPLINK ---
    v79. True while any completed Radar Tent of this army is running its uplink. The

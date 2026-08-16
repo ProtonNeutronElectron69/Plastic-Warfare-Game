@@ -146,25 +146,42 @@ ok('T23.B SURV_WAVE_N is derived from the wave table',SURV_WAVE_N===SURV_WAVES.l
   const d=(b.x-u.x)**2+(b.y-u.y)**2;
   return d<NEST_AGGRO2&&(!cone||inCone(u,b.x,b.y));
  };
+ /* v83: the reference mirrors nearestEnemy's new last-resort slot. A neutral
+    hedgehog is collected apart from best/bd and returned only if the sweep found
+    nothing, so it can never outrank a real target; a BOT unit whose id falls in
+    the clearing share is the only thing that sees one at all. Modelled here
+    rather than exempted, because the whole value of T23.E is that the reference
+    is an INDEPENDENT statement of the rule - loosening it to ignore barricades
+    would stop it testing the branch the release just added. */
  const refPlain=(u,r)=>{
-  let best=null,bd=r*r;
+  let best=null,bd=r*r,nb=null,nbd=BARR_CLEAR2;
   for(const e of G.units){if(allied(e.p,u.p)||e.garrisoned)continue;const d=(e.x-u.x)**2+(e.y-u.y)**2;if(d<bd){bd=d;best=e}}
   for(const b of G.blds){if(allied(b.p,u.p))continue;
    if(b.key==='nest'){const d=(b.x-u.x)**2+(b.y-u.y)**2;if(refDen(u,b,false)&&d<bd){bd=d;best=b}continue;}
-   if(b.key==='barricade'){if(b.p===G.neutral)continue;const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<BARR_AGGRO2&&d<bd){bd=d;best=b}continue;}
+   if(b.key==='barricade'){
+    if(b.p===G.neutral){
+     if(!(u.p&&u.p.ai)||(u.id%BARR_CLEAR_SHARE))continue;
+     const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<nbd){nbd=d;nb=b}continue;
+    }
+    const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<BARR_AGGRO2&&d<bd){bd=d;best=b}continue;}
    const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<bd){bd=d;best=b}}
   for(const cr of (G.neutrals||[])){if(cr.hp<=0)continue;const d=(cr.x-u.x)**2+(cr.y-u.y)**2;if(d<bd){bd=d;best=cr}}
-  return best;
+  return best||nb;
  };
  const refCone=(u,r)=>{
-  let best=null,bd=r*r;
+  let best=null,bd=r*r,nb=null,nbd=BARR_CLEAR2;
   for(const e of G.units){if(allied(e.p,u.p)||e.garrisoned)continue;const d=(e.x-u.x)**2+(e.y-u.y)**2;if(d<bd&&inCone(u,e.x,e.y)){bd=d;best=e}}
   for(const b of G.blds){if(allied(b.p,u.p))continue;
    if(b.key==='nest'){const d=(b.x-u.x)**2+(b.y-u.y)**2;if(refDen(u,b,true)&&d<bd){bd=d;best=b}continue;}
-   if(b.key==='barricade'){if(b.p===G.neutral)continue;const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<BARR_AGGRO2&&d<bd&&inCone(u,b.x,b.y)){bd=d;best=b}continue;}
+   if(b.key==='barricade'){
+    if(b.p===G.neutral){
+     if(!(u.p&&u.p.ai)||(u.id%BARR_CLEAR_SHARE))continue;
+     const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<nbd&&inCone(u,b.x,b.y)){nbd=d;nb=b}continue;
+    }
+    const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<BARR_AGGRO2&&d<bd&&inCone(u,b.x,b.y)){bd=d;best=b}continue;}
    const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<bd&&inCone(u,b.x,b.y)){bd=d;best=b}}
   for(const cr of (G.neutrals||[])){if(cr.hp<=0)continue;const d=(cr.x-u.x)**2+(cr.y-u.y)**2;if(d<bd&&inCone(u,cr.x,cr.y)){bd=d;best=cr}}
-  return best;
+  return best||nb;
  };
  G=null;newGame(cfg43('backyard','dm',515151,3));
  for(let i=0;i<900;i++)update(DT43);
