@@ -20,8 +20,10 @@ harness/seg2a.js
 harness/seg2b.js
 harness/seg2c.js
 harness/seg3.js
+harness/.seg*.out
 harness/rc.js
 harness/rc83.js
+harness/tri.js
 harness/cut_v83.json
 
 # ---------------------------------------------------------------------------

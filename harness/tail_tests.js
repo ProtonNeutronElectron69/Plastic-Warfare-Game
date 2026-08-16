@@ -6,7 +6,7 @@
 'use strict';
 let PASS=0,FAIL=0;const FAILS=[];
 function ok(name,cond){if(cond){PASS++}else{FAIL++;FAILS.push(name);console.log('  FAIL: '+name)}}
-function section(s){console.log('== '+s+' ==')}
+function section(s){if(!process.env.QUIET)console.log('== '+s+' ==')} // v83: QUIET=1 drops the per-section headers; ok() already prints only failures, so a quiet run is failures plus the summary and nothing else
 
 const T_MAPS=Object.keys(MAPS).filter(k=>!MAPS[k].survOnly); // v35: survival-only maps (Desk) get their own coverage in tail_v35
 const T_MODES=['dm','ctf','koth'];

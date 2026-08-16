@@ -332,6 +332,77 @@ Two are not:
 lesson one layer down: the cfgs are not interchangeable and neither are the
 capture preambles. A recut script must mirror each fixture verbatim.
 
+## v83: running the suite for less, without running less of it
+
+Measured on a 4-core box, whole suite, before any of this: 705 seconds serial,
+633,488 simulated ticks, 4,964 reported checks.
+
+    segment 1   125s   165,128 ticks   2,331 checks
+    segment 2a   29s    33,923           620
+    segment 2b  298s   247,032           175
+    segment 2c  105s    84,800           367
+    segment 3   148s   102,605         1,471
+
+Two things came out of that profile and both are now fixed.
+
+FIRST, 508 of those 4,964 checks were the same 127 run four times. seg.sh
+prepended tail_v44 and tail_v47 IN FULL to segments 2a, 2b, 2c and 3 to borrow
+six symbols - cfg44, arena44 with its scan/carve/recarve closure, and
+host47/chan47/walk47 - and paid 127 checks and 12,432 ticks for them each time.
+helpers.js now carries those six and nothing else; the tails themselves still
+run, once, in segment 1. The suite reports 4,456 now, and that is not a loss of
+coverage, it is the duplication leaving the count. Segment 1 is unchanged at
+2,331 and the other four each dropped exactly 127.
+
+SECOND, `./seg.sh all` runs the five segments as concurrent processes. They were
+only ever split because the suite overruns a single CONTAINER CALL - they are
+independent processes over read-only inputs. 705s -> 320s, byte-identical
+results. 2b is launched first because it is the long pole; everything else lands
+inside it. QUIET=1 drops the per-section headers, leaving failures and totals.
+
+The floor is now segment 2b, and 234,000 of the suite's 633,000 ticks are ONE
+check: T39.I's six-seed air-target arm. That was widened deliberately at v78 and
+kept at v81 and v82 with the reasoning recorded above. It is not touched here.
+It is simply worth knowing that it is 37% of the bill, and that it is the only
+place left where a large number lives.
+
+## v83: choosing the right segments up front, mechanically
+
+`./triage.sh [git-ref]` answers the question that used to be judgement, in about
+25 seconds against the full suite's 705.
+
+  1. DID THE SIMULATION MOVE? Re-runs the pinned trail combos and the 30 layout
+     pins and compares. This cannot be read off a diff and should never be
+     guessed: v83's placement bounds check looks like a UI guard and moved every
+     trail, while v82's help-panel work rewrote hundreds of lines of markup and
+     moved nothing. A trail that differs is conclusive - run everything, and the
+     release needs a repin. A trail that reproduces is strong but not absolute:
+     it proves these combos are unchanged, not that no combo anywhere could
+     differ.
+
+  2. WHICH TAILS NAME WHAT YOU TOUCHED? Identifiers on the changed lines,
+     intersected with the names the build actually declares, matched against
+     every tail, and RANKED BY RARITY - a name two tails mention is a pointer, a
+     name half of them mention is noise. Starred rows name a rare identifier.
+
+Run against v83's own gameplay diff it stars tail_v43 (BARR_CLEAR2,
+BARR_CLEAR_SHARE - T23.E, the differential check) and tail_v61 (DEPOT_SUP,
+SUP_CAP - T40.D), with tail_v54 next. Those are exactly the three files that
+release had to edit, and tail_v61 is the one that was MISSED at the time,
+because it sits in a segment nobody thought the change touched.
+
+Two dead ends worth not repeating, both found by running the thing:
+  - Taking every word on a changed line drowns in prose. A comment reading "the
+    ceiling is reached on seven depots" contributes ceiling, reached and depots;
+    every tail says one of those somewhere; the map named all five segments,
+    which is the same as naming none.
+  - Filtering against declared names is not enough on its own if game.js is
+    scanned WITH its comments: a comment reading "the edges that leaked: only a
+    column can wrap" registers `leaked` as a declared property. And a diff line
+    sitting inside a multi-line block comment carries no comment marker of its
+    own, so stripping line by line never reaches it. Both sides go through one
+    stripper that tracks block comments across lines.
+
 ## v83 note: the depot change deletes an equality on purpose, in three places
 
 DEPOT_SUP went 10 -> 15 with SUP_CAP left alone at 110. The point was base
