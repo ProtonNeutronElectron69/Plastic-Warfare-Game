@@ -174,10 +174,27 @@ record of what each phase was told to build and what each one actually cost.
   APC movement blocking (~15%); late-game air production underperforms;
   spectator HUD rendering; hardcoded napalm/paradrop literals in panel strings.
 
-## Assembly (working file at /home/claude/pw.html)
+## Assembly (working file at ../plastic-warfare.html)
+    ./build.sh
+
+build.sh does what the three commands below used to do by hand, and does them
+from ONE source, which is the point of it:
+
     S=$(grep -n '<script>' pw.html | cut -d: -f1); E=$(grep -n '</script>' pw.html | cut -d: -f1)
     sed -n "$((S+1)),$((E-1))p" pw.html > game.js
     node --check game.js
+
+It writes BOTH game.js (what the tails execute) and pw.html (what the nine
+source-text tails read: T41.F, T43.J, T44.F, T49.A/D, T50.A, T53.H, T54.G and
+the v76/v77 checks), each derived from ../plastic-warfare.html in the same step.
+Neither is committed.
+
+Doing it in one step is not tidiness. In the v82 bundle pw.html was still the
+v81 build while game.js was v82, so every source-text check was linting the
+PREVIOUS release while the behavioural checks ran the current one. T49.A's
+`className='bb'` pin was the check that caught it once the two were realigned:
+it still read 18, the v81 figure, against a v82 file carrying 21. Regenerating
+both from one file makes that particular silence impossible.
 
 ## Running (v43: one runner, one tail list)
     ./run.sh                 standard suite        (4785 checks at v79; overruns one call)
@@ -1287,7 +1304,7 @@ the index, so a search knows which version to go looking in.
 Two verification stages were added at v58.
 
 ### Static: `verify_v58.py`
-    python3 verify_v58.py /home/claude/pw.html      # 32 checks
+    python3 verify_v58.py                          # 32 checks (defaults to ./pw.html)
 Asserts properties of the DOCUMENT that the extracted script cannot see: that
 the new chrome is scoped to `#setup` so in-match UI keeps v57 styling, that the
 shared `.opt` / `.card` / `.ctog` base rules survive untouched, that no `#setup`

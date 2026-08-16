@@ -5,7 +5,7 @@ verify_v58.py - static assertions on the spliced HTML.
 These are properties of the document, not of the extracted script, so the node
 harness cannot see them. Run after splice_v58.py:
 
-    python3 verify_v58.py /home/claude/pw.html
+    python3 verify_v58.py            # defaults to ./pw.html, written by build.sh
 """
 import pathlib, re, sys
 
@@ -64,7 +64,14 @@ def main(path):
         s.count('id="infoBtn" class="opt" style=') == 0)
 
     # ---- the module must not write the shared sprite pipeline ----
-    m = re.search(r"/\* =+ v58 MENU BACKDROP \(MENUBG\) =+(.|\n)*?\nmenubgInit\(\);", s)
+    # The banner carried a "v58 " prefix when this script was written. A later
+    # cleanup pass stripped every vNN prefix out of banner titles to satisfy
+    # T49.D, which rejects them - so this anchor stopped matching, and because
+    # the thirteen checks below sit inside `if m:` they stopped running with it.
+    # Nothing reported that: the script is not wired into run.sh or seg.sh, and
+    # its default path pointed at a file outside the repo, so it was never run.
+    # The prefix is optional here so the anchor holds in either form.
+    m = re.search(r"/\* =+ (?:v58 )?MENU BACKDROP \(MENUBG\) =+(.|\n)*?\nmenubgInit\(\);", s)
     chk('MENUBG module present', bool(m))
     if m:
         mod = m.group(0)
@@ -88,4 +95,4 @@ def main(path):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else '/home/claude/pw.html'))
+    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else 'pw.html'))

@@ -7,6 +7,10 @@
 # The game's script block, extracted for the headless tests (harness/build.sh)
 harness/game.js
 
+# A copy of plastic-warfare.html, refreshed by build.sh so the source-text lints
+# always read the CURRENT game rather than a stale copy that drifted behind it
+harness/pw.html
+
 # The assembled test bundles that run.sh / seg.sh concatenate before running
 harness/harness.js
 harness/harness_ms.js
