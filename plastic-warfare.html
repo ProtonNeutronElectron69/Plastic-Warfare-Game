@@ -1899,11 +1899,11 @@ const U={
  tank:{n:'Tank',a:'tank',hp:270,dm:42,rg:5,rt:2.4,sp:2.4,vi:6,cp:220,ce:40,bt:14,w:'s',spl:1,ex:1,tech:'u_tank',d:'Main battle tank'},
  heli:{n:'Huey',a:'heli',hp:155,dm:12,rg:4.6,rt:.55,sp:4.2,vi:8,cp:200,ce:70,bt:13,w:'b',fly:1,tech:'u_heli',d:'Fast flying gunner'},
  sarge:{n:'Sarge',a:'inf',hp:210,dm:15,rg:4.2,rt:.42,sp:2.6,vi:7,cp:260,ce:60,bt:16,w:'b',lim:1,rally:1,regen:1,tech:'u_sarge',d:`Hero commando (1 max). Heals ${SARGE_REGEN} HP/s after ${SARGE_CALM}s out of contact; "On Me!" gives allied infantry within ${SARGE_AURA_R} tiles +${Math.round(SARGE_AURA*100)}% damage for half his own`},
- mortar:{n:'Mortar Squad',a:'inf',hp:52,dm:36,rg:7.5,mrg:2,rt:3.4,sp:1.9,vi:6,cp:150,ce:0,bt:9,w:'m',spl:1.5,ex:1,wf:1,smokeCap:1,tech:'u_mortar',d:`Long-range arcing shells. Consecutive shells on one target ramp +${Math.round(MORT_WF_STEP*100)}% each to +${Math.round(MORT_WF_CAP*100)}%; Smoke Rounds shell friendlies instead, cutting damage taken by ${Math.round(SMOKE_RED*100)}%`},
+ mortar:{n:'Mortar Squad',a:'inf',hp:52,dm:36,rg:7.5,mrg:2,rt:3.4,sp:1.9,vi:6,cp:150,ce:0,bt:9,w:'m',spl:1.5,ex:1,wf:1,smokeCap:1,tech:'u_mortar',d:`Long-range arcing shells. Walking Fire: consecutive shells on one target ramp +${Math.round(MORT_WF_STEP*100)}% each to +${Math.round(MORT_WF_CAP*100)}%; Smoke Rounds shell friendlies instead, cutting damage taken by ${Math.round(SMOKE_RED*100)}%`},
  flamer:{n:'Flamethrower',a:'inf',hp:72,dm:13,rg:2.3,rt:.5,sp:2.2,vi:5,cp:120,ce:0,bt:8,w:'f',spl:.625,ex:1,cook:1,valve:1,tech:'u_flamer',d:`Melts infantry up close; Cook-Off leaves everything he touches burning for ${COOK_DPS}/s. Pressure Valve adds ${Math.round(VALVE_DMG*100)}% damage and +${VALVE_RG} range, but ${Math.round(VALVE_BACK*100)}% of the damage he deals is taken by the man holding the hose`},
  bulltank:{n:'"Bull" Heavy Tank',a:'tank',hp:430,dm:60,rg:5,rt:3,sp:1.9,vi:6,cp:391,ce:80.5,bt:18,w:'s',spl:1.25,ex:1,big:1,plate:1,throttle:1,sec:{w:'f',wc:'f',k:.15,rt:.55,rg:2.6,spl:.625},tech:'u_bulltank',d:`Slow rolling fortress. The hull flamethrower handles infantry & wildlife; the cannon handles everything else, both at once. Ablative plate ignores small-arms fire completely; Full Throttle adds ${Math.round(THROTTLE_SPD*100)}% speed and crushes infantry & barricades, but the Bull cannot fire at all while it rolls`},
- sniper:{n:'Sniper',a:'inf',hp:46,dm:55,rg:7.2,rt:3,sp:2.1,vi:9,cp:170,ce:0,bt:9,w:'b',camo:1,cshot:1,tech:'u_sniper',d:'Picks off infantry far away; unseen until he fires'},
- arty:{n:'Rocket Artillery',a:'arty',hp:95,dm:70,rg:9,mrg:3,rt:5,sp:1.7,vi:6,cp:320,ce:90,bt:18,w:'m',spl:2.8125,ex:1,shock:1,ripple:1,tech:'u_arty',d:'Devastating siege rockets; survivors reload slower'},
+ sniper:{n:'Sniper',a:'inf',hp:46,dm:55,rg:7.2,rt:3,sp:2.1,vi:9,cp:170,ce:0,bt:9,w:'b',camo:1,cshot:1,tech:'u_sniper',d:`Picks off infantry far away. Camouflaged: he cannot be targeted at all until he fires, and drops out of sight again ${CAMO_T}s after his last shot. Called Shot adds ${Math.round(CS_DMG*100)}% damage but restricts him to enemy infantry while it runs`},
+ arty:{n:'Rocket Artillery',a:'arty',hp:95,dm:70,rg:9,mrg:3,rt:5,sp:1.7,vi:6,cp:320,ce:90,bt:18,w:'m',spl:2.8125,ex:1,shock:1,ripple:1,tech:'u_arty',d:`Devastating siege rockets. Shell Shock adds ${SHOCK_SET}s to the reload of everyone who survives the blast. Ripple Fire trades the shell for ${RIPPLE_N} rockets at ${Math.round(RIPPLE_DM*100)}% damage each across a wider box, for ${Math.round((RIPPLE_RT-1)*100)}% more reload`},
  // v78: fire rate -20%, which is rt .5 -> .625 (= .5/0.8, exact in binary64),
  // not a 20% cut to the reload. DPS 5.66 -> 4.53. He drops out of three
  // competitive pools he was marginal in (T26.C light and medium 9 -> 8, bldg
@@ -1950,6 +1950,7 @@ const MEDIC_CATCHUP=1.25;    // speed allowance while closing on the aim point (
 const MEDIC_REPATH=12;       // ticks between repaths when the aim point is around a corner (keyed on tick+id, never the clock)
 const MEDIC_SETTLE_R=5;      // arrival scan radius (idle escorts count here, unlike in transit)
 const MEDIC_SETTLE_BAND=0.9; // do not re-park on arrival for less than this
+const BUNK_GAR=4; // the Bunker's garrison, named ABOVE the table on the same rule as U0AURA: the row cannot read its own literal while it is being written, so its info card would otherwise have to retype the figure the row sets
 const B={
  hq:{n:'HQ',hp:1500,sz:3,cp:500,ce:100,bt:25,vi:8,prod:['truck'],drop:1,anywhere:1,sup:10,d:`Command center & drop-off; anchors a ${BUILD_R_HQ}-tile build zone`},
  barracks:{n:'Barracks',hp:620,sz:2,cp:160,ce:0,bt:10,vi:5,prod:['grunt','grenadier','bazooka','gunner'],d:'Trains infantry'},
@@ -1962,7 +1963,7 @@ const B={
  radar:{n:'Radar Tent',hp:420,sz:2,cp:200,ce:50,bt:10,vi:13,req:'barracks',tech:'b_radar',uplink:1,d:`Huge sight + enemy blips on minimap. Target Uplink: +${UPLINK_RG} range and +${UPLINK_VI} sight to your whole army for ${UPLINK_T}s`},
  radiotower:{n:'Radio Tower',hp:588,sz:2,cp:60,ce:200,bt:12,vi:12,req:'barracks',tech:'b_radiotower',lim:1,radio:1,d:'Static uplink: opens the call-down panel on the right (1 max). Long sight'}, // v30: 293 HP effective; inverted cost (mostly ⚡)
  dump:{n:'Munitions Dump',hp:520,sz:2,cp:220,ce:40,bt:10,vi:5,req:'barracks',tech:'b_dump',scuttle:1,d:'+'+Math.round(DUMP_AURA*100)+'% damage to friends within '+DUMP_R+' tiles. Scuttle detonates it for '+SCUTTLE_DM+' over '+SCUTTLE_R+' tiles, and your own men take '+Math.round(SCUTTLE_FF*100)+'% of it'},
- bunker:{n:'Bunker',hp:820,sz:2,cp:200,ce:0,bt:10,vi:6,req:'barracks',tech:'b_bunker',gar:4,lock:1,d:'Garrison 4 infantry; they shoot out and are safe from splash'},
+ bunker:{n:'Bunker',hp:820,sz:2,cp:200,ce:0,bt:10,vi:6,req:'barracks',tech:'b_bunker',gar:BUNK_GAR,lock:1,d:`Garrison ${BUNK_GAR} infantry; they shoot out and are safe from splash. Lockdown silences the garrison but cuts damage taken by ${Math.round(LOCK_RED*100)}% for ${LOCK_T}s`},
  outpost:{n:'Outpost',hp:780,sz:2,cp:240,ce:20,bt:13,vi:7,req:'barracks',prod:['truck'],drop:1,anywhere:1,expand:1,sup:4,d:`Forward base: builds & refuels Dump Trucks anywhere; opens a ${BUILD_R_OUTPOST}-tile build zone around it`},
  turbine:{n:'Wind Turbine',hp:260,sz:1,cp:110,ce:0,bt:6,vi:4,tech:'b_turbine',eps:2.2,over:1,d:`+2.2 ⚡/sec, cheap. Overdrive runs it at ×${OVER_MUL} for ${OVER_T}s, then it produces nothing for ${OVER_OFF}s`},
  barricade:{n:'Barricade',hp:BARR_HP,sz:1,cp:BARR_COST,ce:0,bt:1.0,vi:0,barr:1,d:'Czech-hedgehog obstacle; blocks movement, 50 HP. Click-and-drag to lay a whole line. 20 ⬢ each.'},
@@ -13455,7 +13456,15 @@ function frame(t){
    the stub. Touches no sim state, no sim RNG stream, nothing hashed or
    serialized. Only reachable from the setup screen (G===null there). */
 const INFO={open:false,tab:'units',kind:null,key:null,fake:null,raf:0,t:0,ground:null,
- stub:{tick:0,orgX:0,neutral:null,human:null}};
+ /* units/blds: the preview draws ONE entity against an empty world, but the
+    renderer still sweeps the entity lists - rallied() walks G.units to decide
+    whether an infantryman wears a Sarge glow. The stub carried no such array,
+    so every drawUnit call for a foot soldier threw "G.units is not iterable"
+    and infoLoop's empty catch swallowed it: the shadow is drawn in a SEPARATE
+    try above, so it landed and the man himself silently did not. Empty arrays
+    are also the honest answer here - in a preview there is no other unit to
+    find, and rallied() correctly returns false instead of throwing. */
+ stub:{tick:0,orgX:0,neutral:null,human:null,units:[],blds:[]}};
 const INFO_UNITS=Object.keys(U);
 const INFO_BLDS=Object.keys(B).filter(k=>k!=='nest'); // nests draw from the map layer, not drawBld
 const INFO_FEXCL_U=['sarge','mortar','flamer','bulltank','sniper','arty','bike','chinook'];
