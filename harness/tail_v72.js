@@ -61,7 +61,7 @@ ok('T49.A bldRoster survived, reached now through constructRoster',
        callers, so it is SUPPOSED to need a conscious edit when one is added. */
     ok('T49.A the .bb class survives, still styled', html.indexOf('.bb{background') > 0);
     ok('T49.A ...and is still built by the surviving callers',
-       (html.match(/className='bb'/g) || []).length === 21);   // v80 15; v81 +3 (Called Shot, Ripple Fire, Lockdown); v82 +3 (Flat Out, Air Assault, Overdrive)
+       (html.match(/className='bb'/g) || []).length === 24);   // v80 15; v81 +3 (Called Shot, Ripple Fire, Lockdown); v82 +3 (Flat Out, Air Assault, Overdrive); v85 +3 (Sprint single, Sprint group, Scramble)
     ok('T49.A the radio panel still scopes .bb', html.indexOf('#radioPanel .bb') > 0);
   }
 }

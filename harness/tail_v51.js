@@ -49,10 +49,25 @@ function quiet51(){for(const mn of (G.map.mines||[]))mn.live=false;}
  // The medic heal rate is derived from the LOWEST dm/rt in the roster. A salvo unit
  // reads low on that formula, so this is the pin that stops a future salvo weapon
  // silently retuning every medic in the game.
+ /* v85: the clause the derivation gained, mirrored here. This check fired when the
+    Signal Runner landed, which is the whole reason it exists - a 5.0-DPS support
+    man would have taken every Medic in the game from 2.089 HP/s to 1.30 in a
+    release nobody thought was touching the Medic. */
  let lo=Infinity,who='';
- for(const k in U){const q=U[k];if(q.dm>0&&q.rt>0&&!q.heal){const d=q.dm/q.rt;if(d<lo){lo=d;who=k}}}
+ for(const k in U){const q=U[k];if(q.dm>0&&q.rt>0&&!q.heal&&!q.noPace){const d=q.dm/q.rt;if(d<lo){lo=d;who=k}}}
  ok('T32.A the Grunt is still the floor, so MEDIC_HEAL_RATE did not move',
     who==='grunt'&&Math.abs(MEDIC_HEAL_RATE-2.08936)<1e-4);
+ /* ...and the exemption is LOAD-BEARING, not decorative: without it the floor
+    really would move. A noPace that excluded nothing would leave the check above
+    green while proving nothing, so the counterfactual is asserted outright. */
+ {
+  let lo2=Infinity,who2='';
+  for(const k in U){const q=U[k];if(q.dm>0&&q.rt>0&&!q.heal){const d=q.dm/q.rt;if(d<lo2){lo2=d;who2=k}}}
+  ok('T32.A MUTATION: drop the exemption and the Signal Runner becomes the floor',
+     who2==='runner'&&lo2<lo);
+  ok('T32.A ...and exactly one unit claims the exemption',
+     Object.keys(U).filter(k=>U[k].noPace).length===1&&!!U.runner.noPace);
+ }
 }
 
 /* ---------- B: the salvo ---------- */

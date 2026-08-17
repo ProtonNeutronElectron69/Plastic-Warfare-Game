@@ -21,7 +21,7 @@ function cfg45(map,mode,seed,opp){return{map,mode,diff:'normal',fac:'tan',opp:(o
 /* The Desk survival trail with the Gunner at its pre-v45 price of 90, recut from
    the v48 build (the AI overhaul moves every trail, so the original pre-v45
    capture can no longer reproduce under any price). Kept here, only for G. */
-const BASE43_DESK=[642584799, 105162413, 3018428316, 742250392, 24285517, 3627942298, 2225808828, 2364969115, 4209290412, 1262920780, 3009190247, 1963492357, 3658958899, 255457593, 3075685287, 2235626196, 3550143172, 3169969484, 2816740290, 2966156476, 4251683367, 2852312079, 2138661996, 2264176352, 2735841043, 2021111895];
+const BASE43_DESK=[1851957415, 4081306149, 4174326148, 3308811084, 2717317501, 1220590682, 4277221818, 3187178252, 954448123, 873964071, 3699840820, 2751718897, 3100646655, 1859941533, 451742869, 4006003553, 239894707, 3823247279, 3470499580, 1536440695, 1868398879, 99501386, 1093447317, 1986119246, 3986236915, 1408246832];
 /* ---------- A: table shape ---------- */
 {
  const WCS=['b','g','r','s','m','f','d','a','q','x'], COLS=ARMOR_ORDER.concat(['bug']);
@@ -63,7 +63,7 @@ const BASE43_DESK=[642584799, 105162413, 3018428316, 742250392, 24285517, 362794
 /* ---------- B: classification ---------- */
 {
  const WANT={grunt:'inf',grenadier:'inf',gunner:'inf',bazooka:'inf',sarge:'inf',mortar:'inf',
-   flamer:'inf',sniper:'inf',para:'inf',truck:'light',medic:'light',bike:'light',arty:'light',
+   flamer:'inf',sniper:'inf',para:'inf',runner:'inf',truck:'light',medic:'light',bike:'light',arty:'light',
    jeep:'medium',apc:'medium',tank:'heavy',bulltank:'heavy',heli:'air',apache:'air',chinook:'air',
    aatruck:'light'}; // v51: a soft-skinned truck, so ground troops have a clean answer to it
  let bad=[];
@@ -102,6 +102,10 @@ const BASE43_DESK=[642584799, 105162413, 3018428316, 742250392, 24285517, 362794
   arty:[1.15,1.00,0.90,0.70,0.40,1.45],   bike:[1.00,1.00,0.85,0.60,1.00,0.70],
   apache:[0.70,1.10,1.35,1.50,1.30,0.90],
   para:[1.30,1.00,0.85,0.60,1.00,0.70],
+  // v85: the Signal Runner's pistol is weapon row 'b', so his row is the plain
+  // small-arms row - identical to the Grunt's. That is the point of not giving a
+  // sidearm a tenth weapon row: it changes what he does, not what small arms do.
+  runner:[1.00,1.00,0.85,0.60,1.00,0.70],
   aatruck:[0.00,0.00,0.00,0.00,1.60,0.00]
  };
  let bad=[];

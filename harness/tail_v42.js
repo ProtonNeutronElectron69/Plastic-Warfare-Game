@@ -185,7 +185,9 @@ ok('T22.1 KOTH_TARGET doubled to 150', KOTH_TARGET===150);
  // HP-linked ripples stay proportional to unit HP -> their TTK vs units is unchanged:
  // mine still one-shots a tank, heal keeps pace
  ok('T22.5 mine damage still one-shots a tank (rides HP_SCALE)', MINE_DMG>=U.tank.hp);
- let lo=Infinity;for(const k in U){const t=U[k];if(t.dm>0&&t.rt>0&&!t.heal)lo=Math.min(lo,t.dm/t.rt);}
+ // v85: !t.noPace mirrors the derivation, which gained the same clause for the
+ // Signal Runner. See T32.A, where the exemption is proved load-bearing.
+ let lo=Infinity;for(const k in U){const t=U[k];if(t.dm>0&&t.rt>0&&!t.heal&&!t.noPace)lo=Math.min(lo,t.dm/t.rt);}
  ok('T22.5 medic heal rides HP_SCALE (proportional to bigger pools)',
     Math.abs(MEDIC_HEAL_RATE-lo*0.9*HP_SCALE)<1e-9);
 }

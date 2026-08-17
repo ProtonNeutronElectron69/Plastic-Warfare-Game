@@ -128,8 +128,13 @@ section('T50.A the minimap reserve tracks the size cycle');
      one button per ability plus the cooldown readout - so it reads the table
      rather than a count that a removal invalidates. The exact roster is pinned in
      T51.C and the removal itself in T52.B. */
-  ok('T50.A ...and still builds one call-down button per ability, plus the readout',
-     bx.children.length === RADIO_ABILITIES.length + 1 && RADIO_ABILITIES.length >= 1);
+  /* v85: per ability THIS ARMY may arm, which is the same relation read through the
+     filter the faction call-downs added. Still expressed as a relation rather than
+     a count, so a fifth call-down does not fail here. */
+  ok('T50.A ...and still builds one call-down button per ability this army has, plus the readout',
+     bx.children.length === radioListFor(p).length + 1 && radioListFor(p).length >= 1);
+  ok('T50.A ...and this army is not Blue, so it is offered the shared three',
+     p.fac !== 'blue' && radioListFor(p).length === 3);
   ok('T50.A ...still as .bb buttons', bx.children[0].className.indexOf('bb') === 0);
 }
 
@@ -346,7 +351,8 @@ section('T50.C the Machine Gunner loses 15% DPS');
 
   /* 4. MEDIC_HEAL_RATE keys off the roster's LOWEST dm/rt. That is the Grunt and
         it is nowhere near him, so the heal rate cannot have followed him down. */
-  const lo = Math.min(...Object.keys(U).filter(k => U[k].dm > 0 && U[k].rt > 0 && !U[k].heal)
+  // v85: !noPace mirrors the derivation - see T32.A, which proves the exemption matters
+  const lo = Math.min(...Object.keys(U).filter(k => U[k].dm > 0 && U[k].rt > 0 && !U[k].heal && !U[k].noPace)
                               .map(k => U[k].dm / U[k].rt));
   ok('T50.C the medic heal rate is keyed to the Grunt floor, not to him',
      Math.abs(lo - U.grunt.dm / U.grunt.rt) < 1e-12 && lo < U.gunner.dm / U.gunner.rt &&
@@ -610,11 +616,27 @@ section('T50.F the UI changes cannot reach the sim; the Gunner can');
   const blind = gunnerTicks({ map: 'backyard', mode: 'dm', diff: 'normal', fac: 'tan', opp: 3, seed: 777001 }, 900);
   ok('T50.F the 900-tick trail combos field no Gunner, so their passing is BLINDNESS not proof',
      blind === 0 && !hasTech(G.human, 'u_gunner'));
-  /* the one combo in the suite that does field him - the anchor for any future
-     unit-stat edit */
-  const seen = gunnerTicks({ map: 'sandbox', mode: 'koth', diff: 'easy', fac: 'gray', opp: 3, seed: 441003 }, 1800, true);
-  ok(`T50.F BASE45_AI's sandbox:koth row is the one gunner-bearing combo (${seen} unit-ticks) and it is the anchor`,
-     seen > 0);
+  /* the combos in the suite that DO field him - the anchor for any future
+     unit-stat edit.
+     v85: this named sandbox:koth as "the one", and at v85's trail that row fields
+     none while three others field him instead (backyard:dm green 929 unit-ticks,
+     kitchen:ctf tan 638, livingroom:dm blue 780). Coverage moved, and widened; it
+     did not disappear. Naming a row was the mistake - the anchor is a property of
+     the fixture set, so it is now COMPUTED, and the check fails only if no row in
+     the AI table fields a Gunner at all, which is the condition that would really
+     leave a unit-stat release with nothing watching it. */
+  const AI_ROWS = [
+    { map: 'backyard', mode: 'dm', diff: 'normal', fac: 'green', opp: 3, seed: 441001 },
+    { map: 'kitchen', mode: 'ctf', diff: 'hard', fac: 'tan', opp: 2, seed: 441002 },
+    { map: 'sandbox', mode: 'koth', diff: 'easy', fac: 'gray', opp: 3, seed: 441003 },
+    { map: 'livingroom', mode: 'dm', diff: 'hard', fac: 'blue', opp: 3, seed: 441004 },
+  ];
+  const anchors = AI_ROWS.map(c => ({ c, n: gunnerTicks(c, 1800, true) })).filter(o => o.n > 0);
+  ok(`T50.F the BASE45_AI table still has a gunner-bearing anchor (${anchors.length}/4 rows: ` +
+     anchors.map(o => `${o.c.map}:${o.c.mode} ${o.n}`).join(', ') + ')',
+     anchors.length > 0);
+  ok('T50.F ...and the 900-tick trail tables still contribute none of it, which is the point',
+     blind === 0);
   /* and the second row that moved did so with NO Gunner on the field: aiPickUnit
      draws over the SQUARE of a damage-per-plastic score, so re-scoring him
      re-weights the draw for every roster he appears in whether he is ever picked

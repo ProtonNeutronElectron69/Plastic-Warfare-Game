@@ -128,7 +128,7 @@ section('T44.B the +15% electricity pass');
   arty:90,bike:5,apache:110,apc:40,chinook:100};
  const V64_B={hq:100,lab:60,garage:20,helipad:60,guardtower:30,radar:50,
   radiotower:200,dump:40,outpost:20};
- const ZERO_U=['grunt','grenadier','gunner','bazooka','truck','mortar','flamer','sniper','para'];
+ const ZERO_U=['grunt','grenadier','gunner','bazooka','truck','mortar','flamer','sniper','para','runner']; // v85: +runner, who draws no battery
  const ZERO_B=['barracks','generator','supply','bunker','turbine','barricade','nest'];
 
  let bad=[];
@@ -136,8 +136,14 @@ section('T44.B the +15% electricity pass');
  for(const k in V64_B)if(Math.abs(B[k].ce-V64_B[k]*1.15)>1e-3)bad.push('B.'+k+'='+B[k].ce);
  ok('T44.B all twenty-one battery costs are exactly 15% up'+(bad.length?' ('+bad.join(', ')+')':''),
     bad.length===0);
- ok('T44.B twelve units and nine buildings, no more and no fewer',
-    Object.keys(U).filter(k=>U[k].ce>0).length===12&&Object.keys(B).filter(k=>B[k].ce>0).length===9);
+ /* v85: nine buildings became ten when the Forward Pad landed. The count is pinned
+    precisely so that an addition has to be declared here rather than slipping in,
+    and the Pad's own battery cost is pinned on the next line so the +15% pass is
+    still proved to have reached it - which is the claim the count exists to guard. */
+ ok('T44.B twelve units and ten buildings, no more and no fewer',
+    Object.keys(U).filter(k=>U[k].ce>0).length===12&&Object.keys(B).filter(k=>B[k].ce>0).length===10);
+ ok('T44.B the Forward Pad is the tenth, and the pass reached it',
+    Math.abs(B.fwdpad.ce-70*1.15)<1e-3&&U.runner.ce===0);
  ok('T44.B the ce:0 roster is still ce:0',
     ZERO_U.every(k=>U[k].ce===0)&&ZERO_B.every(k=>B[k].ce===0));
 
@@ -217,7 +223,7 @@ section('T44.C the Grunt at 36');
     the plastic column, and nothing may drift from it silently. */
  const V69_CP={grunt:36,grenadier:55,gunner:112,bazooka:90,truck:20,medic:150,jeep:130,
   aatruck:180,tank:220,heli:200,sarge:260,mortar:150,flamer:120,bulltank:391,sniper:170,
-  arty:320,bike:90,apache:300,apc:260,chinook:300,para:0};
+  arty:320,bike:90,apache:300,apc:260,chinook:300,para:0,runner:62}; // v85: +Signal Runner
  const moved=Object.keys(U).filter(k=>U[k].cp!==V69_CP[k]);
  ok('T44.C no plastic cost has drifted from the v69 record'+(moved.length?' ('+moved.join(', ')+')':''),
     moved.length===0&&Object.keys(V69_CP).length===Object.keys(U).length);

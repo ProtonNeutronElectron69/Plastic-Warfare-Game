@@ -1,15 +1,35 @@
-# Plastic Warfare headless test harness (updated at v84)
+# Plastic Warfare headless test harness (updated at v85)
 
 Upload this bundle at the start of a session so the harness does not need rebuilding.
 
 ## THE FACTION ABILITY ROADMAP (read this first if you are picking up mid-project)
 
+### Roadmap 1 (v79-v82): every existing exclusive gets a passive and a toggle. LANDED.
+
 v79 is phase 1 of 4. Every faction-exclusive unit and structure gets ONE passive
 and ONE player-toggleable ability. Green landed at v79, Tan at v80, Gray at v81
-and Blue at v82, so THE ROADMAP IS COMPLETE. The whole scope was approved up
+and Blue at v82, so ROADMAP 1 IS COMPLETE. The whole scope was approved up
 front, so the phases below are DECIDED, not proposals - build them as written
 unless the owner says otherwise. Nothing below is outstanding; it is kept as the
 record of what each phase was told to build and what each one actually cost.
+
+### Roadmap 2 (v85-v88): every army fields a full exclusive set. IN PROGRESS.
+
+The owner's target state, approved in full before v85 began: **all four armies
+have two unique buildings (each with an ability), at least one unique unit out of
+the Barracks, the Garage AND the Helipad (each with a passive and an ability),
+and one unique Radio Tower call-in.** Same cadence as roadmap 1 - ONE FACTION PER
+VERSION, so trail divergence stays attributable (rule 7a below still governs).
+
+**Blue landed at v85.** Green is v86, Tan v87, Gray v88. The full specification
+for all three outstanding armies is in "Roadmap 2: the remaining three armies"
+below; it is DECIDED, not proposed.
+
+Rule 1a below was OVERRIDDEN BY THE OWNER for roadmap 2: cooldown abilities on
+units are now in scope, and the `u.abCool` machinery they need is to be built
+when the first one lands (Tan's Napalm Blast at v87, Gray's Paint at v88). v85
+needed none of it - Sprint is a sustained mode in the roadmap-1 shape - so the
+machinery is NOT built yet. Do not assume it exists.
 
 ### The two structural decisions that govern all four phases
 
@@ -331,6 +351,238 @@ Two are not:
 `recut_v76b.js` + `repin_v76b.py` are the correction record. This is the v68
 lesson one layer down: the cfgs are not interchangeable and neither are the
 capture preambles. A recut script must mirror each fixture verbatim.
+
+## Roadmap 2: the remaining three armies (DECIDED - build as written)
+
+Blue landed at v85. The three below are specified in full, including every
+clarification the owner gave, so they can be built without re-asking.
+
+### v86 - GREEN ARMY
+
+  COMMAND TRUCK (Garage). Fairly slow.
+    Passive `Forward Command` - a mobile build anchor that permits **only
+    barricade, guard tower and barracks** placements near it. Nothing else.
+    Toggle `Broadcast` - allies within 5 tiles reload 20% faster; the truck is
+    pinned in place while it runs.
+  OBSERVATION BALLOON (Helipad, REPLACES the proposed observation helicopter).
+    Highest vision in the game. **Only weapons in the `a` / AA-missile row can
+    target it, and at 1/3 damage**; splash never touches it. Drifts slowly. Runs
+    out of fuel after ~3 minutes and crashes; the crash destroys it and kills
+    everyone aboard - it does NOT auto-Bail. NO unit limit.
+    Passive `High Ground` - allies within its vision get +1 range.
+    Ability `Bail` - spawns 1 Grunt, 1 Machine Gunner, 1 Grenadier and 1 Bazooka
+    Man on the ground beneath it, and destroys the balloon.
+  COMMAND POST (second structure).
+    Passive - units within 8 tiles gain veterancy faster.
+    Ability `Regroup` - nearby units gain 25% HP. The "instantly reloads" clause
+    from the original proposal is DELETED; do not reinstate it.
+  SUPPLY DROP (call-in). Two green crates, one carrying 500 plastic and one 500
+    electricity. Only the owning player's units collect them. Instant on pickup.
+    No expiry.
+
+### v87 - TAN ARMY
+
+  FIREBOMB HELI (Helipad).
+    Passive `Scorched Earth` - its hits leave the ground burning.
+    Ability `Napalm Blast` - 10 napalm blasts on 10 random tiles within a 3-tile
+    radius of the helicopter, with a prolonged burn on enemy units, structures
+    AND empty ground. **30-second cooldown - this is the first unit ability that
+    needs `u.abCool`, so that machinery lands here.** The burn damages friendlies.
+  FOUNDRY (second structure).
+    Passive - vehicles produced while it stands get +10% HP.
+    Ability `Pour` - the next vehicle in every Garage completes instantly, at a
+    plastic surcharge.
+  NAPALM BECOMES TAN-EXCLUSIVE. It leaves the shared pool; Fuel-Air Bomb is
+    dropped entirely. Green, Gray and Blue keep Barrage + Paradrop + their own;
+    Tan gets Barrage + Paradrop + Napalm. The `fac` field v85 added to
+    RADIO_ABILITIES is the mechanism - see below.
+
+### v88 - GRAY ARMY
+
+  CHOKTAW HELI (Helipad). Carries the Huey machine gun (row `b`) AND the Apache
+    rocket pods (row `r`) - use the Bull's `sec` secondary-weapon machinery. HP
+    above the Apache's 187.
+    Passive `Forward Observer` - friendly indirect fire gets +2 range against
+    anything it can see.
+    Ability `Paint` - paints enemy units in a player-chosen 2x2 tile area;
+    painted units take **+25% damage from ALL sources** for 10s. 20s cooldown.
+  HEAVY BARRICADE (second structure). Triple the normal barricade's HP (50 ->
+    150). A **-15% damage aura, STACKABLE, capped at 60% total**, on the tiles
+    immediately surrounding it, applying to structures and other barricades as
+    well as units. **NO activated ability.**
+    On construction, a ONE-TIME 10% roll spawns an invisible mine 3 tiles "in
+    front" of it (front = facing the nearest enemy HQ). This is a **NEW mine type
+    that only Gray can see and that does not detonate on Gray units**; same damage
+    as the existing mine.
+  SMOKESCREEN (call-in). 7x7 tiles, **-40% damage** to friendly units AND
+    structures inside, 10 seconds. Deliberately stronger than the Mortar's Smoke
+    Rounds (SMOKE_RED 0.2, radius 2, 5s, units only) - that is intended, not an
+    oversight to be balanced away.
+
+## v85 note: the FAC.ub refactor was landed and PROVED neutral before any content
+
+v85 needed `FAC[].ub` to become an array, because Blue was getting a second
+exclusive structure and `ub` was a bare string with seven readers - three of which
+compared it with `===` and would have quietly answered "no" for any army's second
+building.
+
+The refactor was landed FIRST, on its own, with Blue still holding one structure,
+and `./triage.sh` was run against it: **every pinned trail combo reproduced and all
+42 layout pins held**, so the shape change provably moved nothing. Only then did
+the content go in. That ordering costs one 25-second triage run and is worth
+repeating for any future refactor of a table every subsystem reads: when the suite
+went red afterwards it was already known that none of it could be the refactor.
+
+Three hand-typed lists died with it, and their death is the point: `techAvailable`
+carried its own copy of the eight exclusive units and (twice) the four exclusive
+buildings. They agreed with FAC only for as long as someone remembered to edit
+both - a new exclusive added to FAC and not to those lists would have been
+researchable by every army in the game. They now read `INFO_FEXCL_U` /
+`INFO_FEXCL_B`, which are derived off FAC itself.
+
+`ubScale` also went: "does a bot build this one in numbers" was a name check on
+`'bunker'` and `'turbine'`, which cannot answer the question for a second
+structure. It is now the table flag `B[k].mult`, so a row states its own habit.
+
+## v85 trap: a new unit can silently retune a unit nobody was editing
+
+`MEDIC_HEAL_RATE` is derived as "10% slower than the lowest-DPS unit in the game",
+a `Math.min` over the whole roster. The Signal Runner is deliberately weak - 5.0
+DPS against the Grunt's 7.5 - so **adding him would have cut every Medic in the
+game from 2.089 HP/s to 1.30, a 37% nerf, in a release nobody thought was touching
+the Medic.**
+
+Caught by T32.A, which exists for exactly this ("a salvo unit reads low on that
+formula, so this is the pin that stops a future salvo weapon silently retuning
+every medic in the game") and fired on the first full run. The fix is a `noPace`
+flag on the row, meaning "excluded from the combat-pacing floor", because the
+derivation means *the weakest thing that fights* and a support man with a sidearm
+is not that. T32.A now also asserts the COUNTERFACTUAL - drop the exemption and the
+Runner really does become the floor - so the flag cannot become decorative.
+
+**Generalises:** any derived constant that takes a min or max over a whole table is
+a trap for the next row added to that table. Before adding a unit, grep for what
+reads `U` in aggregate. At v85 that was `MEDIC_HEAL_RATE` (min DPS) and `SUP_U`
+(cost quartiles). The supply quartiles were checked by hand in advance and moved
+nothing - the Runner at 62 plastic lands in the cheap tier and displaces nobody -
+but the check was made, not assumed.
+
+## v85 note: 21 units means the supply tiers can no longer be equal
+
+`SUP_U` cuts the trainable roster into `SUP_MAX` ranks and T35.A asserted each rank
+held exactly a fifth. That was only ever true because the roster had 20 entries and
+20 divides by 4. At 21 it is 6/5/5/5.
+
+T35.A now asserts the PROPERTY rather than the coincidence: no tier is more than
+one unit off another, and the remainder falls to the cheap end (which is where
+`floor()` puts it by construction). The next unit added will not fail here for no
+reason.
+
+The same size assumption was hiding in T48.B, which reconstructed the retired
+median rule as `(v[9]+v[10])/2` - the median of a twenty-element list and nothing
+else. At 21 that silently became "the average of the 10th and 11th cheapest", which
+is not the middle of anything. Written as a real median it is correct at any size,
+and **the direction of that section's headline finding flipped**: at v69 the ladder
+measured wider than the median rule (5.84x vs 4.76x) and that was recorded as the
+scope estimate having been wrong; over a 21-unit roster it measures NARROWER (5.84x
+vs 7.04x). The ladder's own figure did not move at all. Adding one cheap, very
+low-DPS unit costs the two-bucket rule far more than the quartile rule, because a
+bucket keyed on an absolute threshold hands him the same 1 supply it hands the
+Bazooka. That is precisely the cliff the ladder was built to remove, so v69's
+reasoning was right and its roster was just too small to show it.
+
+## v85 note: what v85 actually added, and the two seams worth knowing
+
+  SIGNAL RUNNER (Barracks, Blue). 46 HP / 5.0 DPS against a Grunt's 62 / 7.5, and
+    priced ABOVE him at 62 plastic, because what is bought is the radio. The
+    pistol is weapon row `b` at shorter reach - a tenth weapon row for one sidearm
+    would have widened every damage table in the file to say nothing new.
+    Passive `Radio Net` - friendly infantry within 4 tiles get +1 sight.
+    Toggle `Sprint` - every friendly infantryman within 4 tiles, himself included,
+    gets +30% speed, and NONE of them may fire, take an attack order or acquire a
+    target while it runs.
+  FORWARD PAD (Blue's second structure). Repairs friendly aircraft within 6 tiles
+    at 1.6 HP/s - **the only aircraft repair in the game**; the Medic Truck has
+    always healed ground units and buildings only. Deliberately under the Medic's
+    2.089. Ability `Scramble` - every aircraft the army owns, anywhere on the map,
+    gains +40% speed for 12s, on the building's existing `upT`/`abilityCool`.
+  RAPID REDEPLOY (Radio Tower call-in, Blue only). Airlifts up to 20 SELECTED
+    infantry anywhere, even in fog, under paradrop canopies. Creates nobody.
+
+**Seam 1 - the auras are read off the RUNNER, never written onto the men.** Sprint
+and Radio Net both scan for a Runner in range at the point of use (`spOf`, `viOf`),
+in the same shape as the Sarge and Chinook loops in `dmgBonus`. That is what keeps
+a sprinting platoon of twenty from carrying twenty copies of the same fact through
+`hashState` and the snapshot: the whole feature is ONE boolean, `u.spr`. The
+infantry gate comes first in both scanners, so every vehicle and aircraft leaves on
+the first line; inside the loop the flag test leads, and it is `undefined` on every
+unit in the file except a Signal Runner.
+
+**Seam 2 - the redeploy borrows `u.garrisoned` for its off-map window.** It needed
+no new hashed field, because `garrisoned` already means "not on the field" at every
+door: targeting skips them, splash skips them, the renderer skips them, `applyDmg`
+never reaches them. A man in the air is exactly that. He is in no building's
+garrison list, which is safe because nothing ever searches for a garrisoned unit's
+carrier - the strike is the only thing that knows, and strikes ARE serialized, so a
+snapshot cut mid-flight lands the squad on schedule after a reload. T58.E drives
+that end to end, because a squad stranded off the board forever is the obvious way
+for this to go wrong.
+
+`RADIO_ABILITIES` gained a `fac` field rather than a second table: a row with no
+`fac` belongs to everybody, a row with one belongs to that army. Every surface goes
+through `radioListFor(p)`, and `execCmd` refuses a foreign mode at the command door
+rather than relying on the panel not offering it - the panel is client-local and a
+peer can send whatever it likes. **v87 uses this same field to make Napalm
+Tan-exclusive; do not build a second mechanism for it.**
+
+## v85 note: three fixtures were measuring the wrong thing, and the roster growing exposed it
+
+None of these were v85 regressions. All three were checks that had quietly become
+seed-lucky or name-bound, and a moved trail is what surfaced them.
+
+  T31.E ("a rich bot adds a second producer") took `bots[0]` and `bots[1]` in list
+    order. At v85's trail every bot on seed 600303 already held two barracks by
+    tick 1800, so the headline check was green on a pair it had before the money
+    arrived, and only "...and it is a real gain" was still telling the truth. It
+    now CHOOSES bots that do not already have a pair, and fails loudly if fewer
+    than two qualify.
+  T50.F named `sandbox:koth` as "the one gunner-bearing combo" and the anchor for
+    any future unit-stat release. At v85 that row fields none - and three OTHER
+    rows now field him (backyard:dm 929 unit-ticks, kitchen:ctf 638,
+    livingroom:dm 780). Coverage moved and WIDENED. Naming a row was the mistake;
+    the anchor set is now computed, and the check fails only if no row fields him
+    at all, which is the condition that would really matter.
+  T42.H counted `b.key === FAC[p.fac].ub`, which silently became false for every
+    army once `ub` was an array. It now counts the army's SCALING structures
+    (`B[k].mult`), which is what the threshold always meant.
+
+T42.H also records a REAL behavioural change, not a fixture fault: Blue's turbines
+per match fell 1.5 -> 1.0. Blue's second exclusive takes the wish-list slot the
+non-scaling structures have always had, just after the radio tower, which puts it
+ahead of the second turbine - so within one match's clock a Blue bot now buys a
+Forward Pad's worth of progress where it used to buy a second turbine. Measured
+over six backyard seeds rather than the two that section runs: 1.00 flat, and Gray
+(whose list did not change) is unmoved at 1.67. The WANT is untouched and is still
+proved for free in T42.F. **Expect the same drop for Green, Tan and Gray as each
+gains its second structure at v86-v88.**
+
+## v85 trap: measuring a heal rate inside a firefight measures the firefight
+
+The first cut of T58.C parked a helicopter on a Forward Pad in a live match, ran
+the real update loop for a second, and reported the pad repairing at **-4.86 HP/s**.
+An enemy rifleman had found the aircraft at tick 22.
+
+The rate is now measured through `updateBld(pad, dt)` directly - the real function,
+called on its own - and the main loop gets a separate check that COUNTS the ticks
+on which a hurt aircraft gains exactly `PAD_REP*dt`. A tick where a shot lands is
+simply not one of the ticks counted. Keying on the exact per-tick figure rather
+than on "did it gain" also isolates the pad from the other things that move an
+aircraft's HP: the out-of-range control in that same fixture was caught taking a
+single +11 from a veterancy rung.
+
+**Generalises:** any fixture that measures a RATE inside `update()` is measuring
+the whole match. Either drive the one function under test, or key the measurement
+on the exact expected delta so everything else falls out of the sample.
 
 ## v84 note: T43's voice-distinctness checks are flaky, and it is not v84's doing
 
@@ -1200,12 +1452,22 @@ now runs each table from its own cfg and asserts both the equality that should h
 
 ## Contents
 
-v82 adds tail_v82.js (T56). recut_v82.js and repin_v82.py are one-shot records
-that ship beside the release and are NOT carried forward in this bundle, per the
-standing rule; probe_v82_chin2.js, probe_v82_audit.js, probe_v82_bike2.js,
+v85 adds tail_v85.js (T58). recut_v85.js and repin_v85.py are this release's
+one-shot recut pair, carried forward from the v84 pair and replacing it, per the
+standing rule that only the CURRENT release's one-shots ship. v84's tail_v84.js
+(T57) stays, as every release tail does.
+
+v82 added tail_v82.js (T56). recut_v82.js and repin_v82.py were one-shot records
+that shipped beside the release and are NOT carried forward in this bundle;
+probe_v82_chin2.js, probe_v82_audit.js, probe_v82_bike2.js,
 probe_v82_calldown.js and probe_v82_od.js are the scoping probes behind the v82
 notes above and are likewise records rather than harness machinery.
 - run.sh         harness runner: ./run.sh [standard|mini|full|render <tail>]
+- tail_v85.js    T58, the v85 Blue release and the FAC.ub refactor. Sections A-F:
+                 ub as a list and every reader that took the change, the Signal
+                 Runner's two auras and the three doors Sprint closes, the Forward
+                 Pad's repair and Scramble, Rapid Redeploy including a snapshot cut
+                 mid-flight, and the manual slots.
 - tail_v79.js    T53, the v79 Green ability release. Sections A-H: Sarge's regen and
                  broadcast, the mortar's Walking Fire and Smoke Rounds, the Radar
                  Tent's Target Uplink, the six new hashed fields round-tripping, the
