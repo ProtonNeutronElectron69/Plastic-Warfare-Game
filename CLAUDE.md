@@ -31,7 +31,7 @@ both, and why you run it before every test pass.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 4,781 checks at v87.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 4,842 checks at v87.1.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -89,6 +89,11 @@ its own Radio Tower call-in.
 - **v87 — Tan. LANDED.** Firebomb Heli, Foundry, Napalm became Tan-exclusive.
 - **v88 — Gray. NEXT, and the last.** Choktaw Heli, Heavy Barricade, Smokescreen.
 
+**v87.1 landed between v87 and v88** and is not part of the roadmap: three
+interface repairs (team-coloured drag box, `UNIT_TOGGLES` group buttons, the sell
+teardown and its plastic heap). None of them moved the simulation, which is why
+Gray is still v88.
+
 **The full specification for v88 is written down and settled**, including
 every clarification the owner gave. It is in `harness/README.md` under *Roadmap
 2: the remaining three armies*. **Build it as written** — it is decided, not
@@ -124,6 +129,18 @@ When adding a faction exclusive, the v85 work is the closest model:
 - **Reuse existing state before inventing new state.** Rapid Redeploy borrows
   `u.garrisoned` for its off-map window because that flag already means "not on
   the field" at every door in the file.
+- **When the same eight lines appear a seventh time, they are a table.** The
+  multi-select panel had six hand-written group-toggle blocks and four abilities
+  with no group button at all, purely by shipping order. `UNIT_TOGGLES` (v87.1)
+  replaced them, and the completeness check is DERIVED: it scrapes
+  `refreshSelPanel`'s own source for the single-unit `submitCmd(...,{ids:[e.id],
+  on:!e.<field>})` shape and demands a row for each, both directions. A check that
+  reads the code cannot drift from it the way a transcribed list does.
+- **An effect added to a SIM function must use `Math.random`, never `srand()`.**
+  Rule 2 says never call `srand()` from a rendering path; v87.1 is the mirror.
+  `sellBuilding` gained the destruction teardown, and one seeded offset among the
+  cook-offs would have desynced a live match while looking correct on one machine.
+  The test that catches it drives `G.rngS` across a sell, not the source text.
 - **A faction-only call-in is a `fac` field on the shared `RADIO_ABILITIES`
   table**, refused at the `execCmd` door — not a second table, and never relying
   on the panel simply not offering it. Three armies carry one each now, and at

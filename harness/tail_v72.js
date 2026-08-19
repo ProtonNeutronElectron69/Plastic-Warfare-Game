@@ -61,7 +61,7 @@ ok('T49.A bldRoster survived, reached now through constructRoster',
        callers, so it is SUPPOSED to need a conscious edit when one is added. */
     ok('T49.A the .bb class survives, still styled', html.indexOf('.bb{background') > 0);
     ok('T49.A ...and is still built by the surviving callers',
-       (html.match(/className='bb'/g) || []).length === 31);   // v80 15; v81 +3 (Called Shot, Ripple Fire, Lockdown); v82 +3 (Flat Out, Air Assault, Overdrive); v85 +3 (Sprint single, Sprint group, Scramble); v86 +4 (Broadcast single, Broadcast group, Bail, Regroup); v87 +3 (Napalm Blast single, Napalm Blast group, Pour)
+       (html.match(/className='bb'/g) || []).length === 26);   // v80 15; v81 +3 (Called Shot, Ripple Fire, Lockdown); v82 +3 (Flat Out, Air Assault, Overdrive); v85 +3 (Sprint single, Sprint group, Scramble); v86 +4 (Broadcast single, Broadcast group, Bail, Regroup); v87 +3 (Napalm Blast single, Napalm Blast group, Pour); v87.1 -5 (six hand-written group toggle blocks became ONE loop over UNIT_TOGGLES, so the group buttons stopped being literal .bb sites - the count going DOWN while the panel gains four abilities is the whole point of the change, and T61 counts the buttons the loop actually builds)
     ok('T49.A the radio panel still scopes .bb', html.indexOf('#radioPanel .bb') > 0);
   }
 }

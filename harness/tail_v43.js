@@ -290,7 +290,17 @@ ok('T23.B SURV_WAVE_N is derived from the wave table',SURV_WAVE_N===SURV_WAVES.l
    no Math.sin/cos/atan2/hypot and no wall clock. Nothing enforced it. These are the
    functions verified clean at v43; FX-spawning paths (applyDmg / splash / kill /
    updateProjs / aiTick) are deliberately absent, they seed client-local particles
-   and toasts from Math.random, which is allowed and never touches hashed state. */
+   and toasts from Math.random, which is allowed and never touches hashed state.
+
+   v87.1: sellBuilding LEFT this list, deliberately. Selling used to be a puff of
+   dust and stopped there; it now runs the same teardown a destroyed building gets,
+   which makes it an FX-spawning path exactly like kill() and puts Math.random in
+   its body for the cook-off offsets. Dropping it from the list is not dropping the
+   guarantee - T61.C drives the property this lint could only approximate, by
+   selling an empty building and asserting G.rngS did not move at all, which is the
+   thing that would actually desync a match. The lint keeps its teeth here: the
+   arm below holds sellBuilding to every banned construct EXCEPT the one the FX
+   paths are allowed, so a wall clock or a Math.atan2 creeping in still fires. */
 {
  const BANNED=['Math.random','Math.hypot','Math.atan2','Math.sin(','Math.cos(','Date.now','performance.now'];
  const PURE43=[['nearestEnemy',nearestEnemy],['nearestEnemyCone',nearestEnemyCone],['medicHold',medicHold],
@@ -298,11 +308,19 @@ ok('T23.B SURV_WAVE_N is derived from the wave table',SURV_WAVE_N===SURV_WAVES.l
   ['updateSurv',updateSurv],['spawnWave',spawnWave],['updateNeutrals',updateNeutrals],['execCmd',execCmd],
   ['hashState',hashState],['makeAIBrain',makeAIBrain],['unitCapCount',unitCapCount],['bldCount',bldCount],
   ['placeDeny',placeDeny],['canPlace',canPlace],['targetDmgMul',targetDmgMul],['trainUnit',trainUnit],
-  ['dmgBonus',dmgBonus],['garCap',garCap],['checkEnd',checkEnd],['sellBuilding',sellBuilding]];
+  ['dmgBonus',dmgBonus],['garCap',garCap],['checkEnd',checkEnd]];
  const dirty=[];
  for(const [n,f] of PURE43){const s=f.toString();for(const b of BANNED)if(s.includes(b))dirty.push(n+' uses '+b);}
  ok(`T23.H ${PURE43.length} core sim functions use only deterministic math`+(dirty.length?' ('+dirty.join('; ')+')':''),dirty.length===0);
  ok('T23.H distance math goes through dhyp',placeDeny.toString().includes('dhyp(')&&!placeDeny.toString().includes('Math.hypot'));
+ /* the FX paths get ONE exemption, not a blanket one */
+ {
+  const sb=sellBuilding.toString(),loose=BANNED.filter(b=>b!=='Math.random'&&sb.includes(b));
+  ok('T23.H the sell path takes the FX exemption and nothing beyond it'+(loose.length?' ('+loose.join(', ')+')':''),
+     loose.length===0);
+  ok('T23.H ...and it really is an FX path now, which is why it is exempt',
+     sb.includes('spawnExplosion')&&sb.includes('Math.random'));
+ }
 }
 
 /* ---------- I: snapshot tag + round trip ---------- */
