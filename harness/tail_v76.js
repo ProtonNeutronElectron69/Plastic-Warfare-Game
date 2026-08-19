@@ -124,9 +124,22 @@ section('T51.C one ability table feeds the panel, the card and the vision gate')
   /* v77 removed the Magnifying Glass, so the roster is three rows. The point of
      this section is that ONE table feeds every surface, which is exactly what a
      removal exercises; T52.B proves the removal left nothing behind. */
-  ok('T51.C three call-downs', RADIO_ABILITIES.length === 3);
+  /* v85: four rows, three of which every army gets. The table gained a `fac` field
+     rather than a second table, so the "one source" claim this section exists to
+     make is strictly stronger than it was: the panel, the manual, the vision gate
+     AND now the per-army filter all read the same rows. */
+  ok('T51.C four call-downs, three of them shared', RADIO_ABILITIES.length === 4);
   ok('T51.C the modes are the ones the command path dispatches',
-    RADIO_ABILITIES.map(a => a.mode).join(',') === 'napalm,barrage,paradrop');
+    RADIO_ABILITIES.map(a => a.mode).join(',') === 'napalm,barrage,paradrop,lift');
+  ok('T51.C an absent `fac` means everybody, and exactly one row claims an army',
+    RADIO_ABILITIES.filter(a => !a.fac).length === 3 &&
+    RADIO_ABILITIES.filter(a => a.fac).length === 1 && radioAbility('lift').fac === 'blue');
+  ok('T51.C the filter hands three armies three and Blue four',
+    ['green', 'tan', 'gray'].every(f => radioListFor({ fac: f }).length === 3) &&
+    radioListFor({ fac: 'blue' }).length === 4);
+  ok('T51.C ...and radioAllowed agrees with it, row for row',
+    RADIO_ABILITIES.every(a => ['green', 'tan', 'gray', 'blue'].every(f =>
+      radioAllowed({ fac: f }, a.mode) === radioListFor({ fac: f }).includes(a))));
   ok('T51.C the targeted ones need vision, paradrop does not',
     radioNeedsVision('napalm') && radioNeedsVision('barrage') && !radioNeedsVision('paradrop'));
   ok('T51.C an unknown mode is not an ability', !radioAbility('bombard') && !radioNeedsVision('bombard'));

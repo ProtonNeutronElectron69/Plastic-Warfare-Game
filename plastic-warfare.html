@@ -432,11 +432,11 @@ canvas{display:block}
   <b>Trucks</b>: right-click a pile to harvest it; right-click your <b>HQ</b> to force them to unload right now. Destroyed units leave a salvageable <b>scrap wreck</b> worth <span data-tune="salvagePct"></span>% of their plastic cost — send a truck to pick it up.<br><br>
   Build a <b>Barracks</b> for infantry, a <b>Garage</b> for vehicles, a <b>Helipad</b> for choppers. With a production building selected, right-click sets its rally point. Every building (barricades included) must be placed within <b><span data-tune="hqR"></span> tiles of one of your HQs</b> or <b><span data-tune="opR"></span> tiles of one of your Outposts</b> — only the HQ and Outpost themselves are exempt: they can go anywhere you can see (even far from base, but not into the fog of war). Nobody can build within <b><span data-tune="foeR"></span> tiles of an enemy HQ</b>, and every structure needs <b><span data-tune="gap"></span> clear <span data-tune="gapT"></span></b> between it and any other structure so your units can always drive out of your own base; barricades are exempt from each other, so walls still lay solid. Build an <b>Outpost</b> to push your borders out: it builds Dump Trucks, acts as a resource drop-off so trucks don't have to drive all the way home, and opens a <span data-tune="opR"></span>-tile build zone for a forward defensive line.<br><br>
   <b>Machine Gunner</b> (Barracks): tough, heavy MG. Select him and hit <b>Entrench</b>, then click to aim — he digs in and fires <span data-tune="entrench"></span>× as fast inside a 100° cone (shown on the ground). Give him a move order to pack up.<br><br>
-  <b>Radio Tower</b> (Lab unlock, 1 per army): a static uplink that opens the call-down panel on the right — <b><span data-tune="radioList"></span></b>. Napalm rains fire and a lingering burn across a <span data-tune="napBox"></span>×<span data-tune="napBox"></span> area; the Artillery Barrage walks <span data-tune="barrN"></span> off-map shells through a <span data-tune="barrBox"></span> box, <span data-tune="barrGap"></span>s apart, at <span data-tune="barrDmg"></span> damage inside a <span data-tune="barrR"></span>-tile blast (×<span data-tune="barrInf"></span> against infantry). Those <span data-tune="radioVis"></span> need vision. Paradrop puts <span data-tune="paraN"></span> elite Paratroopers anywhere, even in fog — SMGs shred infantry, AT grenades crack vehicles, slow HE charges level buildings. Click an ability, then click the map (right-click cancels). One shared <span data-tune="radioCd"></span> cooldown.<br><br>
+  <b>Radio Tower</b> (Lab unlock, 1 per army): a static uplink that opens the call-down panel on the right — <b><span data-tune="radioList"></span></b>. Napalm rains fire and a lingering burn across a <span data-tune="napBox"></span>×<span data-tune="napBox"></span> area; the Artillery Barrage walks <span data-tune="barrN"></span> off-map shells through a <span data-tune="barrBox"></span> box, <span data-tune="barrGap"></span>s apart, at <span data-tune="barrDmg"></span> damage inside a <span data-tune="barrR"></span>-tile blast (×<span data-tune="barrInf"></span> against infantry). Those <span data-tune="radioVis"></span> need vision. Paradrop puts <span data-tune="paraN"></span> elite Paratroopers anywhere, even in fog — SMGs shred infantry, AT grenades crack vehicles, slow HE charges level buildings. <b>Rapid Redeploy</b> is Blue's alone and is the only call-down that creates nobody: select up to <span data-tune="liftMax"></span> of your own infantry, click anywhere on the map even in fog, and they come down under canopies at the far end a moment later. Click an ability, then click the map (right-click cancels). One shared <span data-tune="radioCd"></span> cooldown.<br><br>
   <b>Green Army exclusives.</b> <b>Sarge</b> patches himself up at <span data-tune="sargeRegen"></span> HP/sec once he has been out of contact for <span data-tune="sargeCalm"></span> seconds, and his <b>On Me!</b> toggle gives allied infantry within <span data-tune="sargeR"></span> tiles +<span data-tune="sargeAura"></span>% damage while cutting his own by <span data-tune="sargeSelf"></span>%. <b>Mortar Squads</b> ramp +<span data-tune="wfStep"></span>% per consecutive shell on one target up to +<span data-tune="wfCap"></span>%, and their <b>Smoke Rounds</b> toggle shells your own men instead: no damage, but a <span data-tune="smokeR"></span>-tile cloud that cuts damage taken by <span data-tune="smokeRed"></span>% for <span data-tune="smokeT"></span> seconds. The <b>Radar Tent</b>'s <b>Target Uplink</b> gives your whole army +<span data-tune="upRg"></span> range and +<span data-tune="upVi"></span> sight for <span data-tune="upT"></span> seconds on a <span data-tune="upCd"></span>-second cooldown.<br><br>
   <b>Tan Army exclusives.</b> The <b>Flamethrower</b>'s <b>Cook-Off</b> leaves everything he touches burning for <span data-tune="cookDps"></span> damage/sec, and his <b>Pressure Valve</b> toggle adds <span data-tune="valveDmg"></span>% damage and +<span data-tune="valveRg"></span> range at the price of <span data-tune="valveBack"></span>% of the damage he deals being taken by the man holding the hose. The <b>&quot;Bull&quot; Heavy Tank</b>'s ablative plate ignores small-arms fire completely, which is to say <span data-tune="plateRow"></span> cannot hurt it at all, and its <b>Full Throttle</b> toggle adds <span data-tune="thrSpd"></span>% speed and crushes enemy infantry and barricades it drives over, but silences both its weapons while it rolls. The <b>Munitions Dump</b>'s <b>Scuttle</b> blows the building itself for <span data-tune="scDm"></span> damage across <span data-tune="scR"></span> tiles, and your own units and structures take <span data-tune="scFf"></span>% of it.<br><br>
   <b>Gray Army exclusives.</b> The <b>Sniper</b> cannot be picked as a target at all until he fires, and drops back out of sight <span data-tune="camoT"></span> seconds after his last shot — an approach tool above all, since it covers him on the way in rather than through a firefight — and his <b>Called Shot</b> toggle adds <span data-tune="csDmg"></span>% damage but restricts him to enemy infantry for as long as it runs. <b>Rocket Artillery</b> shell-shocks whoever lives through the blast, adding <span data-tune="shockSet"></span> <span data-tune="shockSetT"></span> to a survivor's reload on top of whatever it already reads, and its <b>Ripple Fire</b> toggle trades the single shell for a salvo of <span data-tune="ripN"></span> rockets at <span data-tune="ripDm"></span>% damage each, bursting wider and scattered across the target, paid for with <span data-tune="ripRt"></span>% more reload. The <b>Bunker</b> garrisons <span data-tune="bunkGar"></span> infantry who fire from cover and cannot be caught by splash, and its <b>Lockdown</b> buttons them up: the garrison stops firing entirely, but the bunker takes <span data-tune="lockRed"></span>% less damage for <span data-tune="lockT"></span> seconds, on a <span data-tune="lockCd"></span>-second cooldown.<br><br>
-  <b>Blue Army exclusives.</b> The <b>Scout Bike</b> is evasive, taking <span data-tune="evadeRed"></span>% less damage in any moment he is genuinely moving — which is worth nothing while he sits still trading shots, and that is where most of his damage is taken — and his <b>Flat Out</b> toggle adds <span data-tune="flatSpd"></span>% speed and +<span data-tune="flatVi"></span> sight, but holds his fire completely and refuses attack orders while it runs. The <b>Chinook</b> lifts <span data-tune="chinCap"></span> infantry and makes friendly infantry near it hit <span data-tune="chinAura"></span>% harder, and its <b>Air Assault</b> toggle opens the hold so the squad fires out at whatever it can reach — they can be shot back at while they do it, and the aircraft cannot move at all until you close it again. The <b>Wind Turbine</b>'s <b>Overdrive</b> runs it at ×<span data-tune="overMul"></span> output for <span data-tune="overT"></span> seconds and then produces nothing whatsoever for <span data-tune="overOff"></span> seconds, on a <span data-tune="overCd"></span>-second cooldown; across the full cycle that is less electricity than leaving it alone, so it buys the power earlier rather than cheaper.<br><br>
+  <b>Blue Army exclusives.</b> The <b>Scout Bike</b> is evasive, taking <span data-tune="evadeRed"></span>% less damage in any moment he is genuinely moving — which is worth nothing while he sits still trading shots, and that is where most of his damage is taken — and his <b>Flat Out</b> toggle adds <span data-tune="flatSpd"></span>% speed and +<span data-tune="flatVi"></span> sight, but holds his fire completely and refuses attack orders while it runs. The <b>Chinook</b> lifts <span data-tune="chinCap"></span> infantry and makes friendly infantry near it hit <span data-tune="chinAura"></span>% harder, and its <b>Air Assault</b> toggle opens the hold so the squad fires out at whatever it can reach — they can be shot back at while they do it, and the aircraft cannot move at all until you close it again. The <b>Wind Turbine</b>'s <b>Overdrive</b> runs it at ×<span data-tune="overMul"></span> output for <span data-tune="overT"></span> seconds and then produces nothing whatsoever for <span data-tune="overOff"></span> seconds, on a <span data-tune="overCd"></span>-second cooldown; across the full cycle that is less electricity than leaving it alone, so it buys the power earlier rather than cheaper. The <b>Signal Runner</b> is weaker and worse-armed than a Grunt on purpose — what you are buying is his radio. <b>Radio Net</b> passively gives friendly infantry within <span data-tune="rnetR"></span> tiles +<span data-tune="rnetVi"></span> sight, and his <b>Sprint</b> toggle gives every friendly infantryman within <span data-tune="sprintR"></span> tiles, himself included, +<span data-tune="sprintSpd"></span>% movement speed — but nobody inside the radius will fire, take an attack order, or so much as acquire a target while it runs. The <b>Forward Pad</b> repairs friendly aircraft within <span data-tune="padR"></span> tiles at <span data-tune="padRep"></span> HP/sec, which is the only aircraft repair in the game, and its <b>Scramble</b> gives every aircraft you own — anywhere on the map, not just the ones on the pad — +<span data-tune="scramSpd"></span>% speed for <span data-tune="scramT"></span> seconds on a <span data-tune="scramCd"></span>-second cooldown.<br><br>
   <b>APC</b> (Garage): unarmed transport carrying 10 infantry — right-click it with infantry selected to load, press <b>U</b> (or the panel button) to unload. It shields itself and nearby allied infantry (−25% damage); if destroyed, the squad bails out losing only 15% health.<br><br>
   <b>Chinook</b> (Blue only, Helipad): the fastest chopper in the game and the biggest transport — <span data-tune="chinCap"></span> infantry, loaded and unloaded exactly like an APC, flown straight over water, walls and minefields. It carries no weapons at all, but allied infantry within <b>3 tiles</b> of it hit <b>15% harder</b> (one Chinook only; a second does not stack, though a Munitions Dump does). Over open water it will refuse to unload.<br><br>
   <b>⚔ Counters</b>: what a weapon is firing matters as much as how hard it hits. Every unit has an <b>armor class</b> (infantry, light vehicle, medium armor, heavy armor, aircraft, structure) and every weapon hits each class differently — pick the tool for the job and the same army does two or three times the work. Every build button, research button and selection panel now prints the exact numbers.<br>
@@ -881,6 +881,41 @@ const OVER_MUL=3;          // Overdrive: what the Wind Turbine's output is multi
 const OVER_T=20;           // ...for how long, held on the building's existing upT
 const OVER_OFF=70;         // ...and how long it then produces NOTHING
 const OVER_CD=OVER_T+OVER_OFF; // ...so the cooldown on the shared abilityCool ends exactly when the dead window does. Derived, never typed: the offline test reads abilityCool, and a hand-typed cooldown that drifted from the sum would leave the turbine either dead past its own button or alive before it
+/* v85 BLUE, SECOND PASS. The v79-v82 blocks gave every faction's EXISTING
+   exclusives a passive and a toggle; this one begins the second roadmap, in which
+   every army fields an exclusive out of the Barracks, the Garage and the Helipad,
+   two exclusive structures, and a call-down of its own. Blue is first, and Blue
+   was already covered in the Garage (Scout Bike) and the Helipad (Chinook), so
+   what lands here is the Barracks slot, the second structure and the call-down.
+
+   SIZING NOTES, so the next pass knows what these were chosen against:
+   SPRINT_R and RNET_R are both 4 rather than Sarge's 3 because the Runner is not a
+   fighter - there is no micro reward in holding him at the front, so his radius has
+   to reach the squad he is running alongside rather than the one he is leading.
+   SPRINT_SPD is 0.30, the same figure Flat Out already pays for on the Scout Bike
+   and at the same price (nobody inside it may fire), so Blue's two speed modes read
+   as one idea rather than two.
+   PAD_REP is 1.6 HP/s against MEDIC_HEAL_RATE's 2.089, i.e. deliberately the
+   slower of the two: the Pad cannot follow the flight, and NOTHING repaired
+   aircraft before this, so the rate is the whole of the new capability and is meant
+   to be the quiet half of the building rather than a better Medic. It is a
+   post-HP_SCALE rate, directly comparable to MEDIC_HEAL_RATE, which is why it is
+   not scaled again at the point of use. A Huey (107 effective) taken to a sliver
+   is a little over a minute on the pad; an Apache (187) is about two.
+   LIFT_MAX is the owner's figure. LIFT_T is 1.6s because the paradrop canopy
+   animation already runs on a 0.8s fall, so a lifted squad spends about as long
+   under silk as a Paratrooper does and the two call-downs read alike. */
+const RNET_R=4;        // Radio Net: friendly infantry this close to a Signal Runner...
+const RNET_VI=1;       // ...see this much further. A passive: there is no flag to set
+const SPRINT_R=4;      // Sprint: how far the Runner's whistle carries
+const SPRINT_SPD=0.30; // ...the speed every friendly infantryman inside it gains
+const PAD_R=6;         // Forward Pad: friendly aircraft within this many tiles...
+const PAD_REP=1.6;     // ...are repaired this many HP per second, whoever built them
+const SCRAM_SPD=0.40;  // Scramble: speed added to EVERY aircraft this army owns
+const SCRAM_T=12;      // ...for how long, held on the building's existing upT
+const SCRAM_CD=60;     // ...and its cooldown, on the shared abilityCool
+const LIFT_MAX=20;     // Rapid Redeploy: the most infantry one call can airlift
+const LIFT_T=1.6;      // ...and how long they are off the map before the canopies open
 /* Help-panel slots. The static help markup carries <span data-tune="key"> holes;
    applyHelpTune fills them once at boot. Pure UI: nothing here is hashed. */
 const HELP_TUNE={
@@ -944,6 +979,13 @@ const HELP_TUNE={
     out. Declared far below this table, which is fine: a slot body only runs when
     applyHelpTune calls it, exactly as plateRow already reaches wcRoster. */
  napBox:()=>NAPALM_BOX, paraN:()=>PARA_N,
+ /* v85: the second Blue pass. Same rule as every slot above - the manual states
+    these in prose, and prose drifts the moment one of the constants is tuned. */
+ rnetR:()=>RNET_R, rnetVi:()=>RNET_VI,
+ sprintR:()=>SPRINT_R, sprintSpd:()=>Math.round(SPRINT_SPD*100),
+ padR:()=>PAD_R, padRep:()=>PAD_REP,
+ scramSpd:()=>Math.round(SCRAM_SPD*100), scramT:()=>SCRAM_T, scramCd:()=>SCRAM_CD,
+ liftMax:()=>LIFT_MAX,
  plateRow:()=>wcRoster('b')
 };
 function helpTuneValue(k){const f=HELP_TUNE[k];return f?f():null}
@@ -1316,6 +1358,7 @@ function gunKind(u){
  if(k==='jeep')return 'vmg';
  if(u.t&&u.t.fly)return 'amg';
  if(k==='bike'||k==='para')return 'smg';
+ if(k==='runner')return 'smg'; // v85: a sidearm is the closest thing in the voice set to a pistol; 'rifle' would have made the lightest weapon in the game the loudest-sounding infantry shot
  return 'rifle';
 }
 /* launchKind splits the v63 three into six: the Bull's cannon is not the Tank's,
@@ -1853,12 +1896,19 @@ function updateMineAmbience(){
 }
 
 /* ---------------- DATA TABLES ---------------- */
+/* v85: ub is an ARRAY, on the same footing as uu. Every army is headed for TWO
+   exclusive structures, and while it was a bare string the second one had nowhere
+   to live - `ub` was read in seven places, three of which compared it with === and
+   would have quietly answered "no" for a faction's second building. Changing the
+   shape once, ahead of any content, means the seven readers were fixed together
+   and the trails could prove the move changed nothing. Wildlife carries an empty
+   array rather than an empty string for the same reason uu is already []. */
 const FAC={
- green:{name:'Green Army',color:'#4caf50',mods:{cost:.92,hp:1,dmg:1,speed:1},desc:'Balanced forces, 8% cheaper everything.',uu:['sarge','mortar'],ub:'radar'},
- tan:{name:'Tan Army',color:'#d2b074',mods:{cost:1,hp:1,dmg:1.15,speed:.95},desc:'+15% damage, slightly slower.',uu:['flamer','bulltank'],ub:'dump'},
- gray:{name:'Gray Army',color:'#9b9ba3',mods:{cost:1,hp:1.2,dmg:.95,speed:.92},desc:'+20% toughness, slightly slower.',uu:['sniper','arty'],ub:'bunker'},
- blue:{name:'Blue Army',color:'#4a7de0',mods:{cost:1,hp:.9,dmg:1,speed:1.15},desc:'+15% speed, lighter plastic (-10% HP).',uu:['bike','chinook'],ub:'turbine'},
- bug:{name:'Wildlife',color:'#6e5a2a',mods:{cost:1,hp:1,dmg:1,speed:1},desc:'',uu:[],ub:''}
+ green:{name:'Green Army',color:'#4caf50',mods:{cost:.92,hp:1,dmg:1,speed:1},desc:'Balanced forces, 8% cheaper everything.',uu:['sarge','mortar'],ub:['radar']},
+ tan:{name:'Tan Army',color:'#d2b074',mods:{cost:1,hp:1,dmg:1.15,speed:.95},desc:'+15% damage, slightly slower.',uu:['flamer','bulltank'],ub:['dump']},
+ gray:{name:'Gray Army',color:'#9b9ba3',mods:{cost:1,hp:1.2,dmg:.95,speed:.92},desc:'+20% toughness, slightly slower.',uu:['sniper','arty'],ub:['bunker']},
+ blue:{name:'Blue Army',color:'#4a7de0',mods:{cost:1,hp:.9,dmg:1,speed:1.15},desc:'+15% speed, lighter plastic (-10% HP).',uu:['bike','chinook','runner'],ub:['turbine','fwdpad']},
+ bug:{name:'Wildlife',color:'#6e5a2a',mods:{cost:1,hp:1,dmg:1,speed:1},desc:'',uu:[],ub:[]}
 };
 const U0AURA=0.15; // v82: the Chinook's infantry aura, named ABOVE the table so its own info card can state the figure the row sets rather than a retyped copy of it
 const U={
@@ -1886,6 +1936,14 @@ const U={
     buy the unlock long before they build the man. */
  gunner:{n:'Machine Gunner',a:'inf',hp:100,dm:12,rg:4,rt:.5,sp:1.9,vi:6,cp:112,ce:0,bt:9,w:'b',entrench:1,tech:'u_gunner',d:'Tough, heavy MG. Entrench to fire 50% faster in a frontal cone'},
  bazooka:{n:'Bazooka Man',a:'inf',hp:55,dm:30,rg:4.6,rt:2.2,sp:2.1,vi:6,cp:90,ce:0,bt:7,w:'r',spl:.75,ex:1,tech:'u_bazooka',d:'Anti-armor rockets; needs an escort'},
+ /* v85 BLUE, Barracks slot. Under a Grunt on both of the numbers that matter -
+    46 HP against 62 and 5.0 DPS against 7.5 - and priced ABOVE him at 62, which is
+    the shape the owner asked for: what you buy is the two auras, not the pistol.
+    The pistol is weapon row 'b', the same small-arms row the Grunt's rifle uses, at
+    a shorter 3.2 range; a tenth weapon row for one sidearm would have widened every
+    damage table in the file to say nothing new.
+    noPace keeps him out of MEDIC_HEAL_RATE's floor - see the note there. */
+ runner:{n:'Signal Runner',a:'inf',hp:46,dm:4.5,rg:3.2,rt:.9,sp:2.5,vi:7,cp:62,ce:0,bt:4,w:'b',noPace:1,rnet:1,sprint:1,tech:'u_runner',d:`Runs the wire, not the fight: weaker and worse-armed than a Grunt. Radio Net gives friendly infantry within ${RNET_R} tiles +${RNET_VI} sight. Sprint gives them all +${Math.round(SPRINT_SPD*100)}% speed, himself included, but nobody under it may fire`},
  truck:{n:'Dump Truck',a:'truck',hp:130,dm:0,rg:0,rt:0,sp:2.7,vi:5,cp:20,ce:0,bt:8,w:0,d:'Harvests resources'},
  medic:{n:'Medic Truck',a:'truck',hp:135,dm:0,rg:0,rt:0,sp:2.3,vi:6,cp:150,ce:20,bt:11,w:0,heal:1,healR:2,tech:'u_medic',d:'No weapons. Passively heals allied units & buildings within 2 tiles'}, // v29: paces the grunt
  // v78: hp 115 -> 132.25 (+15%, effective hull 88 -> 101) and rt .5 -> .425
@@ -1927,11 +1985,19 @@ for(const k in U){U[k].hp=Math.round(U[k].hp*HP_SCALE);U[k].dm=+(U[k].dm*DMG_SCA
 // Global balance: every unit builds 15% faster. Applied once at load so all
 // per-unit bt values above stay readable as their pre-reduction baselines.
 for(const k in U)U[k].bt=+(U[k].bt*0.85).toFixed(3);
-// Medic heal rate = 10% slower than the lowest-DPS unit in the game, then scaled by
-// HP_SCALE so sustain keeps pace with the larger health pools.
+// Medic heal rate = 10% slower than the lowest-DPS COMBAT unit in the game, then
+// scaled by HP_SCALE so sustain keeps pace with the larger health pools.
+/* v85: t.noPace was added for the Signal Runner and the reason is worth stating,
+   because the trap here is silent and global. This floor is a Math.min over the
+   whole roster, so ANY new unit deliberately built weak drags it down for all four
+   armies at once - the Runner's 5.0 DPS would have taken the Medic from 5.18 HP/s
+   to 3.25, a 37% nerf to a unit nobody was editing, in a Blue release. The
+   derivation means "the weakest thing that fights"; a support man carrying a
+   sidearm is not that, and says so on his own row rather than being special-cased
+   by name here. */
 const MEDIC_HEAL_RATE=(function(){
  let lo=Infinity;
- for(const k in U){const t=U[k];if(t.dm>0&&t.rt>0&&!t.heal)lo=Math.min(lo,t.dm/t.rt);}
+ for(const k in U){const t=U[k];if(t.dm>0&&t.rt>0&&!t.heal&&!t.noPace)lo=Math.min(lo,t.dm/t.rt);}
  return lo*0.9*HP_SCALE; // 10% slower than lowest DPS, kept proportional to HP
 })();
 const MEDIC_HEAL_RADIUS=2; // tiles
@@ -1966,9 +2032,20 @@ const B={
  radar:{n:'Radar Tent',hp:420,sz:2,cp:200,ce:50,bt:10,vi:13,req:'barracks',tech:'b_radar',uplink:1,d:`Huge sight + enemy blips on minimap. Target Uplink: +${UPLINK_RG} range and +${UPLINK_VI} sight to your whole army for ${UPLINK_T}s`},
  radiotower:{n:'Radio Tower',hp:588,sz:2,cp:60,ce:200,bt:12,vi:12,req:'barracks',tech:'b_radiotower',lim:1,radio:1,d:'Static uplink: opens the call-down panel on the right (1 max). Long sight'}, // v30: 293 HP effective; inverted cost (mostly ⚡)
  dump:{n:'Munitions Dump',hp:520,sz:2,cp:220,ce:40,bt:10,vi:5,req:'barracks',tech:'b_dump',scuttle:1,d:'+'+Math.round(DUMP_AURA*100)+'% damage to friends within '+DUMP_R+' tiles. Scuttle detonates it for '+SCUTTLE_DM+' over '+SCUTTLE_R+' tiles, and your own men take '+Math.round(SCUTTLE_FF*100)+'% of it'},
- bunker:{n:'Bunker',hp:820,sz:2,cp:200,ce:0,bt:10,vi:6,req:'barracks',tech:'b_bunker',gar:BUNK_GAR,lock:1,d:`Garrison ${BUNK_GAR} infantry; they shoot out and are safe from splash. Lockdown silences the garrison but cuts damage taken by ${Math.round(LOCK_RED*100)}% for ${LOCK_T}s`},
+ /* mult (v85): a bot builds this exclusive in NUMBERS rather than as a single
+    signature piece, so it leads the build wish list and gets second and third
+    entries later on. It was a name check on 'bunker' and 'turbine' inside aiTick
+    until ub became a list; as a table flag the row states its own habit. */
+ bunker:{n:'Bunker',hp:820,sz:2,cp:200,ce:0,bt:10,vi:6,req:'barracks',tech:'b_bunker',gar:BUNK_GAR,lock:1,mult:1,d:`Garrison ${BUNK_GAR} infantry; they shoot out and are safe from splash. Lockdown silences the garrison but cuts damage taken by ${Math.round(LOCK_RED*100)}% for ${LOCK_T}s`},
  outpost:{n:'Outpost',hp:780,sz:2,cp:240,ce:20,bt:13,vi:7,req:'barracks',prod:['truck'],drop:1,anywhere:1,expand:1,sup:4,d:`Forward base: builds & refuels Dump Trucks anywhere; opens a ${BUILD_R_OUTPOST}-tile build zone around it`},
- turbine:{n:'Wind Turbine',hp:260,sz:1,cp:110,ce:0,bt:6,vi:4,tech:'b_turbine',eps:2.2,over:1,d:`+2.2 ⚡/sec, cheap. Overdrive runs it at ×${OVER_MUL} for ${OVER_T}s, then it produces nothing for ${OVER_OFF}s`},
+ turbine:{n:'Wind Turbine',hp:260,sz:1,cp:110,ce:0,bt:6,vi:4,tech:'b_turbine',eps:2.2,over:1,mult:1,d:`+2.2 ⚡/sec, cheap. Overdrive runs it at ×${OVER_MUL} for ${OVER_T}s, then it produces nothing for ${OVER_OFF}s`},
+ /* v85 BLUE, second structure. The passive is the point: NOTHING repaired aircraft
+    before this - the Medic Truck heals ground units and buildings, and a damaged
+    Huey stayed damaged until it died. So Blue's second building is the only field
+    hospital in the game that an aircraft can use, which suits the fastest air force
+    in the game. Scramble is the timed half, on the building's existing upT and
+    abilityCool exactly as Overdrive and Lockdown already are. */
+ fwdpad:{n:'Forward Pad',hp:480,sz:2,cp:230,ce:70,bt:12,vi:6,req:'garage',tech:'b_fwdpad',pad:1,scram:1,d:`Repairs friendly aircraft within ${PAD_R} tiles at ${PAD_REP} HP/s — the only thing in the game that does. Scramble gives every aircraft you own +${Math.round(SCRAM_SPD*100)}% speed for ${SCRAM_T}s`},
  barricade:{n:'Barricade',hp:BARR_HP,sz:1,cp:BARR_COST,ce:0,bt:1.0,vi:0,barr:1,d:'Czech-hedgehog obstacle; blocks movement, 50 HP. Click-and-drag to lay a whole line. 20 ⬢ each.'},
  nest:{n:'Wildlife Nest',hp:NEST_HP,sz:1,cp:0,ce:0,bt:1,vi:0,neutralNest:1,d:'A wild critter den. Smash it to stop the swarm from respawning.'}
 };
@@ -2057,7 +2134,7 @@ function supUsed(p){let n=0;for(const u of p.units)n+=supOf(u.key);return n;}
 // into a full roster and get dropped at the spawn site with its cost already spent.
 function supQueued(p){let n=0;for(const b of p.blds)for(const k of (b.queue||[]))n+=supOf(k);return n;}
 function supFree(p){return supCap(p)-supUsed(p)-supQueued(p);}
-const FAC_INF={green:['sarge','mortar'],tan:['flamer'],gray:['sniper'],blue:[]};
+const FAC_INF={green:['sarge','mortar'],tan:['flamer'],gray:['sniper'],blue:['runner']}; // v85: Blue's Barracks slot was the one empty cell in this table
 const FAC_VEH={green:[],tan:['bulltank'],gray:['arty'],blue:['bike']};
 const FAC_AIR={green:[],tan:[],gray:[],blue:['chinook']};
 
@@ -2112,26 +2189,30 @@ for(const bk in UPGRADES){
 // per-faction these unlocks are simply absent (other factions' exclusives never
 // appear in that army's catalog). Map each unit/building tech to whether a given
 // player can ever research it.
+/* v85: the three hand-typed exclusive lists this function used to carry are gone.
+   They named the same eight units and four buildings that FAC already names, and
+   agreed with it only for as long as someone remembered to edit both - a new
+   exclusive added to FAC and not to these lists would have been researchable by
+   every army in the game. INFO_FEXCL_U / INFO_FEXCL_B are those two questions
+   answered off FAC itself; they are declared far below, which is fine because a
+   function body only reads them when it runs. */
 function techAvailable(p,key){
  const r=RESEARCH[key];if(!r)return false;
  // unit unlocks: only offer faction-appropriate ones
  if(r.kind==='unlock'&&!r.bkey){
   const uk=Object.keys(U).find(k=>U[k].tech===key);
-  if(uk){const fexcl=['sarge','mortar','flamer','bulltank','sniper','arty','bike','chinook'];
-   if(fexcl.includes(uk))return FAC[p.fac].uu.includes(uk);}
+  if(uk&&INFO_FEXCL_U.includes(uk))return FAC[p.fac].uu.includes(uk);
   return true;
  }
  // building unlocks: faction-exclusive structures only for their owner
  if(r.kind==='unlock'&&r.bkey){
-  const fb=['radar','dump','bunker','turbine'];
-  if(fb.includes(r.bkey))return FAC[p.fac].ub===r.bkey;
+  if(INFO_FEXCL_B.includes(r.bkey))return FAC[p.fac].ub.includes(r.bkey);
   return true;
  }
  // upgrades: available only if the matching building unlock is (or its building is faction-appropriate)
  if(r.kind==='upgrade'){
   if(r.reqTech&&!techAvailable(p,r.reqTech))return false;
-  const fb=['radar','dump','bunker','turbine'];
-  if(fb.includes(r.bkey))return FAC[p.fac].ub===r.bkey;
+  if(INFO_FEXCL_B.includes(r.bkey))return FAC[p.fac].ub.includes(r.bkey);
   return true;
  }
  return true;
@@ -2171,7 +2252,7 @@ B.lab.d=(function(){
 })();
 // LAB catalog, grouped for a readable layout: production unlocks, then economy, then
 // defence/utility unlocks, then the (non-army) upgrades.
-const LAB_ORDER=['b_garage','b_helipad','b_generator','b_turbine','b_guardtower','b_radar','b_radiotower','b_dump','b_bunker',
+const LAB_ORDER=['b_garage','b_helipad','b_generator','b_turbine','b_fwdpad','b_guardtower','b_radar','b_radiotower','b_dump','b_bunker',
                  'up_guardtower','up_generator','up_turbine','up_dump','up_bunker','up_lab'];
 function researchCatalog(p){return LAB_ORDER.filter(k=>RESEARCH[k]&&techAvailable(p,k)&&researchBuilding(k)==='lab');}
 // the research a given PRODUCTION building offers: its unit unlocks first, then its own upgrade
@@ -2195,7 +2276,7 @@ const MAPS={
 /* ---------------- SETUP SCREEN ---------------- */
 let SETUP={fac:'green',mode:'dm',map:'backyard',opp:1,diff:'normal',test:0,watch:0}; // v50: test = the sandbox toggle. v55: watch = spectate mode
 const facRow=document.getElementById('facRow');
-for(const k in FAC){if(k==='bug')continue;const f=FAC[k];const c=document.createElement('div');c.className='card'+(k==='green'?' sel':'');c.innerHTML=`<div class="cname"><div class="dot" style="background:${f.color}"></div>${f.name}</div><div class="cdesc">${f.desc}</div><div class="uq">★ ${U[f.uu[0]].n} • ${U[f.uu[1]].n}<br>★ ${B[f.ub].n}</div>`;
+for(const k in FAC){if(k==='bug')continue;const f=FAC[k];const c=document.createElement('div');c.className='card'+(k==='green'?' sel':'');c.innerHTML=`<div class="cname"><div class="dot" style="background:${f.color}"></div>${f.name}</div><div class="cdesc">${f.desc}</div><div class="uq">★ ${f.uu.map(k=>U[k].n).join(' • ')}<br>★ ${f.ub.map(k=>B[k].n).join(' • ')}</div>`;
  c.onclick=()=>{document.querySelectorAll('#facRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');SETUP.fac=k;sClick()};facRow.appendChild(c)}
 const mapRow=document.getElementById('mapRow');
 for(const k in MAPS){const m=MAPS[k];const c=document.createElement('div');c.className='card mcard'+(k==='backyard'?' sel':'');c.dataset.map=k;if(m.survOnly){c.dataset.survonly='1';c.style.display='none';} /* v35: survival-only maps hidden outside Wave Survival */ c.innerHTML=`<div class="cname">${m.n}</div><div class="cdesc">${m.d}</div>`;
@@ -4326,6 +4407,11 @@ function makeUnit(key,p,x,y,srcBld){
     what saves a passenger needing a back-pointer to the aircraft holding him. */
  if(t.evade)u.mvg=false;
  if(t.flat)u.flat=false;
+ /* v85: Sprint. One boolean on the Runner, exactly as Flat Out is one boolean on
+    the Bike - the men INSIDE the radius carry nothing of their own, because the
+    effect is read off the Runner at the point of use. That is what keeps a squad
+    of twenty under a sprint from being twenty extra hashed fields. */
+ if(t.sprint)u.spr=false;
  if(t.assault)u.aslt=false;
  if(t.cap)u.fo=false;
  // machine gunner faces its entrench cone forward by default
@@ -4374,7 +4460,7 @@ const CONSTRUCT_OUTPOST=['barricade','guardtower','hq'];
 function constructRoster(hostKey){
  return hostKey==='outpost'?CONSTRUCT_OUTPOST.slice():bldRoster(G.human);
 }
-function bldRoster(p){const r=['barracks','supply','lab','generator','garage','guardtower','helipad','outpost','radiotower',FAC[p.fac].ub,'barricade','hq'];return r}
+function bldRoster(p){const r=['barracks','supply','lab','generator','garage','guardtower','helipad','outpost','radiotower',...FAC[p.fac].ub,'barricade','hq'];return r}
 /* v50: ucost / bcost / rcost are the ONLY three cost sources in the file - every
    deduction, refund, salvage share and UI affordability check reads one of them -
    so testing mode's "free" is three returns and nothing else. G may be null here
@@ -4772,6 +4858,17 @@ function placeBuilding(p,key,tx,ty){
    then click the map to deploy (right-click / Esc cancels). Every ability in
    RADIO_ABILITIES shares one cooldown, held on the tower itself. */
 function myRadioTower(){return (G&&G.human)?G.human.blds.find(b=>b.t.radio&&b.prog>=1&&b.hp>0):null}
+/* v85: which of the player's CURRENT selection a Rapid Redeploy would actually
+   carry. Client-local by nature - G.sel is a UI list and the sim never reads it -
+   so this is only ever used to draw the button and to build the command's id list.
+   execCmd re-derives the same filter from the ids it receives and trusts nothing
+   here, which is what keeps the call honest against a peer sending anything else.
+   Capped at LIFT_MAX by the same slice on both sides, so the button's count is the
+   number that will actually fly. */
+function liftables(){
+ if(!G||!G.human)return [];
+ return G.sel.filter(u=>u&&u.kind==='unit'&&u.p===G.human&&u.hp>0&&!u.garrisoned&&u.t.a==='inf').slice(0,LIFT_MAX);
+}
 let lastRadioSig='';
 function refreshRadioPanel(){
  const el=document.getElementById('radioPanel'),bx=document.getElementById('radioBtns');
@@ -4785,19 +4882,26 @@ function refreshRadioPanel(){
     function for them, and prose is exactly how that check goes vacuously green. */
  const ready=b.abilityCool<=0;
  const armed=(G.radioTargeting&&G.radioTargeting.bld===b)?G.radioTargeting.mode:'';
- const sig=b.id+':'+(ready?'R':Math.ceil(b.abilityCool))+':'+armed;
+ /* v85: the redeploy button reads the live selection, so the count has to be part
+    of the signature or the panel would keep showing whatever was selected when it
+    last redrew. Only counted when Blue actually offers the row, so the other three
+    armies' signatures are byte-for-byte what they were. */
+ const liftN=radioAllowed(b.p,'lift')?liftables().length:-1;
+ const sig=b.id+':'+(ready?'R':Math.ceil(b.abilityCool))+':'+armed+':'+liftN;
  if(sig===lastRadioSig)return;lastRadioSig=sig;
  el.style.display='block';bx.innerHTML='';
- const ab=RADIO_ABILITIES.map(a=>[a.mode,a.icon+' '+a.short,a.panel]);
+ const ab=radioListFor(b.p).map(a=>[a.mode,a.icon+' '+a.short,a.panel]);
  for(const [mode,label,desc] of ab){
   const bt=document.createElement('button');bt.className='bb'+(armed===mode?' sel':'');
-  bt.innerHTML=`<b>${label}</b><br><span style="font-size:10px;opacity:.75">${desc}</span>`;
-  bt.title=desc;
-  if(!ready)bt.classList.add('dis');
+  const sub=(mode==='lift'&&liftN>=0)?desc+' — '+liftN+' selected':desc;
+  bt.innerHTML=`<b>${label}</b><br><span style="font-size:10px;opacity:.75">${sub}</span>`;
+  bt.title=sub;
+  if(!ready||(mode==='lift'&&liftN===0))bt.classList.add('dis');
   bt.onclick=()=>{
    if(b.abilityCool>0){msg(`Radio Tower on cooldown — ${Math.ceil(b.abilityCool)}s.`);return;}
+   if(mode==='lift'&&!liftables().length){msg('Select the infantry you want moved first.');return;}
    G.radioTargeting={bld:b,mode};
-   msg(mode==='paradrop'?'Click anywhere (even in fog) to drop your squad.':'Click a target anywhere you have vision.');
+   msg(mode==='paradrop'?'Click anywhere (even in fog) to drop your squad.':(mode==='lift'?'Click anywhere (even in fog) to airlift the selected infantry.':'Click a target anywhere you have vision.'));
    lastRadioSig='';sClick();
   };
   bx.appendChild(bt);
@@ -5277,12 +5381,17 @@ function refreshSelPanel(){
   if(e.kind==='unit'&&e.t.smokeCap)sig+='|sm'+(e.smoke?1:0);
   if(e.kind==='bld'&&e.t.uplink)sig+='|up'+Math.ceil(e.upT||0)+'_'+Math.ceil(e.abilityCool||0);
   if(e.kind==='bld'&&e.t.over)sig+='|ov'+Math.ceil(e.upT||0)+'_'+Math.ceil(e.abilityCool||0); // v82: the Overdrive button reads both clocks, so both have to move the signature or it redraws stale
+  // v85: the Sprint toggle, and the Forward Pad's pair of clocks on the same rule as Overdrive's
+  if(e.kind==='unit'&&e.t.sprint)sig+='|sp'+(e.spr?1:0);
+  if(e.kind==='bld'&&e.t.scram)sig+='|sc'+Math.ceil(e.upT||0)+'_'+Math.ceil(e.abilityCool||0);
  }
  // radio operators inside a multi-unit selection: track their ability state too
  // machine gunners inside a multi-unit selection: track their entrench state
  if(G.sel.length>1)for(const e of G.sel)if(e.kind==='unit'&&e.t.entrench)sig+='|ge'+e.id+(e.entrenched?1:0);
  // v79: mortars toggle as a group too, so their modes ride the signature the same way
  if(G.sel.length>1)for(const e of G.sel)if(e.kind==='unit'&&e.t.smokeCap)sig+='|gs'+e.id+(e.smoke?1:0);
+ // v85: and Signal Runners, for the same reason - a squad of them toggles together
+ if(G.sel.length>1)for(const e of G.sel)if(e.kind==='unit'&&e.t.sprint)sig+='|gp'+e.id+(e.spr?1:0);
  // any selected building: re-render as its research project (lab or production) progresses / tech set grows
  if(G.sel.length===1){const e=G.sel[0];if(e.kind==='bld'&&(e.t.lab||e.t.prod)){sig+='|res'+(e.techCur||'-')+':'+Math.round(e.techT*4)+':'+e.p.tech.size+':'+Math.floor(e.p.res.p)+'_'+Math.floor(e.p.res.e);}}
  if(sig===lastSelSig)return;lastSelSig=sig;
@@ -5344,6 +5453,16 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>Lockdown</b><br><span style="font-size:10px;opacity:.75">${live?Math.ceil(e.upT)+'s remaining':(ready?`${Math.round(LOCK_RED*100)}% less damage, ${LOCK_T}s, garrison holds fire`:Math.ceil(e.abilityCool)+'s cooldown')}</span>`;
    bt.title=`Button up: the bunker takes ${Math.round(LOCK_RED*100)}% less damage for ${LOCK_T} seconds and the garrison stops firing for all of it. ${LOCK_CD}-second cooldown.`;
    bt.onclick=()=>{submitCmd('lock',{bid:e.id});sClick();};
+   pb.appendChild(bt);
+  }
+  /* --- Forward Pad: scramble, added at v85 --- */
+  if(e.kind==='bld'&&e.p===G.human&&e.t.scram&&e.prog>=1){
+   const live=e.upT>0, ready=e.abilityCool<=0;
+   const bt=document.createElement('button');bt.className='bb'+(live?' sel':'');
+   bt.disabled=!ready&&!live;
+   bt.innerHTML=`<b>Scramble</b><br><span style="font-size:10px;opacity:.75">${live?Math.ceil(e.upT)+'s remaining':(ready?`+${Math.round(SCRAM_SPD*100)}% speed to every aircraft, ${SCRAM_T}s`:Math.ceil(e.abilityCool)+'s cooldown')}</span>`;
+   bt.title=`Scramble the flight: every aircraft you own, anywhere on the map, moves ${Math.round(SCRAM_SPD*100)}% faster for ${SCRAM_T} seconds. ${SCRAM_CD}-second cooldown.`;
+   bt.onclick=()=>{submitCmd('scramble',{bid:e.id});sClick();};
    pb.appendChild(bt);
   }
   /* --- v80 MUNITIONS DUMP: Scuttle ---
@@ -5539,6 +5658,14 @@ function refreshSelPanel(){
    bt.onclick=()=>{submitCmd('assault',{ids:[e.id],on:!e.aslt});sClick();};
    pb.appendChild(bt);
   }
+  /* --- Signal Runner: sprint, added at v85 --- */
+  if(e.kind==='unit'&&e.p===G.human&&e.t.sprint){
+   const bt=document.createElement('button');bt.className='bb'+(e.spr?' sel':'');
+   bt.innerHTML=`<b>${e.spr?'Slow Down':'Sprint'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(SPRINT_SPD*100)}% speed to infantry within ${SPRINT_R}, none of them may fire</span>`;
+   bt.title=`Sound the whistle: every friendly infantryman within ${SPRINT_R} tiles moves ${Math.round(SPRINT_SPD*100)}% faster, the Runner included. Nobody inside the radius will fire, take an attack order, or acquire a target while it runs.`;
+   bt.onclick=()=>{submitCmd('sprint',{ids:[e.id],on:!e.spr});sClick();};
+   pb.appendChild(bt);
+  }
   // ---- v30 APC: troop bay readout + unload ----
   if(e.kind==='unit'&&e.p.human&&e.t.cap){
    const n2=(e.garrison||[]).length;
@@ -5613,6 +5740,19 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${anyT?'Throttle Down':'Full Throttle'} (${bulls.length})</b><br><span style="font-size:10px;opacity:.75">+${Math.round(THROTTLE_SPD*100)}% speed, no guns</span>`;
    bt.title='Order every selected Bull to charge, or to throttle down and fight.';
    bt.onclick=()=>{submitCmd('throttle',{ids:bulls.map(g=>g.id),on:!anyT});sClick();};
+   pb.appendChild(bt);
+  }
+  /* v85: Signal Runners get the group button on the same argument. Two Runners
+     with overlapping radii is the normal way to move a large formation, and the
+     whole value of the ability is that the whistle goes up at ONE moment - toggled
+     one panel at a time, half the column would still be walking. */
+  const rns=G.watch?[]:G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t.sprint);
+  if(rns.length){
+   const anyR=rns.some(g=>g.spr);
+   const bt=document.createElement('button');bt.className='bb'+(anyR?' sel':'');
+   bt.innerHTML=`<b>${anyR?'Slow Down':'Sprint'} (${rns.length})</b><br><span style="font-size:10px;opacity:.75">+${Math.round(SPRINT_SPD*100)}% infantry speed within ${SPRINT_R}, no guns</span>`;
+   bt.title='Sound the whistle on every selected Signal Runner, or call them all down.';
+   bt.onclick=()=>{submitCmd('sprint',{ids:rns.map(g=>g.id),on:!anyR});sClick();};
    pb.appendChild(bt);
   }
  }
@@ -5722,6 +5862,7 @@ function orderAttack(u,tgt){
  if(!u.t.dm){orderMove(u,tgt.x,tgt.y,false);if(u.p.human&&u.t.a==='truck')u.parked=true;return}
  if(hid81(tgt,u.p))return; // v81: nobody can be ordered onto a man nothing has seen - player order, AI order, retaliation and the help sweep all arrive here
  if(u.t.flat&&u.flat)return; // v82: ...and a bike running flat out takes no attack order from any of those four either
+ if(sprintOn(u))return; // v85: ...nor does anyone inside a Sprint. Same door for the same reason: the ability's whole price is that the men under it may not shoot, and an order that set u.target anyway would leave them standing in the attack state until the next tick dropped it again
  if(!mainOk(u,tgt))return; // v51/v52: a main weapon ignores a target it does not own outright. The PLAYER path in execCmd substitutes an attack-move; retaliation and AI orders must NOT drive the unit at its attacker
  u.target=tgt;u.state='attack';u.path=null;u.stuck=0;u.mining=false;u.parkAtHQ=false;
 }
@@ -6635,18 +6776,71 @@ function upOn(p){
  for(const b of p.blds)if(b.t.uplink&&b.upT>0&&b.prog>=1&&b.hp>0)return true;
  return false;
 }
+/* --- SCRAMBLE (added at v85) ---
+   True while any completed Forward Pad of this army is running it. Deliberately a
+   carbon copy of upOn above rather than a generalised "is any building running a
+   mode" helper: the two read different flags for different effects, and one shared
+   scanner would have to be told which, which is the same walk with an argument. */
+function scramOn(p){
+ if(!p||!p.blds)return false;
+ for(const b of p.blds)if(b.t.scram&&b.upT>0&&b.prog>=1&&b.hp>0)return true;
+ return false;
+}
+/* --- THE SIGNAL RUNNER'S TWO AURAS (added at v85) ---
+   Both answer "is there a Runner near this man", and both are read off the RUNNER
+   rather than written onto the men around him, which is what keeps a sprinting
+   platoon from carrying twenty copies of the same fact through the hash and the
+   snapshot. Same shape as the Sarge and Chinook loops in dmgBonus.
+   The infantry gate comes first and is the reason these are cheap: every vehicle,
+   aircraft and truck in the game leaves on the first line without touching G.units.
+   Inside the loop the flag test leads, and it is undefined on every unit in the
+   file except a Signal Runner, so the body is one property read per unit.
+   Unlike "On Me!", both of these DO include the Runner himself: he pays no penalty
+   for either, so there is nothing for excluding him to price. */
+function rnetOn(u){
+ if(!u||u.t.a!=='inf')return false;
+ for(const v of G.units){
+  if(!v.t.rnet||v.hp<=0||v.garrisoned||!allied(v.p,u.p))continue;
+  if((v.x-u.x)**2+(v.y-u.y)**2<=RNET_R*RNET_R)return true;
+ }
+ return false;
+}
+function sprintOn(u){
+ if(!u||u.t.a!=='inf')return false;
+ for(const v of G.units){
+  if(!v.spr||v.hp<=0||v.garrisoned||!allied(v.p,u.p))continue;
+  if((v.x-u.x)**2+(v.y-u.y)**2<=SPRINT_R*SPRINT_R)return true;
+ }
+ return false;
+}
 /* Effective range and sight for a unit. Every sim-side reader goes through
    these two. A zero base stays zero, so an unarmed hull cannot be handed a
    weapon range and a sightless entity cannot be handed vision. */
 function rgOf(u){let r=(u.t.rg||0);if(r>0&&u.t.valve&&u.valve)r+=VALVE_RG;return r>0&&upOn(u.p)?r+UPLINK_RG:r;}
-function viOf(u){let v=(u.t.vi||0);if(v>0&&u.t.flat&&u.flat)v+=FLAT_VI;return v>0&&upOn(u.p)?v+UPLINK_VI:v;}
+function viOf(u){let v=(u.t.vi||0);if(v>0&&u.t.flat&&u.flat)v+=FLAT_VI;if(v>0&&rnetOn(u))v+=RNET_VI;return v>0&&upOn(u.p)?v+UPLINK_VI:v;}
 /* v80: effective ground speed. u.sp is the baked per-unit figure (type row x
    faction modifier x production buff) and stays the base; this is the one place
    a sustained mode may bend it. A unit with no throttle capability returns u.sp
    untouched, so nothing but the Bull can be handed a speed it did not earn.
    Note the flag carry and the terrain multiplier stay OUTSIDE this: they are
    situational and already applied at each call site. */
-function spOf(u){return (u.t.throttle&&u.thr)?u.sp*(1+THROTTLE_SPD):((u.t.flat&&u.flat)?u.sp*(1+FLAT_SPD):u.sp);}
+/* v85: two more modes can bend it, and the shape had to change to take them. The
+   v82 chain answered "which ONE of my own flags is set", which cannot express an
+   aura the unit does not carry or a building-wide order it never hears about.
+   Multiplied rather than chained, so a sprinting infantryman under a Scramble is
+   not silently handed only whichever the ternary happened to test first - although
+   in practice no unit is both, since Scramble is air-only and Sprint infantry-only.
+   The Bull and the Bike keep exclusive first claim on their own hulls, which is the
+   v82 behaviour preserved exactly: neither can ever be inside a Sprint (both are
+   vehicles) and neither flies. */
+function spOf(u){
+ let s=u.sp;
+ if(u.t.throttle&&u.thr)s*=1+THROTTLE_SPD;
+ else if(u.t.flat&&u.flat)s*=1+FLAT_SPD;
+ if(u.t.fly&&scramOn(u.p))s*=1+SCRAM_SPD;
+ else if(sprintOn(u))s*=1+SPRINT_SPD;
+ return s;
+}
 /* v81 CAMOUFLAGED. "Is not seen" is UNIFORM across every hostile army, so the
    per-player half of the question is the allied() test each door already runs
    and no visibility grid is needed. G.fog is client-local and is NOT consulted
@@ -6991,13 +7185,25 @@ const PARA_N=5;       // paratroopers per drop
    below so no dead ability function is left to drift. The barrage panel copy is a
    template literal for the same reason the manual slots are: it was a hand-typed
    shell count and would have gone stale the moment BARRAGE_N moved. */
+const LIFT_ICON='\ud83d\ude81';
+/* v85: a row may now carry `fac`, meaning only that army's tower offers it. The
+   three original call-downs carry none and stay shared by every army, which is what
+   the absent field means - this is an addition to the table's vocabulary, not a
+   re-reading of the rows already in it. Every surface that walks the table walks it
+   through radioListFor(p) instead, so the panel, the manual and the vision gate
+   agree about who has what without any of them knowing the rule. */
 const RADIO_ABILITIES=[
  {mode:'napalm',  icon:'\ud83d\udd25',name:'Napalm Strike',   short:'Napalm',  panel:'Heavy fire + burn, '+NAPALM_BOX+'\u00d7'+NAPALM_BOX+' (needs vision)', vision:true},
  {mode:'barrage', icon:'\ud83c\udfaf',name:'Artillery Barrage',short:'Barrage',panel:BARRAGE_N+' heavy shells, '+BARRAGE_BOX+'\u00d7'+BARRAGE_BOX+' (needs vision)', vision:true},
- {mode:'paradrop',icon:'\ud83e\ude82',name:'Paradrop',        short:'Paradrop',panel:PARA_N+' Paratroopers anywhere, even in fog',      vision:false}
+ {mode:'paradrop',icon:'\ud83e\ude82',name:'Paradrop',        short:'Paradrop',panel:PARA_N+' Paratroopers anywhere, even in fog',      vision:false},
+ {mode:'lift',    icon:LIFT_ICON,     name:'Rapid Redeploy',  short:'Redeploy',panel:'Airlift up to '+LIFT_MAX+' SELECTED infantry anywhere', vision:false, fac:'blue'}
 ];
 function radioAbility(m){return RADIO_ABILITIES.find(a=>a.mode===m)||null;}
 function radioNeedsVision(m){const a=radioAbility(m);return !!(a&&a.vision);}
+/* the call-downs one army may actually arm. A row with no `fac` belongs to
+   everybody; a row with one belongs to that army alone. */
+function radioListFor(p){const f=p&&p.fac;return RADIO_ABILITIES.filter(a=>!a.fac||a.fac===f);}
+function radioAllowed(p,m){return radioListFor(p).some(a=>a.mode===m);}
 function radioAbilityList(){return RADIO_ABILITIES.map(a=>a.icon+' '+a.name).join(', ');}
 function radioCDText(){return (RADIO_CD/60)+'-minute';}
 function radioBarrage(u,cx,cy){
@@ -7044,6 +7250,48 @@ function radioParadrop(u,x,y){
  G.strikes.push({kind:'paradrop',owner:u,drops,t:0});
  u.abilityCool=radioCD();
  if(u.p.human)msg(`Paradrop inbound — ${PARA_N} Paratroopers deploying.`);
+}
+/* RAPID REDEPLOY (v85, Blue). The Paradrop's opposite: it creates nobody. It takes
+   infantry this army ALREADY owns and moves them, which is why the command carries
+   ids - "the selection" is a client-local idea and the sim can never be told to
+   read it. execCmd filters the list before it arrives here, so by this point every
+   id is a live, ungarrisoned infantryman of p's own.
+
+   Off-map transit reuses u.garrisoned rather than adding a hashed flag of its own,
+   and that is the whole reason this needs no new unit state: garrisoned already
+   means "not on the field" at every door in the file - targeting skips them,
+   splash skips them, the renderer skips them, applyDmg never reaches them. A man
+   in the air is exactly that. He is in no building's garrison list, which is safe
+   because nothing ever searches for a garrisoned unit's carrier; the strike that
+   put him up there is the only thing that knows, and strikes are serialized, so a
+   snapshot taken mid-flight lands him on schedule after a reload.
+   They stay in G.sel on purpose, unlike a man boarding an APC: he is gone for as
+   long as you leave him there, whereas this squad is back in LIFT_T seconds and
+   losing the selection would cost the player the order they were about to give. */
+function radioLift(u,x,y,ids){
+ const drops=[];
+ for(let i=0;i<ids.length;i++){
+  const m=G.units.find(g=>g.id===ids[i]);if(!m)continue;
+  const a=i*2.39996,r=.6+.5*Math.sqrt(i);
+  m.garrisoned=true;m.state='idle';m.path=null;m.target=null;m.target2=null;m.node=null;m.oq=[];m.patrol=null;
+  drops.push({id:m.id,x:clamp(x+dcos(a)*r,2,G.map.N-3),y:clamp(y+dsin(a)*r,2,G.map.N-3),delay:LIFT_T+i*0.06,done:false});
+ }
+ if(!drops.length)return false;
+ G.strikes.push({kind:'lift',owner:u,drops,t:0});
+ u.abilityCool=radioCD();sfxWhoosh(x,y);
+ if(u.p.human)msg(`Rapid Redeploy — ${drops.length} infantry in the air.`);
+ return true;
+}
+// put one airlifted man back on the ground where the paradrop would have put him
+function landLifted(d){
+ const u=G.units.find(g=>g.id===d.id);
+ if(!u||u.hp<=0)return;            // shot down in transit is impossible, but a save edited between is not
+ let lx=d.x,ly=d.y;
+ if(!passableR(lx,ly,unitRad(u))){
+  outer:for(let r=1;r<=4;r++)for(let oy=-r;oy<=r;oy++)for(let ox=-r;ox<=r;ox++){const nx=d.x+ox,ny=d.y+oy;if(passable(Math.floor(nx),Math.floor(ny))){lx=nx;ly=ny;break outer;}}
+ }
+ u.garrisoned=false;u.x=lx;u.y=ly;u.state='idle';u.anchor={x:lx,y:ly};u.dest=null;u.savedDest=null;u.stuck=0;u.lastProg={x:lx,y:ly};
+ spawnSmoke(lx,ly,4);spawnShrapnel(lx,ly,'#d9cf8f',4,.6);
 }
 // land one Paratrooper with a little dust puff
 function dropTrooper(p,x,y){
@@ -7107,6 +7355,10 @@ function updateStrikes(dt){
    if(s.sh.every(q=>q.done)&&s.t>s.sh[s.sh.length-1].at+0.8)G.strikes.splice(i,1);
   } else if(s.kind==='paradrop'){
    for(const d of s.drops){if(!d.done && s.t>=d.delay){d.done=true;dropTrooper(s.owner.p,d.x,d.y);}}
+   if(s.drops.every(d=>d.done))G.strikes.splice(i,1);
+  } else if(s.kind==='lift'){
+   // v85: same schedule as the paradrop, but the men already exist - this puts them back
+   for(const d of s.drops){if(!d.done && s.t>=d.delay){d.done=true;landLifted(d);}}
    if(s.drops.every(d=>d.done))G.strikes.splice(i,1);
   } else if(s.kind==='smoke'){
    /* v79: the cloud is pure duration - applyDmg reads its position while it is
@@ -7458,6 +7710,15 @@ function updateUnit(u,dt){
     no-target branch and the Bull resumes its march. The acquisition gates
     below stop it picking a new one up. */
  if(u.thr){u.target=null;u.target2=null;crush80(u);}
+ /* --- SPRINT: the same trick, one level out (added at v85) ---
+    Dropping the target rather than gating fireAt, for the reason written above the
+    Bull: a man who keeps a target and merely declines to shoot stands in range
+    doing nothing, because the attack state pins his path the moment he is inside
+    rgOf. The difference from Full Throttle is WHOSE flag is being read - a man
+    under a Sprint carries none of his own, so this asks the radius, and it costs
+    the sprinting Runner his own rifle too because he is inside his own whistle. */
+ const spr85=!!(t.dm&&sprintOn(u));   // asked ONCE per tick: the two acquisition gates below read this, not the radius again
+ if(spr85){u.target=null;u.target2=null;}
  /* --- v80: the bot's pressure-valve coin flip, rolled at the moment the
     engagement starts. Owner's rule: a CPU flamethrower opens the valve on a
     flat VALVE_AI_INF_P chance whenever it engages infantry, whether or not
@@ -7487,7 +7748,7 @@ function updateUnit(u,dt){
     if(u.node&&u.node.amt>0){u.state='togo';truckToNode(u,u.node);break}
     const n=findNode(u);if(n){orderHarvest(u,n);break}
    }
-   if(t.dm&&!u.smoke&&!u.thr&&!u.flat&&G.tick%10===u.id%10){const e=nearestEnemy(u,u.hold?Math.min(viOf(u),rgOf(u)):viOf(u));if(e){u.target=e;u.state='attack';u.anchor={x:u.x,y:u.y}}} // v29: held units only sight what they can shoot. v79: a smoking mortar acquires no enemies at all
+   if(t.dm&&!u.smoke&&!u.thr&&!u.flat&&!spr85&&G.tick%10===u.id%10){const e=nearestEnemy(u,u.hold?Math.min(viOf(u),rgOf(u)):viOf(u));if(e){u.target=e;u.state='attack';u.anchor={x:u.x,y:u.y}}} // v29: held units only sight what they can shoot. v79: a smoking mortar acquires no enemies at all. v85: nor does anyone inside a Sprint
    break}
   case 'move':{
    if(t.heal&&medicTrack(u,dt))break; // v44: medics keep station on the group they move with
@@ -7498,7 +7759,7 @@ function updateUnit(u,dt){
    }
    break}
   case 'amove':{
-   if(t.dm&&!u.smoke&&!u.thr&&!u.flat&&G.tick%6===u.id%6){const e=nearestEnemy(u,viOf(u));if(e){u.savedDest=u.dest;u.target=e;u.state='attack';break}}
+   if(t.dm&&!u.smoke&&!u.thr&&!u.flat&&!spr85&&G.tick%6===u.id%6){const e=nearestEnemy(u,viOf(u));if(e){u.savedDest=u.dest;u.target=e;u.state='attack';break}}
    if(t.heal&&medicTrack(u,dt))break; // v44: medics keep station (no t.dm, so the sight branch above never fires)
    if(moveAlong(u,dt)){
     if(t.heal&&medicSettle(u))break;
@@ -7845,6 +8106,22 @@ function updateBld(b,dt){
    if(b.p.human){updateTopbar();lastSelSig=''}
   }
   if(!G.test)break;
+ }
+ /* --- FORWARD PAD: the repair passive (added at v85) ---
+    Sits here rather than in updateUnit because the PAD is the scarce thing: one or
+    two per base against however many aircraft, so the walk is over the aircraft
+    near a pad and not over the pads near every aircraft.
+    allied() rather than b.p, matching the Medic Truck: a team-mate's Huey sets down
+    on your pad. Aircraft only - t.fly is the whole filter, so a Chinook full of
+    infantry is repaired and the men inside it are not, which is already how the
+    Medic treats a loaded APC. Repairs to mhp and no further, and only what is
+    actually hurt, so a full flight costs nothing. */
+ if(b.t.pad&&b.hp>0){
+  for(const u of G.units){
+   if(!u.t.fly||u.hp<=0||u.hp>=u.mhp||u.garrisoned||!allied(u.p,b.p))continue;
+   const dx=Math.max(0,Math.abs(u.x-b.x)-b.sz*.5),dy=Math.max(0,Math.abs(u.y-b.y)-b.sz*.5);
+   if(dx*dx+dy*dy<=PAD_R*PAD_R)u.hp=Math.min(u.mhp,u.hp+PAD_REP*dt);
+  }
  }
  if(b.abilityCool>0)b.abilityCool-=dt; // v30.1: tick the shared call-down on EVERY building - the Radio Tower is neither a guardtower nor a garrisoned bunker, so inside the branch below it never recharged after the first use
  /* v79: the uplink's REMAINING duration, ticked out here for the same reason the
@@ -8435,23 +8712,30 @@ function aiTick(p){
     turbine entry goes with it: it was dead for the other three factions already,
     since techAvailable gates b_turbine to its owner, and for Blue the [ub,N]
     entries now subsume it. */
- const ub=FAC[p.fac].ub,ubScale=(ub==='bunker'||ub==='turbine');
+ /* v85: ub is a list, and "does this one get built in numbers" is now a table flag
+    (B[k].mult) rather than a name check on 'bunker' or 'turbine'. Both readings had
+    to change together: a hard-coded pair of names cannot answer the question for a
+    second exclusive, and would have silently given every new structure the single
+    late slot. The pass order below is unchanged for the four v84 factions - the
+    mult entries lead, the singles sit after the radio tower - so this is a
+    reshaping, not a reprioritising. */
+ const ubs=FAC[p.fac].ub||[];
  const wish=[['barracks',1],['lab',1],['generator',2],['garage',1]];
- if(ubScale)wish.push([ub,1]);
+ for(const ub of ubs)if(B[ub].mult)wish.push([ub,1]);
  wish.push(['guardtower',1],['helipad',1],['guardtower',Math.min(2,towerWant)],['radiotower',1]); // v48: +radiotower
- if(!ubScale&&ub)wish.push([ub,1]);
- if(ubScale)wish.push([ub,2]);
+ for(const ub of ubs)if(!B[ub].mult)wish.push([ub,1]);
+ for(const ub of ubs)if(B[ub].mult)wish.push([ub,2]);
  wish.push(['guardtower',towerWant],['generator',2]);
  /* v60: a bot banking more plastic than it can spend puts up a second barracks and
     garage. Appended rather than inserted, so it is the lowest priority in the list
     and a poor bot's order of business is untouched. */
- if(p.res.p>=AI_RICH_P){wish.push(['barracks',2],['garage',2]);if(ubScale)wish.push([ub,3]);}
+ if(p.res.p>=AI_RICH_P){wish.push(['barracks',2],['garage',2]);for(const ub of ubs)if(B[ub].mult)wish.push([ub,3]);}
  for(const [k,needed] of wish){
   if(count(k)>=needed)continue;
   if(B[k].req&&!has(B[k].req))continue; // v59: was break, which blocked the whole tail
   // tech gate: the AI can't build a structure whose unlock it hasn't researched yet
   if(B[k].tech&&!hasTech(p,B[k].tech))continue;
-  if((k==='generator'||k==='turbine')&&!(ubScale&&k===ub)&&!lowE&&p.res.e>120)continue; /* only build power when needed - except (v63) this faction's own signature structure, which is built for identity rather than for load */
+  if(B[k].eps&&!ubs.includes(k)&&!lowE&&p.res.e>120)continue; /* only build power when needed - except (v63) this faction's own signature structure, which is built for identity rather than for load. v85: "is this a power building" reads B[k].eps rather than naming the generator and the turbine, which is the same two rows and stays right if a third is ever added */
   if(k==='radiotower'&&p.res.e<260)continue; // v48: the uplink is priced in ⚡ - wait for a surplus, never stall the list on it
   const c=bcost(p,k);
   if(p.res.p>=c.p+80+(saveExp?200:0)&&p.res.e>=c.e){const spot=aiFindSpot(p,k,hq);if(spot){placeBuilding(p,k,spot.x,spot.y);break}}
@@ -9088,8 +9372,8 @@ function aiResearch(p){
   // 3) bread-and-butter combat units
   ['u_tank','u_jeep','u_gunner','u_bazooka','u_grenadier','u_heli','u_aatruck','u_medic','u_apache','u_apc'].forEach(push); // v30: Apache replaces the retired Radio Operator; v48: +APC (transport doctrine)
   // 4) economy + defensive structure unlocks, this faction's OWN structure first (v63)
-  if(FAC[p.fac].ub&&B[FAC[p.fac].ub])push(B[FAC[p.fac].ub].tech);
-  ['b_generator','b_turbine','b_guardtower','b_radiotower','b_dump','b_bunker','b_radar'].forEach(push); // v48: +radio tower (napalm/paradrop call-downs)
+  for(const ub of (FAC[p.fac].ub||[]))if(B[ub]&&B[ub].tech)push(B[ub].tech);
+  ['b_generator','b_turbine','b_fwdpad','b_guardtower','b_radiotower','b_dump','b_bunker','b_radar'].forEach(push); // v48: +radio tower (napalm/paradrop call-downs). v85: +forward pad; techAvailable gates it to Blue, so the other three armies skip it exactly as they already skip the turbine
   // 5) upgrades — army buffs first, then the lab, then the rest
   ['up_barracks','up_garage','up_helipad','up_lab','up_guardtower','up_dump','up_bunker','up_generator','up_turbine'].forEach(push);
   ai.researchPlan=plan;
@@ -10329,6 +10613,34 @@ function bldBody(c,k,col,sz){
   // four corner lights
 
  }
+ else if(k==='fwdpad'){
+  /* v85: deliberately the Helipad's poor relation - a field strip, not a hangar.
+     Same read at a glance (a flat disc you set an aircraft down on) so its purpose
+     is obvious, but marked with a repair cross instead of an H, ringed in the
+     medic's green rather than the helipad's yellow, and carrying a fuel bowser and
+     a windsock instead of a control kiosk. */
+  const body=prism(c,shade(col,.9),0,HD*.5,S*.8,HD*.8,7,{matte:true});
+  const py=body.topY;
+  c.fillStyle=rgb(deep.r,deep.g,deep.b);c.beginPath();c.ellipse(0,py,S*.72,HD*.72,0,0,7);c.fill();
+  (function(){const pg=c.createRadialGradient(LIGHT.x*S*.3,py+LIGHT.y*HD*.3,2,0,py,S*.74);pg.addColorStop(0,rgb(mixc(B0,BLACK,.18).r,mixc(B0,BLACK,.18).g,mixc(B0,BLACK,.18).b));pg.addColorStop(1,rgb(mixc(B0,BLACK,.48).r,mixc(B0,BLACK,.48).g,mixc(B0,BLACK,.48).b));c.fillStyle=pg;c.beginPath();c.ellipse(0,py,S*.64,HD*.64,0,0,7);c.fill();})();
+  // green ring + repair cross
+  c.save();c.beginPath();c.ellipse(0,py,S*.64,HD*.64,0,0,7);c.clip();
+  c.strokeStyle='rgba(120,225,140,.8)';c.lineWidth=3;c.beginPath();c.ellipse(0,py,S*.5,HD*.5,0,0,7);c.stroke();
+  c.fillStyle='#eaf6ec';c.fillRect(-2.6,py-8,5.2,16);c.fillRect(-9,py-2.6,18,5.2);
+  c.restore();
+  const lip=mixc(B0,BLACK,.45);
+  c.save();c.globalAlpha=.55;c.strokeStyle=rgb(lip.r,lip.g,lip.b);c.lineWidth=2;c.beginPath();c.ellipse(0,py,S*.68,HD*.68,0,0,7);c.stroke();c.restore();
+  // fuel bowser squatting on the north corner
+  const bow=prism(c,shade(col,1.02),-S*.46,py-HD*.24,S*.15,HD*.12,8);
+  c.fillStyle='#2a2e34';quadPatch(c,wallCorners(bow,-1),.18,.05,.6,.7);c.fill();
+  c.strokeStyle='rgba(30,30,36,.75)';c.lineWidth=1.4;c.lineCap='round';
+  c.beginPath();c.moveTo(-S*.38,py-HD*.12);c.quadraticCurveTo(-S*.2,py+HD*.1,-S*.06,py+HD*.04);c.stroke();c.lineCap='butt';
+  // windsock on a mast at the far corner, so the pad reads as an airfield
+  c.strokeStyle=rgb(mixc(B0,WHITE,.3).r,mixc(B0,WHITE,.3).g,mixc(B0,WHITE,.3).b);c.lineWidth=1.6;
+  c.beginPath();c.moveTo(S*.5,py-HD*.1);c.lineTo(S*.5,py-HD*.1-16);c.stroke();
+  c.fillStyle='#e8663a';c.beginPath();c.moveTo(S*.5,py-HD*.1-16);c.lineTo(S*.5+9,py-HD*.1-13.6);c.lineTo(S*.5+9,py-HD*.1-10.4);c.lineTo(S*.5,py-HD*.1-11);c.closePath();c.fill();
+  c.fillStyle='rgba(245,245,245,.85)';c.beginPath();c.moveTo(S*.5+4.4,py-HD*.1-14.8);c.lineTo(S*.5+6.4,py-HD*.1-14.3);c.lineTo(S*.5+6.4,py-HD*.1-10.8);c.lineTo(S*.5+4.4,py-HD*.1-11.2);c.closePath();c.fill();
+ }
  else if(k==='generator'){
   // a power shed: prism housing with the glowing cell recessed into the SE
   // wall, a molded vent grille on the roof, and a ground cable to the pad edge
@@ -10665,6 +10977,23 @@ function trooperBody(c,key,col,bob){
   c.fillStyle='#3a3a44';rr(c,-7.8,-16,3,8.5,1.5);c.fill();rr(c,-4.6,-16.8,3,9.3,1.5);c.fill();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.25)';rr(c,-7.4,-15.6,1,7.5,.5);c.fill();c.restore();
  }
+ else if(key==='runner'){
+
+  /* v85: the field radio, which IS the unit - a man who read as a plain rifleman
+     would be the one thing on the board you could not tell apart from a Grunt at a
+     glance, and both of his abilities are things you want to see coming. Baked with
+     the body rather than drawn in the gear pass because none of it aims. */
+  c.fillStyle='#3a3a44';rr(c,-7.6,-16.2,3.4,9,1.4);c.fill();               // set on the back, over the pack
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.2)';rr(c,-7.2,-15.8,1.1,7.6,.5);c.fill();c.restore();
+  c.fillStyle='#22222a';rr(c,-6.9,-15.6,2,1.5,.4);c.fill();                // dial face
+  c.strokeStyle='#8d8d99';c.lineWidth=1.1;                                  // whip aerial, bent back over the shoulder
+  c.beginPath();c.moveTo(-6,-16.2);c.quadraticCurveTo(-7.6,-24,-4.2,-28.6);c.stroke();
+  c.fillStyle='#c8c8d2';c.beginPath();c.arc(-4.2,-28.8,.8,0,7);c.fill();
+  // handset clipped to the chest webbing, cord looping down to the set
+  c.fillStyle='#1f1f25';rr(c,1.4,-13.4,1.8,3.2,.7);c.fill();
+  c.strokeStyle='rgba(40,40,48,.8)';c.lineWidth=.9;
+  c.beginPath();c.moveTo(1.6,-10.4);c.quadraticCurveTo(-1.6,-8.4,-4.4,-11);c.stroke();
+ }
 }
 /* aim-following gear: weapons & arms drawn live on top of the baked body so
    continuous aim is preserved. Context must already carry the body's
@@ -10718,6 +11047,9 @@ function trooperGear(c,u,col,ang){
   const long=u.key==='sniper';
   c.save();c.translate(0,-10.5+dy);c.rotate(ang);
   if(long){plLimb(c,gunMetal,-3,0,13.5,0,2);c.fillStyle='#1f1f25';rr(c,1.5,-3.3,4.4,2.3,1);c.fill();glint(c,4,-2.4,.7);}
+  /* v85: the Runner's sidearm - the shortest weapon in the file, at roughly a third
+     the Grunt's barrel, so the difference reads at sprite scale without a legend. */
+  else if(u.key==='runner'){plLimb(c,gunMetal,-1.4,0,2.8,0,2.2);c.fillStyle='#1f1f25';rr(c,-2.2,-.4,1.8,2.6,.7);c.fill();}
   else if(sarge){plLimb(c,gunMetal,-2,-.2,7,-.2,3);}
   else{plLimb(c,gunMetal,-3.5,0,8,0,2.8);c.fillStyle=rgb(hx2rgb(col).r*.6,hx2rgb(col).g*.6,hx2rgb(col).b*.6);rr(c,-5.6,-1.7,2.6,3.4,1.2);c.fill();}
   c.restore();armsToGun(c,col,ang);
@@ -12108,6 +12440,27 @@ function execCmd(c){
    }
    if(p===G.human)lastSelSig='';
    break}
+  case 'sprint':{ // v85: the Signal Runner sounds the whistle
+   for(const u of cmdUnits(p,a.ids)){
+    if(!u.t.sprint||u.garrisoned)continue;
+    u.spr=!!a.on;
+    /* dropping targets on the way IN is the same courtesy the smoke, throttle and
+       flat cases pay, but it has to reach the whole RADIUS rather than the man
+       holding the button - he is not the only one who has just stopped shooting.
+       Everyone inside keeps their orders; only the shooting stops. */
+    if(u.spr)for(const v of G.units){
+     if(v.t.a!=='inf'||v.hp<=0||v.garrisoned||!allied(v.p,u.p))continue;
+     if((v.x-u.x)**2+(v.y-u.y)**2<=SPRINT_R*SPRINT_R){v.target=null;v.target2=null;if(v.state==='attack')v.state='idle';}
+    }
+   }
+   if(p===G.human)lastSelSig='';
+   break}
+  case 'scramble':{ // v85: the Forward Pad puts the whole flight on the boil
+   const b=entById(a.bid);
+   if(!b||b.kind!=='bld'||!b.t.scram||b.p!==p||b.prog<1||b.hp<=0||b.abilityCool>0)break;
+   b.upT=SCRAM_T;b.abilityCool=(G&&G.test)?0:SCRAM_CD;
+   if(p===G.human){msg(`Scramble — +${Math.round(SCRAM_SPD*100)}% aircraft speed for ${SCRAM_T}s.`);lastSelSig='';}
+   break}
   case 'over':{ // v82: the Wind Turbine spends its output ahead of time
    const b=entById(a.bid);
    if(!b||b.kind!=='bld'||!b.t.over||b.p!==p||b.prog<1||b.hp<=0||b.abilityCool>0)break;
@@ -12131,10 +12484,20 @@ function execCmd(c){
    if(!b||b.kind!=='bld'||!b.t.radio||b.p!==p||b.prog<1||b.hp<=0||b.abilityCool>0)break;
    const x=clamp(a.x,1,G.map.N-2),y=clamp(a.y,1,G.map.N-2);
    if(!radioAbility(a.mode))break;
+   if(!radioAllowed(p,a.mode))break; // v85: a faction call-down is refused to every other army HERE, not merely left out of their panel - the panel is client-local and a peer can send any mode it likes
    if(radioNeedsVision(a.mode)&&!pVision(p,x,y))break;
    if(a.mode==='napalm')radioNapalm(b,x,y);
    else if(a.mode==='barrage')radioBarrage(b,x,y);
    else if(a.mode==='paradrop')radioParadrop(b,x,y);
+   else if(a.mode==='lift'){
+    /* the id list is re-filtered from scratch: own units, alive, on the field,
+       infantry, capped. cmdUnits already applies the ownership half, so this adds
+       only what the redeploy itself requires. A call that filters down to nobody
+       spends no cooldown - radioLift returns false and the tower stays ready. */
+    const men=cmdUnits(p,a.ids).filter(u=>u.hp>0&&!u.garrisoned&&u.t.a==='inf').slice(0,LIFT_MAX);
+    if(!men.length)break;
+    radioLift(b,x,y,men.map(u=>u.id));
+   }
    if(p===G.human){lastSelSig='';lastRadioSig='';}
    break}
   case 'halt':{
@@ -12203,7 +12566,7 @@ function hashState(){
      makeAIBrain, which is fixed, so the walk is deterministic. */
   if(p.ai&&p.ai.enc)for(const k in p.ai.enc)h=hF(h,p.ai.enc[k]);
  }
- for(const u of G.units){h=hI(h,u.id);h=hF(h,u.x);h=hF(h,u.y);h=hF(h,u.hp);h=hF(h,u.cool);h=hS(h,u.state);h=hF(h,u.cargo||0);h=hF(h,u.face);h=hI(h,u.entrenched?1:0);h=hI(h,u.garrisoned?1:0);h=hI(h,u.kl||0);h=hI(h,u.hold?1:0);h=hI(h,u.oq?u.oq.length:0);h=hI(h,u.patrol?u.patrol.leg+1:0);h=hF(h,u.burnT||0);h=hI(h,u.salv||0);h=hF(h,u.cool2||0);h=hF(h,u.calmT||0);h=hI(h,u.onMe?1:0);h=hI(h,u.smoke?1:0);h=hI(h,u.wf||0);h=hI(h,u.wfT||0);h=hI(h,u.valve?1:0);h=hI(h,u.thr?1:0);h=hI(h,u.vrt||0);h=hF(h,u.burnDps||0);h=hF(h,u.shotT||0);h=hI(h,u.cs?1:0);h=hI(h,u.rip?1:0);h=hI(h,u.flat?1:0);h=hI(h,u.aslt?1:0);h=hI(h,u.fo?1:0);h=hI(h,u.mvg?1:0)} // v51: salvo counter & secondary cooldown are sim state. v79: calm timer, the two Green toggles and the Walking Fire streak. v80: the two Tan toggles, and the burn RATE - hashed now that Cook-Off is a second writer of it at a different value from the fire ant's. v81: the shot clock the concealment test reads, and the two Gray toggles. v82: the two Blue toggles, the per-passenger firing-out flag its carrier writes, and the movement flag Evasive multiplies damage by
+ for(const u of G.units){h=hI(h,u.id);h=hF(h,u.x);h=hF(h,u.y);h=hF(h,u.hp);h=hF(h,u.cool);h=hS(h,u.state);h=hF(h,u.cargo||0);h=hF(h,u.face);h=hI(h,u.entrenched?1:0);h=hI(h,u.garrisoned?1:0);h=hI(h,u.kl||0);h=hI(h,u.hold?1:0);h=hI(h,u.oq?u.oq.length:0);h=hI(h,u.patrol?u.patrol.leg+1:0);h=hF(h,u.burnT||0);h=hI(h,u.salv||0);h=hF(h,u.cool2||0);h=hF(h,u.calmT||0);h=hI(h,u.onMe?1:0);h=hI(h,u.smoke?1:0);h=hI(h,u.wf||0);h=hI(h,u.wfT||0);h=hI(h,u.valve?1:0);h=hI(h,u.thr?1:0);h=hI(h,u.vrt||0);h=hF(h,u.burnDps||0);h=hF(h,u.shotT||0);h=hI(h,u.cs?1:0);h=hI(h,u.rip?1:0);h=hI(h,u.flat?1:0);h=hI(h,u.aslt?1:0);h=hI(h,u.fo?1:0);h=hI(h,u.mvg?1:0);h=hI(h,u.spr?1:0)} // v85: the Sprint toggle. v51: salvo counter & secondary cooldown are sim state. v79: calm timer, the two Green toggles and the Walking Fire streak. v80: the two Tan toggles, and the burn RATE - hashed now that Cook-Off is a second writer of it at a different value from the fire ant's. v81: the shot clock the concealment test reads, and the two Gray toggles. v82: the two Blue toggles, the per-passenger firing-out flag its carrier writes, and the movement flag Evasive multiplies damage by
  for(const b of G.blds){h=hI(h,b.id);h=hF(h,b.hp);h=hF(h,b.prog);h=hI(h,b.queue.length);h=hF(h,b.prodT);h=hF(h,b.techT||0);h=hS(h,b.techCur||'');h=hI(h,b.garrison.length);h=hF(h,b.abilityCool||0);h=hF(h,b.burnT||0);h=hF(h,b.upT||0)} // v30: tower cooldown is sim state. v79: so is the uplink's remaining duration
  for(const pr of G.projs){h=hF(h,pr.x);h=hF(h,pr.y);h=hF(h,pr.z||0);h=hF(h,pr.dm)}
  for(const n of G.map.nodes){h=hF(h,n.amt);h=hI(h,n.wreck?1:0)}
@@ -12327,7 +12690,7 @@ function loadState(json){
   byId[e.id]=e;
   return e;
  }
- G.units=S.units.map(o=>{const u=decEnt(o);u.t=u.kind==='creature'?CREATURE[u.species]:U[u.key];if(!u.oq)u.oq=[];if(u.hold==null)u.hold=false;if(u.kl==null)u.kl=0;if(u.vr==null)u.vr=0;if(u.calmT==null)u.calmT=0;if(u.t.rally&&u.onMe==null)u.onMe=false;if(u.t.smokeCap&&u.smoke==null)u.smoke=false;if(u.t.wf&&u.wf==null){u.wf=0;u.wfT=0}if(u.t.valve&&u.valve==null){u.valve=false;u.vrt=0}if(u.t.throttle&&u.thr==null)u.thr=false;if(u.t.camo&&u.shotT==null)u.shotT=999;if(u.t.cshot&&u.cs==null)u.cs=false;if(u.t.ripple&&u.rip==null)u.rip=false;if(u.t.evade&&u.mvg==null)u.mvg=false;if(u.t.flat&&u.flat==null)u.flat=false;if(u.t.assault&&u.aslt==null)u.aslt=false;if(u.t.cap&&u.fo==null)u.fo=false;return u}); // v29: pre-v29 saves get queue/hold/vet defaults. v79: and the ability fields, which a pre-v79 save has none of
+ G.units=S.units.map(o=>{const u=decEnt(o);u.t=u.kind==='creature'?CREATURE[u.species]:U[u.key];if(!u.oq)u.oq=[];if(u.hold==null)u.hold=false;if(u.kl==null)u.kl=0;if(u.vr==null)u.vr=0;if(u.calmT==null)u.calmT=0;if(u.t.rally&&u.onMe==null)u.onMe=false;if(u.t.smokeCap&&u.smoke==null)u.smoke=false;if(u.t.wf&&u.wf==null){u.wf=0;u.wfT=0}if(u.t.valve&&u.valve==null){u.valve=false;u.vrt=0}if(u.t.throttle&&u.thr==null)u.thr=false;if(u.t.camo&&u.shotT==null)u.shotT=999;if(u.t.cshot&&u.cs==null)u.cs=false;if(u.t.ripple&&u.rip==null)u.rip=false;if(u.t.evade&&u.mvg==null)u.mvg=false;if(u.t.flat&&u.flat==null)u.flat=false;if(u.t.assault&&u.aslt==null)u.aslt=false;if(u.t.cap&&u.fo==null)u.fo=false;if(u.t.sprint&&u.spr==null)u.spr=false;return u}); // v29: pre-v29 saves get queue/hold/vet defaults. v79: and the ability fields, which a pre-v79 save has none of
  G.blds=S.blds.map(o=>{const b=decEnt(o);b.t=B[b.key];if(b.abilityCool==null)b.abilityCool=0;if(b.upT==null)b.upT=0;return b}); // v30: pre-v30 saves get the cooldown default. v79: and the uplink timer
  G.projs=S.projs.map(o=>{const pr={};for(const k in o){if(k[0]==='$')continue;pr[k]=o[k]}return pr});
  G.neutrals=S.neutrals.map(o=>{const cr=decEnt(o);cr.t=CREATURE[cr.species];cr.p=G.neutral;return cr});
@@ -12878,7 +13241,17 @@ function handleRadioClick(mx,my){
  if(radioNeedsVision(rt.mode)&&fogAt(w.x,w.y)!==2){
   msg('Needs vision — pick a target your army can currently see.');return; // keep targeting active
  }
- submitCmd('radio',{bid:b.id,mode:rt.mode,x:w.x,y:w.y});
+ /* v85: the redeploy is the one call-down whose command carries a payload beyond
+    a point, because WHO moves is not derivable from the map. Sent as ids for the
+    same reason every other multi-unit command is: the selection is client-local,
+    and a peer replaying "the selection" would replay its own. */
+ const arg={bid:b.id,mode:rt.mode,x:w.x,y:w.y};
+ if(rt.mode==='lift'){
+  const men=liftables();
+  if(!men.length){msg('Select the infantry you want moved first.');cancelRadioTargeting();return;}
+  arg.ids=men.map(g=>g.id);
+ }
+ submitCmd('radio',arg);
  G.radioTargeting=null;lastSelSig='';lastRadioSig='';sClick();
 }
 addEventListener('mousemove',e=>{MOUSE.x=e.clientX;MOUSE.y=e.clientY;MOUSE.inside=true;if(MOUSE.down&&Math.hypot(MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy)>4)MOUSE.drag=true;if(mmDown&&G)mmPan(e);});
@@ -13031,7 +13404,7 @@ function drawStrikes(c){
    let rx=s.x||0,ry=s.y||0;
    if(s.kind==='napalm'&&s.cells.length){const cme=s.cells[Math.max(0,Math.min(s.i,s.cells.length-1))];rx=cme.x;ry=cme.y}
    else if(s.kind==='barrage'){rx=s.cx;ry=s.cy}
-   else if(s.kind==='paradrop'&&s.drops.length){rx=s.drops[0].x;ry=s.drops[0].y}
+   else if((s.kind==='paradrop'||s.kind==='lift')&&s.drops.length){rx=s.drops[0].x;ry=s.drops[0].y} // v85: a hostile redeploy is hidden by fog on the same rule as a hostile paradrop
    if(fogAt(rx,ry)!==2)continue;
   }
   if(s.kind==='barrage'){
@@ -13075,8 +13448,10 @@ function drawStrikes(c){
     c.fillStyle=g2;c.beginPath();c.ellipse(px,py,7*TW,3.5*TW,0,0,7);c.fill();
     c.restore();
    }
-  } else if(s.kind==='paradrop'){
-   // descending parachutes for Paratroopers not yet landed
+  } else if(s.kind==='paradrop'||s.kind==='lift'){
+   /* v85: one canopy routine for both call-downs, which is the owner's brief -
+      a redeployed squad is meant to READ as a paradrop. The only difference is
+      whose men they are, and that is already in s.owner. */
    for(const d of s.drops){if(d.done)continue;const fall=clamp((d.delay-s.t)/0.8,0,1);const z=60*fall;
     const px=isoX(d.x,d.y),py=isoY(d.x,d.y)-z;
     c.save();
@@ -13558,14 +13933,16 @@ const INFO_BLDS=Object.keys(B).filter(k=>k!=='nest'); // nests draw from the map
    ALREADY searches FAC to decide WHICH army an exclusive belongs to, so a typed
    copy here meant one table deciding ownership and a hand-kept list deciding
    membership - they agreed only for as long as someone remembered to edit both.
-   Wildlife contributes nothing: its uu is empty and its ub is the empty string,
-   which the filter drops. */
+   Wildlife contributes nothing: both of its lists are empty.
+   v85: ub became an array, so the two lines are now the same line twice. They are
+   also the answer techAvailable reads, which is why they are not just an info-panel
+   concern - see the note on that function. */
 const INFO_FEXCL_U=Object.values(FAC).flatMap(f=>f.uu||[]);
-const INFO_FEXCL_B=Object.values(FAC).map(f=>f.ub).filter(Boolean);
+const INFO_FEXCL_B=Object.values(FAC).flatMap(f=>f.ub||[]);
 function infoFacOf(kind,key){ // faction exclusives show in their home army's colors
  const mine=(G&&G.human)?G.human.fac:SETUP.fac; // v46: opened mid-match it shows YOUR army
  if(kind==='unit'&&INFO_FEXCL_U.includes(key))return Object.keys(FAC).find(f=>FAC[f].uu&&FAC[f].uu.includes(key))||mine;
- if(kind==='bld'&&INFO_FEXCL_B.includes(key))return Object.keys(FAC).find(f=>FAC[f].ub===key)||mine;
+ if(kind==='bld'&&INFO_FEXCL_B.includes(key))return Object.keys(FAC).find(f=>FAC[f].ub&&FAC[f].ub.includes(key))||mine;
  return mine;
 }
 function infoStub(fn){const real=G;G=INFO.stub;try{fn()}finally{G=real}}

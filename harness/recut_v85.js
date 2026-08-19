@@ -1,16 +1,23 @@
-/* recut_v84.js - regenerate the hash-trail baselines that v84 moved.
+/* recut_v85.js - regenerate the hash-trail baselines that v85 moved.
  *
- *   cat shim_head.js game.js recut_v84.js > rc84.js && node rc84.js
+ *   cat shim_head.js game.js recut_v85.js > rc85.js && node rc85.js
  *
- * v84 is the AI encounter ledger: a decaying record of damage taken per armour
- * class, blended into the mix aiPickUnit already scores against. It changes what
- * bots BUY, so every trail table moves and that is expected. What must NOT move
- * is the map - the ledger writes nothing but a number on a brain, and touches no
- * prop, node, nest or anything that fills M.pass.
+ * v85 is Blue's second pass: a Signal Runner out of the Barracks, a Forward Pad,
+ * and a Rapid Redeploy call-down, on top of the FAC.ub string->array refactor that
+ * had to land first to make room for a second exclusive structure.
+ *
+ * The REFACTOR alone was proved sim-neutral before any content went in - triage
+ * reproduced every pinned combo - so everything that moves below is the content.
+ * It moves the trails through two doors, both expected: a 21st entry in U reshapes
+ * the research plan and the production draw for every army that can see it, and
+ * a tenth entry in B does the same for the build wish list.
+ *
+ * What must NOT move is the map. Nothing in this release touches a prop, a node,
+ * a nest or anything that fills M.pass.
  *
  * THE GATE RUNS FIRST AND EMITS NOTHING IF IT FAILS. All 42 layout pins
  * (12 in tail_v28, 15 in tail_v43, 15 in tail_v62) are recomputed and compared
- * before a single trail is cut - recut_v78 gated on 30, recut_v83 widened it to 42, and the third table is
+ * before a single trail is cut - recut_v78 gated on 30, recut_v83 widened it to 42, and v85 keeps it, and the third table is
  * included here because tail_v72's note counts all three when it calls the
  * layout hashes the equality proof. A layout hash that moved would mean
  * this release touched map generation, which would make every trail below it

@@ -40,8 +40,8 @@ function bot55(){return G.players.find(p=>p.ai)}
     construction. Same shape of test aimed at the new rule. */
  ok('T35.A the roster is cut into four ranks',SUP_MAX===4&&typeof SUP_STEP==='undefined');
  const trainable=Object.keys(U).filter(k=>!U[k].noTrain);
- ok('T35.A the cuts are still set by the 20 trainable units (the drop-only para is excluded)',
-    trainable.length===20&&!trainable.includes('para'));
+ ok('T35.A the cuts are set by the 21 trainable units (the drop-only para is excluded)',
+    trainable.length===21&&!trainable.includes('para')); // v85: 20 -> 21, the Signal Runner
  /* recompute the quartiles independently of SUP_U's own expression, including the
     total-order tiebreak: a comparator that returned 0 on equal costs would leave
     the order to the engine and put a silent divergence into lockstep. */
@@ -53,13 +53,29 @@ function bot55(){return G.players.find(p=>p.ai)}
   return Math.min(SUP_MAX,r)};
  ok('T35.A every unit obeys the quartile rule with no hand exceptions',
     Object.keys(U).every(k=>supOf(k)===rung(k)));
- ok('T35.A each rank holds a fifth of the roster, which is what ranking buys over a fixed step',
-    [1,2,3,4].every(r=>trainable.filter(k=>supOf(k)===r).length===5));
+ /* v85: the roster went 20 -> 21, so the tiers CANNOT all hold exactly a quarter of
+    it any more - 21 does not divide by 4. The claim ranking actually buys is that
+    the tiers stay BALANCED however the roster is priced, which under an uneven
+    roster means within one of each other; equality was only ever the special case
+    of a roster whose size happened to divide. Asserted as the property rather than
+    as the coincidence, so the next unit added does not fail here for no reason.
+    (Measured at v85: 6/5/5/5 - the Runner lands in the cheap tier and the remainder
+    goes to the bottom rank, which is where floor() puts it by construction.) */
+ {
+  const sz=[1,2,3,4].map(r=>trainable.filter(k=>supOf(k)===r).length);
+  ok(`T35.A the ranks stay balanced - no tier is more than one unit off another (${sz.join('/')})`,
+     Math.max(...sz)-Math.min(...sz)<=1&&sz.reduce((a,b)=>a+b,0)===trainable.length);
+  ok('T35.A ...and the remainder falls to the cheap end, which is where floor() puts it',
+     sz[0]===Math.max(...sz));
+ }
 
  // the four tiers, transcribed, so a silent re-tiering fires as well as a rule break
- const T1=['truck','para','grunt','grenadier','bazooka','bike'];
+ const T1=['truck','para','grunt','grenadier','bazooka','bike','runner']; // v85: +runner, at 62 he sits between the Grenadier and the Bazooka
  // v70: the Medic moved 2 -> 3 and the Sergeant Bull 3 -> 4 on the quartile cut.
  // Nothing else changed tier against the v69 ladder.
+ // v85: adding a 21st unit moved NOTHING between tiers - checked deliberately,
+ // since a quartile cut re-ranks off roster POSITION and an insertion can shove
+ // whatever sits on a boundary across it.
  const T2=['gunner','flamer','jeep','mortar','sniper'];
  const T3=['medic','aatruck','tank','heli','apc'];
  const T4=['sarge','arty','chinook','apache','bulltank'];

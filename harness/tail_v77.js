@@ -81,8 +81,10 @@ section('T52.A the barrage walks seven half-weight shells');
 section('T52.B the Magnifying Glass removal left nothing behind');
 {
   ok('T52.B the ability row is gone', !radioAbility('magnify'));
-  ok('T52.B and the roster is the three survivors',
-    RADIO_ABILITIES.length === 3 && !RADIO_ABILITIES.some(a => a.mode === 'magnify'));
+  // v85: three survivors plus Blue's Rapid Redeploy. The claim is the removal, so
+  // it is stated as "magnify is absent from a table of four", not as a bare count.
+  ok('T52.B and the roster is the three survivors, plus the one added since',
+    RADIO_ABILITIES.length === 4 && !RADIO_ABILITIES.some(a => a.mode === 'magnify'));
   ok('T52.B radioMagnify is not a function any more', typeof radioMagnify === 'undefined');
   ok('T52.B its audio cue went with it', typeof sfxLaser === 'undefined');
   ok('T52.B the flame roster no longer names it',

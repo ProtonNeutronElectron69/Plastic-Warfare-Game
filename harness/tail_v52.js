@@ -56,7 +56,10 @@ function mkCr52(sp,x,y){
  const V65={grunt:[36,0],grenadier:[55,0],gunner:[112,0],bazooka:[90,0],truck:[20,0],
   medic:[150,23],jeep:[130,11.5],aatruck:[180,34.5],tank:[220,46],heli:[200,80.5],sarge:[260,69],
   mortar:[150,0],flamer:[120,0],bulltank:[391,92.575],sniper:[170,0],arty:[320,103.5],bike:[90,5.75],
-  apache:[300,126.5],apc:[260,46],chinook:[300,115],para:[0,0]};
+  apache:[300,126.5],apc:[260,46],chinook:[300,115],para:[0,0],
+  // v85: the Signal Runner joins the record. 62 plastic and no battery - priced
+  // ABOVE the Grunt he is weaker than, because what is bought is the two auras.
+  runner:[62,0]};
  const drift=[];
  for(const k in U)if(V65[k]&&(U[k].cp!==V65[k][0]||U[k].ce!==V65[k][1]))drift.push(k);
  ok('T33.A the whole v65 cost roster is intact'+(drift.length?' (drift: '+drift.join(', ')+')':''),

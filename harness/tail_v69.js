@@ -59,9 +59,16 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
     return Math.max(...v) / Math.min(...v);
   };
   // the v68 rule, rebuilt here rather than remembered: >median => 2, else 1
+  /* v85: this reconstruction used to read (v[9]+v[10])/2, which is the median of a
+     TWENTY-element list and nothing else - the indices were the roster size baked
+     in. The Signal Runner made it 21 and the "median" silently became the average
+     of the 10th and 11th cheapest, which is not the middle of anything. Written as
+     a real median it is correct at any roster size, which is what a reconstruction
+     of a retired rule has to be if the comparison below is to mean anything. */
   const oldMedian = (() => {
     const v = Object.keys(U).filter(k => !U[k].noTrain).map(k => U[k].cp + U[k].ce).sort((a, b) => a - b);
-    return (v[9] + v[10]) / 2;
+    const n = v.length;
+    return n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2;
   })();
   const oldSup = k => (U[k].cp + U[k].ce) > oldMedian ? 2 : 1;
   const nowSpread = spread(supOf), thenSpread = spread(oldSup);
@@ -76,10 +83,29 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
      So the spread is pinned at the measured figure rather than asserted to have
      fallen. What this release actually fixes is the TOP end, and section B tests
      that directly below. The bottom end is a v70 siege question. */
+  /* v85: the LADDER's figure is untouched at 5.84 - the Signal Runner is not the
+     floor of it (Rocket Artillery still is, at 1.27 against his 1.72), so a new
+     unit joined the roster without moving the number this section is about. The
+     median arm moved 4.76 -> 7.04, and that is the retired rule being re-measured
+     over a 21-unit roster with a correct median, not a change in anything shipped. */
   ok(`T48.B the roster-wide per-supply spread is the v69 figure (${nowSpread.toFixed(2)}x, was ${thenSpread.toFixed(2)}x under the median rule)`,
-     Math.abs(nowSpread - 5.84) < 0.05 && Math.abs(thenSpread - 4.76) < 0.05);
-  ok('T48.B ...and it widened rather than narrowed, which is the scope estimate being wrong, not the metric',
-     nowSpread > thenSpread);
+     Math.abs(nowSpread - 5.84) < 0.05 && Math.abs(thenSpread - 7.04) < 0.05);
+  /* v85: THE DIRECTION FLIPPED, and the flip is honest rather than a fix.
+     At v69 the ladder measured WIDER than the median rule (5.84 vs 4.76) and that
+     was recorded above as the scope estimate having been wrong. Over a 21-unit
+     roster it measures NARROWER (5.84 vs 7.04) - the ladder's own figure did not
+     move at all, the median arm did. Adding one cheap, very-low-DPS unit costs the
+     two-bucket rule far more than the quartile rule, because a bucket keyed on an
+     absolute threshold hands him the SAME 1 supply it hands the Bazooka, while a
+     rank cut re-sorts the roster around him. That is precisely the cliff the ladder
+     was built to remove, so v69's estimate was not wrong about the mechanism - it
+     was measured on a roster too small to show it.
+     Recorded as the comparison it now is, with the v69 reading left standing above
+     as what that roster honestly said. */
+  ok(`T48.B ...and over a 21-unit roster the ladder is the narrower of the two (${nowSpread.toFixed(2)}x vs ${thenSpread.toFixed(2)}x)`,
+     nowSpread < thenSpread);
+  ok('T48.B ...because it is the MEDIAN arm that moved, not the ladder',
+     Math.abs(nowSpread - 5.84) < 0.05);
 
   /* The specific cliff: under the median rule the Gunner was the single best
      per-supply buy in the game by a wide margin, and it got there by being the
@@ -97,9 +123,18 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
   /* The consequence, pinned by name so it cannot be discovered again by surprise:
      the three units the ladder demotes hardest are the siege pieces, and every one
      of them carries splash or reach that this measure cannot see. */
+  /* v85: the Mortar Squad is displaced out of the bottom three by the Signal
+     Runner, and the note above survives the change intact rather than needing a
+     new excuse - he is the fourth unit in the roster whose whole job this measure
+     cannot see. Artillery's splash, the Sniper's reach and now the Runner's two
+     auras are all invisible to single-target DPS per supply. That is a statement
+     about the metric, and it is why the bottom of this table has never been an
+     argument for buffing anything. */
   const bottom3 = newTop.slice(-3).map(o => o.k).sort().join(',');
-  ok(`T48.B the ladder's bottom three are the siege pieces (${bottom3}) - a v70 question, recorded here`,
-     bottom3 === 'arty,mortar,sniper');
+  ok(`T48.B the ladder's bottom three are units this measure cannot see (${bottom3}) - a v70 question, recorded here`,
+     bottom3 === 'arty,runner,sniper');
+  ok('T48.B ...and the Mortar Squad is the one it displaced, still just above them',
+     newTop.slice(-4)[0].k === 'mortar');
 
   U.gunner.rt = _rt72;
   ok('T48.B ...and the v72 reload the measurement borrowed was put back',

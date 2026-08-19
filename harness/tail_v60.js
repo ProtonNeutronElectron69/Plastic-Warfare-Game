@@ -116,11 +116,21 @@ ok('T31.A AI_RICH_P is 1200',typeof AI_RICH_P==='number'&&AI_RICH_P===1200);
 
 /* ---------- E: a rich bot adds a second barracks / garage ---------- */
 {
- G=null;newGame(cfg60('backyard','dm',600303,3));
+ /* v85: the bots are CHOSEN rather than taken in list order, and the seed moved
+    600303 -> 600305. At v85's trail, every bot on 600303 already held two barracks
+    by tick 1800, so "the banked bot puts up a second producer" was green on a pair
+    it had before the money arrived and "a real gain" was the only thing still
+    telling the truth - which is exactly what it caught. Picking bots that do NOT
+    already have a pair makes the section say what it means, and a future trail move
+    that leaves fewer than two such bots fails the count below loudly instead of
+    quietly proving nothing again. */
+ G=null;newGame(cfg60('backyard','dm',600305,3));
  for(let i=0;i<1800;i++)update(DT60);
- const bots=G.players.filter(p=>p.ai&&p.alive);
- const rich=bots[0], poor=bots[1];
- ok('T31.E two live bots to compare',!!rich&&!!poor);
+ const nb0=k=>p=>p.blds.filter(b=>b.key===k).length;
+ const eligible=G.players.filter(p=>p.ai&&p.alive&&nb0('barracks')(p)<2&&nb0('garage')(p)<2);
+ const rich=eligible[0], poor=eligible[1];
+ ok(`T31.E two live bots without a pair already, so a gain can be seen (${eligible.length} eligible)`,
+    !!rich&&!!poor);
  if(rich&&poor){
   const nb=k=>p=>p.blds.filter(b=>b.key===k).length;
   const richBefore=nb('barracks')(rich)+nb('garage')(rich);

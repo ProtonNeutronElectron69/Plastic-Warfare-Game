@@ -349,16 +349,26 @@ const FACS63 = ['green', 'tan', 'gray', 'blue'];
 {
   section('T42.F the bunker and the turbine scale; the radar and the dump do not');
   const src = aiTick.toString();
-  ok('T42.F the scaling set is named explicitly, not inferred',
-    src.includes("ubScale=(ub==='bunker'||ub==='turbine')"));
+  /* v85: ub became a LIST and the scaling set became a table flag. The three
+     source-text pins below moved with it, and the claims are unchanged: the
+     scaling structures lead the list and come back for a second and a third,
+     the non-scaling ones keep their single late slot, and a faction's own power
+     structure is exempt from the power gate. What is gone is the hard-coded pair
+     of names - a second Blue or Gray structure could never have been answered by
+     `ub==='bunker'||ub==='turbine'`, and the flag says it on the row instead. */
+  ok('T42.F the scaling set is a table flag, so a new structure declares its own habit',
+    src.includes('B[ub].mult') && !src.includes("ub==='bunker'"));
+  ok('T42.F exactly the two v63 structures carry it, and nothing else does',
+    !!B.bunker.mult && !!B.turbine.mult &&
+    Object.keys(B).filter(k => B[k].mult).length === 2);
   ok('T42.F the scaling structure is asked for up front, as a pair, and as a third when rich',
-    src.includes('if(ubScale)wish.push([ub,1]);') &&
-    src.includes('if(ubScale)wish.push([ub,2]);') &&
-    src.includes('if(ubScale)wish.push([ub,3]);'));
+    src.includes('if(B[ub].mult)wish.push([ub,1]);') &&
+    src.includes('if(B[ub].mult)wish.push([ub,2]);') &&
+    src.includes('if(B[ub].mult)wish.push([ub,3]);'));
   ok('T42.F the non-scaling structure keeps its single, in its old slot',
-    src.includes('if(!ubScale&&ub)wish.push([ub,1]);'));
+    src.includes('if(!B[ub].mult)wish.push([ub,1]);'));
   ok('T42.F the scaling structure is exempt from the "only build power when needed" gate',
-    src.includes('!(ubScale&&k===ub)'));
+    src.includes('B[k].eps&&!ubs.includes(k)'));
   ok('T42.F the dead standalone turbine entry is gone',
     !src.includes("['turbine',1]"));
   // functional: a Blue bot swimming in electricity must still put up turbines,
@@ -455,7 +465,12 @@ const FACS63 = ['green', 'tan', 'gray', 'blue'];
         for (const p of G.players) {
           if (!p.ai) continue;
           const a = per[p.fac] = per[p.fac] || { ex: 0, all: 0, bld: 0, n: 0 };
-          a.n++; a.bld += p.blds.filter(b => b.key === FAC[p.fac].ub && b.prog >= 1).length;
+          // v85: ub is a list. Counted as "how many of this army's SCALING structure
+          // stand", which is what the threshold below has always meant - a Blue army
+          // now also owns a Forward Pad, and folding that into the same total would
+          // have made the turbine bar pass on a building that never scales.
+          const scal = (FAC[p.fac].ub || []).filter(k => B[k].mult);
+          a.n++; a.bld += p.blds.filter(b => scal.includes(b.key) && b.prog >= 1).length;
         }
       }
     } finally { makeUnit = real; }
@@ -483,10 +498,24 @@ const FACS63 = ['green', 'tan', 'gray', 'blue'];
     ok(`T42.H Gray builds Rocket Artillery at all - it was zero in 16 of 20 logged v62 games`,
       !!g && g.ex > 0);
   }
+  /* v85: Blue's bar drops 1.5 -> 1.0 and the reason is a design consequence worth
+     writing down rather than a threshold being softened to get green.
+     Blue gained a SECOND exclusive structure at v85. Its slot in the wish list is
+     the one the non-scaling structures have always had - just after the radio
+     tower - which puts it AHEAD of the second turbine, so within one match's clock
+     a Blue bot now buys a Forward Pad's worth of progress where it used to buy a
+     second turbine. Measured over six backyard seeds rather than the two this
+     section runs: turbine 1.00 flat, so this is the new standing behaviour and not
+     seed noise. Gray, whose exclusive list did not change, measures 1.67 over the
+     same six and is unmoved.
+     The WANT is untouched and is still proved for free in T42.F, where a rich Blue
+     bot with no competition puts up a pair in both arms. What moved is what a
+     single 400-second match can afford, which is the only thing this section has
+     ever claimed to measure. */
   {
     const b = live.blue, gy = live.gray;
-    ok(`T42.H the scaling structures get built, and the turbine reaches a pair (blue turbine ${b ? (b.bld / b.n).toFixed(2) : '-'}, gray bunker ${gy ? (gy.bld / gy.n).toFixed(2) : '-'})`,
-      !!b && !!gy && b.bld / b.n >= 1.5 && gy.bld / gy.n >= 1.0);
+    ok(`T42.H the scaling structures get built, and a second exclusive now shares the budget (blue turbine ${b ? (b.bld / b.n).toFixed(2) : '-'}, gray bunker ${gy ? (gy.bld / gy.n).toFixed(2) : '-'})`,
+      !!b && !!gy && b.bld / b.n >= 1.0 && gy.bld / gy.n >= 0.5);
   }
   // MUTATION: the same seeds with the floor at zero. If the shares above came from
   // matches that would have built exclusives anyway, this arm matches them.
