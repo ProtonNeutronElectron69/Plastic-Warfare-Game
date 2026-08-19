@@ -1,27 +1,32 @@
-/* recut_v85.js - regenerate the hash-trail baselines that v85 moved.
+/* recut_v86.js - regenerate the hash-trail baselines that v86 moved.
  *
- *   cat shim_head.js game.js recut_v85.js > rc85.js && node rc85.js
+ *   cat shim_head.js game.js recut_v86.js > rc86.js && node rc86.js
  *
- * v85 is Blue's second pass: a Signal Runner out of the Barracks, a Forward Pad,
- * and a Rapid Redeploy call-down, on top of the FAC.ub string->array refactor that
- * had to land first to make room for a second exclusive structure.
+ * v86 is Green's second pass: a Command Truck out of the Garage, an Observation
+ * Balloon out of the Helipad, a Command Post as the second structure, and a
+ * Supply Drop call-down. Nothing in it is a refactor of a shared table, so unlike
+ * v85 there is no neutral-first step to separate: every line of it is content.
  *
- * The REFACTOR alone was proved sim-neutral before any content went in - triage
- * reproduced every pinned combo - so everything that moves below is the content.
- * It moves the trails through two doors, both expected: a 21st entry in U reshapes
- * the research plan and the production draw for every army that can see it, and
- * a tenth entry in B does the same for the build wish list.
+ * It moves the trails through the same two doors v85 did and one more. Two new
+ * entries in U reshape the research plan and the production draw for every army
+ * that can see them; an eleventh entry in B does the same for the build wish
+ * list; and the three doors that changed for EVERYBODY - rtOf, rgOf and vetSteps
+ * each gained a scan - consume no RNG but do change what the AI reads, so a bot's
+ * decisions diverge from the first tick a Green bot researches anything.
+ *
+ * A trail moving in a match with no Green bot in it is therefore expected too:
+ * the seeded stream is shared, and a Green bot that spends differently shifts
+ * every draw after it. That is the v79 lesson and it is why this file exists
+ * rather than the trails being read as evidence.
  *
  * What must NOT move is the map. Nothing in this release touches a prop, a node,
  * a nest or anything that fills M.pass.
  *
  * THE GATE RUNS FIRST AND EMITS NOTHING IF IT FAILS. All 42 layout pins
  * (12 in tail_v28, 15 in tail_v43, 15 in tail_v62) are recomputed and compared
- * before a single trail is cut - recut_v78 gated on 30, recut_v83 widened it to 42, and v85 keeps it, and the third table is
- * included here because tail_v72's note counts all three when it calls the
- * layout hashes the equality proof. A layout hash that moved would mean
- * this release touched map generation, which would make every trail below it
- * meaningless to repin - so the correct answer there is to stop, not to cut.
+ * before a single trail is cut. A layout hash that moved would mean this release
+ * touched map generation, which would make every trail below it meaningless to
+ * repin - so the correct answer there is to stop, not to cut.
  *
  * Each table is regenerated with the SAME generator its own tail uses, read off
  * that tail rather than reimplemented from memory:
@@ -105,7 +110,7 @@ if (moved.length) {
   console.error('LAYOUT GATE FAILED - ' + moved.length + ' of 42 pins moved. Nothing cut.');
   for (const l of moved) console.error('  ' + l);
   console.error('A moved layout hash means this release touched map generation, which is');
-  console.error('not what v83 claims to do. Fix that before repinning any trail.');
+  console.error('not what v86 claims to do. Fix that before repinning any trail.');
   process.exit(1);
 }
 console.error('layout gate: all 42 pins hold. Cutting trails.\n');

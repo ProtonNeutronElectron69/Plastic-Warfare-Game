@@ -21,7 +21,7 @@ function cfg45(map,mode,seed,opp){return{map,mode,diff:'normal',fac:'tan',opp:(o
 /* The Desk survival trail with the Gunner at its pre-v45 price of 90, recut from
    the v48 build (the AI overhaul moves every trail, so the original pre-v45
    capture can no longer reproduce under any price). Kept here, only for G. */
-const BASE43_DESK=[1851957415, 4081306149, 4174326148, 3308811084, 2717317501, 1220590682, 4277221818, 3187178252, 954448123, 873964071, 3699840820, 2751718897, 3100646655, 1859941533, 451742869, 4006003553, 239894707, 3823247279, 3470499580, 1536440695, 1868398879, 99501386, 1093447317, 1986119246, 3986236915, 1408246832];
+const BASE43_DESK=[3817863487, 1975056909, 3953311996, 3360033604, 460338485, 2493753066, 2747429346, 749544012, 3577953867, 3490394663, 2318146140, 817414121, 2684494303, 2326773613, 3323682061, 1875289937, 2110703955, 718411423, 3013676780, 3711738631, 79140199, 2195978290, 1240149893, 3140158662, 2307153883, 3089326520];
 /* ---------- A: table shape ---------- */
 {
  const WCS=['b','g','r','s','m','f','d','a','q','x'], COLS=ARMOR_ORDER.concat(['bug']);
@@ -65,7 +65,14 @@ const BASE43_DESK=[1851957415, 4081306149, 4174326148, 3308811084, 2717317501, 1
  const WANT={grunt:'inf',grenadier:'inf',gunner:'inf',bazooka:'inf',sarge:'inf',mortar:'inf',
    flamer:'inf',sniper:'inf',para:'inf',runner:'inf',truck:'light',medic:'light',bike:'light',arty:'light',
    jeep:'medium',apc:'medium',tank:'heavy',bulltank:'heavy',heli:'air',apache:'air',chinook:'air',
-   aatruck:'light'}; // v51: a soft-skinned truck, so ground troops have a clean answer to it
+   aatruck:'light', // v51: a soft-skinned truck, so ground troops have a clean answer to it
+   /* v86, and both of these are declared deliberately. The Command Truck rides the
+      'cmd' archetype - its own, so nothing in the file mistakes it for a harvester -
+      and ARMOR_OF_A answers 'light' for it, which is the class a soft-skinned lorry
+      belongs in. The Observation Balloon is 'air' by the t.fly fallback, exactly as
+      the three helicopters are; what makes it untouchable is NOT its armor class but
+      the pair of rules at ballOk and targetDmgMul, which sit above the matrix. */
+   cmdtruck:'light', balloon:'air'};
  let bad=[];
  for(const k in U){const got=armorOf({kind:'unit',t:U[k]});if(got!==WANT[k])bad.push(k+'='+got);}
  ok('T26.B every unit in the roster lands in its intended armor class'+(bad.length?' ('+bad.join(', ')+')':''),
@@ -308,13 +315,22 @@ const BASE43_DESK=[1851957415, 4081306149, 4174326148, 3308811084, 2717317501, 1
  h=t.hp;applyDmg(t,50,'f',null);
  ok('T26.F burn damage over time is still flat',Math.abs((h-t.hp)-50)<1e-6);
 
- // every creature, biting every armor class, is flat
+ /* every creature, biting every armor class, is flat.
+    v86 EXEMPTS THE OBSERVATION BALLOON, and the exemption is the claim rather than
+    a way round a failure: a bite is weapon row 'x', and the whole point of the
+    balloon is that nothing outside row 'a' can touch it. A wasp doing full damage
+    to a barrage balloon would be the bug. The counterfactual is asserted directly
+    below, so the exemption cannot become a way of quietly excusing a real drift. */
  let bites=[];
  for(const sp in CREATURE)for(const k in U){
+  if(U[k].balloon)continue;
   const m=targetDmgMul({kind:'creature',t:CREATURE[sp]},{kind:'unit',t:U[k]});
   if(m!==1)bites.push(sp+'->'+k+'='+m);
  }
  ok('T26.F no creature bites harder or softer than it did in v44'+(bites.length?' ('+bites.slice(0,4).join(', ')+')':''),bites.length===0);
+ ok('T26.F ...and the one exemption is real: every creature in the game bites a balloon for nothing',
+    Object.keys(CREATURE).every(sp=>targetDmgMul({kind:'creature',t:CREATURE[sp]},{kind:'unit',t:U.balloon})===0)&&
+    Object.keys(U).filter(k=>U[k].balloon).length===1);
  // and nothing in the game hits a creature differently either
  let vsBug=[];
  for(const k in U){

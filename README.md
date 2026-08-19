@@ -21,14 +21,13 @@ you use during the battle.
 
 | Army | Character | Exclusive units | Exclusive buildings | Own call-in |
 |---|---|---|---|---|
-| 🟢 **Green Army** | Balanced — everything costs 8% less | Sarge, Mortar Squad | Radar Tent | — |
+| 🟢 **Green Army** | Balanced — everything costs 8% less | Sarge, Mortar Squad, Command Truck, Observation Balloon | Radar Tent, Command Post | Supply Drop |
 | 🟤 **Tan Army** | +15% damage, slightly slower | Flamethrower, "Bull" Heavy Tank | Munitions Dump | — |
 | ⚪ **Gray Army** | +20% tougher, slightly slower | Sniper, Rocket Artillery | Bunker | — |
 | 🔵 **Blue Army** | +15% speed, lighter plastic (−10% health) | Scout Bike, Chinook, Signal Runner | Wind Turbine, Forward Pad | Rapid Redeploy |
 
-Blue is currently the only army with a *full* exclusive set. Green, Tan and Gray
-are being brought up to the same shape at v86, v87 and v88 — see the version
-history below.
+Blue and Green have a *full* exclusive set. Tan and Gray are being brought up to
+the same shape at v87 and v88 — see the version history below.
 
 A few examples of what those abilities actually do:
 
@@ -38,6 +37,9 @@ A few examples of what those abilities actually do:
 - The **"Bull" Heavy Tank** ignores rifle fire completely, and at Full Throttle
   crushes infantry under its treads but cannot shoot while rolling.
 - The **Scout Bike** takes half damage on any moment he is actually moving.
+- The **Observation Balloon** has the best sight on the board and nothing but an
+  anti-air missile can touch it — but the gas runs out after three minutes and it
+  falls, so bail the crew out before it does.
 - The **Chinook**'s squad can fire out of the open hold — but the aircraft is
   pinned in place while they do.
 - The **Wind Turbine** can be overdriven to triple power for 20 seconds, and
@@ -102,7 +104,7 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 85**.
+The game is at **version 86**.
 
 **Roadmap 1 (v79–v82) — complete.** Every exclusive unit and building that
 existed then got one passive and one toggleable ability: Green at v79, Tan at
@@ -110,8 +112,8 @@ v80, Gray at v81, Blue at v82.
 
 **Roadmap 2 (v85–v88) — in progress.** Every army gets two exclusive buildings,
 an exclusive unit out of the Barracks, the Garage *and* the Helipad, and a Radio
-Tower call-in of its own. **Blue landed at v85**; Green is v86, Tan v87, Gray
-v88. The specification for all three outstanding armies is already written down
+Tower call-in of its own. **Blue landed at v85 and Green at v86**; Tan is v87 and
+Gray v88. The specification for both outstanding armies is already written down
 and settled — see *Roadmap 2: the remaining three armies* in
 [`harness/README.md`](harness/README.md).
 

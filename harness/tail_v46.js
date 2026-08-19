@@ -214,8 +214,14 @@ function drop46(u){const i=G.units.indexOf(u);if(i>=0)G.units.splice(i,1);const 
 
 /* ---------- F: bots leave it alone ---------- */
 {
+ /* v86: the exclusion list stopped being a chain of name tests inside aiTick and
+    became a read of AI_SUPPORT, which is the table that already answered the
+    question - two hand-typed copies of four keys would have silently called the
+    Command Truck and the Observation Balloon line fighters. The check follows the
+    fact rather than the spelling: ask the table, and assert the combat pick really
+    consults it rather than merely having it in scope. */
  ok('T27.F the transport is on the AI production exclusion list',
-    aiTick.toString().indexOf("k!=='chinook'")>0);
+    !!AI_SUPPORT.chinook&&aiTick.toString().indexOf('AI_SUPPORT[k]')>0);
  let built=0,blueSeen=false;
  for(const seed of [460101,460102]){
   G=null;newGame({map:'backyard',mode:'dm',diff:'hard',fac:'green',opp:3,seed:seed});

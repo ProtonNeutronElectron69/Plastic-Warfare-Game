@@ -476,7 +476,20 @@ const FACS63 = ['green', 'tan', 'gray', 'blue'];
     } finally { makeUnit = real; }
     return per;
   }
-  const SEEDS63 = [630080, 630081];
+  /* v86: TWO SEEDS BECAME FOUR, and the reason is measurement rather than a
+     failure being papered over. v86 adds nothing to Gray, but it moves the shared
+     RNG stream everywhere (a Green bot now researches and fields three more
+     things), and on the original pair Gray's bunker count fell 1.00 -> 0.00 while
+     Blue's turbine count rose 1.00 -> 2.50. Measured over six seeds instead of
+     two: v85 read blue 1.00 / gray 1.67, v86 reads blue 2.33 / gray 0.83, so the
+     PAIR is roughly conserved (2.67 -> 3.16) and what actually happened is a
+     redistribution between two armies, not Gray losing the ability to build
+     bunkers. A two-sample mean of a small count was never enough to tell those
+     apart, which is the same fault T31.E and T50.F were found to have at v85.
+     Four rather than six is the time budget: each seed is a 400-second match and
+     this section runs the census twice, so six would put ~120 seconds on the
+     segment for a third decimal place. */
+  const SEEDS63 = [630080, 630081, 630082, 630083];
   /* 400 sim-seconds. This section costs four full matches and is the most expensive
      thing in the file, so it buys the claim it can afford: that signature units are
      a real share of production and that the structures get built. Whether the bot

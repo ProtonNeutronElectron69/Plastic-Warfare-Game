@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v85)
+# Plastic Warfare headless test harness (updated at v86)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -23,15 +23,18 @@ the Barracks, the Garage AND the Helipad (each with a passive and an ability),
 and one unique Radio Tower call-in.** Same cadence as roadmap 1 - ONE FACTION PER
 VERSION, so trail divergence stays attributable (rule 7a below still governs).
 
-**Blue landed at v85.** Green is v86, Tan v87, Gray v88. The full specification
-for all three outstanding armies is in "Roadmap 2: the remaining three armies"
-below; it is DECIDED, not proposed.
+**Blue landed at v85 and Green at v86.** Tan is v87 and Gray v88. The full
+specification for both outstanding armies is in "Roadmap 2: the remaining three
+armies" below; it is DECIDED, not proposed. The v86 entry there is left in place
+as the record of what Green was told to build, exactly as the roadmap-1 phases are.
 
 Rule 1a below was OVERRIDDEN BY THE OWNER for roadmap 2: cooldown abilities on
 units are now in scope, and the `u.abCool` machinery they need is to be built
 when the first one lands (Tan's Napalm Blast at v87, Gray's Paint at v88). v85
-needed none of it - Sprint is a sustained mode in the roadmap-1 shape - so the
-machinery is NOT built yet. Do not assume it exists.
+needed none of it - Sprint is a sustained mode in the roadmap-1 shape - and v86
+needed none either: Broadcast is a sustained mode, and Bail is an instantaneous
+one-shot that destroys the unit offering it, so there is nothing to recharge. The
+machinery is STILL NOT BUILT. Do not assume it exists; v87 is where it lands.
 
 ### The two structural decisions that govern all four phases
 
@@ -382,6 +385,8 @@ clarification the owner gave, so they can be built without re-asking.
     electricity. Only the owning player's units collect them. Instant on pickup.
     No expiry.
 
+### v86 - GREEN ARMY. LANDED. See the v86 notes below for what it cost.
+
 ### v87 - TAN ARMY
 
   FIREBOMB HELI (Helipad).
@@ -420,6 +425,249 @@ clarification the owner gave, so they can be built without re-asking.
     structures inside, 10 seconds. Deliberately stronger than the Mortar's Smoke
     Rounds (SMOKE_RED 0.2, radius 2, 5s, units only) - that is intended, not an
     oversight to be balanced away.
+
+## v86 note: what v86 actually added, and the four seams worth knowing
+
+  COMMAND TRUCK (Garage, Green). 145 plastic + 20 battery, no weapon at all, and
+    the slowest wheeled thing in the game at sp 2.0. Its own archetype `a:'cmd'`
+    rather than `'truck'`, because `t.a==='truck'` means HARVESTER at fifteen doors
+    in the file and the idle branch in `updateUnit` would send a command vehicle
+    off to mine; the Medic escapes that only by carrying `t.heal`.
+    Passive `Forward Command` - a build anchor that travels, on `CMD_R` 5 tiles,
+    carrying `CMD_BLD` and nothing else: barricade, guard tower, barracks. The list
+    is a constant read by the placement door and by the info card, so the sentence
+    the player reads and the rule the sim enforces are the same three names.
+    Toggle `Broadcast` - allies within 5 tiles reload 20% faster and the truck
+    cannot move while it runs.
+  OBSERVATION BALLOON (Helipad, Green). 250 + 60, vision 16 - above the Radar
+    Tent's 13, so it is the best sight in the game and not merely among units.
+    Only weapon row `a` may ACQUIRE it and it takes a flat third from what does;
+    splash never reaches it; and `BALLOON_FUEL` 180 seconds later it falls on its
+    own and the crew is lost. No unit limit, by decision - the clock is the limit.
+    Passive `High Ground` - allies inside its vision get +1 range.
+    Ability `Bail` - four men on the ground, and the balloon is destroyed.
+  COMMAND POST (Green's second structure). 250 + 60. Passive: units within 8 tiles
+    promote on 30% fewer kills. Ability `Regroup`: every unit in that radius is
+    handed 25% of its OWN maximum HP back, at once, on a 60-second cooldown.
+  SUPPLY DROP (Radio Tower call-in, Green only). Two crates, 500 plastic and 500
+    electricity, collected by walking over them, and only by the owning army.
+
+**Seam 1 - the three auras are read off their sources, exactly as v85's pair are.**
+`bcastOn`, `highOn` and `cpostOn` scan for the source at the point of use and write
+nothing onto the entities they affect. A twenty-man line under a Broadcast is still
+one boolean on one truck. Where they differ from `rnetOn`/`sprintOn` is the missing
+infantry gate: a reload, a weapon range and a promotion belong to vehicles and
+aircraft as much as to men, so there is no class to leave on the first line. The
+flag test still leads inside each loop and is undefined on every unit in the file
+except the two Green vehicles, so the body stays one property read per unit.
+
+**Seam 2 - Broadcast lives in `rtOf`, which IS the reload.** Ripple Fire's longer
+reload and an entrenched gunner's divided one both resolve through it, so one door
+covers all three shapes and leaves `srtOf` - the INTER-salvo spacing, a cadence and
+not a reload - alone. The one shot in the file that does not come through `rtOf` is
+the Paratrooper's, whose munition carries its own `rt` exactly as it carries its own
+range past `rgOf`; a drop-only unit standing outside both doors is v30 behaviour and
+was left as it is.
+
+**Seam 3 - the balloon needed BOTH an acquisition gate and a damage rule, and the
+damage rule alone would not have done.** `ballOk` is the gate, shaped like `aaOk`
+and `csOk` but read the other way round - it is a property of the TARGET restricting
+who may hold it, where those two are properties of the shooter. It is consulted at
+`mainOk`, at `nearestEnemy` and at the tower/bunker scan; `wcOf` answers for a
+building as well as a unit, so the guard tower and the bunker are covered by the
+same line. Without it every rifleman on the map would stand under a balloon forever
+dealing nothing, because a zero multiplier is not a refusal to aim.
+`splash` needed its own line for a reason that is easy to get backwards: EVERY
+rocket in this file, the AA row included, does all of its damage as splash on
+impact - `updateProjs` never applies a direct hit - so "splash never touches it"
+could not be implemented as "skip balloons in splash". It is implemented as "skip
+balloons unless this burst is an AA missile's", which is both sentences at once.
+
+**Seam 4 - the Command Post spends the veterancy LADDER, not the kill credit.**
+`u.kl` is a count of kills, it is hashed through `hI`, and `hI` does `v|=0` - so
+crediting 1.5 kills for one under the aura would advance the serialized state and
+NOT advance the hash. That is a lockstep divergence with no symptom at all until
+two clients disagree about a promotion. A cheaper ladder keeps `kl` an integer,
+needs no new state anywhere, and says the same thing. The reduced rungs are derived
+per rung off `VET_INF` / `VET_VEH` rather than typed as a second pair of arrays, so
+re-tuning either cannot leave a stale copy behind.
+
+## v86 note: two new units, and the roster-wide derivations were checked FIRST
+
+The v85 trap generalises to "any derived constant that takes a min or a max over a
+whole table is a trap for the next row added to it", and v86 adds two rows. Both
+readers of `U` in aggregate were checked before either row went in:
+
+  `MEDIC_HEAL_RATE` - a `Math.min` over the DPS of everything that fights. Both new
+    units are unarmed (`dm: 0`), so the guard `t.dm>0` excludes them and the floor
+    is untouched at 2.0894 HP/s. Note this is NOT the `noPace` exemption the Signal
+    Runner needed: neither row carries it, and T59.A asserts that, so the reason the
+    Medic did not move is the honest one.
+  `SUP_U` - quartile RANKS over the trainable roster sorted by cost. This one really
+    was at risk: an insertion re-ranks everything after it, and the roster went 21 ->
+    23, which moves the cuts from after the 6th/11th/16th to after the 6th/12th/18th.
+    For all 21 existing units to keep the rank they had, exactly one arrival has to
+    land before the Medic and exactly one between the Medic and Sarge. **The two
+    prices were then chosen to make that true**: 145+23 = 168 puts the Command Truck
+    between the Mortar Squad (150) and the Sniper (170), and 250+69 = 319 puts the
+    Balloon between the APC (306) and Sarge (329). Measured after the fact: nothing
+    moved tier. T59.A transcribes the pre-v86 ranks and carries the counterfactual -
+    price the Command Truck at 20 and the roster really does re-tier - so the two
+    costs cannot drift into a silent re-pricing of somebody else's supply.
+
+`AI_SUP_UNIT` (the mean supply rank over the trainable COMBAT roster) reads the same
+`dm>0` guard as the Medic floor and is likewise unmoved.
+
+## v86 trap: the build-menu alphabet ran out at v85, and the pin that should have caught it was reading the wrong thing
+
+`MENU_KEYS` held thirteen letters, chosen at v73 as EXACTLY the ones no in-match
+binding claims. The HQ's panel is the build roster plus its Dump Truck tile, and the
+build roster is eleven fixed keys plus that army's exclusive structures - so the
+moment Blue got a second structure at v85 its HQ menu was **fourteen tiles against
+thirteen keys**, and the fourteenth tile silently carried no hotkey. `hotNext`
+returns null past the end and the tile is built without a key, so nothing failed.
+
+T50.D exists to catch precisely that, and it did not, because the loop that claims
+to check "every host x faction" computed the construct half with
+`constructRoster('hq')` - which reads `bldRoster(G.human)`, the LOCAL player's
+roster, no matter what faction the loop was iterating. Every row of that sweep
+measured Green. Green was still thirteen at v85, so the sweep read 13 and passed.
+
+Both halves are fixed in this release. The fixture reads `bldRoster(q)` so the claim
+it makes is the claim it checks, and `MENU_KEYS` gains a fourteenth key. Fourteen is
+the whole roadmap's width, not a step on the way to more: every army ends roadmap 2
+with two exclusive structures, so Tan and Gray reach fourteen at v87 and v88 and
+nothing reaches fifteen.
+
+**The fourteenth key is `v`, and it is not free in the strict sense the other
+thirteen are** - the spectator box toggles on it. The two can never be live
+together, and not by luck: the Construct menu is built only under `e.p.human`, and
+a watch match has no human player at all, so the registry is empty for the whole of
+every match in which `v` means anything. That premise is PINNED rather than argued
+in prose - T50.D boots a watch match and asserts no player in it is human - because
+it is the kind of claim that quietly stops being true.
+
+## v86 measurement: T42.H's two-seed census was seed-lucky, and both builds were measured
+
+T42.H reads "how many of its SCALING structures does each army finish inside one
+400-second match", over two seeds. At v86 it read blue 2.50 / gray 0.00 and failed
+on Gray's 0.5 floor - in a release that adds nothing to Gray at all.
+
+Measured over six seeds on BOTH builds rather than argued about:
+
+    v85   blue 1.00   gray 1.67
+    v86   blue 2.33   gray 0.83
+
+The pair is roughly conserved (2.67 -> 3.16). What happened is a redistribution
+between two armies, not Gray losing the ability to build bunkers: v86 moves the
+shared RNG stream everywhere, because a Green bot now researches and fields three
+more things and every draw after it shifts. A two-sample mean of a small count
+cannot tell "redistributed" from "regressed", which is the same fault T31.E and
+T50.F were found to have at v85.
+
+`SEEDS63` is now four seeds rather than two (gray 0.75, blue 2.50). Four rather
+than six is the time budget: each seed is a 400-second match and the section runs
+the census twice, so six would put ~120 seconds on segment 2c for a third decimal
+place. **Expect this section to need re-measuring at v87 and v88 for the same
+reason**, and re-measure both builds rather than adjusting the floor.
+
+## v86 note: the crates are the first new top-level list since G.strikes
+
+`G.crates` is hashed, serialized and swept once per tick by `updateCrates`. It is a
+list rather than a strike because a strike is a TIMED effect that is spliced out when
+its schedule runs out, and a crate has no schedule at all - the owner's rule is "no
+expiry", so it lies where it lands until somebody walks over it. The strike that
+drops the pair carries `pi` rather than leaning on its owner, exactly as the v79
+smoke cloud does and for the same reason: the crates can land after the tower that
+called them is rubble, and `loadState` resolves a dead owner to null.
+
+Hashing it is not optional. Two clients disagreeing about whether a crate has been
+collected is a 500-plastic divergence, and a list that is hashed and not serialized
+fails the save/load test by construction - T59.F drives both directions, including
+collecting a crate that has been through a snapshot.
+
+## v86 trap: a fixture that stands a unit in a live match is measuring the match
+
+The first cut of T59.E stood an enemy Grunt on a crate, ran one tick of the real
+match, and asserted the crate was still there AND the Grunt still alive. It failed:
+the Grunt was at -171 HP by the end of the tick, having spawned on a buried landmine
+(`MINE_DMG` is 276). The refusal it meant to test was never exercised - it was
+reading a corpse.
+
+The rule is now driven through `updateCrates()` directly, the real function called on
+its own, and the claim that the MAIN LOOP drives that sweep is a separate check with
+a live tick on a crate of its own. This is the v85 heal-rate lesson in a second
+shape: either drive the one function under test, or key the measurement on something
+the rest of the match cannot supply.
+
+## v86 traps learned
+
+  - **A `d:` string on a table row cannot name another table.** `U.cmdtruck.d` wants
+    the NAMES of the three structures Forward Command anchors and `U.balloon.d` wants
+    the names of the four men Bail spawns; `B` is declared after `U`, and `U` is not
+    initialised while its own literal is being built, so both are template literals
+    reading a const in its temporal dead zone. Both are written in a post-table pass
+    below `B`, in the same style as `B.guardtower.dm`, so they still read off
+    `CMD_BLD` / `BAIL_CREW` rather than retyping the lists. HELP_TUNE slots do NOT
+    have this problem - a slot body only runs when `applyHelpTune` calls it, which is
+    why `plateRow` can already reach `wcRoster`.
+  - **A three-dash banner at column zero is a banner.** T49.D scans for
+    `/^\/\*\s+[-=]{3,}\s+(.+?)/`, so a top-level `/* --- v86 SOMETHING ---` comment is
+    a FILE MAP title and is refused for carrying a version prefix. An INDENTED one is
+    not, which is why the dozen `/* --- v86 ... ---` blocks inside functions are fine
+    and the one at column zero was not.
+  - **A comment cannot follow `.filter(k=>{` on the same line.** Dropping a `//`
+    explanation after an arrow-function brace ate the body of the AI production
+    filter and produced an "Illegal continue statement" two hundred lines away. Use a
+    `/* */` comment or put it on its own line.
+  - **The suite has two hand-typed copies of `AI_SUPPORT` in `aiTick`**, and both had
+    to become reads of the table before two new support units could be added -
+    otherwise the Command Truck and the Observation Balloon would have counted as
+    line fighters in the army census, the ceiling and the composition vote. T27.F and
+    T29.A pinned the SPELLING of those two lists and were rewritten to pin the fact.
+  - **A fresh match already fields two Grunts.** A fixture that counts `p.units` by
+    key to see what an ability spawned will read them as crew; count against the set
+    of ids that existed before instead.
+
+## v86 note: render_tail_v32 had been failing since BUILD_R_HQ moved, on every build
+
+Not a v86 regression - measured on the v85 build first, identical failure. The
+fixture painted `drawGhost` onto a fixed 560x420 canvas with the comment "so the
+10-ring lands on-canvas". `BUILD_R_HQ` was 10 when that was written and is 15 now:
+at 15 tiles the ring's widest points sit 480 px out against a 280 px half-width,
+and its top and bottom arcs sit 240 px out against a 210 px half-height, so NONE of
+it landed. The check read 0 green pixels and had been dead ever since.
+
+The canvas is now sized off `BUILD_R_HQ` itself, so a further re-tune of the build
+zone moves the canvas with it. Two v86 checks were added beside it for the Command
+Truck's travelling ring, and they carry a trap worth knowing: the placement GHOST is
+drawn in the faction colour, and for Green that is green, so a cross-key comparison
+measures the FOOTPRINT rather than the ring. Both checks compare the same key with
+the truck on the field and off it.
+
+render_tail_v49 gained a v86 block of its own: the two new hulls through the same
+near-black / team-hue classifier the buildings already use, and the supply crate,
+which is scored differently on purpose - its body is a fixed olive green and NOT the
+faction colour, because what has to read at a glance is which resource is in it
+rather than whose it is. The Command Post needed no edit there: section 3 already
+walks `for(const key in B)`.
+
+The six real-canvas tails at v86: 60 / 25 / 60 / 152 / 9 / 4, all green. They need
+`npm i @napi-rs/canvas`, which is not preinstalled in a fresh container.
+
+## v86 note: the snapshot tag moved 73 -> 86
+
+`saveState` writes a `v` field that T49.E calls "the tag that tracks the build". It
+had read 73 since v73 because no release since had changed the snapshot's SHAPE.
+v86 adds a top-level `crates` list to it, so the tag moves. Old saves still load:
+`loadState` reads `S.crates || []`, and a pre-v86 save honestly carries none. The
+tag is not part of `hashState` and never has been.
+
+## v86 note: tail_v86 rides segment 3, and the check count
+
+Segment 3 carries tail_v86 alongside tail_v79 through tail_v85. No further split was
+needed. The five segments at v86 run 2337 / 494 / 48 / 237 / 1567 = 4683 checks,
+0 failures, plus verify_v58.py's 32.
 
 ## v85 note: the FAC.ub refactor was landed and PROVED neutral before any content
 
@@ -1454,10 +1702,10 @@ now runs each table from its own cfg and asserts both the equality that should h
 
 ## Contents
 
-v85 adds tail_v85.js (T58). recut_v85.js and repin_v85.py are this release's
-one-shot recut pair, carried forward from the v84 pair and replacing it, per the
-standing rule that only the CURRENT release's one-shots ship. v84's tail_v84.js
-(T57) stays, as every release tail does.
+v86 adds tail_v86.js (T59). recut_v86.js and repin_v86.py are this release's
+one-shot recut pair, carried forward from the v85 pair and replacing it, per the
+standing rule that only the CURRENT release's one-shots ship. v85's tail_v85.js
+(T58) stays, as every release tail does.
 
 v82 added tail_v82.js (T56). recut_v82.js and repin_v82.py were one-shot records
 that shipped beside the release and are NOT carried forward in this bundle;
@@ -1465,6 +1713,13 @@ probe_v82_chin2.js, probe_v82_audit.js, probe_v82_bike2.js,
 probe_v82_calldown.js and probe_v82_od.js are the scoping probes behind the v82
 notes above and are likewise records rather than harness machinery.
 - run.sh         harness runner: ./run.sh [standard|mini|full|render <tail>]
+- tail_v86.js    T59, the v86 Green release. Sections A-H: the tables and the two
+                 roster-wide derivations that had to be checked before two rows went
+                 into U, the Command Truck's travelling build anchor and Broadcast at
+                 the rtOf door, the Observation Balloon across all four of its
+                 targeting doors plus the fuel clock and Bail, the Command Post's
+                 cheaper veterancy ladder and Regroup, the Supply Drop's crates
+                 through a snapshot, and the four bot rules driven rather than read.
 - tail_v85.js    T58, the v85 Blue release and the FAC.ub refactor. Sections A-F:
                  ub as a list and every reader that took the change, the Signal
                  Runner's two auras and the three doors Sprint closes, the Forward
