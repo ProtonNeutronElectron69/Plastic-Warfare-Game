@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""repin_v85.py - write the recut_v85 tables into the tails that pin them.
+"""repin_v86.py - write the recut_v86 tables into the tails that pin them.
 
-    cat shim_head.js game.js recut_v85.js > rc85.js && node rc85.js > cut_v85.json
-    python3 repin_v85.py cut_v85.json
+    cat shim_head.js game.js recut_v86.js > rc86.js && node rc86.js > cut_v86.json
+    python3 repin_v86.py cut_v86.json
 
 Five tables across four files:
 
@@ -27,7 +27,7 @@ import json
 import re
 import sys
 
-CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v85.json'
+CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v86.json'
 cut = json.load(open(CUT, encoding='utf-8'))
 
 # ---- shape gate: refuse a cut that does not look like the tables it replaces --
@@ -52,7 +52,7 @@ if any(len(v) != 3 for v in cut['BASE45_AI'].values()):
 if len(cut['BASE43_DESK']) != 26:
     sys.exit('BASE43_DESK should hold 26 samples (2400/90), got %d' % len(cut['BASE43_DESK']))
 if cut['BASE45_TRAILS'] != cut['BASE62_TRAILS']:
-    sys.exit('the two tan tables disagree - recut_v85 should have caught this')
+    sys.exit('the two tan tables disagree - recut_v86 should have caught this')
 
 
 def obj(table, indent):

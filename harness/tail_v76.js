@@ -128,15 +128,28 @@ section('T51.C one ability table feeds the panel, the card and the vision gate')
      rather than a second table, so the "one source" claim this section exists to
      make is strictly stronger than it was: the panel, the manual, the vision gate
      AND now the per-army filter all read the same rows. */
-  ok('T51.C four call-downs, three of them shared', RADIO_ABILITIES.length === 4);
+  /* v86: five rows, three of them still shared. Green's Supply Drop is the second
+     row to carry a `fac`, which is what makes the field's semantics testable rather
+     than a special case for one army: two DIFFERENT armies each get exactly one row
+     nobody else can see, off the same mechanism. */
+  ok('T51.C five call-downs, three of them shared', RADIO_ABILITIES.length === 5);
   ok('T51.C the modes are the ones the command path dispatches',
-    RADIO_ABILITIES.map(a => a.mode).join(',') === 'napalm,barrage,paradrop,lift');
-  ok('T51.C an absent `fac` means everybody, and exactly one row claims an army',
+    RADIO_ABILITIES.map(a => a.mode).join(',') === 'napalm,barrage,paradrop,lift,supply');
+  ok('T51.C an absent `fac` means everybody, and two rows claim an army each',
     RADIO_ABILITIES.filter(a => !a.fac).length === 3 &&
-    RADIO_ABILITIES.filter(a => a.fac).length === 1 && radioAbility('lift').fac === 'blue');
-  ok('T51.C the filter hands three armies three and Blue four',
-    ['green', 'tan', 'gray'].every(f => radioListFor({ fac: f }).length === 3) &&
-    radioListFor({ fac: 'blue' }).length === 4);
+    RADIO_ABILITIES.filter(a => a.fac).length === 2 &&
+    radioAbility('lift').fac === 'blue' && radioAbility('supply').fac === 'green');
+  ok('T51.C the filter hands two armies three and Blue and Green four each',
+    ['tan', 'gray'].every(f => radioListFor({ fac: f }).length === 3) &&
+    radioListFor({ fac: 'blue' }).length === 4 && radioListFor({ fac: 'green' }).length === 4);
+  ok('T51.C ...and neither faction row leaks into the other army that has one',
+    !radioAllowed({ fac: 'green' }, 'lift') && !radioAllowed({ fac: 'blue' }, 'supply'));
+  /* v86: `hint` joined the row for the same reason `panel` is on it - the armed
+     message was a chain of mode-name tests in the panel, i.e. a hand-kept copy of
+     this table's membership. */
+  ok('T51.C every row carries the line the panel prints when it is armed',
+    RADIO_ABILITIES.every(a => typeof a.hint === 'string' && a.hint.length > 0) &&
+    refreshRadioPanel.toString().indexOf('.hint') > 0);
   ok('T51.C ...and radioAllowed agrees with it, row for row',
     RADIO_ABILITIES.every(a => ['green', 'tan', 'gray', 'blue'].every(f =>
       radioAllowed({ fac: f }, a.mode) === radioListFor({ fac: f }).includes(a))));

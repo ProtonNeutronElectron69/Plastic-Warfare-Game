@@ -133,8 +133,16 @@ section('T50.A the minimap reserve tracks the size cycle');
      a count, so a fifth call-down does not fail here. */
   ok('T50.A ...and still builds one call-down button per ability this army has, plus the readout',
      bx.children.length === radioListFor(p).length + 1 && radioListFor(p).length >= 1);
-  ok('T50.A ...and this army is not Blue, so it is offered the shared three',
-     p.fac !== 'blue' && radioListFor(p).length === 3);
+  /* v86: this used to read "not Blue, so it gets the shared three", which was a
+     count dressed as a relation and stopped being true the moment a SECOND army
+     got a row of its own. Stated as the rule instead - the shared rows plus this
+     army's own, and nothing belonging to anybody else - so it holds for whichever
+     faction the fixture happens to boot and for the two armies still to come. */
+  ok('T50.A ...and the roster it is offered is the shared rows plus this army\'s own',
+     radioListFor(p).length === RADIO_ABILITIES.filter(a => !a.fac).length
+                              + RADIO_ABILITIES.filter(a => a.fac === p.fac).length &&
+     radioListFor(p).every(a => !a.fac || a.fac === p.fac) &&
+     RADIO_ABILITIES.filter(a => !a.fac).length === 3);
   ok('T50.A ...still as .bb buttons', bx.children[0].className.indexOf('bb') === 0);
 }
 
@@ -375,12 +383,21 @@ section('T50.D build-menu hotkeys');
      keys the in-match handler already claims, read out of the handler's own
      source, so a future release that binds one of these globally fails HERE
      rather than by producing a key that silently means two things. */
-  ok('T50.D thirteen distinct keys', MENU_KEYS.length === 13 && new Set(MENU_KEYS).size === 13);
+  /* v86: FOURTEEN, and the alphabet is now exactly the 26 letters minus the twelve
+     the in-match handler claims outright. 'v' is the fourteenth and is the one
+     entry that is not disjoint in the strict sense: the spectator box binds it,
+     but only in a watch match, and a watch match builds no Construct menu at all
+     (the panel gate is e.p.human and a watch match has no human player), so the
+     registry and that binding can never be live together. That premise is pinned
+     just above, in the widest-menu block, rather than assumed here. */
+  ok('T50.D fourteen distinct keys', MENU_KEYS.length === 14 && new Set(MENU_KEYS).size === 14);
   ok('T50.D none of them is a movement key or the space bar',
      !MENU_KEYS.some(k => 'wasd '.indexOf(k) >= 0));
-  const taken = ['b', 'f', 'h', 'j', 'p', 'q', 'u', 'v', 'x'];
-  ok('T50.D none of them collides with an existing in-match binding',
+  const taken = ['b', 'f', 'h', 'j', 'p', 'q', 'u', 'x'];
+  ok('T50.D none of them collides with an in-match binding that can be live beside a menu',
      !MENU_KEYS.some(k => taken.indexOf(k) >= 0));
+  ok('T50.D ...and the one overlap is the watch-only key, declared rather than accidental',
+     MENU_KEYS.includes('v') && taken.indexOf('v') < 0);
   {
     /* the same claim, read out of the handler instead of out of that list, so
        the list above cannot drift away from the code it describes */
@@ -388,13 +405,15 @@ section('T50.D build-menu hotkeys');
     const declared = MENU_KEYS.concat(taken, ['w', 'a', 's', 'd']);
     ok('T50.D the alphabet and the taken set are disjoint and total 26 or fewer',
        new Set(declared).size === declared.length && declared.length <= 26 && kd.length >= 0);
+    ok('T50.D ...and together they now account for every letter of the alphabet',
+       declared.length === 26);
   }
   ok('T50.D hotNext walks the alphabet in order and then returns null',
      (() => {
        hotReset();
-       const got = []; for (let i = 0; i < 15; i++) got.push(hotNext());
+       const got = []; for (let i = 0; i < 16; i++) got.push(hotNext());
        hotReset();
-       return got.slice(0, 13).join('') === MENU_KEYS.join('') && got[13] === null && got[14] === null;
+       return got.slice(0, 14).join('') === MENU_KEYS.join('') && got[14] === null && got[15] === null;
      })());
 }
 {
@@ -413,17 +432,40 @@ section('T50.D build-menu hotkeys');
 
   /* every OTHER host fits with room to spare, checked across all four factions
      so a faction-exclusive cannot push one over without this firing */
+  /* v86 FIXTURE CORRECTION. This loop claimed to check all four factions and did
+     not: constructRoster('hq') reads bldRoster(G.human), so the construct half of
+     every row was the LOCAL player's roster no matter what `q` said. That is why
+     nobody noticed that Blue's HQ menu became fourteen tiles at v85 against a
+     thirteen-letter alphabet - the fourteenth tile silently carried no hotkey, and
+     this is the pin that exists to catch exactly that. Reading bldRoster(q) makes
+     the claim true, and MENU_KEYS gained its fourteenth key in the same release. */
   let worst = 0, worstAt = '';
   for (const fac of Object.keys(FAC).filter(f => f !== 'bug')) {
     const q = { fac };
     for (const host of ['hq', 'outpost', 'barracks', 'garage', 'helipad']) {
-      const c = (host === 'hq' || host === 'outpost') ? constructRoster(host === 'outpost' ? 'outpost' : 'hq').length : 0;
+      const c = host === 'outpost' ? CONSTRUCT_OUTPOST.length : (host === 'hq' ? bldRoster(q).length : 0);
       const t = fullRoster(q, host).length;
       if (c + t > worst) { worst = c + t; worstAt = fac + '/' + host; }
     }
   }
   ok(`T50.D no host x faction menu outgrows the alphabet (widest ${worst} at ${worstAt})`,
-     worst === 13 && worst <= MENU_KEYS.length);
+     worst === 14 && worst <= MENU_KEYS.length);
+  /* the fourteenth key is 'v', which the spectator box also uses. The two can
+     never be live together, and this is the premise rather than the prose: a watch
+     match has no human player, and the Construct menu is built only under
+     e.p.human, so the registry is empty for every match in which 'v' means
+     anything. Asserted here rather than in tail_v86 because this is the section
+     that owns the alphabet. */
+  ok('T50.D the fourteenth key is the one no menu-bearing match can also bind',
+     MENU_KEYS.length === 14 && MENU_KEYS.includes('v') &&
+     refreshSelPanel.toString().indexOf("e.p.human&&e.prog>=1") > 0);
+  {
+    const keep = G;
+    G = null; newGame({ map: 'backyard', mode: 'dm', diff: 'normal', fac: 'green', opp: 3, seed: 730451, watch: true });
+    ok('T50.D ...and a watch match, which is the only place \'v\' is bound, has no human player at all',
+       G.watch === true && G.players.every(pl => !pl.human));
+    G = keep;
+  }
 }
 {
   /* THE REGISTRY IS THE GATE. Not a conditional: keys exist only while their

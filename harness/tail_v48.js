@@ -40,10 +40,18 @@ function foe48(p){return G.players.find(q=>q!==p&&q.alive&&!allied(q,p))}
     rsrc.includes("'u_apc'")&&rsrc.includes("'b_radiotower'"));
  ok('T29.A the wish list builds the tower behind a non-stalling energy gate',
     src.includes("'radiotower'")&&src.includes("k==='radiotower'&&p.res.e<260"));
+ /* v86: both of these named the SPELLING of two hand-typed lists that have since
+    been replaced by reads of AI_SUPPORT - the table that has always been the real
+    answer. Rewritten to assert the fact instead: the army census and the combat
+    pick both consult that table, and the table still holds every carrier. Keeping
+    the string checks would have meant either reverting a genuine dedup or leaving
+    two checks green against text nothing reads. */
  ok('T29.A carriers and medics are support, not line fighters',
-    src.includes("u.key!=='apc'&&u.key!=='chinook'"));
+    src.includes('!AI_SUPPORT[u.key]&&!u.garrisoned')&&
+    ['truck','medic','apc','chinook'].every(k=>!!AI_SUPPORT[k]));
  ok('T29.A the combat pick still excludes every carrier',
-    src.indexOf("k!=='chinook'")>0&&src.indexOf("k!=='apc'")>0);
+    src.includes('roster(p,b.key).filter(k=>!AI_SUPPORT[k])')&&
+    Object.keys(U).filter(k=>AI_SUPPORT[k]).every(k=>!(U[k].dm>0)));
  ok('T29.A the AI never touches the magnifying glass',
     !src.includes('radioMagnify'));
  ok('T29.A entrenched gunners are barred from all three errand pools',

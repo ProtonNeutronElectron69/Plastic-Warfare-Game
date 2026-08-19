@@ -31,7 +31,7 @@ both, and why you run it before every test pass.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 4,560 checks at v85.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 4,683 checks at v86.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -65,7 +65,10 @@ the real problem instead of recording it.
    the next row you add to it.** Before adding a unit, grep for what reads `U` in
    aggregate. At v85 that was `MEDIC_HEAL_RATE` (min DPS across the roster) and
    `SUP_U` (cost quartiles) — the first would have silently cut every Medic in
-   the game by 37%.
+   the game by 37%. At v86 the same two were checked BEFORE the rows went in, and
+   `SUP_U` is why Green's two units are priced where they are: the two costs were
+   chosen inside the only bands that leave all 21 existing units on the supply
+   ranks they had.
 5. **A test that needs a conscious edit is doing its job.** Several pins exist
    precisely so an addition has to be declared: the `.bb` button count, the unit
    and building counts, the transcribed cost tables. Update them deliberately and
@@ -81,12 +84,12 @@ buildings, an exclusive unit from the Barracks, the Garage and the Helipad, and
 its own Radio Tower call-in.
 
 - **v85 — Blue. LANDED.** Signal Runner, Forward Pad, Rapid Redeploy.
-- **v86 — Green. NEXT.** Command Truck, Observation Balloon, Command Post,
+- **v86 — Green. LANDED.** Command Truck, Observation Balloon, Command Post,
   Supply Drop.
-- **v87 — Tan.** Firebomb Heli, Foundry, Napalm becomes Tan-exclusive.
+- **v87 — Tan. NEXT.** Firebomb Heli, Foundry, Napalm becomes Tan-exclusive.
 - **v88 — Gray.** Choktaw Heli, Heavy Barricade, Smokescreen.
 
-**The full specification for v86–v88 is written down and settled**, including
+**The full specification for v87–v88 is written down and settled**, including
 every clarification the owner gave. It is in `harness/README.md` under *Roadmap
 2: the remaining three armies*. **Build it as written** — it is decided, not
 proposed. Do not re-ask the questions it already answers.
@@ -96,8 +99,15 @@ Two things to know before starting one of them:
 - **One faction per version.** Self-contained, so trail divergence stays
   attributable to a single release.
 - **`u.abCool` does not exist yet.** Cooldown abilities on units were originally
-  ruled out and the owner later overrode that, but v85 needed none. The
-  machinery must be built when the first one lands — Tan's Napalm Blast at v87.
+  ruled out and the owner later overrode that, but neither v85 nor v86 needed
+  one — Sprint and Broadcast are sustained modes, and Bail is instantaneous and
+  destroys the unit offering it. The machinery must be built when the first one
+  lands — Tan's Napalm Blast at v87.
+- **The build-menu alphabet is now exactly full.** `MENU_KEYS` holds fourteen
+  keys and the widest menu is fourteen tiles. Tan and Gray reach fourteen too
+  when they get their second structure, so nothing more is needed — but a new
+  structure on top of roadmap 2 would need a fifteenth key, and there is no
+  unclaimed letter left. See the v86 note in `harness/README.md`.
 
 ## The patterns worth copying
 
@@ -116,7 +126,14 @@ When adding a faction exclusive, the v85 work is the closest model:
   the field" at every door in the file.
 - **A faction-only call-in is a `fac` field on the shared `RADIO_ABILITIES`
   table**, refused at the `execCmd` door — not a second table, and never relying
-  on the panel simply not offering it.
+  on the panel simply not offering it. Two armies carry one each now, so the
+  field's meaning is exercised rather than being a special case for Blue.
+- **"Cannot be targeted" needs an acquisition gate AND a damage rule.** v86's
+  balloon has both, because a zero multiplier is not a refusal to aim: without
+  `ballOk` every rifleman on the map would stand under one forever dealing
+  nothing. Splash needed a third line of its own, and the direction is
+  counter-intuitive — every rocket in the file lands its damage AS splash, so
+  the rule is "skip it unless this burst is an AA missile's".
 
 ## Git
 

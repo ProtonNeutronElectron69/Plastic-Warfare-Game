@@ -17,17 +17,25 @@ function put85(k, p, x, y) { const u = makeUnit(k, p, x, y); u.state = 'idle'; u
     Object.keys(FAC).every(f => Array.isArray(FAC[f].ub)) && Array.isArray(FAC.bug.ub));
   ok('T58.A Wildlife carries an empty one rather than an empty string',
     FAC.bug.ub.length === 0 && FAC.bug.uu.length === 0);
-  ok('T58.A Blue is the first army with two, and the other three still have one',
-    FAC.blue.ub.length === 2 && ['green', 'tan', 'gray'].every(f => FAC[f].ub.length === 1));
+  /* v86: Green is the second army to reach two, so the claim is no longer "one
+     army has two". Stated as the roadmap's own invariant instead - every army has
+     at least one and none has more than two - which holds at v86, v87 and v88
+     without another edit here, and the exact membership is pinned in T58.A's
+     INFO_FEXCL_B line just below. */
+  ok('T58.A two armies now hold two exclusive structures, and no army holds more',
+    FAC.blue.ub.length === 2 && FAC.green.ub.length === 2 &&
+    ['tan', 'gray'].every(f => FAC[f].ub.length === 1) &&
+    Object.keys(FAC).filter(f => f !== 'bug').every(f => FAC[f].ub.length >= 1 && FAC[f].ub.length <= 2));
 
   /* the membership list is DERIVED off FAC, and techAvailable reads that same
      list rather than a hand-typed copy. This is the check that a new exclusive
      cannot be researchable by every army in the game - the failure mode the three
      retired literal lists had built in. */
-  ok('T58.A the exclusive-building list is read off FAC and covers all five',
-    INFO_FEXCL_B.length === 5 && ['radar', 'dump', 'bunker', 'turbine', 'fwdpad'].every(k => INFO_FEXCL_B.includes(k)));
-  ok('T58.A the exclusive-unit list is read off FAC and covers all nine',
-    INFO_FEXCL_U.length === 9 && INFO_FEXCL_U.includes('runner'));
+  ok('T58.A the exclusive-building list is read off FAC and covers all six',
+    INFO_FEXCL_B.length === 6 && ['radar', 'dump', 'bunker', 'turbine', 'fwdpad', 'cmdpost'].every(k => INFO_FEXCL_B.includes(k)));
+  ok('T58.A the exclusive-unit list is read off FAC and covers all eleven',
+    INFO_FEXCL_U.length === 11 && INFO_FEXCL_U.includes('runner') &&
+    INFO_FEXCL_U.includes('cmdtruck') && INFO_FEXCL_U.includes('balloon'));
   for (const f of ['green', 'tan', 'gray', 'blue']) {
     const mine = FAC[f].ub, theirs = INFO_FEXCL_B.filter(k => !mine.includes(k));
     ok(`T58.A ${f} may research its own structures and no other army's`,
@@ -46,7 +54,7 @@ function put85(k, p, x, y) { const u = makeUnit(k, p, x, y); u.state = 'idle'; u
   /* mult is a table flag now. Two rows carry it, and the AI reads the flag. */
   ok('T58.A exactly the two structures a bot builds in numbers carry mult',
     Object.keys(B).filter(k => B[k].mult).sort().join(',') === 'bunker,turbine');
-  ok('T58.A ...and the Forward Pad is not one of them', !B.fwdpad.mult);
+  ok('T58.A ...and neither the Forward Pad nor the Command Post is one of them', !B.fwdpad.mult && !B.cmdpost.mult); // v86: a second post's aura does not add, exactly as a second Radar Tent's does not
 }
 
 /* ---------- B: the Signal Runner, as specified ---------- */

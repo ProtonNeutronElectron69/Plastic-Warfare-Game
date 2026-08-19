@@ -59,7 +59,15 @@ function mkCr52(sp,x,y){
   apache:[300,126.5],apc:[260,46],chinook:[300,115],para:[0,0],
   // v85: the Signal Runner joins the record. 62 plastic and no battery - priced
   // ABOVE the Grunt he is weaker than, because what is bought is the two auras.
-  runner:[62,0]};
+  runner:[62,0],
+  /* v86: Green's two. Both prices were chosen INSIDE a band rather than picked
+     for feel, and the band is the supply ladder: SUP_U cuts the trainable roster
+     into quartiles by cp+ce, so a new unit's cost decides its own supply AND can
+     shove every unit past it into another tier. 168 total lands the Command Truck
+     between the Mortar Squad and the Sniper and 319 lands the Balloon between the
+     APC and Sarge, which is exactly where the two gaps are - see T35.A, which
+     asserts all twenty-one existing units kept the rank they had. */
+  cmdtruck:[145,23],balloon:[250,69]};
  const drift=[];
  for(const k in U)if(V65[k]&&(U[k].cp!==V65[k][0]||U[k].ce!==V65[k][1]))drift.push(k);
  ok('T33.A the whole v65 cost roster is intact'+(drift.length?' (drift: '+drift.join(', ')+')':''),

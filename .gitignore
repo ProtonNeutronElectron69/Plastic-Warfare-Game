@@ -22,9 +22,9 @@ harness/seg2c.js
 harness/seg3.js
 harness/.seg*.out
 harness/rc.js
-harness/rc84.js
+harness/rc86.js
 harness/tri.js
-harness/cut_v84.json
+harness/cut_v86.json
 
 # ---------------------------------------------------------------------------
 # Ordinary clutter your computer creates on its own
@@ -35,6 +35,10 @@ desktop.ini
 *.swp
 *~
 
-# If Node packages ever get installed here (e.g. for the canvas render tests)
+# If Node packages ever get installed here (e.g. for the canvas render tests).
+# package.json joined the list at v86: npm i writes one, the render tails are a
+# manual "npm i @napi-rs/canvas" step by design, and a committed manifest would
+# quietly turn that into a dependency of the repo.
 node_modules/
 package-lock.json
+package.json
