@@ -31,7 +31,7 @@ both, and why you run it before every test pass.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 4,683 checks at v86.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 4,781 checks at v87.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -86,10 +86,10 @@ its own Radio Tower call-in.
 - **v85 — Blue. LANDED.** Signal Runner, Forward Pad, Rapid Redeploy.
 - **v86 — Green. LANDED.** Command Truck, Observation Balloon, Command Post,
   Supply Drop.
-- **v87 — Tan. NEXT.** Firebomb Heli, Foundry, Napalm becomes Tan-exclusive.
-- **v88 — Gray.** Choktaw Heli, Heavy Barricade, Smokescreen.
+- **v87 — Tan. LANDED.** Firebomb Heli, Foundry, Napalm became Tan-exclusive.
+- **v88 — Gray. NEXT, and the last.** Choktaw Heli, Heavy Barricade, Smokescreen.
 
-**The full specification for v87–v88 is written down and settled**, including
+**The full specification for v88 is written down and settled**, including
 every clarification the owner gave. It is in `harness/README.md` under *Roadmap
 2: the remaining three armies*. **Build it as written** — it is decided, not
 proposed. Do not re-ask the questions it already answers.
@@ -98,14 +98,14 @@ Two things to know before starting one of them:
 
 - **One faction per version.** Self-contained, so trail divergence stays
   attributable to a single release.
-- **`u.abCool` does not exist yet.** Cooldown abilities on units were originally
-  ruled out and the owner later overrode that, but neither v85 nor v86 needed
-  one — Sprint and Broadcast are sustained modes, and Bail is instantaneous and
-  destroys the unit offering it. The machinery must be built when the first one
-  lands — Tan's Napalm Blast at v87.
+- **`u.abCool` EXISTS now**, built at v87 for Tan's Napalm Blast. The duration
+  lives on the table row as `t.abCd`; `makeUnit` writes the clock only onto rows
+  that declare one, `updateUnit` ticks it, and it is hashed, serialized and
+  zeroed by testing mode. Gray's Paint needs `abCd:20` on its row and no new
+  machinery at all.
 - **The build-menu alphabet is now exactly full.** `MENU_KEYS` holds fourteen
-  keys and the widest menu is fourteen tiles. Tan and Gray reach fourteen too
-  when they get their second structure, so nothing more is needed — but a new
+  keys and the widest menu is fourteen tiles. Gray reaches fourteen too when it
+  gets its second structure, so nothing more is needed — but a new
   structure on top of roadmap 2 would need a fifteenth key, and there is no
   unclaimed letter left. See the v86 note in `harness/README.md`.
 
@@ -126,8 +126,12 @@ When adding a faction exclusive, the v85 work is the closest model:
   the field" at every door in the file.
 - **A faction-only call-in is a `fac` field on the shared `RADIO_ABILITIES`
   table**, refused at the `execCmd` door — not a second table, and never relying
-  on the panel simply not offering it. Two armies carry one each now, so the
-  field's meaning is exercised rather than being a special case for Blue.
+  on the panel simply not offering it. Three armies carry one each now, and at
+  v87 the Napalm Strike moved INTO that state rather than being added beside it,
+  which is the strongest form of the claim. **The bot is the surface that hides:**
+  `aiTick` calls `radioNapalm` directly and never through `execCmd`, so it had to
+  be taught the same gate separately. Grep for the ability's own function name,
+  not just for the mode string.
 - **"Cannot be targeted" needs an acquisition gate AND a damage rule.** v86's
   balloon has both, because a zero multiplier is not a refusal to aim: without
   `ballOk` every rifleman on the map would stand under one forever dealing

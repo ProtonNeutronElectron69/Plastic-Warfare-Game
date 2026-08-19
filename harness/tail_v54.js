@@ -40,8 +40,8 @@ function bot55(){return G.players.find(p=>p.ai)}
     construction. Same shape of test aimed at the new rule. */
  ok('T35.A the roster is cut into four ranks',SUP_MAX===4&&typeof SUP_STEP==='undefined');
  const trainable=Object.keys(U).filter(k=>!U[k].noTrain);
- ok('T35.A the cuts are set by the 23 trainable units (the drop-only para is excluded)',
-    trainable.length===23&&!trainable.includes('para')); // v85: 20 -> 21, the Signal Runner. v86: 21 -> 23, the Command Truck and the Observation Balloon
+ ok('T35.A the cuts are set by the 24 trainable units (the drop-only para is excluded)',
+    trainable.length===24&&!trainable.includes('para')); // v85: 20 -> 21, the Signal Runner. v86: 21 -> 23, the Command Truck and the Observation Balloon. v87: 23 -> 24, the Firebomb Heli
  /* recompute the quartiles independently of SUP_U's own expression, including the
     total-order tiebreak: a comparator that returned 0 on equal costs would leave
     the order to the engine and put a silent divergence into lockstep. */
@@ -83,9 +83,17 @@ function bot55(){return G.players.find(p=>p.ai)}
     Command Truck between the Mortar Squad and the Sniper and 319 puts the Balloon
     between the APC and Sarge, which are exactly those two slots. This transcription
     is what proves it, and it is why the two costs read as they do in T33.A. */
+ /* v87: ONE unit added, and again nothing moved tier - but the reason is different
+    from v86's and worth writing down, because it is the reason the Firebomb costs
+    what it does. At 23 units the cuts fall after the 6th, 12th and 18th; at 24 they
+    fall after the 6th, 12th and 18th as well, because 24 divides by four and 23's
+    floor() landed in the same three places. The boundaries therefore did not move
+    at all, and the ONLY insertion point that shifts nobody across one is past the
+    18th - anywhere cheaper and whichever unit sits on a boundary is pushed over it.
+    That is why 383.5 total, dearer than Sarge, is not a feel decision. */
  const T2=['gunner','flamer','jeep','mortar','sniper','cmdtruck'];
  const T3=['medic','aatruck','tank','heli','apc','balloon'];
- const T4=['sarge','arty','chinook','apache','bulltank'];
+ const T4=['sarge','arty','chinook','apache','bulltank','firebomb'];
  ok('T35.A the cheap tier costs 1 supply',T1.every(k=>supOf(k)===1));
  ok('T35.A the second tier costs 2',T2.every(k=>supOf(k)===2));
  ok('T35.A the third tier costs 3',T3.every(k=>supOf(k)===3));

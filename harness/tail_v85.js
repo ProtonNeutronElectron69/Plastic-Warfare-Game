@@ -22,20 +22,21 @@ function put85(k, p, x, y) { const u = makeUnit(k, p, x, y); u.state = 'idle'; u
      at least one and none has more than two - which holds at v86, v87 and v88
      without another edit here, and the exact membership is pinned in T58.A's
      INFO_FEXCL_B line just below. */
-  ok('T58.A two armies now hold two exclusive structures, and no army holds more',
-    FAC.blue.ub.length === 2 && FAC.green.ub.length === 2 &&
-    ['tan', 'gray'].every(f => FAC[f].ub.length === 1) &&
+  ok('T58.A three armies now hold two exclusive structures, and no army holds more',
+    ['blue', 'green', 'tan'].every(f => FAC[f].ub.length === 2) &&
+    FAC.gray.ub.length === 1 &&
     Object.keys(FAC).filter(f => f !== 'bug').every(f => FAC[f].ub.length >= 1 && FAC[f].ub.length <= 2));
 
   /* the membership list is DERIVED off FAC, and techAvailable reads that same
      list rather than a hand-typed copy. This is the check that a new exclusive
      cannot be researchable by every army in the game - the failure mode the three
      retired literal lists had built in. */
-  ok('T58.A the exclusive-building list is read off FAC and covers all six',
-    INFO_FEXCL_B.length === 6 && ['radar', 'dump', 'bunker', 'turbine', 'fwdpad', 'cmdpost'].every(k => INFO_FEXCL_B.includes(k)));
-  ok('T58.A the exclusive-unit list is read off FAC and covers all eleven',
-    INFO_FEXCL_U.length === 11 && INFO_FEXCL_U.includes('runner') &&
-    INFO_FEXCL_U.includes('cmdtruck') && INFO_FEXCL_U.includes('balloon'));
+  ok('T58.A the exclusive-building list is read off FAC and covers all seven',
+    INFO_FEXCL_B.length === 7 && ['radar', 'dump', 'bunker', 'turbine', 'fwdpad', 'cmdpost', 'foundry'].every(k => INFO_FEXCL_B.includes(k)));
+  ok('T58.A the exclusive-unit list is read off FAC and covers all twelve',
+    INFO_FEXCL_U.length === 12 && INFO_FEXCL_U.includes('runner') &&
+    INFO_FEXCL_U.includes('cmdtruck') && INFO_FEXCL_U.includes('balloon') &&
+    INFO_FEXCL_U.includes('firebomb'));
   for (const f of ['green', 'tan', 'gray', 'blue']) {
     const mine = FAC[f].ub, theirs = INFO_FEXCL_B.filter(k => !mine.includes(k));
     ok(`T58.A ${f} may research its own structures and no other army's`,
@@ -219,10 +220,14 @@ function put85(k, p, x, y) { const u = makeUnit(k, p, x, y); u.state = 'idle'; u
 
 /* ---------- D: Rapid Redeploy ---------- */
 {
+  /* v87: "the shared set" is the barrage and the paradrop now - the napalm went to
+     Tan. Read off the table rather than transcribed, so the next row to change
+     hands moves this check with it instead of breaking it. */
   ok('T58.D the row belongs to Blue alone, and the other three keep the shared set',
     radioAllowed({ fac: 'blue' }, 'lift') &&
     !['green', 'tan', 'gray'].some(f => radioAllowed({ fac: f }, 'lift')) &&
-    ['green', 'tan', 'gray'].every(f => ['napalm', 'barrage', 'paradrop'].every(m => radioAllowed({ fac: f }, m))));
+    ['green', 'tan', 'gray'].every(f => RADIO_ABILITIES.filter(a => !a.fac)
+      .every(a => radioAllowed({ fac: f }, a.mode))));
   ok('T58.D it needs no vision, like the paradrop it is drawn as',
     !radioNeedsVision('lift'));
 

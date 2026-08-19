@@ -102,7 +102,7 @@ for(const [key,scale] of [['tank',1],['bulltank',1.34]]){
       scored differently on purpose - its body is a fixed olive green that is NOT
       the faction colour, because what has to read at a glance is which resource is
       in it rather than whose it is. */
-for(const key of ['cmdtruck','balloon']){
+for(const key of ['cmdtruck','balloon','firebomb']){
  for(const fac of FACS){
   const cv=__cc(200,200),c=cv.getContext('2d');
   let err=null;

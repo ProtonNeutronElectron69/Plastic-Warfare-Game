@@ -61,7 +61,7 @@ ok('T49.A bldRoster survived, reached now through constructRoster',
        callers, so it is SUPPOSED to need a conscious edit when one is added. */
     ok('T49.A the .bb class survives, still styled', html.indexOf('.bb{background') > 0);
     ok('T49.A ...and is still built by the surviving callers',
-       (html.match(/className='bb'/g) || []).length === 28);   // v80 15; v81 +3 (Called Shot, Ripple Fire, Lockdown); v82 +3 (Flat Out, Air Assault, Overdrive); v85 +3 (Sprint single, Sprint group, Scramble); v86 +4 (Broadcast single, Broadcast group, Bail, Regroup)
+       (html.match(/className='bb'/g) || []).length === 31);   // v80 15; v81 +3 (Called Shot, Ripple Fire, Lockdown); v82 +3 (Flat Out, Air Assault, Overdrive); v85 +3 (Sprint single, Sprint group, Scramble); v86 +4 (Broadcast single, Broadcast group, Bail, Regroup); v87 +3 (Napalm Blast single, Napalm Blast group, Pour)
     ok('T49.A the radio panel still scopes .bb', html.indexOf('#radioPanel .bb') > 0);
   }
 }
@@ -88,8 +88,13 @@ ok('T49.A bldRoster survived, reached now through constructRoster',
   me.res.p = 5000; me.res.e = 5000;
   show(hq);
   const hqTiles = col('Construct');
+  /* v87: thirteen. This fixture boots TAN, and Tan gained its second exclusive
+     structure at v87, so the roster it offers grew by exactly one. The count is
+     pinned rather than derived on purpose - the relation to bldRoster is checked
+     on the same line, so what the literal adds is that the roster itself has to
+     be a declared size and cannot drift under the relation. */
   ok('T49.A the HQ carries the whole build roster',
-     hqTiles.length === bldRoster(me).length && hqTiles.length === 12);
+     hqTiles.length === bldRoster(me).length && hqTiles.length === 13);
 
   /* the click still reaches startPlacing */
   G.placing = null;
@@ -106,7 +111,7 @@ ok('T49.A bldRoster survived, reached now through constructRoster',
   /* and the accumulation trap itself is real, so the wipe is load-bearing */
   lastSelSig = ''; refreshSelPanel(); show(hq);
   ok('T49.A the by-column read is not picking up a stale column',
-     col('Construct').length === 12);
+     col('Construct').length === 13);
 }
 
 /* ---------- B: one envelope, three primitives ---------- */

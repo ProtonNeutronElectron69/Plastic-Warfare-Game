@@ -60,9 +60,15 @@ function cfg54(map,mode,seed,opp){return{map,mode,diff:'normal',fac:'green',opp:
     Math.abs(U.arty.spl-1.875*1.5)<1e-12&&U.arty.spl===2.8125);
  ok('T34.B the secondary and both paratrooper munitions scaled too',
     U.bulltank.sec.spl===0.625&&PARA_MUN.at.spl===0.625&&PARA_MUN.he.spl===1.5&&PARA_MUN.smg.spl===0);
+ /* v87: the Firebomb Heli joins the list, and its 1.0 is NOT a v52 value scaled by
+    anything - it is a new row written after the pass, which is why it is exempted
+    from the ratio check above and named here instead. The list is pinned precisely
+    so an addition has to be declared rather than slipping in. */
  ok('T34.B nothing else in the roster grew a splash radius',
     Object.keys(U).filter(k=>U[k].spl).sort().join()===
-    'aatruck,apache,arty,bazooka,bulltank,flamer,grenadier,mortar,tank');
+    'aatruck,apache,arty,bazooka,bulltank,firebomb,flamer,grenadier,mortar,tank');
+ ok('T34.B ...and the one arrival since the pass carries a literal, not a scaled one',
+    U.firebomb.spl===1);
  // every scaled value is a dyadic fraction, so the rescale adds no float noise to a
  // path that feeds the state hash
  // v63: sixteenths rather than eighths. The artillery's 2.8125 is 45/16 - still a

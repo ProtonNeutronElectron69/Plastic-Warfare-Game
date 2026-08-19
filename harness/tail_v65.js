@@ -144,13 +144,15 @@ section('T44.B the +15% electricity pass');
     Balloon both draw battery, and so does the Command Post; all three are declared
     on the lines below at their pre-pass baselines, so the count is guarding the
     same claim it always did. */
- ok('T44.B fourteen units and eleven buildings, no more and no fewer',
-    Object.keys(U).filter(k=>U[k].ce>0).length===14&&Object.keys(B).filter(k=>B[k].ce>0).length===11);
+ ok('T44.B fifteen units and twelve buildings, no more and no fewer',
+    Object.keys(U).filter(k=>U[k].ce>0).length===15&&Object.keys(B).filter(k=>B[k].ce>0).length===12);
  ok('T44.B the Forward Pad is the tenth, and the pass reached it',
     Math.abs(B.fwdpad.ce-70*1.15)<1e-3&&U.runner.ce===0);
  ok('T44.B the three v86 rows are the new ones, and the pass reached all three',
     Math.abs(U.cmdtruck.ce-20*1.15)<1e-3&&Math.abs(U.balloon.ce-60*1.15)<1e-3&&
     Math.abs(B.cmdpost.ce-60*1.15)<1e-3);
+ ok('T44.B ...and the two v87 rows likewise',
+    Math.abs(U.firebomb.ce-90*1.15)<1e-3&&Math.abs(B.foundry.ce-50*1.15)<1e-3);
  ok('T44.B the ce:0 roster is still ce:0',
     ZERO_U.every(k=>U[k].ce===0)&&ZERO_B.every(k=>B[k].ce===0));
 
@@ -231,7 +233,7 @@ section('T44.C the Grunt at 36');
  const V69_CP={grunt:36,grenadier:55,gunner:112,bazooka:90,truck:20,medic:150,jeep:130,
   aatruck:180,tank:220,heli:200,sarge:260,mortar:150,flamer:120,bulltank:391,sniper:170,
   arty:320,bike:90,apache:300,apc:260,chinook:300,para:0,runner:62, // v85: +Signal Runner
-  cmdtruck:145,balloon:250}; // v86: +Green's two, both priced inside the supply band that leaves every existing rank where it was (see T35.A)
+  cmdtruck:145,balloon:250,firebomb:280}; // v86: +Green's two, both priced inside the supply band that leaves every existing rank where it was (see T35.A). v87: +Tan's one, on the same rule
  const moved=Object.keys(U).filter(k=>U[k].cp!==V69_CP[k]);
  ok('T44.C no plastic cost has drifted from the v69 record'+(moved.length?' ('+moved.join(', ')+')':''),
     moved.length===0&&Object.keys(V69_CP).length===Object.keys(U).length);
