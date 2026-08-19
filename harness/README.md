@@ -1,6 +1,8 @@
 # Plastic Warfare headless test harness (updated at v85)
 
-Upload this bundle at the start of a session so the harness does not need rebuilding.
+This is the development record: every release, what it was told to build, what it
+actually cost, and the traps learned. If you are new to the project, read
+`../CLAUDE.md` first — it is the short orientation and points back here.
 
 ## THE FACTION ABILITY ROADMAP (read this first if you are picking up mid-project)
 

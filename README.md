@@ -15,16 +15,20 @@ your web browser and you are straight into the setup screen.
 
 ## The four armies
 
-Each army plays differently, and each one has two exclusive units plus one
-exclusive building. Every exclusive entity has a permanent **passive** and a
-**toggleable ability** you switch on and off during the battle.
+Each army plays differently, and each one fields exclusive units and buildings
+of its own. Every exclusive entity has a permanent **passive** and an **ability**
+you use during the battle.
 
-| Army | Character | Exclusive units | Exclusive building |
-|---|---|---|---|
-| 🟢 **Green Army** | Balanced — everything costs 8% less | Sarge, Mortar Squad | Radar Tent |
-| 🟤 **Tan Army** | +15% damage, slightly slower | Flamethrower, "Bull" Heavy Tank | Munitions Dump |
-| ⚪ **Gray Army** | +20% tougher, slightly slower | Sniper, Rocket Artillery | Bunker |
-| 🔵 **Blue Army** | +15% speed, lighter plastic (−10% health) | Scout Bike, Chinook | Wind Turbine |
+| Army | Character | Exclusive units | Exclusive buildings | Own call-in |
+|---|---|---|---|---|
+| 🟢 **Green Army** | Balanced — everything costs 8% less | Sarge, Mortar Squad | Radar Tent | — |
+| 🟤 **Tan Army** | +15% damage, slightly slower | Flamethrower, "Bull" Heavy Tank | Munitions Dump | — |
+| ⚪ **Gray Army** | +20% tougher, slightly slower | Sniper, Rocket Artillery | Bunker | — |
+| 🔵 **Blue Army** | +15% speed, lighter plastic (−10% health) | Scout Bike, Chinook, Signal Runner | Wind Turbine, Forward Pad | Rapid Redeploy |
+
+Blue is currently the only army with a *full* exclusive set. Green, Tan and Gray
+are being brought up to the same shape at v86, v87 and v88 — see the version
+history below.
 
 A few examples of what those abilities actually do:
 
@@ -39,6 +43,10 @@ A few examples of what those abilities actually do:
 - The **Wind Turbine** can be overdriven to triple power for 20 seconds, and
   then produces nothing at all for 70. It is a net loss on purpose: it buys you
   the electricity *earlier*, not *cheaper*.
+- The **Signal Runner** is weaker and worse-armed than a plain rifleman on
+  purpose — what you are buying is his radio. His Sprint speeds up every
+  friendly infantryman around him, and stops all of them from firing.
+- The **Forward Pad** repairs aircraft, which nothing else in the game does.
 
 ## Modes and maps
 
@@ -65,7 +73,7 @@ This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
 that the results come out identical every time. As of v82 it makes **over 2,300
-individual checks** in its first segment alone.
+individual checks** in its first segment alone, and over 4,500 across all five.
 
 That is what makes it safe to keep changing the game: if a change breaks
 something subtle three systems away, the tests say so before you ever see it.
@@ -94,10 +102,22 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 82**. The four-phase faction ability roadmap — one army
-per version, Green at v79, Tan at v80, Gray at v81, Blue at v82 — is complete.
+The game is at **version 85**.
+
+**Roadmap 1 (v79–v82) — complete.** Every exclusive unit and building that
+existed then got one passive and one toggleable ability: Green at v79, Tan at
+v80, Gray at v81, Blue at v82.
+
+**Roadmap 2 (v85–v88) — in progress.** Every army gets two exclusive buildings,
+an exclusive unit out of the Barracks, the Garage *and* the Helipad, and a Radio
+Tower call-in of its own. **Blue landed at v85**; Green is v86, Tan v87, Gray
+v88. The specification for all three outstanding armies is already written down
+and settled — see *Roadmap 2: the remaining three armies* in
+[`harness/README.md`](harness/README.md).
+
 The full version-by-version record, including what was tried and rejected and
-why, is in [`harness/README.md`](harness/README.md).
+why, is in [`harness/README.md`](harness/README.md). If you are picking this
+project up fresh, start with [`CLAUDE.md`](CLAUDE.md).
 
 ## Credits
 
