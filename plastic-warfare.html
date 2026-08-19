@@ -5612,6 +5612,56 @@ function researchBtn(e,key,tipTail,hk){
  bt.onclick=()=>{submitCmd('research',{bid:e.id,key});sClick()};
  return bt;
 }
+/* --- EVERY UNIT TOGGLE IS A ROW, ADDED AT v87.1 ---
+   Eleven units carry a toggleable ability. Seven of them had a hand-written
+   group block in the multi-select panel and four did not - On Me!, Called Shot,
+   Ripple Fire and Flat Out - purely because of the order they shipped in, so a
+   mixed selection silently dropped abilities the same units offered one at a
+   time. Every one of those blocks was the same eight lines, so they are one
+   table now and the loop below builds all eleven.
+   `f` is the U-table flag that says the unit HAS the ability; `s` is the
+   per-unit field that says it is RUNNING; `c` is the command. `sub` is a
+   function rather than a string so the constants are read at click time, the
+   way every other label in this panel reads them.
+   Entrench is the one row that is a PAIR of commands rather than an on/off, and
+   the only one whose "on" needs an aimed direction, so it carries `offc` and
+   `aim`; the loop keeps that branch byte-identical to the block it replaces.
+   NOT in the table: Napalm Blast and Bail, which are one-shots, not toggles. */
+const UNIT_TOGGLES=[
+ {f:'entrench',s:'entrenched',c:'entrench',offc:'unentrench',aim:'Click to aim the entrench cone for the group.',
+  on:'Pack Up',off:'Entrench',sub:()=>`${ENTRENCH_RATE}× fire rate, 100° cone`,
+  tip:'Dig the selected gunners in, or pack them up. Click to aim a shared cone direction.'},
+ {f:'rally',s:'onMe',c:'onme',on:'Stand Down',off:'On Me!',
+  sub:()=>`+${Math.round(SARGE_AURA*100)}% damage to infantry within ${SARGE_AURA_R}, −${Math.round((1-SARGE_SELF)*100)}% their own`,
+  tip:'Open or close the broadcast on every selected Sarge.'},
+ {f:'smokeCap',s:'smoke',c:'smoke',on:'High Explosive',off:'Smoke Rounds',
+  sub:()=>`−${Math.round(SMOKE_RED*100)}% damage taken under the cloud`,
+  tip:'Switch the selected mortars between high explosive and smoke.'},
+ {f:'valve',s:'valve',c:'valve',on:'Close Valve',off:'Pressure Valve',
+  sub:()=>`+${Math.round(VALVE_DMG*100)}% damage, ${Math.round(VALVE_BACK*100)}% of it back on them`,
+  tip:'Open or close the valve on every selected flamethrower.'},
+ {f:'throttle',s:'thr',c:'throttle',on:'Throttle Down',off:'Full Throttle',
+  sub:()=>`+${Math.round(THROTTLE_SPD*100)}% speed, no guns`,
+  tip:'Order every selected Bull to charge, or to throttle down and fight.'},
+ {f:'cshot',s:'cs',c:'cshot',on:'Free Fire',off:'Called Shot',
+  sub:()=>`+${Math.round(CS_DMG*100)}% damage, infantry only`,
+  tip:'Put every selected sniper on infantry targets only, or release them.'},
+ {f:'ripple',s:'rip',c:'ripple',on:'Single Fire',off:'Ripple Fire',
+  sub:()=>`${RIPPLE_N} rockets at ${Math.round(RIPPLE_DM*100)}% each, +${Math.round((RIPPLE_RT-1)*100)}% reload`,
+  tip:'Switch every selected rocket battery between salvo and single shells.'},
+ {f:'flat',s:'flat',c:'flat',on:'Slow Down',off:'Flat Out',
+  sub:()=>`+${Math.round(FLAT_SPD*100)}% speed, +${FLAT_VI} sight, no guns`,
+  tip:'Send every selected scout flat out, or bring them all back down.'},
+ {f:'assault',s:'aslt',c:'assault',on:'Cease Fire',off:'Air Assault',
+  sub:()=>'the squads fire out; the aircraft cannot move',
+  tip:'Open or close the hold on every selected transport.'},
+ {f:'sprint',s:'spr',c:'sprint',on:'Slow Down',off:'Sprint',
+  sub:()=>`+${Math.round(SPRINT_SPD*100)}% infantry speed within ${SPRINT_R}, no guns`,
+  tip:'Sound the whistle on every selected Signal Runner, or call them all down.'},
+ {f:'bcast',s:'bcast',c:'bcast',on:'Close Net',off:'Broadcast',
+  sub:()=>`${Math.round(BCAST_RT*100)}% faster reload within ${BCAST_R}, pinned`,
+  tip:'Open or close the net on every selected Command Truck.'}
+];
 function refreshSelPanel(){
  const info=document.getElementById('selInfo'),pb=document.getElementById('prodBtns'),qr=document.getElementById('queueRow');
  let sig=G.sel.length+'|'+G.sel.map(e=>e.kind==='node'?('nd'+e.x.toFixed(2)+'_'+e.y.toFixed(2)+':'+Math.round(e.amt)):(e.id+':'+Math.round(e.hp)+':'+(e.vr||0)+(e.hold?'h':'')+(e.garrison?'g'+e.garrison.length:''))).join(',')+(G.sel[0]&&G.sel[0].queue?G.sel[0].queue.join(''):''); // v29 sig + v30 garrison counts
@@ -5642,15 +5692,15 @@ function refreshSelPanel(){
   if(e.kind==='unit'&&e.t.abCd)sig+='|ab'+Math.ceil(e.abCool||0);
   if(e.kind==='bld'&&e.t.pour){let n=0;for(const g of e.p.blds)if(g.key==='garage'&&g.prog>=1&&g.queue&&g.queue.length)n++;sig+='|po'+Math.ceil(e.abilityCool||0)+'_'+n;}
  }
- // radio operators inside a multi-unit selection: track their ability state too
- // machine gunners inside a multi-unit selection: track their entrench state
- if(G.sel.length>1)for(const e of G.sel)if(e.kind==='unit'&&e.t.entrench)sig+='|ge'+e.id+(e.entrenched?1:0);
- // v79: mortars toggle as a group too, so their modes ride the signature the same way
- if(G.sel.length>1)for(const e of G.sel)if(e.kind==='unit'&&e.t.smokeCap)sig+='|gs'+e.id+(e.smoke?1:0);
- // v85: and Signal Runners, for the same reason - a squad of them toggles together
- if(G.sel.length>1)for(const e of G.sel)if(e.kind==='unit'&&e.t.sprint)sig+='|gp'+e.id+(e.spr?1:0);
- // v86: and Command Trucks, which get the same group button for the same reason
- if(G.sel.length>1)for(const e of G.sel)if(e.kind==='unit'&&e.t.bcast)sig+='|gb'+e.id+(e.bcast?1:0);
+ /* Every group toggle rides the signature, read off the SAME table the buttons
+    are built from. Five of these were hand-written and four abilities had no
+    line at all, which is exactly the failure the group buttons had: a row added
+    to UNIT_TOGGLES now cannot ship a button whose label freezes at whatever it
+    said when the panel last rebuilt. (v87.1) */
+ if(G.sel.length>1)for(const e of G.sel){
+  if(e.kind!=='unit')continue;
+  for(let i=0;i<UNIT_TOGGLES.length;i++){const a=UNIT_TOGGLES[i];if(e.t[a.f])sig+='|g'+i+'_'+e.id+(e[a.s]?1:0);}
+ }
  // v87: and Firebombs, whose group button counts only the ones off cooldown
  if(G.sel.length>1)for(const e of G.sel)if(e.kind==='unit'&&e.t.fbomb)sig+='|gf'+e.id+((e.abCool||0)>0?1:0);
  // any selected building: re-render as its research project (lab or production) progresses / tech set grows
@@ -6023,88 +6073,41 @@ function refreshSelPanel(){
    pg2.appendChild(d);
   }
   info.appendChild(pg2);
-  // machine gunners in a mixed group: entrench / pack up all of them together.
-  const gunners=G.watch?[]:G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t.entrench); // v55: the one action button gated on p===G.human rather than p.human, so a spectator would otherwise still see it
-  if(gunners.length){
-   const anyEnt=gunners.some(g=>g.entrenched);
-   const bt=document.createElement('button');bt.className='bb'+(anyEnt?' sel':'');
-   bt.innerHTML=`<b>${anyEnt?'Pack Up':'Entrench'} (${gunners.length})</b><br><span style="font-size:10px;opacity:.75">${ENTRENCH_RATE}× fire rate, 100° cone</span>`;
-   bt.title='Dig the selected gunners in, or pack them up. Click to aim a shared cone direction.';
+  /* Every toggleable ability any selected unit owns, one button each, built off
+     UNIT_TOGGLES. Each button counts and commands only the units that actually
+     carry that ability, so a mixed selection of gunners, mortars and flamers
+     shows three buttons and each one moves its own men. Any unit already running
+     the ability flips the whole of its group back off, so a button is never
+     ambiguous about what it will do. The p===G.human gate is per row and matches
+     the single-unit panel; v55 records why it is p===G.human and not p.human -
+     a spectator would otherwise still see the button. (v87.1) */
+  for(const a of UNIT_TOGGLES){
+   const list=G.watch?[]:G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t[a.f]);
+   if(!list.length)continue;
+   const any=list.some(g=>g[a.s]);
+   const bt=document.createElement('button');bt.className='bb'+(any?' sel':'');
+   bt.innerHTML=`<b>${any?a.on:a.off} (${list.length})</b><br><span style="font-size:10px;opacity:.75">${a.sub()}</span>`;
+   bt.title=a.tip;
    bt.onclick=()=>{
-    if(anyEnt){submitCmd('unentrench',{ids:gunners.map(g=>g.id)});sClick();}
-    else{G.radioTargeting={unit:gunners[0],mode:'entrench',group:gunners};msg('Click to aim the entrench cone for the group.');sClick();}
+    if(a.offc){ // the entrench pair: two commands, and turning it ON needs an aimed direction
+     if(any){submitCmd(a.offc,{ids:list.map(g=>g.id)});sClick();}
+     else{G.radioTargeting={unit:list[0],mode:a.c,group:list};msg(a.aim);sClick();}
+     return;
+    }
+    submitCmd(a.c,{ids:list.map(g=>g.id),on:!any});sClick();
    };
    pb.appendChild(bt);
   }
-  /* v79: mortars in a mixed group switch ammunition together. Same shape as the
-     gunner block above, including the p===G.human gate that keeps it off a
-     spectator's panel. Any mortar already smoking flips the whole group back to
-     high explosive, so the button is never ambiguous about what it will do. */
-  const tubes=G.watch?[]:G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t.smokeCap);
-  if(tubes.length){
-   const anySm=tubes.some(g=>g.smoke);
-   const bt=document.createElement('button');bt.className='bb'+(anySm?' sel':'');
-   bt.innerHTML=`<b>${anySm?'High Explosive':'Smoke Rounds'} (${tubes.length})</b><br><span style="font-size:10px;opacity:.75">−${Math.round(SMOKE_RED*100)}% damage taken under the cloud</span>`;
-   bt.title='Switch the selected mortars between high explosive and smoke.';
-   bt.onclick=()=>{submitCmd('smoke',{ids:tubes.map(g=>g.id),on:!anySm});sClick();};
-   pb.appendChild(bt);
-  }
-  /* v80: the two Tan toggles get the same group treatment. Flamers in
-     particular are massed, and opening eight valves one panel at a time is not
-     a decision, it is typing. Any one already on flips the whole group off, so
-     the button is never ambiguous about what it will do. */
-  const hoses=G.watch?[]:G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t.valve);
-  if(hoses.length){
-   const anyV=hoses.some(g=>g.valve);
-   const bt=document.createElement('button');bt.className='bb'+(anyV?' sel':'');
-   bt.innerHTML=`<b>${anyV?'Close Valve':'Pressure Valve'} (${hoses.length})</b><br><span style="font-size:10px;opacity:.75">+${Math.round(VALVE_DMG*100)}% damage, ${Math.round(VALVE_BACK*100)}% of it back on them</span>`;
-   bt.title='Open or close the valve on every selected flamethrower.';
-   bt.onclick=()=>{submitCmd('valve',{ids:hoses.map(g=>g.id),on:!anyV});sClick();};
-   pb.appendChild(bt);
-  }
-  /* v87: Firebombs get a group button on the same argument the Bulls below do -
-     the whole value of ten firebombs is that they land at one moment. Only the
-     ones that are actually off cooldown are counted or sent, so the button says
-     how many will fire rather than how many are selected. */
+  /* v87: Firebombs are the one group button that is NOT a toggle, so they stay
+     hand-written below the loop. Only the ones actually off cooldown are counted
+     or sent, so the button says how many will fire rather than how many are
+     selected - which is why this cannot be a UNIT_TOGGLES row. */
   const fbs=G.watch?[]:G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t.fbomb&&(s.abCool||0)<=0);
   if(fbs.length){
    const bt=document.createElement('button');bt.className='bb';
    bt.innerHTML=`<b>🔥 Napalm Blast (${fbs.length})</b><br><span style="font-size:10px;opacity:.75">${FB_N} firebombs each, and the fire burns your men too</span>`;
    bt.title='Empty the racks on every selected Firebomb Heli that is off cooldown.';
    bt.onclick=()=>{submitCmd('napalmblast',{ids:fbs.map(g=>g.id)});sClick();};
-   pb.appendChild(bt);
-  }
-  const bulls=G.watch?[]:G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t.throttle);
-  if(bulls.length){
-   const anyT=bulls.some(g=>g.thr);
-   const bt=document.createElement('button');bt.className='bb'+(anyT?' sel':'');
-   bt.innerHTML=`<b>${anyT?'Throttle Down':'Full Throttle'} (${bulls.length})</b><br><span style="font-size:10px;opacity:.75">+${Math.round(THROTTLE_SPD*100)}% speed, no guns</span>`;
-   bt.title='Order every selected Bull to charge, or to throttle down and fight.';
-   bt.onclick=()=>{submitCmd('throttle',{ids:bulls.map(g=>g.id),on:!anyT});sClick();};
-   pb.appendChild(bt);
-  }
-  /* v85: Signal Runners get the group button on the same argument. Two Runners
-     with overlapping radii is the normal way to move a large formation, and the
-     whole value of the ability is that the whistle goes up at ONE moment - toggled
-     one panel at a time, half the column would still be walking. */
-  const rns=G.watch?[]:G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t.sprint);
-  if(rns.length){
-   const anyR=rns.some(g=>g.spr);
-   const bt=document.createElement('button');bt.className='bb'+(anyR?' sel':'');
-   bt.innerHTML=`<b>${anyR?'Slow Down':'Sprint'} (${rns.length})</b><br><span style="font-size:10px;opacity:.75">+${Math.round(SPRINT_SPD*100)}% infantry speed within ${SPRINT_R}, no guns</span>`;
-   bt.title='Sound the whistle on every selected Signal Runner, or call them all down.';
-   bt.onclick=()=>{submitCmd('sprint',{ids:rns.map(g=>g.id),on:!anyR});sClick();};
-   pb.appendChild(bt);
-  }
-  /* v86: Command Trucks get the group button on the same argument as every one
-     above it. A pair of them covering one line is the way the ability is used. */
-  const cts=G.watch?[]:G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t.bcast);
-  if(cts.length){
-   const anyB=cts.some(g=>g.bcast);
-   const bt=document.createElement('button');bt.className='bb'+(anyB?' sel':'');
-   bt.innerHTML=`<b>${anyB?'Close Net':'Broadcast'} (${cts.length})</b><br><span style="font-size:10px;opacity:.75">${Math.round(BCAST_RT*100)}% faster reload within ${BCAST_R}, pinned</span>`;
-   bt.title='Open or close the net on every selected Command Truck.';
-   bt.onclick=()=>{submitCmd('bcast',{ids:cts.map(g=>g.id),on:!anyB});sClick();};
    pb.appendChild(bt);
   }
  }
@@ -6325,7 +6328,26 @@ function sellBuilding(b){
  b.hp=0;
  for(let y=0;y<b.sz;y++)for(let x=0;x<b.sz;x++)G.map.pass[(b.ty+y)*G.map.N+(b.tx+x)]=1;
  pfDirty();
- spawnDust(b.x,b.y,1);stampBits(b.x,b.y,FAC[p.fac].color,4);sfxStructBreak(b.x,b.y);
+ /* --- WHAT SELLING LOOKS LIKE, ADDED AT v87.1 ---
+    A sold building used to leave a puff of dust and four flecks of plastic, so
+    a structure the player deliberately removed simply blinked out. It gets the
+    same teardown a destroyed one does - melt, scorch, shrapnel, the primary
+    blast and its staggered cook-offs, the smoke column and the shake - plus the
+    heap of plastic it leaves behind.
+    Two deliberate differences from kill(). The heap is a stampPile DECAL and not
+    a spawnWreck node, because the refund already paid for this building and a
+    mineable pile would pay twice. And every offset below is Math.random, never
+    srand(): selling runs inside the simulation, so drawing even one seeded
+    number here would move the shared RNG stream and desync a live match. */
+ const scol=FAC[p.fac].color;
+ stampMelt(b.x,b.y,scol,14+b.sz*5);stampScorch(b.x,b.y,b.sz*14);
+ stampPile(b.x,b.y,shade(scol,.78),6+b.sz*3);
+ spawnShrapnel(b.x,b.y,scol,26,2.2);
+ spawnExplosion(b.x,b.y,1.8+b.sz*.2);
+ for(let s=0;s<2+b.sz;s++){const ox=(Math.random()-.5)*b.sz,oy=(Math.random()-.5)*b.sz,dl=.06+s*.07;
+  setTimeout2(()=>{if(G)spawnExplosion(b.x+ox,b.y+oy,.8+Math.random()*.5)},dl);}
+ spawnSmoke(b.x,b.y,6+b.sz*2,{rise:10,grow:8,life:2.8+b.sz*.3,r:5,col:'#2e2e2e'});
+ spawnDust(b.x,b.y,1);shakeAt(b.x,b.y,7);sfxBuildingDestroy(b.x,b.y);
  if(G.sel.includes(b))G.sel.splice(G.sel.indexOf(b),1);
  if(p===G.human){msg(`${b.t.n} sold (+⬢${Math.round(bcost(p,b.key).p*SELL_FRAC)}).`);updateTopbar();}
  lastSelSig='';
@@ -6995,6 +7017,25 @@ function paintMelt(x,y,col,size){
 }
 function paintScorch(x,y,r){const c=G.tctx,sx=isoX(x,y),sy=isoY(x,y);c.save();c.globalAlpha=.4;const g=c.createRadialGradient(sx,sy,r*.1,sx,sy,r);g.addColorStop(0,'rgba(20,12,8,.9)');g.addColorStop(1,'rgba(20,12,8,0)');c.fillStyle=g;c.beginPath();c.ellipse(sx,sy,r,r*.5,0,0,7);c.fill();c.restore()}
 function paintBits(x,y,col,n){const c=G.tctx;c.save();for(let i=0;i<n;i++){const sx=isoX(x,y)+(Math.random()-.5)*22,sy=isoY(x,y)+(Math.random()-.5)*11;c.fillStyle=Math.random()<.8?col:shade(col,.7);c.translate(sx,sy);c.rotate(Math.random()*6.28);c.fillRect(-2,-1.2,4,2.4);c.setTransform(1,0,0,1,0,0)}c.restore()}
+/* --- THE HEAP A SOLD BUILDING LEAVES, ADDED AT v87.1 ---
+   The fourth member of the decal family, and it exists because a sold building
+   may not drop a resource NODE: selling already paid its owner in cash, and a
+   mineable pile would pay twice - which is why sold structures left nothing but
+   four flecks of plastic until now. This is scenery. It borrows plSphere so the
+   heap reads as the same moulded plastic the salvage wrecks are made of, but it
+   lives on the terrain canvas with the scorch marks, so nothing can path to it,
+   mine it, select it or serialize it. */
+function paintPile(x,y,col,size){
+ const c=G.tctx,sx=isoX(x,y),sy=isoY(x,y);
+ c.save();c.translate(sx,sy);
+ c.globalAlpha=.3;c.fillStyle='#120e0a';c.beginPath();c.ellipse(0,0,size*1.2,size*.52,0,0,7);c.fill();c.globalAlpha=1;
+ for(let i=0;i<9;i++){const a=i*1.5+x,ox=Math.cos(a)*size*.7,oy=Math.sin(a)*size*.28,r=size*(.3+.16*Math.sin(a*2));
+  plSphere(c,i%3?col:shade(col,.72),ox,oy-r*.3,r,.62,false);}
+ c.strokeStyle=shade(col,.5);c.lineWidth=2.2;c.lineCap='round';
+ c.beginPath();c.moveTo(-size*.5,-1);c.lineTo(-size*.1,-size*.62);c.stroke();
+ c.restore();
+ paintBits(x,y,col,6);
+}
 /* ---------------- FOG HELPERS ----------------
    fogAt: the human-local fog state under a world point (0 unexplored,
    1 explored, 2 visible). UI/cosmetic use only; the sim never branches on it.
@@ -7013,11 +7054,12 @@ function queueStamp(s){const q=ghostInit().stampQ;q.push(s);if(q.length>400)q.sh
 function flushStamps(){
  const q=G.ghost&&G.ghost.stampQ;if(!q||!q.length)return;
  for(let i=q.length-1;i>=0;i--){const s=q[i];if(fogAt(s.x,s.y)!==2)continue;q.splice(i,1);
-  if(s.k==='s')paintScorch(s.x,s.y,s.r);else if(s.k==='m')paintMelt(s.x,s.y,s.col,s.r);else paintBits(s.x,s.y,s.col,s.r)}
+  if(s.k==='s')paintScorch(s.x,s.y,s.r);else if(s.k==='m')paintMelt(s.x,s.y,s.col,s.r);else if(s.k==='p')paintPile(s.x,s.y,s.col,s.r);else paintBits(s.x,s.y,s.col,s.r)}
 }
 function stampScorch(x,y,r){if(fogAt(x,y)===2)paintScorch(x,y,r);else queueStamp({k:'s',x,y,r})}
 function stampMelt(x,y,col,size){if(fogAt(x,y)===2)paintMelt(x,y,col,size);else queueStamp({k:'m',x,y,col,r:size})}
 function stampBits(x,y,col,n){if(fogAt(x,y)===2)paintBits(x,y,col,n);else queueStamp({k:'b',x,y,col,r:n})}
+function stampPile(x,y,col,size){if(fogAt(x,y)===2)paintPile(x,y,col,size);else queueStamp({k:'p',x,y,col,r:size})}
 
 
 /* ---------------- FLAGS (CTF) ---------------- */
@@ -10711,6 +10753,12 @@ const LIGHT={x:-0.46,y:-0.66}; // up & to the left
 function hx2rgb(hex){const n=parseInt(hex.slice(1),16);return{r:(n>>16)&255,g:(n>>8)&255,b:n&255}}
 function rgb(r,g,b){return`rgb(${r|0},${g|0},${b|0})`}
 function rgba(r,g,b,a){return`rgba(${r|0},${g|0},${b|0},${a})`}
+/* --- THE DRAG BOX WEARS YOUR ARMY'S COLOUR, ADDED AT v87.1 ---
+   Read off FAC at the point of use, lifted so the two darker armies still
+   read against terrain. A watch match has no human player, so the old
+   yellow stays as the spectator's fallback. */
+const DRAG_BOX_LIFT=1.3, DRAG_BOX_NEUTRAL={r:255,g:236,b:110};
+function dragBoxCol(){return G.human?hx2rgb(shade(FAC[G.human.fac].color,DRAG_BOX_LIFT)):DRAG_BOX_NEUTRAL}
 /* mix two rgb objects */
 function mixc(a,b,t){return{r:a.r+(b.r-a.r)*t,g:a.g+(b.g-a.g)*t,b:a.b+(b.b-a.b)*t}}
 const WHITE={r:255,g:255,b:255},BLACK={r:0,g:0,b:0};
@@ -14886,7 +14934,7 @@ function renderCore(){
  if(worldCv)compositePost();
  v71Fills();
  if(G.placing)drawGhost(vc,G.cam.x,G.cam.y);
- if(MOUSE.down&&MOUSE.drag){vc.strokeStyle='rgba(255,236,110,.9)';vc.lineWidth=1.5;vc.strokeRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);vc.fillStyle='rgba(255,236,110,.1)';vc.fillRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);}
+ if(MOUSE.down&&MOUSE.drag){const dbc=dragBoxCol();vc.strokeStyle=rgba(dbc.r,dbc.g,dbc.b,.9);vc.lineWidth=1.5;vc.strokeRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);vc.fillStyle=rgba(dbc.r,dbc.g,dbc.b,.1);vc.fillRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);}
  view.style.cursor=(G.amove||G.radioTargeting)?'crosshair':(G.placing?'copy':'default');
  renderMinimap();
 }

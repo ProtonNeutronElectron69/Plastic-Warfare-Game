@@ -106,7 +106,7 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 87**.
+The game is at **version 87.1**.
 
 **Roadmap 1 (v79–v82) — complete.** Every exclusive unit and building that
 existed then got one passive and one toggleable ability: Green at v79, Tan at
@@ -122,6 +122,13 @@ Gray is v88 and is the last. Its specification is already written down and settl
 One consequence is deliberate and visible in the table above: the **Napalm Strike**
 used to belong to every army and is now Tan's alone, so Gray fields only the two
 shared call-downs until v88 hands it the Smokescreen.
+
+**v87.1 — three interface repairs**, off the roadmap and touching no simulation.
+The drag-selection box is drawn in your army's colour instead of a fixed yellow;
+a mixed selection now offers a button for *every* toggleable ability any unit in
+it owns, where four of the eleven were single-unit only; and selling a building
+plays the same teardown a destroyed one does and leaves a heap of plastic behind
+— scenery, not salvage, because the refund already paid for it.
 
 The full version-by-version record, including what was tried and rejected and
 why, is in [`harness/README.md`](harness/README.md). If you are picking this

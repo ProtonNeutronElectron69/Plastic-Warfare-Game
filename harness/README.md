@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v87)
+# Plastic Warfare headless test harness (updated at v87.1)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -427,6 +427,97 @@ clarification the owner gave, so they can be built without re-asking.
     Rounds (SMOKE_RED 0.2, radius 2, 5s, units only) - that is intended, not an
     oversight to be balanced away.
 
+## v87.1 note: three interface repairs, and the one that could have desynced a match
+
+Off the roadmap, requested between v87 and v88, and none of the three touches the
+simulation: triage reported every pinned combo reproducing and all layout pins
+holding after all three landed. That is the acceptance criterion the release was
+built against, not a happy accident, and it is what let v88 stay Gray's.
+
+**1. The drag box wears your army's colour.** `dragBoxCol()` sits with the other
+colour utilities and reads `FAC[G.human.fac].color` at the point of use, lifted
+by `DRAG_BOX_LIFT` (1.3) so Blue and Gray still read against the board. A watch
+match has no human player at all, so it falls back to `DRAG_BOX_NEUTRAL` - the
+same yellow the box has always been. The rally-point arrow was deliberately left
+in that yellow and T61.A pins it: it is a marker on the ground, not a selection.
+
+**2. `UNIT_TOGGLES`: eleven rows where there were six hand-written blocks.**
+Eleven units carry a toggleable ability. SEVEN had a group block in the
+multi-select panel and FOUR did not - On Me!, Called Shot, Ripple Fire and Flat
+Out - purely because of the order they shipped in. A mixed selection silently
+dropped abilities that the same units offered one at a time, and had done since
+v81. Every one of those blocks was the same eight lines, so they are one table
+and one loop now, and the panel offers every toggle any selected unit owns.
+
+  - **The completeness check is derived, not transcribed.** Every single-unit
+    toggle in the panel is written `submitCmd('<cmd>',{ids:[e.id],on:!e.<field>})`,
+    so the panel's own source names the full set. T61.B scrapes
+    `refreshSelPanel.toString()` for that shape and demands a `UNIT_TOGGLES` row
+    for each, in both directions. That is the check that would have caught the
+    four missing group buttons five releases ago, and it is why a twelfth toggle
+    cannot ship with a single-unit button and no group one.
+  - **Entrench is the one row that is a PAIR of commands** (`entrench` /
+    `unentrench`) and the only one whose "on" needs an aimed direction, so it
+    carries `offc` and `aim` and the loop keeps that branch byte-identical to the
+    block it replaced.
+  - **Napalm Blast is deliberately NOT a row** and stays hand-written below the
+    loop: it is a one-shot on a cooldown, and its button counts only the
+    helicopters actually off cooldown rather than the ones selected. "Fold
+    everything into the table" is the obvious wrong next step, so T61.B pins it.
+  - **The signature is driven off the same table.** Five of the eleven had a
+    hand-written `lastSelSig` line and four had none, which is the freeze trap the
+    Overdrive pair records: a group button whose state does not ride the signature
+    prints whatever it said when the panel last rebuilt. T61.B drives all eleven.
+  - **`.bb` went DOWN, 31 to 26.** T49.A counts literal `className='bb'` sites, and
+    six blocks collapsing into one loop removes five of them while the panel gains
+    four abilities. The pin needed a conscious edit in the unusual direction; T61
+    counts the buttons the loop actually builds, which is what the pin was proxying
+    for all along.
+
+**3. Selling looks like a teardown, and leaves a heap.** `sellBuilding` ran a puff
+of dust and four flecks of plastic, so a structure the player deliberately removed
+simply blinked out. It now runs the same effects `kill()` runs on a building -
+melt, scorch, shrapnel, the primary blast and its staggered cook-offs, the smoke
+column, the shake and `sfxBuildingDestroy` - plus a heap of plastic.
+
+  - **THE ONE THAT COULD HAVE DESYNCED A MATCH.** `sellBuilding` runs INSIDE the
+    simulation. Every offset in the new block is `Math.random`; one `srand()`
+    among them would have moved the shared stream, and the machine that watched
+    the sale and the machine that made it would have disagreed from that tick on -
+    while looking perfectly correct on one machine. T61.C drives it against the
+    live cursor: sell an empty building, `G.rngS` must not move at all. The
+    garrison spill stays seeded, and is pinned separately so the first check
+    cannot be met by making that part cosmetic too.
+  - **The heap is a DECAL, not a node.** `paintPile`/`stampPile` are the fourth
+    member of the scorch/melt/bits family, with a `k:'p'` branch in `flushStamps`,
+    so a pile dropped out of vision queues and paints when the ground is next seen.
+    It borrows `plSphere` so it reads as the same moulded plastic the salvage
+    wrecks are made of. It may NOT be a `spawnWreck` node: the refund already paid
+    for this building and a mineable pile would pay twice, which is exactly why
+    sold buildings dropped nothing at all before now. T61.C pins the node count
+    unchanged AND, as a contrast on the same board, that destroying the same
+    structure does drop salvage.
+  - **T23.H needed a conscious edit, and got a replacement rather than a hole.**
+    The v43 sim-purity lint lists functions that may use no `Math.random`, no wall
+    clock and no `Math.atan2`/`hypot`/`sin`/`cos`; `sellBuilding` was on it and
+    FX-spawning paths (`kill`, `applyDmg`, `splash`, `aiTick`) were always exempt.
+    Selling became an FX path, so it left the list - but the lint keeps its teeth:
+    a new arm holds `sellBuilding` to every banned construct EXCEPT the one the FX
+    paths are allowed, and T61.C drives the property the lint could only
+    approximate. Dropping a name off a purity list is only safe when something
+    stronger takes its place.
+
+### Verification actually run at v87.1
+`./build.sh`; `node --check`; `./triage.sh` twice (before and after the tail work)
+- **all layout pins hold, every pinned trail combo reproduces, no repin due**;
+`QUIET=1 ./seg.sh all` = 2343 / 495 / 48 / 235 / 1721 = **4842 checks, 0 failures**
+(tail_v87_1 contributes 59); `python3 verify_v58.py` 32 passed. Driven in real
+Chromium at 1400x900: the Blue drag box measured `rgb(96,163,255)`, a mixed
+six-unit selection rendered exactly the five expected buttons
+(`Entrench (2)`, `On Me! (1)`, `Called Shot (1)`, `Ripple Fire (1)`, `Flat Out (1)`),
+a sold Barracks added 0 nodes and moved `G.rngS` by 0, and `REN_ERRS` stayed empty
+across the teardown. The real-canvas render tails were NOT run.
+
 ## v87 note: what v87 actually added, and the four seams worth knowing
 
   FIREBOMB HELI (Helipad, Tan). 280 plastic + 90 battery, weapon row `f` - the row
@@ -596,7 +687,8 @@ one thing inside `update()` is measuring the whole match.**
 Segment 3 carries tail_v87 alongside tail_v79 through tail_v86. No further split was
 needed. The five segments at v87 run 2341 / 495 / 48 / 235 / 1662 = 4781 checks,
 0 failures, plus verify_v58.py's 32 and the six real-canvas tails
-(60 / 25 / 60 / 164 / 9 / 4).
+(60 / 25 / 60 / 164 / 9 / 4). v87.1 added tail_v87_1 to the same segment: 2343 /
+495 / 48 / 235 / 1721 = 4842.
 
 ## v86 note: what v86 actually added, and the four seams worth knowing
 
