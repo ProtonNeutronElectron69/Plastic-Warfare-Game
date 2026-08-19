@@ -40,8 +40,8 @@ function bot55(){return G.players.find(p=>p.ai)}
     construction. Same shape of test aimed at the new rule. */
  ok('T35.A the roster is cut into four ranks',SUP_MAX===4&&typeof SUP_STEP==='undefined');
  const trainable=Object.keys(U).filter(k=>!U[k].noTrain);
- ok('T35.A the cuts are set by the 24 trainable units (the drop-only para is excluded)',
-    trainable.length===24&&!trainable.includes('para')); // v85: 20 -> 21, the Signal Runner. v86: 21 -> 23, the Command Truck and the Observation Balloon. v87: 23 -> 24, the Firebomb Heli
+ ok('T35.A the cuts are set by the 25 trainable units (the drop-only para is excluded)',
+    trainable.length===25&&!trainable.includes('para')); // v85: 20 -> 21, the Signal Runner. v86: 21 -> 23, the Command Truck and the Observation Balloon. v87: 23 -> 24, the Firebomb Heli. v88: 24 -> 25, the Choktaw Gunship
  /* recompute the quartiles independently of SUP_U's own expression, including the
     total-order tiebreak: a comparator that returned 0 on equal costs would leave
     the order to the engine and put a silent divergence into lockstep. */
@@ -70,7 +70,6 @@ function bot55(){return G.players.find(p=>p.ai)}
  }
 
  // the four tiers, transcribed, so a silent re-tiering fires as well as a rule break
- const T1=['truck','para','grunt','grenadier','bazooka','bike','runner']; // v85: +runner, at 62 he sits between the Grenadier and the Bazooka
  // v70: the Medic moved 2 -> 3 and the Sergeant Bull 3 -> 4 on the quartile cut.
  // Nothing else changed tier against the v69 ladder.
  // v85: adding a 21st unit moved NOTHING between tiers - checked deliberately,
@@ -91,9 +90,38 @@ function bot55(){return G.players.find(p=>p.ai)}
     at all, and the ONLY insertion point that shifts nobody across one is past the
     18th - anywhere cheaper and whichever unit sits on a boundary is pushed over it.
     That is why 383.5 total, dearer than Sarge, is not a feel decision. */
- const T2=['gunner','flamer','jeep','mortar','sniper','cmdtruck'];
- const T3=['medic','aatruck','tank','heli','apc','balloon'];
- const T4=['sarge','arty','chinook','apache','bulltank','firebomb'];
+/* v88: THREE UNITS MOVED, and unlike v85, v86 and v87 that was NOT avoidable.
+    This is the first release since the quartile rule shipped where no price for the
+    new unit leaves the roster untouched, and it was measured BEFORE the row went in
+    rather than discovered afterwards: the sweep ran every total cost from 10 to 700
+    against the v87 build and counted how many existing units changed rank.
+      total <= 111 ...... 0 move   (cheaper than the Machine Gunner)
+      112 .. ~299 ....... 1 moves  (gunner 2 -> 1)
+      ~300 .. ~382 ...... 2 move   (+ medic 3 -> 2)
+      >= ~383 ........... 3 move   (+ sarge 4 -> 3)
+    The reason is arithmetic and not pricing. At 24 trainable units the cuts land
+    after the 6th, 12th and 18th; at 25 they land after the 7th, 13th and 19th,
+    because 25 does not divide by four and floor() puts the extra member in the
+    cheap tier. The three units sitting exactly ON the old cuts therefore drop one
+    rank whatever the 25th unit costs, and the only band that shifts nobody is one
+    a gunship cannot be priced into.
+    All three moved DOWN by exactly one rank, which is to say each got one supply
+    CHEAPER. Nothing moved up, and no unit moved by more than one rank.
+    The transcription below is the v88 truth and the three movers are named on
+    their own line, so a FOURTH mover - or a mover in the other direction - still
+    fires here as loudly as this one did. */
+ const T1=['truck','para','grunt','grenadier','bazooka','bike','runner','gunner']; // v88: +gunner, dropped from 2
+ const T2=['flamer','jeep','mortar','sniper','cmdtruck','medic'];                  // v88: -gunner, +medic (dropped from 3)
+ const T3=['aatruck','tank','heli','apc','balloon','sarge'];                       // v88: -medic, +sarge (dropped from 4)
+ const T4=['arty','chinook','apache','bulltank','firebomb','choktaw'];             // v88: -sarge, +the Choktaw itself
+ ok('T35.A v88 moved EXACTLY these three, each down exactly one rank',
+    supOf('gunner')===1&&supOf('medic')===2&&supOf('sarge')===3);
+ ok('T35.A ...and every other unit kept the rank it had at v87',
+    (function(){const V87={truck:1,grunt:1,grenadier:1,runner:1,bazooka:1,bike:1,para:1,
+      flamer:2,jeep:2,mortar:2,sniper:2,cmdtruck:2,
+      aatruck:3,tank:3,heli:3,apc:3,balloon:3,
+      arty:4,chinook:4,apache:4,bulltank:4,firebomb:4};
+     return Object.keys(V87).every(k=>supOf(k)===V87[k])})());
  ok('T35.A the cheap tier costs 1 supply',T1.every(k=>supOf(k)===1));
  ok('T35.A the second tier costs 2',T2.every(k=>supOf(k)===2));
  ok('T35.A the third tier costs 3',T3.every(k=>supOf(k)===3));
@@ -110,14 +138,21 @@ function bot55(){return G.players.find(p=>p.ai)}
  ok('T35.A no unit can exceed the top rank',Object.keys(U).every(k=>supOf(k)<=SUP_MAX));
  ok('T35.A the drop-only Paratrooper is floored off zero rather than fielded free',
     U.para.cp+U.para.ce===0&&supOf('para')===1&&U.para.noTrain);
- ok('T35.A the Gunner holds supply 2 at its v78 price',U.gunner.cp===112&&supOf('gunner')===2);
+ /* v88: the Gunner's PRICE is unmoved and is still pinned; his RANK fell to 1 for
+    the arithmetic reason above, not because anything about him changed. Both
+    halves are asserted so a price edit and a re-ranking stay distinguishable. */
+ ok('T35.A the Gunner still costs 112, the v78 price',U.gunner.cp===112);
+ ok('T35.A ...and holds supply 1 since the roster reached 25 units',supOf('gunner')===1);
  /* v78: the quartile boundary is what matters here, not the price. Tier 1 ends
     at the Scout Bike on 95 total, so 112 clears it by 17 and a further cut past
     95 would silently drop him a tier and push the Bike up one. */
- ok('T35.A ...and clears the tier-1 boundary the Scout Bike sets',
+ ok('T35.A ...and is still dearer than the Scout Bike, who shares the rank with him now',
     U.gunner.cp+U.gunner.ce>U.bike.cp+U.bike.ce&&supOf('bike')===1);
- ok('T35.A the Medic moved 2 -> 3 at v70: 173 total opens the third quartile',
-    U.medic.cp+U.medic.ce===173&&supOf('medic')===3);
+ /* v70 moved the Medic 2 -> 3 on the quartile cut; v88's 25th unit moved him back
+    to 2 without touching his price, which is the same arithmetic that moved the
+    Gunner. The PRICE is what v70 legislated and it is still pinned. */
+ ok('T35.A the Medic still costs 173 total, the v65 figure',U.medic.cp+U.medic.ce===173);
+ ok('T35.A ...and holds supply 2 since the roster reached 25 units',supOf('medic')===2);
  ok('T35.A an unknown key falls back to 1 rather than NaN',supOf('nosuchunit')===1);
 }
 

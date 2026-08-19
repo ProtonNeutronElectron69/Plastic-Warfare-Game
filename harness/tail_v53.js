@@ -64,9 +64,15 @@ function cfg54(map,mode,seed,opp){return{map,mode,diff:'normal',fac:'green',opp:
     anything - it is a new row written after the pass, which is why it is exempted
     from the ratio check above and named here instead. The list is pinned precisely
     so an addition has to be declared rather than slipping in. */
+ /* v88: the Choktaw joins the list. Its 0.75 is the Apache's literal, because its
+    main weapon IS the Apache's rocket pod - so unlike the Firebomb's it is not a
+    new number at all, and the identity is asserted below rather than transcribed.
+    Its DOOR GUN carries no spl, which is why fireSec had to stop assuming one. */
  ok('T34.B nothing else in the roster grew a splash radius',
     Object.keys(U).filter(k=>U[k].spl).sort().join()===
-    'aatruck,apache,arty,bazooka,bulltank,firebomb,flamer,grenadier,mortar,tank');
+    'aatruck,apache,arty,bazooka,bulltank,choktaw,firebomb,flamer,grenadier,mortar,tank');
+ ok('T34.B the Choktaw\'s burst is the Apache\'s, and its door gun has none',
+    U.choktaw.spl===U.apache.spl&&!U.choktaw.sec.spl);
  ok('T34.B ...and the one arrival since the pass carries a literal, not a scaled one',
     U.firebomb.spl===1);
  // every scaled value is a dyadic fraction, so the rescale adds no float noise to a

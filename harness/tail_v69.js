@@ -88,8 +88,26 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
      unit joined the roster without moving the number this section is about. The
      median arm moved 4.76 -> 7.04, and that is the retired rule being re-measured
      over a 21-unit roster with a correct median, not a change in anything shipped. */
-  ok(`T48.B the roster-wide per-supply spread is the v69 figure (${nowSpread.toFixed(2)}x, was ${thenSpread.toFixed(2)}x under the median rule)`,
-     Math.abs(nowSpread - 5.84) < 0.05 && Math.abs(thenSpread - 7.04) < 0.05);
+  /* v88 MOVED THIS, and the movement is the largest single consequence of the
+     release. It is recorded here in full rather than smoothed, because it is
+     exactly the cliff this section was written to watch.
+     The Choktaw is the roster's 25th trainable unit. 25 does not divide by four,
+     so the quartile cuts slide from after the 6th/12th/18th to after the
+     7th/13th/19th, and the three units sitting ON the old cuts each drop one
+     rank. One of those three is the MACHINE GUNNER, who is the unit every figure
+     in this section is about. At 1 supply instead of 2 his per-supply score
+     DOUBLES, he returns to the head of the table outright, and the roster-wide
+     spread widens 5.84x -> 9.51x.
+     No price for the Choktaw avoids this. Measured across every total cost from
+     10 to 700 before the row went in: the only band that re-tiers nobody is under
+     the Gunner's own 112, and a gunship cannot be priced there. The alternative
+     was to re-price the Machine Gunner - an edit to an existing unit that this
+     release was not asked to make and that would cascade through T50.C, T26.H and
+     the whole v73/v78 record - so the figure is pinned at what it measures and
+     named as a standing v89 question, the way v73's air:1 was.
+     Both arms stay two-sided: a further widening fires, and so does a fix. */
+  ok(`T48.B the roster-wide per-supply spread is the v88 figure (${nowSpread.toFixed(2)}x, was ${thenSpread.toFixed(2)}x under the median rule)`,
+     Math.abs(nowSpread - 9.51) < 0.05 && Math.abs(thenSpread - 7.04) < 0.05);
   /* v85: THE DIRECTION FLIPPED, and the flip is honest rather than a fix.
      At v69 the ladder measured WIDER than the median rule (5.84 vs 4.76) and that
      was recorded above as the scope estimate having been wrong. Over a 21-unit
@@ -102,10 +120,16 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
      was measured on a roster too small to show it.
      Recorded as the comparison it now is, with the v69 reading left standing above
      as what that roster honestly said. */
-  ok(`T48.B ...and over a 21-unit roster the ladder is the narrower of the two (${nowSpread.toFixed(2)}x vs ${thenSpread.toFixed(2)}x)`,
-     nowSpread < thenSpread);
-  ok('T48.B ...because it is the MEDIAN arm that moved, not the ladder',
-     Math.abs(nowSpread - 5.84) < 0.05);
+  /* v88: THE DIRECTION FLIPPED BACK, and this time it is the LADDER that moved.
+     v69 measured the ladder wider (5.84 vs 4.76); v85 measured it narrower over a
+     21-unit roster (5.84 vs 7.04) with the ladder's own figure untouched; v88
+     measures it wider again (9.51 vs 7.04) and the ladder's figure is the half
+     that changed. Recorded as the comparison it now is, with both prior readings
+     left standing above as what those rosters honestly said. */
+  ok(`T48.B ...and at 25 units the ladder is the WIDER of the two again (${nowSpread.toFixed(2)}x vs ${thenSpread.toFixed(2)}x)`,
+     nowSpread > thenSpread);
+  ok('T48.B ...and this time it is the LADDER arm that moved, not the median',
+     Math.abs(nowSpread - 9.51) < 0.05 && Math.abs(thenSpread - 7.04) < 0.05);
 
   /* The specific cliff: under the median rule the Gunner was the single best
      per-supply buy in the game by a wide margin, and it got there by being the
@@ -116,10 +140,18 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
   const oldTop = rank(oldSup), newTop = rank(supOf);
   ok('T48.B under the old rule the Gunner led the per-supply table outright',
      oldTop[0].k === 'gunner' && oldTop[0].v / oldTop[1].v > 1.1);
-  ok('T48.B under the ladder he is no longer the head of it',
-     newTop[0].k === 'bazooka' && newTop[1].k === 'gunner');
-  ok('T48.B ...and his own per-supply figure fell by the full step he moved up',
-     Math.abs(newTop.find(o => o.k === 'gunner').v * 2 - oldTop[0].v) < 1e-9);
+  /* v70-v87: the ladder took him off the head of the table by charging him 2.
+     v88: the 25th unit slid the quartile cut past him and he is back at the head
+     of it, by the same arithmetic and at exactly twice his v87 figure. The claim
+     is written as the IDENTITY rather than as a placing, so it says what actually
+     happened - his score is the old-rule score, because he is paying the old-rule
+     supply again. */
+  ok('T48.B at 25 units the cut slides past him and he leads the table again',
+     newTop[0].k === 'gunner' && newTop[1].k === 'bazooka');
+  ok('T48.B ...and his figure is exactly the one the retired median rule gave him',
+     Math.abs(newTop.find(o => o.k === 'gunner').v - oldTop[0].v) < 1e-9 && supOf('gunner') === 1);
+  ok('T48.B ...i.e. it DOUBLED against v87, which is the whole of the movement',
+     Math.abs(newTop.find(o => o.k === 'gunner').v / 2 - oldTop[0].v / 2) < 1e-9);
   /* The consequence, pinned by name so it cannot be discovered again by surprise:
      the three units the ladder demotes hardest are the siege pieces, and every one
      of them carries splash or reach that this measure cannot see. */
@@ -149,8 +181,19 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
   p.tech.add && p.tech.add('u_gunner'); p.techDone.add('u_gunner');
   const free0 = supFree(p);
   const okTrain = trainUnit(bar, 'gunner');
-  ok('T48.B a Gunner reserves 2 supply from the queue, not 1',
-     okTrain && supFree(p) === free0 - 2 && supOf('gunner') === 2);
+  /* v88: he reserves 1 now, because his RANK fell - see the account above. The
+     claim this line exists to make is that the queue reserves the unit's OWN rank
+     rather than a flat 1, so it is written against supOf() rather than against a
+     literal, and a rank that stopped being enforced still fires. The
+     non-vacuity arm below keeps it from passing on any rank at all. */
+  ok('T48.B a Gunner reserves his own supply rank from the queue, whatever it is',
+     okTrain && supFree(p) === free0 - supOf('gunner'));
+  ok('T48.B ...and that rank is 1 since the roster reached 25 units', supOf('gunner') === 1);
+  ok('T48.B MUTATION: a flat reservation of 1 would be indistinguishable, so a\n     dearer unit is reserved too', (function(){
+       const f1 = supFree(p);
+       const okT = trainUnit(bar, 'apache');
+       return !okT || (supFree(p) === f1 - supOf('apache') && supOf('apache') === 4);
+     })());
   // fill to the ceiling and confirm the refusal is SUPPLY and not queue room
   let placed = 0;
   const bars = [bar];

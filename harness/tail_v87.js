@@ -33,9 +33,13 @@ function burn87(n) { for (let i = 0; i < n; i++) updateStrikes(DT87); }
 {
   ok('T60.A Tan now fields an exclusive out of all three production buildings',
     FAC_INF.tan.includes('flamer') && FAC_VEH.tan.includes('bulltank') && FAC_AIR.tan.includes('firebomb'));
-  ok('T60.A ...and Gray is the last army with an empty cell in those three tables',
-    FAC_AIR.gray.length === 0 &&
-    ['green', 'tan', 'blue'].every(f => FAC_INF[f].length && FAC_VEH[f].length && FAC_AIR[f].length));
+  /* v88 FILLED IT. Gray's Helipad cell was the last empty one in the three tables,
+     and this line becomes the completion claim it was counting down to: every army
+     fields an exclusive out of every production building, which is the whole of
+     what roadmap 2 set out to do for units. */
+  ok('T60.A ...and v88 filled Gray\'s cell, the last empty one in those three tables',
+    FAC_AIR.gray.includes('choktaw') &&
+    ['green', 'tan', 'gray', 'blue'].every(f => FAC_INF[f].length && FAC_VEH[f].length && FAC_AIR[f].length));
   ok('T60.A Tan holds two exclusive structures now',
     FAC.tan.ub.length === 2 && FAC.tan.ub.includes('dump') && FAC.tan.ub.includes('foundry'));
   for (const f of ['green', 'gray', 'blue']) {
@@ -74,9 +78,16 @@ function burn87(n) { for (let i = 0; i < n; i++) updateStrikes(DT87); }
       gunner: 2, flamer: 2, jeep: 2, mortar: 2, cmdtruck: 2, sniper: 2,
       medic: 3, aatruck: 3, tank: 3, heli: 3, apc: 3, balloon: 3,
       sarge: 4, chinook: 4, arty: 4, apache: 4, bulltank: 4 };
+    /* v88: as with T59.A, this was a claim about V87 and the roster moved under it.
+       The v86 transcription is KEPT and what is asserted is the exact drift: the
+       same three units, each one rank cheaper, for the arithmetic reason T35.A
+       records. v87's own addition still moved nobody, which is what this line was
+       written to say and is still true. */
     const moved = Object.keys(V86).filter(k => supOf(k) !== V86[k]);
-    ok('T60.A adding a 24th unit moved NO existing unit between supply tiers' + (moved.length ? ' (' + moved.join(', ') + ')' : ''),
-      moved.length === 0);
+    ok('T60.A v87 itself moved nobody; the only drift from the v86 table is v88\'s three' +
+       (moved.length ? ' (' + moved.join(', ') + ')' : ''),
+      moved.slice().sort().join(',') === 'gunner,medic,sarge' &&
+      moved.every(k => V86[k] - supOf(k) === 1));
     ok('T60.A ...and the arrival took the top rank its price bought', supOf('firebomb') === 4);
     /* COUNTERFACTUAL. At 24 trainable units the quartile cuts land in exactly the
        three places they did at 23, so the only insertion point that shifts nobody
@@ -100,8 +111,14 @@ function burn87(n) { for (let i = 0; i < n; i++) updateStrikes(DT87); }
      is stated about t.abCd and u.abCool rather than about the Firebomb. */
   ok('T60.B the DURATION lives on the table row, so a row declares its own clock',
     U.firebomb.abCd === FB_CD && typeof U.firebomb.abCd === 'number');
+  /* v88 IS THE PROOF THIS SECTION WAS WRITTEN FOR. The claim above is that v87
+     built machinery rather than one helicopter's special case, and the Choktaw's
+     Paint is the second user of it - a row declaring abCd:20 and nothing else new.
+     Both rows are named, so a third still has to be declared here. */
   ok('T60.B ...and exactly the rows that declare one are the rows that have an ability with one',
-    Object.keys(U).filter(k => U[k].abCd).join(',') === 'firebomb');
+    Object.keys(U).filter(k => U[k].abCd).sort().join(',') === 'choktaw,firebomb');
+  ok('T60.B the second user needed NO new machinery, only a duration on its row',
+    U.choktaw.abCd === PAINT_CD && !!U.choktaw.paint);
 
   G = null; newGame(cfg87('tan', 870201));
   const me = G.human;
@@ -280,14 +297,15 @@ function burn87(n) { for (let i = 0; i < n; i++) updateStrikes(DT87); }
   ok('T60.E it is Tan\'s alone now', radioAllowed({ fac: 'tan' }, 'napalm') &&
     !['green', 'gray', 'blue'].some(f => radioAllowed({ fac: f }, 'napalm')));
   ok('T60.E ...and it did so by GAINING a field, not by moving to a second table',
-    !!radioAbility('napalm') && radioAbility('napalm').fac === 'tan' && RADIO_ABILITIES.length === 5);
+    !!radioAbility('napalm') && radioAbility('napalm').fac === 'tan' && RADIO_ABILITIES.length === 6); // v88: 5 -> 6, Gray's Smokescreen
   ok('T60.E the shared pool is now the barrage and the paradrop',
     RADIO_ABILITIES.filter(a => !a.fac).map(a => a.mode).sort().join() === 'barrage,paradrop');
   ok('T60.E Tan\'s panel offers three, and each army sees only its own',
     radioListFor({ fac: 'tan' }).map(a => a.mode).sort().join() === 'barrage,napalm,paradrop' &&
     ['green', 'tan', 'gray', 'blue'].every(f => radioListFor({ fac: f }).every(a => !a.fac || a.fac === f)));
-  ok('T60.E Gray is down to the two shared rows until v88 gives it the Smokescreen',
-    radioListFor({ fac: 'gray' }).length === 2);
+  ok('T60.E and v88 gave Gray the Smokescreen, so every army now holds exactly one',
+    radioListFor({ fac: 'gray' }).length === 3 && radioAbility('smokescr').fac === 'gray' &&
+    ['green', 'tan', 'gray', 'blue'].every(f => RADIO_ABILITIES.filter(a => a.fac === f).length === 1));
   ok('T60.E ...and the vision gate did not move with the ownership',
     radioNeedsVision('napalm') && radioNeedsVision('barrage') && !radioNeedsVision('paradrop'));
 

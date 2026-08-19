@@ -84,8 +84,9 @@ section('T52.B the Magnifying Glass removal left nothing behind');
   // v85: three survivors plus Blue's Rapid Redeploy. The claim is the removal, so
   // it is stated as "magnify is absent from a table of N", not as a bare count.
   // v86: N is five - Green's Supply Drop is the second faction row.
-  ok('T52.B and the roster is the three survivors, plus the two added since',
-    RADIO_ABILITIES.length === 5 && !RADIO_ABILITIES.some(a => a.mode === 'magnify'));
+  // v88: N is six, and the table is complete - one faction row per army.
+  ok('T52.B and the roster is the three survivors, plus the three added since',
+    RADIO_ABILITIES.length === 6 && !RADIO_ABILITIES.some(a => a.mode === 'magnify'));
   /* v87: the count is unchanged because the napalm did not LEAVE the table when it
      became Tan's - it gained a field. Worth its own line: "removed" and "narrowed
      to one army" are different things, and this section is about the first. */
@@ -374,7 +375,14 @@ section('T52.F the manual lint now catches claims that carry no number');
     ok('T52.F4 the manual markup was located', help.length > 500);
     const liveNames = new Set([...RADIO_ABILITIES.map(a => a.name),
       ...Object.keys(U).map(k => U[k].n), ...Object.keys(B).map(k => B[k].n)]);
+    /* v88: 'Gunship' is a retired BLUE unit and the check is a plain substring, so
+       any future unit whose name ENDS in that word would read as the dead one to a
+       reader as well as to this test. Gray's new helicopter is named 'Choktaw Heli'
+       for exactly that reason - and it is the name the roadmap specified anyway,
+       matching Tan's 'Firebomb Heli'. Asserted rather than left to luck. */
     const retired = ['Magnifying Glass', 'Radio Operator', 'Gunship'];
+    ok('T52.F4 no LIVE unit name contains a retired one as a substring either',
+      Object.keys(U).every(k => retired.every(r => !U[k].n.includes(r))));
     const named = retired.filter(n => !liveNames.has(n) && help.includes(n));
     ok('T52.F4 the manual names no retired ability or unit', named.length === 0);
     /* and the FILE MAP banners may not name one either */

@@ -69,9 +69,20 @@ function bld86(k, p, tx, ty) { const b = makeBuilding(k, p, tx, ty, true); b.pro
       gunner: 2, flamer: 2, jeep: 2, mortar: 2, sniper: 2,
       medic: 3, aatruck: 3, tank: 3, heli: 3, apc: 3,
       sarge: 4, chinook: 4, arty: 4, apache: 4, bulltank: 4 };
+    /* v88: this claim was a statement about V86, and v88 moved the roster under it.
+       Three units are one rank cheaper than the v85 table records - gunner, medic
+       and sarge - and that is v88's doing, not v86's: it is what happens when a
+       25th trainable unit slides the quartile cuts, and T35.A owns the full
+       account. Re-aimed rather than relaxed: the v85 transcription is KEPT, and
+       what is asserted is that exactly those three drifted from it and each by
+       exactly one rank downward. A fourth mover, or one in the other direction,
+       still fires here as a named unit. */
     const moved = Object.keys(V85).filter(k => supOf(k) !== V85[k]);
-    ok('T59.A adding two units moved NO existing unit between supply tiers' + (moved.length ? ' (' + moved.join(', ') + ')' : ''),
-      moved.length === 0);
+    ok('T59.A v86 itself moved nobody; the only drift from the v85 table is v88\'s three' +
+       (moved.length ? ' (' + moved.join(', ') + ')' : ''),
+      moved.slice().sort().join(',') === 'gunner,medic,sarge');
+    ok('T59.A ...and every one of the three fell by exactly one rank, none rose',
+      moved.every(k => V85[k] - supOf(k) === 1));
     ok('T59.A ...and the two arrivals took the ranks their prices bought',
       supOf('cmdtruck') === 2 && supOf('balloon') === 3);
     /* COUNTERFACTUAL: the prices are load-bearing, not decorative. Price the
@@ -82,8 +93,11 @@ function bld86(k, p, tx, ty) { const b = makeBuilding(k, p, tx, ty, true); b.pro
     const cost = k => U[k].cp + U[k].ce;
     const tr = Object.keys(U).filter(k => !U[k].noTrain).sort((a, b) => (cost(a) - cost(b)) || (a < b ? -1 : a > b ? 1 : 0));
     const rank = k => Math.min(SUP_MAX, 1 + Math.floor(tr.indexOf(k) * SUP_MAX / tr.length));
+    /* v88: measured against the LIVE ranks rather than the v85 transcription, since
+       three of those have legitimately drifted - the counterfactual is still about
+       whether the Command Truck's own price is load-bearing, and it still is. */
     ok('T59.A COUNTERFACTUAL: a cheaper Command Truck really would re-tier the roster',
-      rank('bike') !== V85.bike || rank('gunner') !== V85.gunner);
+      rank('bike') !== supOf('bike') || rank('gunner') !== supOf('gunner') || rank('medic') !== supOf('medic'));
     U.cmdtruck.cp = keep;
   }
 }
