@@ -176,9 +176,18 @@ function quiet51(){for(const mn of (G.map.mines||[]))mn.live=false;}
 /* ---------- D: the Bull's hull flamethrower ---------- */
 {
  const sc=U.bulltank.sec;
- ok('T32.D the Bull carries a second weapon, and only the Bull does',
-    !!sc&&sc.w==='f'&&sc.wc==='f'&&sc.rg===2.6&&sc.rt===0.55&&sc.k===0.15&&
-    Object.keys(U).filter(k=>U[k].sec).length===1);
+ /* v88: the Bull is no longer alone. The Choktaw's door gun is the second `sec`
+    row in the game and the FIRST that is not a flamethrower, which is what forced
+    fireSec to read sc.w instead of assuming one. The count is pinned at two so a
+    third still has to be declared here, and the Bull's own row is asserted
+    UNCHANGED beside it - this release generalised the machinery and had to move
+    none of the Bull's numbers to do it. */
+ ok('T32.D the Bull carries a second weapon, and its row is untouched',
+    !!sc&&sc.w==='f'&&sc.wc==='f'&&sc.rg===2.6&&sc.rt===0.55&&sc.k===0.15);
+ ok('T32.D exactly two units carry one now, and the second is the Choktaw',
+    Object.keys(U).filter(k=>U[k].sec).length===2&&!!U.choktaw.sec&&U.choktaw.sec.w==='b');
+ ok('T32.D ...and fireSec branches on the ROW rather than assuming a flamethrower',
+    /sc\.w===.b./.test(fireSec.toString()));
 
  G=null;newGame(cfg51('backyard','dm',51004,1,'tan'));quiet51();
  const A=arena51(3,3,14),foe=foeOf();

@@ -432,10 +432,10 @@ canvas{display:block}
   <b>Trucks</b>: right-click a pile to harvest it; right-click your <b>HQ</b> to force them to unload right now. Destroyed units leave a salvageable <b>scrap wreck</b> worth <span data-tune="salvagePct"></span>% of their plastic cost — send a truck to pick it up.<br><br>
   Build a <b>Barracks</b> for infantry, a <b>Garage</b> for vehicles, a <b>Helipad</b> for choppers. With a production building selected, right-click sets its rally point. Every building (barricades included) must be placed within <b><span data-tune="hqR"></span> tiles of one of your HQs</b> or <b><span data-tune="opR"></span> tiles of one of your Outposts</b> — only the HQ and Outpost themselves are exempt: they can go anywhere you can see (even far from base, but not into the fog of war). Nobody can build within <b><span data-tune="foeR"></span> tiles of an enemy HQ</b>, and every structure needs <b><span data-tune="gap"></span> clear <span data-tune="gapT"></span></b> between it and any other structure so your units can always drive out of your own base; barricades are exempt from each other, so walls still lay solid. Build an <b>Outpost</b> to push your borders out: it builds Dump Trucks, acts as a resource drop-off so trucks don't have to drive all the way home, and opens a <span data-tune="opR"></span>-tile build zone for a forward defensive line.<br><br>
   <b>Machine Gunner</b> (Barracks): tough, heavy MG. Select him and hit <b>Entrench</b>, then click to aim — he digs in and fires <span data-tune="entrench"></span>× as fast inside a 100° cone (shown on the ground). Give him a move order to pack up.<br><br>
-  <b>Radio Tower</b> (Lab unlock, 1 per army): a static uplink that opens the call-down panel on the right — <b><span data-tune="radioList"></span></b>. Every army gets the Artillery Barrage and the Paradrop; the rest belong to one army each, and you only ever see your own. <b>Napalm</b> is Tan's: it rains fire and a lingering burn across a <span data-tune="napBox"></span>×<span data-tune="napBox"></span> area; the <b>Artillery Barrage</b> walks <span data-tune="barrN"></span> off-map shells through a <span data-tune="barrBox"></span> box, <span data-tune="barrGap"></span>s apart, at <span data-tune="barrDmg"></span> damage inside a <span data-tune="barrR"></span>-tile blast (×<span data-tune="barrInf"></span> against infantry). Those <span data-tune="radioVis"></span> need vision. Paradrop puts <span data-tune="paraN"></span> elite Paratroopers anywhere, even in fog — SMGs shred infantry, AT grenades crack vehicles, slow HE charges level buildings. <b>Rapid Redeploy</b> is Blue's alone and is the only call-down that creates nobody: select up to <span data-tune="liftMax"></span> of your own infantry, click anywhere on the map even in fog, and they come down under canopies at the far end a moment later. <b>Supply Drop</b> is Green's alone: two crates on canopies, one carrying <span data-tune="dropP"></span> ⬢ and one carrying <span data-tune="dropE"></span> ⚡, which lie where they land with no expiry until one of <em>your</em> units walks over them — nobody else can pick them up, and nothing on the board can destroy them. Click an ability, then click the map (right-click cancels). One shared <span data-tune="radioCd"></span> cooldown.<br><br>
+  <b>Radio Tower</b> (Lab unlock, 1 per army): a static uplink that opens the call-down panel on the right — <b><span data-tune="radioList"></span></b>. Every army gets the Artillery Barrage and the Paradrop; the rest belong to one army each, and you only ever see your own. <b>Napalm</b> is Tan's: it rains fire and a lingering burn across a <span data-tune="napBox"></span>×<span data-tune="napBox"></span> area; the <b>Artillery Barrage</b> walks <span data-tune="barrN"></span> off-map shells through a <span data-tune="barrBox"></span> box, <span data-tune="barrGap"></span>s apart, at <span data-tune="barrDmg"></span> damage inside a <span data-tune="barrR"></span>-tile blast (×<span data-tune="barrInf"></span> against infantry). Those <span data-tune="radioVis"></span> need vision. Paradrop puts <span data-tune="paraN"></span> elite Paratroopers anywhere, even in fog — SMGs shred infantry, AT grenades crack vehicles, slow HE charges level buildings. <b>Rapid Redeploy</b> is Blue's alone and is the only call-down that creates nobody: select up to <span data-tune="liftMax"></span> of your own infantry, click anywhere on the map even in fog, and they come down under canopies at the far end a moment later. <b>Supply Drop</b> is Green's alone: two crates on canopies, one carrying <span data-tune="dropP"></span> ⬢ and one carrying <span data-tune="dropE"></span> ⚡, which lie where they land with no expiry until one of <em>your</em> units walks over them — nobody else can pick them up, and nothing on the board can destroy them. <b>Smokescreen</b> is Gray's alone: a <span data-tune="scrBox"></span>&times;<span data-tune="scrBox"></span> cloud in which your units <em>and your structures</em> take <span data-tune="scrRed"></span>% less damage for <span data-tune="scrT"></span> seconds. It is deliberately heavier than the Mortar Squad's Smoke Rounds in every dimension — wider, longer, twice the reduction, and it covers buildings — because it costs a Radio Tower and the shared cooldown where the mortar's costs one loaded tube. Click an ability, then click the map (right-click cancels). One shared <span data-tune="radioCd"></span> cooldown.<br><br>
   <b>Green Army exclusives.</b> <b>Sarge</b> patches himself up at <span data-tune="sargeRegen"></span> HP/sec once he has been out of contact for <span data-tune="sargeCalm"></span> seconds, and his <b>On Me!</b> toggle gives allied infantry within <span data-tune="sargeR"></span> tiles +<span data-tune="sargeAura"></span>% damage while cutting his own by <span data-tune="sargeSelf"></span>%. <b>Mortar Squads</b> ramp +<span data-tune="wfStep"></span>% per consecutive shell on one target up to +<span data-tune="wfCap"></span>%, and their <b>Smoke Rounds</b> toggle shells your own men instead: no damage, but a <span data-tune="smokeR"></span>-tile cloud that cuts damage taken by <span data-tune="smokeRed"></span>% for <span data-tune="smokeT"></span> seconds. The <b>Radar Tent</b>'s <b>Target Uplink</b> gives your whole army +<span data-tune="upRg"></span> range and +<span data-tune="upVi"></span> sight for <span data-tune="upT"></span> seconds on a <span data-tune="upCd"></span>-second cooldown. The <b>Command Truck</b> carries no guns at all: its <b>Forward Command</b> is a build zone that travels, opening <span data-tune="cmdR"></span> tiles of buildable ground around it for three structures and no others — <span data-tune="cmdBlds"></span> — and its <b>Broadcast</b> toggle makes allies within <span data-tune="bcastR"></span> tiles reload <span data-tune="bcastRt"></span>% faster while pinning the truck exactly where it stands. The <b>Observation Balloon</b> has the best sight in the game at <span data-tune="ballVi"></span> tiles, drifts slowly, and is the one thing on the board that ordinary weapons cannot touch: only AA missiles can target it at all and they land for <span data-tune="ballAa"></span>% damage, while splash never reaches it. Its <b>High Ground</b> gives every ally inside that vision +<span data-tune="highRg"></span> range. It is a clock, though — the gas lasts <span data-tune="ballFuel"></span> seconds and then it falls, killing everyone aboard, so spend <b>Bail</b> before that to put <span data-tune="bailCrew"></span> on the ground beneath it and scuttle the balloon yourself. The <b>Command Post</b> makes your army learn faster within <span data-tune="cpostR"></span> tiles — promotions cost <span data-tune="cpostVet"></span>% fewer kills — and its <b>Regroup</b> hands every unit in that radius <span data-tune="regroupHp"></span>% of its own maximum health back at once, on a <span data-tune="regroupCd"></span>-second cooldown.<br><br>
   <b>Tan Army exclusives.</b> The <b>Flamethrower</b>'s <b>Cook-Off</b> leaves everything he touches burning for <span data-tune="cookDps"></span> damage/sec, and his <b>Pressure Valve</b> toggle adds <span data-tune="valveDmg"></span>% damage and +<span data-tune="valveRg"></span> range at the price of <span data-tune="valveBack"></span>% of the damage he deals being taken by the man holding the hose. The <b>&quot;Bull&quot; Heavy Tank</b>'s ablative plate ignores small-arms fire completely, which is to say <span data-tune="plateRow"></span> cannot hurt it at all, and its <b>Full Throttle</b> toggle adds <span data-tune="thrSpd"></span>% speed and crushes enemy infantry and barricades it drives over, but silences both its weapons while it rolls. The <b>Munitions Dump</b>'s <b>Scuttle</b> blows the building itself for <span data-tune="scDm"></span> damage across <span data-tune="scR"></span> tiles, and your own units and structures take <span data-tune="scFf"></span>% of it. The <b>Firebomb Heli</b> sows fire rather than shooting at things: <b>Scorched Earth</b> leaves the ground burning for <span data-tune="scorchT"></span> seconds at <span data-tune="scorchDps"></span> damage/sec under everything it hits, so a target that holds its position keeps burning and one that walks away does not. Its <b>Napalm Blast</b> empties the racks — <span data-tune="fbN"></span> firebombs on random tiles within <span data-tune="fbR"></span> of the helicopter, <span data-tune="fbDm"></span> damage each, every one leaving <span data-tune="fbBurn"></span> seconds of fire at <span data-tune="groundDps"></span>/sec that burns <em>your</em> men and buildings exactly as readily as theirs — on a <span data-tune="fbCd"></span>-second cooldown, the first cooldown ability any unit in the game has carried. The fire is on the ground, so it cannot reach an aircraft: the helicopter that dropped it is safe above it, and so is everything else with rotors. The <b>Foundry</b> gives every vehicle built while it stands +<span data-tune="foundryHp"></span>% hull permanently, and its <b>Pour</b> finishes the vehicle at the front of <em>every</em> Garage queue at once for <span data-tune="pourCost"></span>% of each one's plastic on top, on a <span data-tune="pourCd"></span>-second cooldown.<br><br>
-  <b>Gray Army exclusives.</b> The <b>Sniper</b> cannot be picked as a target at all until he fires, and drops back out of sight <span data-tune="camoT"></span> seconds after his last shot — an approach tool above all, since it covers him on the way in rather than through a firefight — and his <b>Called Shot</b> toggle adds <span data-tune="csDmg"></span>% damage but restricts him to enemy infantry for as long as it runs. <b>Rocket Artillery</b> shell-shocks whoever lives through the blast, adding <span data-tune="shockSet"></span> <span data-tune="shockSetT"></span> to a survivor's reload on top of whatever it already reads, and its <b>Ripple Fire</b> toggle trades the single shell for a salvo of <span data-tune="ripN"></span> rockets at <span data-tune="ripDm"></span>% damage each, bursting wider and scattered across the target, paid for with <span data-tune="ripRt"></span>% more reload. The <b>Bunker</b> garrisons <span data-tune="bunkGar"></span> infantry who fire from cover and cannot be caught by splash, and its <b>Lockdown</b> buttons them up: the garrison stops firing entirely, but the bunker takes <span data-tune="lockRed"></span>% less damage for <span data-tune="lockT"></span> seconds, on a <span data-tune="lockCd"></span>-second cooldown.<br><br>
+  <b>Gray Army exclusives.</b> The <b>Sniper</b> cannot be picked as a target at all until he fires, and drops back out of sight <span data-tune="camoT"></span> seconds after his last shot — an approach tool above all, since it covers him on the way in rather than through a firefight — and his <b>Called Shot</b> toggle adds <span data-tune="csDmg"></span>% damage but restricts him to enemy infantry for as long as it runs. <b>Rocket Artillery</b> shell-shocks whoever lives through the blast, adding <span data-tune="shockSet"></span> <span data-tune="shockSetT"></span> to a survivor's reload on top of whatever it already reads, and its <b>Ripple Fire</b> toggle trades the single shell for a salvo of <span data-tune="ripN"></span> rockets at <span data-tune="ripDm"></span>% damage each, bursting wider and scattered across the target, paid for with <span data-tune="ripRt"></span>% more reload. The <b>Bunker</b> garrisons <span data-tune="bunkGar"></span> infantry who fire from cover and cannot be caught by splash, and its <b>Lockdown</b> buttons them up: the garrison stops firing entirely, but the bunker takes <span data-tune="lockRed"></span>% less damage for <span data-tune="lockT"></span> seconds, on a <span data-tune="lockCd"></span>-second cooldown. The <b>Choktaw Heli</b> carries two weapons at once and fires both: rocket pods that take armour, aircraft and structures, and a door gun that takes infantry and wildlife, so it never has to choose. It is also the eye of the army — <b>Forward Observer</b> gives every friendly arcing weapon, which is to say the Mortar Squad and the Rocket Artillery, +<span data-tune="fobRg"></span> tiles of reach against anything the Choktaw itself can see, and nothing at all against a target it cannot. Its <b>Paint</b> marks a <span data-tune="paintBox"></span>&times;<span data-tune="paintBox"></span> area you choose: every enemy unit inside takes +<span data-tune="paintDmg"></span>% damage from <em>every</em> source for <span data-tune="paintT"></span> seconds, on a <span data-tune="paintCd"></span>-second cooldown. The mark rides the men rather than the ground, so it follows them out of the box, and painting a unit that is already lit restarts its clock instead of stacking a second mark. The <b>Heavy Barricade</b> is the ordinary wall at <span data-tune="hbarrHp"></span> HP, and everything of yours on the tiles around it — units, structures and other walls alike — takes <span data-tune="hbarrRed"></span>% less damage. That aura <em>stacks</em>: overlapping walls add up, to a ceiling of <span data-tune="hbarrCap"></span>%, so four of them reach the cap and a fifth is wasted plastic. One in <span data-tune="hbarrMineP"></span> of them buries a mine <span data-tune="hbarrMineD"></span> tiles toward the nearest enemy HQ as it finishes — a mine only your army can see, and one that lets your own men walk over it.<br><br>
   <b>Blue Army exclusives.</b> The <b>Scout Bike</b> is evasive, taking <span data-tune="evadeRed"></span>% less damage in any moment he is genuinely moving — which is worth nothing while he sits still trading shots, and that is where most of his damage is taken — and his <b>Flat Out</b> toggle adds <span data-tune="flatSpd"></span>% speed and +<span data-tune="flatVi"></span> sight, but holds his fire completely and refuses attack orders while it runs. The <b>Chinook</b> lifts <span data-tune="chinCap"></span> infantry and makes friendly infantry near it hit <span data-tune="chinAura"></span>% harder, and its <b>Air Assault</b> toggle opens the hold so the squad fires out at whatever it can reach — they can be shot back at while they do it, and the aircraft cannot move at all until you close it again. The <b>Wind Turbine</b>'s <b>Overdrive</b> runs it at ×<span data-tune="overMul"></span> output for <span data-tune="overT"></span> seconds and then produces nothing whatsoever for <span data-tune="overOff"></span> seconds, on a <span data-tune="overCd"></span>-second cooldown; across the full cycle that is less electricity than leaving it alone, so it buys the power earlier rather than cheaper. The <b>Signal Runner</b> is weaker and worse-armed than a Grunt on purpose — what you are buying is his radio. <b>Radio Net</b> passively gives friendly infantry within <span data-tune="rnetR"></span> tiles +<span data-tune="rnetVi"></span> sight, and his <b>Sprint</b> toggle gives every friendly infantryman within <span data-tune="sprintR"></span> tiles, himself included, +<span data-tune="sprintSpd"></span>% movement speed — but nobody inside the radius will fire, take an attack order, or so much as acquire a target while it runs. The <b>Forward Pad</b> repairs friendly aircraft within <span data-tune="padR"></span> tiles at <span data-tune="padRep"></span> HP/sec, which is the only aircraft repair in the game, and its <b>Scramble</b> gives every aircraft you own — anywhere on the map, not just the ones on the pad — +<span data-tune="scramSpd"></span>% speed for <span data-tune="scramT"></span> seconds on a <span data-tune="scramCd"></span>-second cooldown.<br><br>
   <b>APC</b> (Garage): unarmed transport carrying 10 infantry — right-click it with infantry selected to load, press <b>U</b> (or the panel button) to unload. It shields itself and nearby allied infantry (−25% damage); if destroyed, the squad bails out losing only 15% health.<br><br>
   <b>Chinook</b> (Blue only, Helipad): the fastest chopper in the game and the biggest transport — <span data-tune="chinCap"></span> infantry, loaded and unloaded exactly like an APC, flown straight over water, walls and minefields. It carries no weapons at all, but allied infantry within <b>3 tiles</b> of it hit <b>15% harder</b> (one Chinook only; a second does not stack, though a Munitions Dump does). Over open water it will refuse to unload.<br><br>
@@ -1009,6 +1009,53 @@ const FB_AI_CLUMP=3;   // Napalm Blast: enemy ground units inside the disc befor
 const FB_AI_OWN=1;     // ...and the most of its OWN it will accept standing in the fire
 const AI_POUR_BANK=900;// Pour: the plastic a bot must be holding before it buys time with it...
 const AI_POUR_N=2;     // ...and how many Garages must have something queued to be worth the cooldown
+/* --- THE OBSERVER, THE WALL AND THE SMOKE: GRAY, ADDED AT v88 ---
+   The last army of roadmap 2, and the last release of it. Three pieces, and the
+   shape of each is decided by a door the file already has rather than by new
+   machinery: the Choktaw's second weapon is the Bull's `sec` row, its Paint is
+   the v87 `u.abCool` clock, and both the barricade's aura and the smokescreen
+   are defender-side multipliers in applyDmg beside the APC shield, the mortar's
+   smoke and Lockdown.
+
+   SIZING NOTES, on the same rule as the v85, v86 and v87 blocks above.
+   FOB_RG is the owner's figure: +2 tiles. It applies only to INDIRECT fire,
+   which the file already spells `t.mrg` - the minimum-range flag the Mortar
+   Squad and the Rocket Artillery carry - rather than to a hand-written pair of
+   unit keys that a third arcing weapon would have to be remembered into.
+   PAINT_DMG, PAINT_BOX, PAINT_T and PAINT_CD are the owner's four: +25% from
+   every source, a 2x2 box, ten seconds, twenty of cooldown. The cooldown is
+   TWO THIRDS the Napalm Blast's 30 because Paint does no damage of its own -
+   it is worth nothing at all unless something else is already shooting.
+   HBARR_HP is triple BARR_HP by specification. HBARR_RED is 15% per wall and
+   HBARR_CAP is 60%, so FOUR overlapping walls reach the ceiling and a fifth is
+   wasted plastic; the cap is what stops a solid block of them from being
+   arithmetically unkillable, and it is a cap on the TOTAL rather than on the
+   count so it cannot be walked around by mixing in the cheap barricade.
+   HBARR_MINE_P is the one-time 10% roll, HBARR_MINE_D the three tiles in front.
+   SMOKESCR_BOX is 7 by specification and SMOKESCR_RED is 40% against the
+   Mortar's SMOKE_RED of 20% over a 2-tile radius for 5 seconds. That gap is
+   INTENDED and is written down here so a later balance pass reads it as a
+   decision: the call-down costs a Radio Tower and the shared RADIO_CD, the
+   mortar's costs one loaded tube. SMOKESCR_T matches the Mortar's cloud in
+   kind but not in size - ten seconds against five. */
+const FOB_RG=2;          // Forward Observer: tiles of extra reach for friendly INDIRECT fire on a spotted target
+const PAINT_DMG=0.25;    // Paint: the extra damage a painted unit takes, from every source
+const PAINT_BOX=2;       // ...over this many tiles square
+const PAINT_T=10;        // ...for this many seconds
+const PAINT_CD=20;       // ...and the cooldown, on the v87 u.abCool clock
+const HBARR_HP=BARR_HP*3;// Heavy Barricade: triple the ordinary wall
+const HBARR_COST=60;     // ...at three times the plastic, so HP per plastic is flat and what you buy is the aura and the mine
+const HBARR_RED=0.15;    // ...damage taken cut per wall in reach, STACKING with the others
+const HBARR_CAP=0.60;    // ...but never past this in total, however many overlap
+const HBARR_R=1.5;       // ...the reach itself: the ring of tiles immediately around a 1x1 wall
+const HBARR_MINE_P=0.10; // ...the one-time roll on completion that buries a mine
+const HBARR_MINE_D=3;    // ...that many tiles in front, front being the nearest enemy HQ
+const SMOKESCR_BOX=7;    // Smokescreen: the side of the square it covers
+const SMOKESCR_RED=0.40; // ...damage cut for friendly units AND structures inside it
+const SMOKESCR_T=10;     // ...and how many seconds it stands
+/* The BOT threshold, named here on the same rule as v86's and v87's. */
+const SCR_AI_N=4;        // Smokescreen: friendly units under fire in one box before a bot calls it
+const PAINT_AI_N=3;      // Paint: enemy ground units inside the box before a bot spends the Choktaw's cooldown on it
 /* Help-panel slots. The static help markup carries <span data-tune="key"> holes;
    applyHelpTune fills them once at boot. Pure UI: nothing here is hashed. */
 const HELP_TUNE={
@@ -1095,6 +1142,13 @@ const HELP_TUNE={
  fbCd:()=>FB_CD, fbN:()=>FB_N, fbR:()=>FB_R, fbDm:()=>FB_DM, fbBurn:()=>FB_BURN,
  scorchT:()=>SCORCH_T, scorchDps:()=>SCORCH_DPS, groundDps:()=>GROUND_DPS,
  foundryHp:()=>Math.round(FOUNDRY_HP*100), pourCost:()=>Math.round(POUR_COST*100), pourCd:()=>POUR_CD,
+ /* v88 GRAY. Every number the Field Manual prints for the last army reads off
+    its constant here, on the rule the v85-v87 slots above were added under. */
+ fobRg:()=>FOB_RG, paintDmg:()=>Math.round(PAINT_DMG*100), paintBox:()=>PAINT_BOX,
+ paintT:()=>PAINT_T, paintCd:()=>PAINT_CD,
+ hbarrHp:()=>HBARR_HP, hbarrRed:()=>Math.round(HBARR_RED*100), hbarrCap:()=>Math.round(HBARR_CAP*100),
+ hbarrMineP:()=>Math.round(HBARR_MINE_P*100), hbarrMineD:()=>HBARR_MINE_D,
+ scrBox:()=>SMOKESCR_BOX, scrRed:()=>Math.round(SMOKESCR_RED*100), scrT:()=>SMOKESCR_T,
  plateRow:()=>wcRoster('b')
 };
 function helpTuneValue(k){const f=HELP_TUNE[k];return f?f():null}
@@ -1862,7 +1916,7 @@ function bldVoice(e){
  if(k==='supply'||k==='dump')return 'supply';
  if(k==='radar')return 'radar';
  if(k==='radiotower')return 'radio';
- if(k==='barricade')return 'barricade';
+ if(B[k]&&B[k].barr)return 'barricade';   // v88: both walls share the icon and the placement sound
  return e.t.tower?'defense':(e.t.prod?'garage':'supply');
 }
 function sBuildingSelect(e){
@@ -1948,7 +2002,7 @@ function selectionBark(list){
     a Tank, an Apache does not answer like a Huey, and the Chinook's tandem
     rotors beat against each other the way a real one does. */
  if(t.balloon)sEngine('balloon'); // v86: a gas bag has no rotor, so it must not answer as one
- else if(t.fly)sRotor(k==='apache'?'apache':(k==='chinook'?'chinook':'heli'));
+ else if(t.fly)sRotor(k==='apache'||k==='choktaw'?'apache':(k==='chinook'?'chinook':'heli')); // v88: the Choktaw takes the Apache's heavier rotor, being the heavier gunship
  else if(t.a==='cmd')sEngine('diesel'); // v86: the Command Truck is a lorry and answers like one
  else if(k==='bike')sEngine('bike');
  else if(t.a==='jeep')sEngine('jeep');
@@ -2028,7 +2082,7 @@ function updateMineAmbience(){
 const FAC={
  green:{name:'Green Army',color:'#4caf50',mods:{cost:.92,hp:1,dmg:1,speed:1},desc:'Balanced forces, 8% cheaper everything.',uu:['sarge','mortar','cmdtruck','balloon'],ub:['radar','cmdpost']},
  tan:{name:'Tan Army',color:'#d2b074',mods:{cost:1,hp:1,dmg:1.15,speed:.95},desc:'+15% damage, slightly slower.',uu:['flamer','bulltank','firebomb'],ub:['dump','foundry']},
- gray:{name:'Gray Army',color:'#9b9ba3',mods:{cost:1,hp:1.2,dmg:.95,speed:.92},desc:'+20% toughness, slightly slower.',uu:['sniper','arty'],ub:['bunker']},
+ gray:{name:'Gray Army',color:'#9b9ba3',mods:{cost:1,hp:1.2,dmg:.95,speed:.92},desc:'+20% toughness, slightly slower.',uu:['sniper','arty','choktaw'],ub:['bunker','hbarricade']},
  blue:{name:'Blue Army',color:'#4a7de0',mods:{cost:1,hp:.9,dmg:1,speed:1.15},desc:'+15% speed, lighter plastic (-10% HP).',uu:['bike','chinook','runner'],ub:['turbine','fwdpad']},
  bug:{name:'Wildlife',color:'#6e5a2a',mods:{cost:1,hp:1,dmg:1,speed:1},desc:'',uu:[],ub:[]}
 };
@@ -2103,6 +2157,25 @@ const U={
  bike:{n:'Scout Bike',a:'bike',hp:70,dm:7,rg:3.5,rt:.625,sp:5.1,vi:9,cp:90,ce:5,bt:6,w:'b',evade:1,flat:1,tech:'u_bike',d:`Blazing fast scout. Evasive: takes ${Math.round(EVADE_RED*100)}% less damage on any tick he actually moved. Flat Out adds ${Math.round(FLAT_SPD*100)}% speed and +${FLAT_VI} sight, but he cannot fire or be sent at a target`},
  // v30 additions - table values are pre-load-scale baselines; effective (in-game) numbers in the comments
  apache:{n:'Apache',a:'heli',hp:244,dm:66.9,rg:4.8,rt:1.7,sp:3.8,vi:8,cp:300,ce:110,bt:16,w:'r',spl:.75,ex:1,fly:1,tech:'u_apache',d:'Rocket attack chopper'}, // 170 HP / 30 dmg effective
+ /* v88 GRAY, Helipad slot - the last empty cell in FAC_INF/FAC_VEH/FAC_AIR, and
+    the last unit roadmap 2 adds. It is the FIRST unit in the file to carry two
+    weapons that are both ordinary guns: the Bull has carried a `sec` since v80,
+    but its hull flamer is a support weapon bolted to a cannon, whereas the
+    Choktaw is genuinely the Huey's machine gun and the Apache's rocket pods on
+    one airframe. That is why fireSec stopped assuming a flamethrower at this
+    release - see the note there.
+    The split falls out of secOwns UNCHANGED: the rockets take armour, aircraft
+    and structures, the machine gun takes infantry and wildlife, which is exactly
+    the division the Bull's cannon and hose already run under.
+    vi 9 is one above every other helicopter, and it is load-bearing rather than
+    decorative: Forward Observer and Paint are both about what this aircraft can
+    SEE, so its sight radius is the actual reach of both.
+    hp 265 -> 203 effective, above the Apache's 187 by specification; with Gray's
+    x1.2 hull it fields at 244. Priced at 468 total, which puts it in the top
+    supply rank - and moves three existing units down one rank, which is
+    unavoidable for ANY 25th trainable unit priced above the Machine Gunner. That
+    was measured before the row went in; see the SUP_U note and tail_v88 T62.A. */
+ choktaw:{n:'Choktaw Heli',a:'heli',hp:265,dm:58,rg:4.8,rt:1.9,sp:3.5,vi:9,cp:330,ce:120,bt:17,w:'r',spl:.75,ex:1,fly:1,fobs:1,paint:1,abCd:PAINT_CD,sec:{w:'b',wc:'b',k:.22,rt:.5,rg:4.2},tech:'u_choktaw',d:`Twin-weapon gunship: rocket pods for armour and structures, a door gun for infantry, both at once. Forward Observer gives friendly arcing weapons +${FOB_RG} tiles against anything the Choktaw can see. Paint marks a ${PAINT_BOX}×${PAINT_BOX} area; everything of the enemy's inside it takes +${Math.round(PAINT_DMG*100)}% damage from EVERY source for ${PAINT_T}s — ${PAINT_CD}s cooldown`},
  /* v87 TAN, Helipad slot. Weapon row 'f', which is the row Tan already lives on -
     the Flamethrower's hose and the Bull's hull flamer both score there - so the
     Firebomb reads as the same army's idea carried into the air rather than as a
@@ -2216,6 +2289,18 @@ const B={
     structure ability already uses, and is instantaneous rather than a duration:
     there is nothing to run down, so it writes no upT. */
  cmdpost:{n:'Command Post',hp:640,sz:2,cp:250,ce:60,bt:13,vi:7,req:'barracks',tech:'b_cmdpost',cpost:1,regroup:1,d:`Your army learns faster within ${CPOST_R} tiles: promotions cost ${Math.round((1-CPOST_VET)*100)}% fewer kills. Regroup hands every unit in that radius ${Math.round(REGROUP_HP*100)}% of its own maximum HP back, on a ${REGROUP_CD}s cooldown`},
+ /* v88 GRAY, second structure and the last of roadmap 2. It is a `barr` row, and
+    that one flag hands it the ordinary wall's entire life at once: click-and-drag
+    laying, the 1x1 footprint, the passability block, the lightweight teardown in
+    kill(), and its exclusion from veterancy, from the under-attack alert, from
+    the base-value sum and from elimination.
+    THE COST OF THAT is the reason fourteen tests moved at this release. Every one
+    of them asked `key==='barricade'` and meant "is a wall"; with one wall in the
+    game those were the same question and now they are not, so they ask t.barr.
+    Priced at three times the wall for three times the hull, which makes HP per
+    plastic identical - what the extra 40 buys is the aura and the mine, not
+    tougher plastic per coin. */
+ hbarricade:{n:'Heavy Barricade',hp:HBARR_HP,sz:1,cp:HBARR_COST,ce:0,bt:2.2,vi:0,barr:1,hbarr:1,req:'lab',tech:'b_hbarricade',d:`Reinforced obstacle, ${HBARR_HP} HP. Everything of yours on the tiles around it — units, structures and other walls alike — takes ${Math.round(HBARR_RED*100)}% less damage, and overlapping walls STACK up to ${Math.round(HBARR_CAP*100)}%. One in ${Math.round(1/HBARR_MINE_P)} buries a mine ${HBARR_MINE_D} tiles toward the enemy that only your army can see. Click-and-drag to lay a whole line.`},
  barricade:{n:'Barricade',hp:BARR_HP,sz:1,cp:BARR_COST,ce:0,bt:1.0,vi:0,barr:1,d:'Czech-hedgehog obstacle; blocks movement, 50 HP. Click-and-drag to lay a whole line. 20 ⬢ each.'},
  nest:{n:'Wildlife Nest',hp:NEST_HP,sz:1,cp:0,ce:0,bt:1,vi:0,neutralNest:1,d:'A wild critter den. Smash it to stop the swarm from respawning.'}
 };
@@ -2234,7 +2319,7 @@ U.balloon.d=`Drifts on the wind with the best sight in the game (${BALLOON_VI} t
 // v30: building HP rides the same effective rescale as units & damage, so
 // structures fall at exactly the v29 pace. Barricades & nests are excluded
 // here because their constants (BARR_HP / NEST_HP) are already rescaled.
-for(const k in B){if(k==='barricade'||k==='nest')continue;B[k].hp=Math.round(B[k].hp*RESCALE);}
+for(const k in B){if(B[k].barr||k==='nest')continue;B[k].hp=Math.round(B[k].hp*RESCALE);} // v88: t.barr, not the key - HBARR_HP derives from BARR_HP and is already rescaled through it, so a second pass would have cubed the wall
 /* v65 ELECTRICITY PASS: +15% on every unit and building that ALREADY draws
    battery. Guarded on ce>0, so it can never invent an electricity cost for
    something that had none - the Grunt, the Barracks, the Generator and the rest
@@ -2315,7 +2400,7 @@ function supQueued(p){let n=0;for(const b of p.blds)for(const k of (b.queue||[])
 function supFree(p){return supCap(p)-supUsed(p)-supQueued(p);}
 const FAC_INF={green:['sarge','mortar'],tan:['flamer'],gray:['sniper'],blue:['runner']}; // v85: Blue's Barracks slot was the one empty cell in this table
 const FAC_VEH={green:['cmdtruck'],tan:['bulltank'],gray:['arty'],blue:['bike']}; // v86: Green's Garage slot was one of the two empty cells left in this pair
-const FAC_AIR={green:['balloon'],tan:['firebomb'],gray:[],blue:['chinook']}; // v87: Tan's Helipad slot fills, leaving Gray's as the last empty cell in the three tables
+const FAC_AIR={green:['balloon'],tan:['firebomb'],gray:['choktaw'],blue:['chinook']}; // v88: Gray's Helipad slot was the LAST empty cell in the three tables, and it fills here - every army now fields an exclusive out of all three production buildings
 
 /* ---------------- RESEARCH CATALOG ----------------
    Flat tech tree run from the Research Lab. Every entry is available from the
@@ -4622,6 +4707,7 @@ function makeUnit(key,p,x,y,srcBld){
     machinery rather than one unit's special case: v88's Paint declares 20 and
     needs nothing else. The building pair it mirrors is b.abilityCool. */
  if(t.abCd)u.abCool=0;
+ u.paintT=0; // v88: NOT gated on a table flag, unlike every ability field around it - the mark is worn by units whose own row says nothing about it, so every unit is born unpainted
  if(t.assault)u.aslt=false;
  if(t.cap)u.fo=false;
  // machine gunner faces its entrench cone forward by default
@@ -5457,8 +5543,8 @@ function tileURL(kind,key,fac){
      c.drawImage(tc,(W-dw)/2,(H-dh)/2,dw,dh);
     }
    }
-  }else if(key==='barricade'){
-   /* never baked: the barricade is live-painted, so borrow the manual's stub */
+  }else if(B[key].barr){
+   /* never baked: the barricades are live-painted, so borrow the manual's stub */
    const real=G;G=INFO.stub;
    try{c.save();c.translate(W/2,H/2+22);c.scale(2.1,2.1);
        drawBarricade(c,{key:'barricade',p:{fac},prog:1},0,6);c.restore()}catch(err){}finally{G=real}
@@ -6023,6 +6109,25 @@ function refreshSelPanel(){
    bt.onclick=()=>{if(!ready)return;submitCmd('napalmblast',{ids:[e.id]});sClick();};
    pb.appendChild(bt);
   }
+  /* --- Choktaw: paint, added at v88 ---
+     Shaped like the Napalm Blast above it - the same cooldown readout on the same
+     u.abCool clock - with one difference: this one AIMS. It hands off to
+     G.radioTargeting the way the Gunner's entrench does, because the box is a
+     player's choice and not a radius around the aircraft.
+     It has no group button, and that is a decision rather than an omission: the
+     mark is SET rather than accumulated, so a second Choktaw over the same box
+     restarts a clock that is already running and spends a second cooldown for
+     nothing. tail_v88 pins that it stays out of UNIT_TOGGLES too - it is a
+     one-shot, like the Napalm Blast and the Bail. */
+  if(e.kind==='unit'&&e.p===G.human&&e.t.paint){
+   const ready=(e.abCool||0)<=0;
+   const bt=document.createElement('button');bt.className='bb'+(G.radioTargeting&&G.radioTargeting.unit===e&&G.radioTargeting.mode==='paint'?' sel':'');
+   bt.disabled=!ready;
+   bt.innerHTML=`<b>🎯 Paint</b><br><span style="font-size:10px;opacity:.75">${ready?`${PAINT_BOX}×${PAINT_BOX} area, +${Math.round(PAINT_DMG*100)}% damage taken for ${PAINT_T}s`:Math.ceil(e.abCool)+'s cooldown'}</span>`;
+   bt.title=`Mark a ${PAINT_BOX}×${PAINT_BOX} area: every enemy unit inside it takes +${Math.round(PAINT_DMG*100)}% damage from EVERY source for ${PAINT_T} seconds. Click to place the box. ${PAINT_CD}-second cooldown.`;
+   bt.onclick=()=>{if(!ready)return;G.radioTargeting={unit:e,mode:'paint'};msg('Click to place the paint box.');sClick();};
+   pb.appendChild(bt);
+  }
   /* --- Command Truck: broadcast, added at v86 --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.bcast){
    const bt=document.createElement('button');bt.className='bb'+(e.bcast?' sel':'');
@@ -6585,6 +6690,59 @@ function applyDmg(tgt,amt,type,attacker,wc){
    if((s.x-tgt.x)**2+(s.y-tgt.y)**2<=SMOKE_R*SMOKE_R){amt*=(1-SMOKE_RED);break}
   }
  }
+ /* --- THE SMOKESCREEN, ADDED AT v88 ---
+    Sits OUT here rather than inside the `tgt.kind==='unit'` block that holds the
+    mortar's cloud, because this one covers structures too - which is the single
+    largest difference between the two and the reason it could not simply reuse
+    that loop with bigger numbers. A square, not a disc, so what the reticle drew
+    is what is covered. First screen wins, as every other cloud and aura does; it
+    still multiplies with the APC shield, the mortar's smoke and the wall aura,
+    on the v79 rule that independent sources stack.
+    s.pi rather than s.owner, because a screen outlives the tower that laid it and
+    loadState resolves a dead owner to null. */
+ if(!(tgt.kind==='unit'&&tgt.garrisoned))for(const sc of (G.strikes||[])){
+  if(sc.kind!=='smokescr')continue;
+  const sp=G.players[sc.pi];
+  if(!sp||!allied(sp,tgt.p))continue;
+  const h=sc.n/2,pad=tgt.kind==='bld'?tgt.sz*.5:0;
+  if(Math.abs(tgt.x-sc.x)-pad<=h&&Math.abs(tgt.y-sc.y)-pad<=h){amt*=(1-SMOKESCR_RED);break}
+ }
+ /* --- THE HEAVY BARRICADE'S SHADOW, ADDED AT v88 ---
+    Read off the SOURCE at the point of use, like every other aura in the file -
+    nothing is ever written onto what it shelters. Three things make it the odd
+    one out, all of them by specification:
+      it STACKS. Every defender-side reduction before it takes the first source
+      it finds and breaks; this one COUNTS them, so four overlapping walls reach
+      HBARR_CAP and a fifth is wasted plastic. The cap is on the TOTAL and not on
+      the number of walls, so it cannot be walked around by mixing wall types.
+      it shelters STRUCTURES AND OTHER WALLS, not just units, which is why it sits
+      out here rather than inside the `tgt.kind==='unit'` block above.
+      it does NOT shelter itself. "The tiles immediately surrounding it" is the
+      owner's wording and it excludes the tile the wall is standing on, which also
+      keeps a lone wall honest about its own 150 HP.
+    Chebyshev rather than Euclidean, because "immediately surrounding" is a ring
+    of eight tiles and not a disc, and measured to the FOOTPRINT edge for
+    buildings the way the Command Post and the Forward Pad already measure. */
+ if(tgt.p&&G.blds){
+  let hb=0;
+  for(const wb of G.blds){
+   if(!wb.t.hbarr||wb.prog<1||wb.hp<=0||wb===tgt||!allied(wb.p,tgt.p))continue;
+   const pad=tgt.kind==='bld'?tgt.sz*.5:0;
+   const dx=Math.max(0,Math.abs(wb.x-tgt.x)-pad),dy=Math.max(0,Math.abs(wb.y-tgt.y)-pad);
+   if(dx<=HBARR_R&&dy<=HBARR_R)hb+=HBARR_RED;
+  }
+  if(hb>0)amt*=(1-Math.min(HBARR_CAP,hb));
+ }
+ /* --- PAINT, ADDED AT v88 ---
+    "+25% damage from ALL sources" is one line and it has to be THIS line: applyDmg
+    is the single defender-side door, so a multiplier written here is reached by
+    every shell, every burn tick, every mine and every crush alike. Written on the
+    TARGET as a clock rather than read off the Choktaw the way its Forward Observer
+    is, and the difference is deliberate: an aura ends when its source dies, and a
+    mark does not - the aircraft that painted a tank may be shot down a second
+    later and the tank stays lit for the rest of the ten seconds. That makes
+    paintT sim state, so it is hashed AND defaulted in loadState. */
+ if(tgt.kind==='unit'&&tgt.paintT>0)amt*=1+PAINT_DMG;
  /* v81 LOCKDOWN. Defender-side, so it sits here beside the smoke reduction
     rather than in the ability path. Keyed on the building's own upT, which
     already ticks down in updateBld for every structure and is already hashed;
@@ -6662,7 +6820,7 @@ function applyDmg(tgt,amt,type,attacker,wc){
  // v27: enemy fire on any of your units or buildings drops a red blip on the minimap
  if(tgt.p===G.human&&attacker&&attacker.p!==G.human&&(attacker.kind==='creature'||(attacker.p&&attacker.p!==G.neutral)))atkPing(tgt.x,tgt.y);
  // alert the player when their own structures are attacked (throttled to ~5s)
- if(tgt.p===G.human&&tgt.kind==='bld'&&tgt.key!=='barricade'&&attacker&&attacker.p&&attacker.p!==G.human){
+ if(tgt.p===G.human&&tgt.kind==='bld'&&!tgt.t.barr&&attacker&&attacker.p&&attacker.p!==G.human){ // v88: neither wall raises the base alarm
   if(!G.underAttackT||G.tick-G.underAttackT>150){G.underAttackT=G.tick;msg('⚠ Your base is under attack!');pingEvent(tgt.x,tgt.y,'#ff6a5a');}
  }
  if(tgt.hp<=0)kill(tgt,attacker);
@@ -6673,7 +6831,7 @@ function applyDmg(tgt,amt,type,attacker,wc){
 }
 function kill(e,attacker){
  if(attacker&&attacker.p&&attacker.p.stats)attacker.p.stats.kills++;
- if(attacker&&attacker.kind==='unit'&&attacker.hp>0&&e.key!=='barricade')vetRankUp(attacker); // v29: veterancy (barricades excluded)
+ if(attacker&&attacker.kind==='unit'&&attacker.hp>0&&!e.t.barr)vetRankUp(attacker); // v29: veterancy (barricades excluded). v88: BOTH walls excluded - a promotion for shooting a wall is a promotion for shooting a heavier wall
  e.p.stats.lost++;
  const col=FAC[e.p.fac].color;
  const melted=e.lastHit==='ex'||e.lastHit==='fire';
@@ -6716,7 +6874,7 @@ function kill(e,attacker){
    return;
   }
   // --- barricade: lightweight teardown (salvages at SALVAGE_FRAC like other structures; still no garrison pop / no elim trigger) ---
-  if(e.key==='barricade'){
+  if(e.t.barr){ // v88: t.barr, so the Heavy Barricade takes the same 1x1 teardown rather than the full building blast
    G.blds.splice(G.blds.indexOf(e),1);const bi=e.p.blds.indexOf(e);if(bi>=0)e.p.blds.splice(bi,1);
    G.map.pass[e.ty*G.map.N+e.tx]=1;pfDirty();
    const bcol=e.p===G.neutral?'#5a5a60':col;
@@ -6760,7 +6918,7 @@ function checkElim(p){
  if(p===G.neutral)return;            // the neutral barricade owner is never "eliminated"
  if(!p.alive)return;
  // a player is out once they have no real buildings left — lone barricades don't keep them alive
- if(p.blds.every(b=>b.key==='barricade')){
+ if(p.blds.every(b=>b.t.barr)){ // v88: t.barr - an army left holding only HEAVY walls is out on exactly the same rule
   p.alive=false;
   // hand any surviving barricades to the neutral owner so the walls stay (now dark-gray)
   for(const b of p.blds.slice()){p.blds.splice(p.blds.indexOf(b),1);b.p=G.neutral;G.neutral.blds.push(b);}
@@ -6795,7 +6953,7 @@ function dmMMSS(v){const m=Math.floor(v/60),r=v-m*60;return m+':'+(r<10?'0':'')+
 function dmBaseWorth(p){
  let n=0;
  for(const b of p.blds){
-  if(b.prog<1||b.key==='barricade')continue;
+  if(b.prog<1||b.t.barr)continue; // v88: neither wall counts toward base value
   const t=B[b.key];if(t)n+=t.cp+t.ce;
  }
  return n;
@@ -7176,7 +7334,7 @@ function nearestEnemy(u,r,cone){
    const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<NEST_AGGRO2&&d<bd&&(!cone||inCone(u,b.x,b.y))){bd=d;best=b}
    continue;
   }
-  if(b.key==='barricade'){
+  if(b.t.barr){ // v88: t.barr
    if(b.p===G.neutral){ // v83: a BOT clears the map's scattered hedgehogs; a player's units still never auto-target them
     if(!(u.p&&u.p.ai)||(u.id%BARR_CLEAR_SHARE))continue; // keyed on id, never on srand: reading the sim stream from a targeting scan would move every trail
     const d=(b.x-u.x)**2+(b.y-u.y)**2;
@@ -7260,6 +7418,31 @@ function bcastOn(u){
    is read through viOf rather than off the row, so an uplinked balloon extends
    the bonus exactly as far as it extends the vision. viOf never calls rgOf, so
    the pair cannot recurse. */
+/* --- FORWARD OBSERVER, ADDED AT v88 ---
+   Read off the SOURCE at the point of use, like sprintOn, rnetOn, bcastOn,
+   highOn and cpostOn before it. One difference decides the whole shape: every
+   other aura in the file asks "is the AFFECTED UNIT in reach of a source", and
+   this one asks "is the TARGET". A spotter extends the guns' reach against what
+   the SPOTTER can see, not against everything a gun near the spotter feels like
+   shelling, so the range test runs from the Choktaw to the target and rgOf takes
+   an optional second argument to carry it.
+   A call with no target - an acquisition sweep, the entrenched cone, the ring
+   the renderer draws - gets the unextended range, and that is correct rather
+   than an omission: nothing has been spotted yet, so there is nothing for an
+   observer to be looking at.
+   Indirect fire is `t.mrg`, the minimum-range flag the Mortar Squad and the
+   Rocket Artillery already carry. That is the file's own word for an arcing
+   weapon, so a third one added later is covered without being remembered into a
+   list of two unit keys. */
+function fobOn(u,tgt){
+ if(!u||!u.p||!tgt||!u.t.mrg)return false;
+ for(const v of G.units){
+  if(!v.t.fobs||v.hp<=0||v.garrisoned||!allied(v.p,u.p))continue;
+  const vi=viOf(v);
+  if((v.x-tgt.x)**2+(v.y-tgt.y)**2<=vi*vi)return true;
+ }
+ return false;
+}
 function highOn(u){
  if(!u||!u.p)return false;
  for(const v of G.units){
@@ -7284,7 +7467,7 @@ function cpostOn(u){
 /* Effective range and sight for a unit. Every sim-side reader goes through
    these two. A zero base stays zero, so an unarmed hull cannot be handed a
    weapon range and a sightless entity cannot be handed vision. */
-function rgOf(u){let r=(u.t.rg||0);if(r>0&&u.t.valve&&u.valve)r+=VALVE_RG;if(r>0&&highOn(u))r+=HIGH_RG;return r>0&&upOn(u.p)?r+UPLINK_RG:r;} // v86: High Ground rides the same door Pressure Valve and the uplink already use
+function rgOf(u,tgt){let r=(u.t.rg||0);if(r>0&&u.t.valve&&u.valve)r+=VALVE_RG;if(r>0&&highOn(u))r+=HIGH_RG;if(r>0&&fobOn(u,tgt))r+=FOB_RG;return r>0&&upOn(u.p)?r+UPLINK_RG:r;} // v86: High Ground rides the same door Pressure Valve and the uplink already use. v88: and Forward Observer, which is the first of them that needs to know WHAT is being shot at
 function viOf(u){let v=(u.t.vi||0);if(v>0&&u.t.flat&&u.flat)v+=FLAT_VI;if(v>0&&rnetOn(u))v+=RNET_VI;return v>0&&upOn(u.p)?v+UPLINK_VI:v;}
 /* v80: effective ground speed. u.sp is the baked per-unit figure (type row x
    faction modifier x production buff) and stays the base; this is the one place
@@ -7443,10 +7626,30 @@ function nearestSec(u,r){
  for(const cr of (G.neutrals||[])){if(!secValid(u,cr))continue;const d=(cr.x-u.x)**2+(cr.y-u.y)**2;if(d<bd){bd=d;best=cr}}
  return best;
 }
+/* v88: the secondary stopped ASSUMING a flamethrower. From v80 to v87 the Bull
+   was the only carrier of a `sec`, so this function spawned flame, splashed on
+   row 'f' and played the hose - three facts about the Bull baked into machinery
+   whose whole claim is that it is generic. The Choktaw's door gun is the second
+   carrier and it is a machine gun, so the branch reads sc.w the way fireAt reads
+   u.t.w, and the Bull's path below is byte-identical to what it always was.
+   A bullet secondary lands through applyDmg directly rather than through splash:
+   sc.spl is what the flamer sprays and a machine gun has no burst radius at all,
+   so a row that declares no spl gets a point hit, which is the same rule fireAt
+   applies to weapon row 'b'. */
 function fireSec(u,tgt){
  const sc=u.t.sec;
  u.cool2=sc.rt;
  const dm=u.dm*sc.k*dmgBonus(u);
+ if(sc.w==='b'){
+  applyDmg(tgt,dm,'b',u,sc.wc);
+  const gz=u.t.fly?34:9, tz=tgt.kind==='bld'?12:(tgt.t&&tgt.t.fly?34:8);
+  const ang=datan2(tgt.y-u.y,tgt.x-u.x);
+  tracer2(u.x,u.y,gz,tgt.x,tgt.y,tz,'#ffd23f',2.4);
+  muzzle(u.x,u.y,gz,screenAng(ang),'#ffe27a',1.15);
+  sparks(tgt.x,tgt.y,tz,'#ffe08a',4);
+  sfxGun(u.x,u.y,'vmg',tgt.x,tgt.y);
+  return;
+ }
  spawnFlame(u.x,u.y,tgt.x,tgt.y,sc.spl);
  splash(tgt.x,tgt.y,sc.spl,dm,'fire',u,sc.wc);
  sfxFlame(u.x,u.y,tgt.x,tgt.y);
@@ -7690,6 +7893,7 @@ const PARA_N=5;       // paratroopers per drop
    template literal for the same reason the manual slots are: it was a hand-typed
    shell count and would have gone stale the moment BARRAGE_N moved. */
 const LIFT_ICON='\ud83d\ude81';
+const SCR_ICON='\ud83c\udf2b\ufe0f'; // Smokescreen, v88 - the last call-down roadmap 2 adds
 const DROP_ICON='\ud83d\udce6'; // v86: the Supply Drop's crate
 /* v85: a row may now carry `fac`, meaning only that army's tower offers it. The
    three original call-downs carry none and stay shared by every army, which is what
@@ -7706,7 +7910,8 @@ const RADIO_ABILITIES=[
  {mode:'barrage', icon:'\ud83c\udfaf',name:'Artillery Barrage',short:'Barrage',panel:BARRAGE_N+' heavy shells, '+BARRAGE_BOX+'\u00d7'+BARRAGE_BOX+' (needs vision)', vision:true, hint:'Click a target anywhere you have vision.'},
  {mode:'paradrop',icon:'\ud83e\ude82',name:'Paradrop',        short:'Paradrop',panel:PARA_N+' Paratroopers anywhere, even in fog',      vision:false, hint:'Click anywhere (even in fog) to drop your squad.'},
  {mode:'lift',    icon:LIFT_ICON,     name:'Rapid Redeploy',  short:'Redeploy',panel:'Airlift up to '+LIFT_MAX+' SELECTED infantry anywhere', vision:false, fac:'blue', hint:'Click anywhere (even in fog) to airlift the selected infantry.'},
- {mode:'supply',  icon:DROP_ICON,     name:'Supply Drop',     short:'Supply',  panel:'Two crates: '+DROP_P+' \u2b22 and '+DROP_E+' \u26a1, yours alone', vision:false, fac:'green', hint:'Click anywhere (even in fog) to drop the crates.'}
+ {mode:'supply',  icon:DROP_ICON,     name:'Supply Drop',     short:'Supply',  panel:'Two crates: '+DROP_P+' \u2b22 and '+DROP_E+' \u26a1, yours alone', vision:false, fac:'green', hint:'Click anywhere (even in fog) to drop the crates.'},
+ {mode:'smokescr',icon:SCR_ICON,      name:'Smokescreen',     short:'Smoke',   panel:SMOKESCR_BOX+'\u00d7'+SMOKESCR_BOX+' cloud: \u2212'+Math.round(SMOKESCR_RED*100)+'% damage to your units AND structures, '+SMOKESCR_T+'s', vision:false, fac:'gray', hint:'Click anywhere (even in fog) to lay the screen.'}
 ];
 function radioAbility(m){return RADIO_ABILITIES.find(a=>a.mode===m)||null;}
 function radioNeedsVision(m){const a=radioAbility(m);return !!(a&&a.vision);}
@@ -7850,6 +8055,54 @@ function napalmBlast(u){
    The strike carries pi rather than leaning on its owner, exactly as the smoke
    cloud does and for the same reason: the crates can land after the tower that
    called them is rubble, and loadState resolves a dead owner to null. */
+/* --- PAINT, ADDED AT v88 ---
+   The Choktaw's ability, and the only one in roadmap 2 that deals no damage at
+   all: it makes everything ELSE hurt more. The box is anchored the way the
+   barrage's is, on the floor of the clicked tile, so what the player saw under
+   the reticle is what gets marked.
+   Enemies only, and the test is `!allied` rather than "not mine" - a painted
+   ally in a team game would be a gift to the other side.
+   The mark is SET rather than accumulated: repainting a unit that is already lit
+   restarts its ten seconds instead of stacking a second +25%, which is why two
+   Choktaws over one box are worth exactly one and why Paint has no group button.
+   Deterministic: a fixed walk of G.units, no RNG, no clock, every distance in
+   tile space. */
+function paintArea(u,cx,cy){
+ const x0=Math.floor(cx),y0=Math.floor(cy),n=PAINT_BOX;
+ let hit=0;
+ for(const e of G.units){
+  if(e.hp<=0||e.garrisoned||allied(e.p,u.p))continue;
+  if(e.x<x0||e.x>=x0+n||e.y<y0||e.y>=y0+n)continue;
+  e.paintT=PAINT_T;hit++;
+ }
+ u.abCool=(G&&G.test)?0:u.t.abCd;
+ G.strikes.push({kind:'paint',pi:u.p.i,x:x0,y:y0,n,t:0}); // the marker box the renderer draws; it carries no rule of its own
+ sfxWhoosh(cx,cy);
+ if(u.p.human)msg(hit?`Target painted — ${hit} marked, +${Math.round(PAINT_DMG*100)}% damage for ${PAINT_T}s.`:'Nothing of theirs in the box.');
+ return hit;
+}
+/* --- SMOKESCREEN, ADDED AT v88 ---
+   Gray's call-down and the last of roadmap 2. It is a `fac` row on the shared
+   RADIO_ABILITIES table refused at the execCmd door, which is the shape v85
+   introduced, v86 followed and v87 moved the Napalm Strike INTO - not a second
+   table, and never relying on the panel simply not offering it.
+   Deliberately STRONGER than the Mortar's Smoke Rounds, and the gap is the point
+   rather than an oversight: SMOKESCR_RED is 40% against SMOKE_RED's 20%, over a
+   7-tile square against a 2-tile disc, for 10 seconds against 5, and it covers
+   STRUCTURES where the mortar's cloud covers units alone. What it costs is a
+   Radio Tower and the shared RADIO_CD; the mortar's costs one loaded tube.
+   The record of that decision is in the v88 constants block.
+   No vision requirement, on the Paradrop and Supply Drop's rule rather than the
+   Barrage's: a screen is laid over your OWN men, and you can always see those. */
+function radioSmokescreen(u,x,y){
+ const fx=Math.floor(x)+.5,fy=Math.floor(y)+.5;
+ G.strikes.push({kind:'smokescr',owner:u,pi:u.p.i,x:fx,y:fy,n:SMOKESCR_BOX,t:0});
+ const h=SMOKESCR_BOX/2;
+ for(let i=0;i<26;i++)spawnSmoke(fx+(Math.random()-.5)*SMOKESCR_BOX,fy+(Math.random()-.5)*SMOKESCR_BOX,3,{rise:3,grow:15,life:SMOKESCR_T*.5,r:9,col:'#d8d8d4'});
+ u.abilityCool=radioCD();sfxWhoosh(x,y);
+ if(u.p.human)msg(`Smokescreen laid — −${Math.round(SMOKESCR_RED*100)}% damage inside for ${SMOKESCR_T}s.`);
+ return true;
+}
 function radioSupply(u,x,y){
  const drops=[
   {x:clamp(x-0.7,2,G.map.N-3),y:clamp(y,2,G.map.N-3),kind:'p',amt:DROP_P,delay:DROP_T,done:false},
@@ -8000,6 +8253,18 @@ function updateStrikes(dt){
    // G.crates, which has no clock at all and is not this list's business afterwards
    for(const d of s.drops){if(!d.done && s.t>=d.delay){d.done=true;landCrate(s.pi,d);}}
    if(s.drops.every(d=>d.done))G.strikes.splice(i,1);
+  } else if(s.kind==='smokescr'){
+   /* pure duration, exactly like the mortar's cloud above it - applyDmg reads the
+      square while the entry is in the list and it leaves when SMOKESCR_T is up.
+      Math.random for the drifting puffs, never srand: this runs inside the
+      simulation and one seeded offset here would move the shared stream. */
+   if(s.t>=SMOKESCR_T)G.strikes.splice(i,1);
+   else if(Math.random()<dt*5)spawnSmoke(s.x+(Math.random()-.5)*s.n,s.y+(Math.random()-.5)*s.n,3,{rise:2,grow:12,life:2.6,r:8,col:'#cfcfca'});
+  } else if(s.kind==='paint'){
+   /* pure duration, like the mortar's cloud: the RULE lives on each marked unit's
+      own paintT, and this entry exists only so the box stays drawn for as long as
+      the mark lasts. It carries no damage and nothing reads it but the renderer. */
+   if(s.t>=PAINT_T)G.strikes.splice(i,1);
   } else if(s.kind==='smoke'){
    /* v79: the cloud is pure duration - applyDmg reads its position while it is
       in the list and it leaves when SMOKE_T is up. The drifting puff on top of
@@ -8265,7 +8530,7 @@ function fireOut82(u,dt){
  }
  if(!tgt||tgt.hp<=0)return;
  const d=dhyp(tgt.x-u.x,tgt.y-u.y)-(tgt.kind==='bld'?tgt.sz*.45:0);
- if(d<=rgOf(u)&&d>=(u.t.mrg||0)){
+ if(d<=rgOf(u,tgt)&&d>=(u.t.mrg||0)){ // v88: the FIRING test knows its target, so a spotted one is 2 tiles further away
   u.tface=datan2(tgt.y-u.y,tgt.x-u.x);u.face=u.tface;
   if(u.cool<=0)fireAt(u,tgt);
  }
@@ -8344,6 +8609,7 @@ function updateUnit(u,dt){
  if(u.calmT<999)u.calmT+=dt;
  if(u.shotT!=null&&u.shotT<999)u.shotT+=dt; // v81: seconds since he last fired, read by the concealment test
  if(u.abCool>0)u.abCool-=dt; // v87: the unit ability clock, ticked here for the same reason updateBld ticks b.abilityCool for EVERY building - a timer parked inside a branch never runs out
+ if(u.paintT>0)u.paintT-=dt; // v88: and the mark, ticked for every unit for that same reason - it is written onto the VICTIM, who has no ability of his own to run it down
  /* --- v86 THE BALLOON'S GAS ---
     Counted DOWN in seconds on the unit, so the remaining life reads straight off
     u.fuel with no need to know what tick it launched on, and a snapshot restores
@@ -8463,7 +8729,7 @@ function updateUnit(u,dt){
    if(!tgt||tgt.hp<=0||!mainOk(u,tgt)){u.target=null;if(u.savedDest){orderMove(u,u.savedDest.x,u.savedDest.y,true);u.dest=u.savedDest}else u.state='idle';break}
    const d=dhyp(tgt.x-u.x,tgt.y-u.y)-(tgt.kind==='bld'?tgt.sz*.45:0);
    const minR=t.mrg||0;
-   const rg=u.key==='para'?paraMun(tgt).rg:rgOf(u); // v30: paratrooper range follows the selected munition. v79: everything else follows the uplink
+   const rg=u.key==='para'?paraMun(tgt).rg:rgOf(u,tgt); // v30: paratrooper range follows the selected munition. v79: everything else follows the uplink. v88: ...and a spotted target adds Forward Observer's tiles on top
    if(d<=rg&&d>=minR){u.path=null;u.tface=datan2(tgt.y-u.y,tgt.x-u.x);if(!turreted(t))u.face=u.tface;if(u.cool<=0)fireAt(u,tgt);} // v41: tanks keep their travel-facing hull; the turret aims on its own
    else if(u.hold){u.target=null;u.state='idle';} // v29: hold-position never moves; drop unreachable targets
    else if(d<minR){const a=datan2(u.y-tgt.y,u.x-tgt.x);const nx=u.x+dcos(a)*spOf(u)*dt,ny=u.y+dsin(a)*spOf(u)*dt;if(t.fly||passableR(nx,ny,unitRad(u))){u.x=nx;u.y=ny}}
@@ -8628,7 +8894,7 @@ function truckToNode(u,n){
 const RES_REF=(function(){
  let cp=0,ce=0;
  for(const k in U){if(U[k].noTrain)continue;cp+=U[k].cp;ce+=U[k].ce;}
- for(const k in B){if(k==='nest'||k==='barricade')continue;cp+=B[k].cp;ce+=B[k].ce;}
+ for(const k in B){if(k==='nest'||B[k].barr)continue;cp+=B[k].cp;ce+=B[k].ce;} // v88: t.barr - a wall is not part of the roster the harvest ratio is derived from, whichever wall it is
  return cp>0?ce/cp:0.22;
 })();
 const RES_BIAS=9;     // tiles of score at full skew, per pile type
@@ -8760,7 +9026,17 @@ function separation(){
 
 /* ---------------- BUILDING UPDATE ---------------- */
 function updateBld(b,dt){
- if(b.prog<1){b.prog=G.test?1:Math.min(1,b.prog+dt/b.t.bt);/* v50: testing mode tops out on the first tick */b.hp=Math.min(b.mhp,Math.max(b.hp,b.mhp*b.prog));if(b.prog>=1&&b.p.human){msg(`${b.t.n} complete.`);lastSelSig=''}return}
+ if(b.prog<1){b.prog=G.test?1:Math.min(1,b.prog+dt/b.t.bt);/* v50: testing mode tops out on the first tick */b.hp=Math.min(b.mhp,Math.max(b.hp,b.mhp*b.prog));
+  /* v88: the Heavy Barricade's one-time roll, hooked HERE because this branch is
+     the single tick on which a structure crosses into being finished - prog jumps
+     to 1 inside this expression and the branch is never entered again, so the roll
+     cannot fire twice without a flag to remember it by. srand(), because burying a
+     mine is simulation: the tile it lands on has to be the same tile on every
+     client, and an unseeded draw here would desync a live match. The draw is taken for
+     EVERY completed heavy wall whether or not it succeeds, so the RNG stream does
+     not depend on the outcome. */
+  if(b.prog>=1&&b.t.hbarr)buryHBMine(b);
+  if(b.prog>=1&&b.p.human){msg(`${b.t.n} complete.`);lastSelSig=''}return}
  // electricity buildings: generator/turbine produce more when upgraded
  /* v82 OVERDRIVE, three-way on the two timers the building already has: upT is
     the burst, and once that runs out abilityCool is still holding, which IS
@@ -9675,6 +9951,29 @@ function aiTick(p){
       recovers the tower goes back to being an offensive charge. Dropped on its own
       HQ, which is the one place on the map its units are guaranteed to walk over -
       a crate nobody collects is 500 plastic left lying in a field. */
+   /* v88: a Gray bot spends the charge DEFENSIVELY when enough of its own army is
+      being shot in one place. Read off calmT - the "seconds since last hit" clock
+      every unit already carries and the same signal the Radar Tent's uplink reads
+      - so it is self-correcting: the moment the shooting stops the tower goes back
+      to being an offensive charge. radioAllowed is the gate, exactly as the napalm
+      branch above uses it, because aiTick never passes through execCmd. */
+   const scr88=radioAllowed(p,'smokescr')&&(function(){
+    const hurt=[];
+    for(const u of p.units)if(u.hp>0&&!u.garrisoned&&u.calmT<HURT_WINDOW)hurt.push(u);
+    if(hurt.length<SCR_AI_N)return null;
+    const h=SMOKESCR_BOX/2;
+    let best=null,bn=0;
+    for(const a of hurt){
+     let n=0;
+     for(const b of hurt)if(Math.abs(b.x-a.x)<=h&&Math.abs(b.y-a.y)<=h)n++;
+     if(n>bn){bn=n;best=a}
+    }
+    return bn>=SCR_AI_N?best:null;
+   })();
+   if(scr88){
+    radioSmokescreen(radio,clamp(scr88.x,2,G.map.N-3),clamp(scr88.y,2,G.map.N-3));fired=true;
+   }
+   else{
    const drop86=radioAllowed(p,'supply')&&p.res.p<AI_DROP_FLOOR;
    if(drop86){
     const hq86=p.blds.find(b=>b.key==='hq'&&b.hp>0);
@@ -9682,6 +9981,7 @@ function aiTick(p){
     radioSupply(radio,clamp(dx86,2,G.map.N-3),clamp(dy86,2,G.map.N-3));fired=true;
    }
    else{
+   
    // paradrop: a harvesting truck, else an outpost, else the nearest non-HQ structure
    const tq=scoreFoes()[0].q;
    let hit=null,hd3=1e9;
@@ -9690,6 +9990,7 @@ function aiTick(p){
    if(!hit){let bd3=1e9;for(const b of tq.blds){if(b.key==='hq')continue;const d=dhyp(b.x-p.start.x,b.y-p.start.y);if(d<bd3){bd3=d;hit={x:b.x,y:b.y}}}}
    if(!hit&&tq.blds.length)hit={x:tq.blds[0].x,y:tq.blds[0].y};
    if(hit){radioParadrop(radio,clamp(hit.x,2,G.map.N-3),clamp(hit.y,2,G.map.N-3));fired=true;}
+   }
    }
   }
   if(fired)ai.radioReadyT=null;
@@ -10102,6 +10403,30 @@ function aiTick(p){
    if(allied(e.p,u.p))own87++;else foe87++;
   }
   if(foe87>=FB_AI_CLUMP&&own87<=FB_AI_OWN)napalmBlast(u);
+ }
+ /* v88: the Choktaw paints, and the bot has to be taught it SEPARATELY for the
+    same reason v87 records about the Napalm Blast - aiTick calls the ability
+    function directly and never through execCmd, so the door that refuses a human
+    is not on this path at all. Grep for the function name, not for the mode.
+    The box is anchored on the densest 2x2 of enemy ground units the aircraft can
+    actually see, walked in a fixed order over G.units with no RNG, and it paints
+    only when the box is worth the twenty-second cooldown. */
+ for(const u of p.units){
+  if(!u.t.paint||u.garrisoned||u.hp<=0||(u.abCool||0)>0)continue;
+  const vi=viOf(u);
+  let bestN=0,bx=0,by=0;
+  for(const anchor of G.units){
+   if(anchor.hp<=0||anchor.garrisoned||allied(anchor.p,u.p))continue;
+   if((anchor.x-u.x)**2+(anchor.y-u.y)**2>vi*vi)continue;
+   const x0=Math.floor(anchor.x),y0=Math.floor(anchor.y);
+   let n88=0;
+   for(const e of G.units){
+    if(e.hp<=0||e.garrisoned||allied(e.p,u.p))continue;
+    if(e.x>=x0&&e.x<x0+PAINT_BOX&&e.y>=y0&&e.y<y0+PAINT_BOX)n88++;
+   }
+   if(n88>bestN){bestN=n88;bx=x0;by=y0}
+  }
+  if(bestN>=PAINT_AI_N)paintArea(u,bx,by);
  }
  for(const b of p.blds){
   if(!b.t.pour||b.prog<1||b.hp<=0||b.abilityCool>0)continue;
@@ -10629,6 +10954,62 @@ function refreshSurvBanner(){
 /* ---------------- TERRAIN HAZARD DAMAGE ---------------- */
 // blow a hidden landmine: a radial blast whose damage falls off with distance
 // (mineDmg) so it 1-shots a tank at the centre, a jeep one tile out, a grunt two.
+/* --- THE HEAVY BARRICADE'S MINE, ADDED AT v88 ---
+   A new KIND of mine rather than a new mine system: it joins G.map.mines, which
+   is already hashed, already serialized and already swept every frame, and it
+   carries two extra fields that the sweep and the renderer read.
+     mn.pi  - whose it is. The sweep skips that player's army and its allies, so
+              Gray walks over its own field; every other army trips it.
+     mn.gray- that it is one of these at all, which is what the renderer draws and
+              what tells the sweep to consult mn.pi in the first place. The map's
+              own scattered mines carry neither field and behave exactly as they
+              did: invisible to everybody, hostile to everybody.
+   "Three tiles in front" is measured toward the nearest enemy HQ, which is what
+   the owner meant by front - a wall faces the army it was built to stop. With no
+   enemy HQ left on the board there is no front, so no mine is buried; the draw is
+   still taken, so the RNG stream is the same either way.
+   The landing tile is clamped and must be passable, and the search for a passable
+   one walks a fixed ring order - no second srand() draw, so two clients that
+   agree on the roll agree on the tile. */
+function hbMineFront(b){
+ let best=null,bd=1e9;
+ for(const q of G.players){
+  if(!q.alive||allied(q,b.p))continue;
+  for(const h of q.blds){
+   if(h.key!=='hq'||h.hp<=0)continue;
+   const d=(h.x-b.x)**2+(h.y-b.y)**2;
+   if(d<bd){bd=d;best=h}
+  }
+ }
+ return best;
+}
+function buryHBMine(b){
+ const roll=srand();                       // taken for every wall, so the stream never forks on the outcome
+ const hq=hbMineFront(b);
+ if(roll>=HBARR_MINE_P||!hq)return null;
+ const a=datan2(hq.y-b.y,hq.x-b.x);
+ let mx=b.x+dcos(a)*HBARR_MINE_D, my=b.y+dsin(a)*HBARR_MINE_D;
+ mx=clamp(mx,1.5,G.map.N-1.5);my=clamp(my,1.5,G.map.N-1.5);
+ if(!passable(Math.floor(mx),Math.floor(my))){
+  let found=false;
+  outer:for(let r=1;r<=3&&!found;r++)for(let oy=-r;oy<=r;oy++)for(let ox=-r;ox<=r;ox++){
+   const nx=clamp(mx+ox,1.5,G.map.N-1.5),ny=clamp(my+oy,1.5,G.map.N-1.5);
+   if(passable(Math.floor(nx),Math.floor(ny))){mx=nx;my=ny;found=true;break outer;}
+  }
+  if(!found)return null;
+ }
+ const mn={x:mx,y:my,live:true,gray:1,pi:b.p.i};
+ G.map.mines.push(mn);
+ if(b.p.human)msg('The work party buried a mine forward of the wall.');
+ return mn;
+}
+/* may this mine answer to this walker? The map's own mines answer to everyone;
+   a buried one never answers to the army that buried it or to its allies. */
+function mineArms(mn,u){
+ if(!mn.gray)return true;
+ const owner=G.players[mn.pi];
+ return !owner||!allied(owner,u.p);
+}
 function detonateMine(mn){
  mn.live=false;
  const R=MINE_R;
@@ -10664,7 +11045,7 @@ function updateHazards(dt){
   for(const u of G.units.slice()){
    if(u.garrisoned||u.t.fly||u.hp<=0)continue;
    for(const mn of mines){
-    if(!mn.live)continue;
+    if(!mn.live||!mineArms(mn,u))continue; // v88: a Gray-buried mine lets Gray walk over it
     const dx=u.x-mn.x,dy=u.y-mn.y;
     if(dx*dx+dy*dy<MINE_TRIG*MINE_TRIG){detonateMine(mn);break;}
    }
@@ -10997,7 +11378,7 @@ function bakeSprites(){
   }
  }
  for(const k in B){
-  if(k==='barricade')continue;
+  if(B[k].barr)continue; // v88: both walls are live-painted rather than baked
   const sz=B[k].sz,S=sz*HW,HD=sz*HH;
   const box=BLD_BOX[k]||[-S-10,-Math.max(70,S*1.2),S+10,HD*1.58+8];
   SPR.bld[k]={};
@@ -11166,6 +11547,41 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
   c.strokeStyle='#3a3a42';c.lineWidth=1.6;
   c.beginPath();c.moveTo(-6,-9.8);c.lineTo(9,-9.8);c.moveTo(-6,9.8);c.lineTo(9,9.8);c.stroke();
   plRim(c,col,2,0,10,8);gloss(c,-2,-5,2.6,3.2);glint(c,10,-4,.9);
+ }
+ else if(key==='choktaw'){
+  /* v88: it has to read as TWO weapons at a glance, because that is the whole of
+     what the unit is - stub wings carrying the Apache's rocket pods, and a door
+     gun poking out of the cabin on both sides. Broader in the shoulder than the
+     Apache's thin dart and shorter in the boom than the Firebomb, so the three
+     gunships are tellable apart at map zoom. The rotor, like every other
+     helicopter's, is live-painted in drawUnit. */
+  c.scale(1.08,1.08);
+  plLimb(c,shade(col,.7),-7,0,-25,-1,4.6);                                    // tail boom
+  c.fillStyle=shade(col,.58);c.beginPath();c.moveTo(-23,-1);c.lineTo(-29,-8);c.lineTo(-26,1);c.closePath();c.fill(); // tail fin
+  (function(){const g=c.createLinearGradient(-9,-8,9,8);
+   g.addColorStop(0,rgb(litc.r,litc.g,litc.b));g.addColorStop(.55,rgb(b.r,b.g,b.b));g.addColorStop(1,rgb(deep.r,deep.g,deep.b));
+   c.fillStyle=g;rr(c,-9,-7.2,23,14.4,5.5);c.fill();})();                     // cabin
+  c.fillStyle=rgba(AMB.r,AMB.g,AMB.b,.3);rr(c,-7,3.4,19,3.4,2);c.fill();      // belly AO
+  (function(){const cp=c.createRadialGradient(9.4,-2,.5,10.4,0,5.4);
+   cp.addColorStop(0,'#f2fbff');cp.addColorStop(.5,'#a8d8f0');cp.addColorStop(1,'#5a92b4');
+   c.fillStyle=cp;c.beginPath();c.ellipse(10,0,4.4,5,0,0,7);c.fill();})();     // canopy
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.55)';
+  c.beginPath();c.ellipse(8.8,-2.2,1.5,1.1,-.5,0,7);c.fill();c.restore();
+  // STUB WINGS + ROCKET PODS, the Apache's hardpoints on a wider shoulder
+  c.fillStyle=rgb(deep.r,deep.g,deep.b);rr(c,-4,-11.4,9,2.6,1.2);c.fill();rr(c,-4,8.8,9,2.6,1.2);c.fill();
+  for(const wy of [-13.6,10.8]){
+   c.fillStyle='#23232a';rr(c,0,wy,7.5,3.2,1.4);c.fill();
+   for(let i=0;i<3;i++){c.fillStyle='#101014';c.beginPath();c.ellipse(1.4+i*2.3,wy+1.6,.9,.8,0,0,7);c.fill();
+    c.fillStyle='#ff7a3a';c.beginPath();c.ellipse(1.4+i*2.3,wy+1.6,.4,.35,0,0,7);c.fill();}
+  }
+  // DOOR GUN, a stubby barrel out of each side of the cabin
+  c.strokeStyle='#2e2e36';c.lineWidth=1.8;c.lineCap='round';
+  c.beginPath();c.moveTo(1,-6.6);c.lineTo(4.5,-9.6);c.moveTo(1,6.6);c.lineTo(4.5,9.6);c.stroke();
+  c.fillStyle='#4a4a54';c.beginPath();c.arc(4.6,-9.8,1.1,0,7);c.fill();c.beginPath();c.arc(4.6,9.8,1.1,0,7);c.fill();
+  // skids
+  c.strokeStyle='#3a3a42';c.lineWidth=1.5;
+  c.beginPath();c.moveTo(-5,-8.6);c.lineTo(8,-8.6);c.moveTo(-5,8.6);c.lineTo(8,8.6);c.stroke();
+  plRim(c,col,1.5,0,9.5,7.2);gloss(c,-1,-4.4,2.4,3);glint(c,11,-3.6,.9);
  }
  else if(key==='chinook'){ // v46: tandem-rotor troop transport - long slab hull, rear ramp, no weapon hardpoints
   c.scale(1.25,1.25);
@@ -12062,7 +12478,7 @@ function drawGroundCone(c,cx,cy,dir,rng,half,col,alpha){
    click picking are untouched. Applied to body, shadow, selection ring, muzzle
    flash and HP bar offset together. */
 const USCALE={grunt:.82,grenadier:.82,gunner:.85,para:.85,bazooka:.82,mortar:.82,flamer:.82,sniper:.82,sarge:.92,
- medic:1.08,truck:1.08,aatruck:1.08,jeep:1.05,bike:.95,tank:1.15,bulltank:1.22,arty:1.12,heli:1.15,chinook:1.28,apache:1.18,apc:1.15};
+ medic:1.08,truck:1.08,aatruck:1.08,jeep:1.05,bike:.95,tank:1.15,bulltank:1.22,arty:1.12,heli:1.15,chinook:1.28,apache:1.18,apc:1.15,choktaw:1.20,firebomb:1.16,balloon:1.10,cmdtruck:1.08};  // v88: the three roadmap-2 aircraft and the Command Truck were falling through to 1.0 - the Choktaw is the heaviest gunship in the game and read smaller than the Apache
 function uScale(u){return USCALE[u.key]||1}
 /* v79: is this unit inside a broadcasting Sarge's radius? The renderer's read of
    exactly the test dmgBonus makes, kept as one function so the glow can never
@@ -12089,6 +12505,25 @@ function drawUnit(c,u){
   const g=c.createRadialGradient(sx,gy,1,sx,gy,fly?20:16);
   g.addColorStop(0,'rgba(150,255,170,.55)');g.addColorStop(.5,'rgba(90,230,130,.28)');g.addColorStop(1,'rgba(90,230,130,0)');
   c.fillStyle=g;c.beginPath();c.ellipse(sx,gy,fly?20:16,fly?12:11,0,0,7);c.fill();
+  c.restore();c.globalAlpha=1;
+ }
+ /* v88 PAINT MARK: a spinning bracket over anything currently carrying the
+    Choktaw's mark. Read straight off the unit's own paintT rather than off the
+    box, because the box and the mark can outlive each other - a painted unit
+    that walks out of the square is still lit, and that is the whole point of a
+    mark as against an aura. Purely cosmetic: no srand, and the mark is drawn for
+    whoever can see the unit at all, since the enemy knowing it is lit is the
+    warning that makes the ability readable. */
+ if(u.paintT>0){
+  const py=sy-gz-(fly?4:14),pr=(fly?15:11)*K,rot=G.tick*.07,pf=.55+.35*Math.sin(G.tick*.35+u.id);
+  c.save();c.globalAlpha=pf;c.strokeStyle='#ff5b45';c.lineWidth=2;c.lineCap='round';
+  for(let q=0;q<4;q++){
+   const a0=rot+q*1.5708;
+   c.beginPath();
+   c.moveTo(sx+Math.cos(a0)*pr,py+Math.sin(a0)*pr*.6);
+   c.lineTo(sx+Math.cos(a0+.42)*pr,py+Math.sin(a0+.42)*pr*.6);
+   c.stroke();
+  }
   c.restore();c.globalAlpha=1;
  }
  /* v79 "ON ME!" GLOW: a soft green pulse under any infantryman currently inside
@@ -12342,16 +12777,28 @@ function drawBarricade(c,b,sx,sy){
  const dk=shade(base,.55),lt=shade(base,1.35);
  c.save();c.translate(sx,sy);
  const pr=b.prog;if(pr<1){c.globalAlpha=.5+.5*pr;c.translate(0,(1-pr)*8);}
- // three crossed beams (screen-space x0,y0 -> x1,y1) forming a 6-pointed silhouette
- const beams=[[-10,5,10,-7],[10,5,-10,-7],[0,9,0,-13]];
+ /* v88: the heavy wall is the same hedgehog built HEAVIER rather than a different
+    object - thicker beams, a taller centre post and a sandbag skirt at its foot.
+    A player has to be able to tell the two apart at a glance while reading the
+    same silhouette, because they lay in the same line and block the same tile. */
+ const hv=!!b.t.hbarr;
+ const beams=hv?[[-13,6,13,-9],[13,6,-13,-9],[0,11,0,-17]]:[[-10,5,10,-7],[10,5,-10,-7],[0,9,0,-13]];
+ const bw=hv?8.2:5.6;
  c.lineCap='round';
- for(const bm of beams){c.strokeStyle=dk;c.lineWidth=5.6;c.beginPath();c.moveTo(bm[0],bm[1]);c.lineTo(bm[2],bm[3]);c.stroke();}
+ if(hv){ // the skirt goes down first, so the beams stand in front of it
+  c.fillStyle=shade(base,.42);
+  for(const q of [[-9,7],[0,10],[9,7]]){c.beginPath();c.ellipse(q[0],q[1],6.4,3.2,0,0,7);c.fill();}
+  c.fillStyle=shade(base,.52);
+  for(const q of [[-5,9],[5,9]]){c.beginPath();c.ellipse(q[0],q[1],6.0,3.0,0,0,7);c.fill();}
+ }
+ for(const bm of beams){c.strokeStyle=dk;c.lineWidth=bw;c.beginPath();c.moveTo(bm[0],bm[1]);c.lineTo(bm[2],bm[3]);c.stroke();}
  // lit top edge on each beam
- c.save();c.globalCompositeOperation='lighter';c.strokeStyle='rgba(255,255,255,.26)';c.lineWidth=1.8;
+ c.save();c.globalCompositeOperation='lighter';c.strokeStyle='rgba(255,255,255,.26)';c.lineWidth=hv?2.6:1.8;
  for(const bm of beams){c.beginPath();c.moveTo(bm[0],bm[1]-1.4);c.lineTo(bm[2],bm[3]-1.4);c.stroke();}
  c.restore();
  // central rivet hub
- plSphere(c,lt,0,-2,3.2,1,false);
+ plSphere(c,lt,0,hv?-4:-2,hv?4.6:3.2,1,false);
+ if(hv){plSphere(c,shade(base,1.15),0,-15,2.6,1,false);} // the cap on the tall post
  c.restore();
 }
 function drawBld(c,b){
@@ -12380,7 +12827,7 @@ function drawBld(c,b){
   return;
  }
  // --- barricade: dark-gray (neutral) or team-colored Czech hedgehog, no molded base ---
- if(b.key==='barricade'){
+ if(b.t.barr){ // v88: both walls are live-painted; drawBarricade reads t.hbarr for the heavier one
   plShadow(c,sx,sy+HD*.5,S*1.15,HD*1.1,.3);
   drawBarricade(c,b,sx,sy);
   if(b.sel||b.hp<b.mhp)drawHP(c,sx,sy-20,b.hp/b.mhp);
@@ -12441,7 +12888,7 @@ function drawItemShadow(c,it){
   }
   c.restore();
  } else if(kind==='bld'){
-  const b=o;if(b.key==='barricade')return;
+  const b=o;if(b.t.barr)return; // v88: neither wall has a baked silhouette to cast
   const cell=SPR.bld[b.key]&&SPR.bld[b.key][b.p.fac];if(!cell)return;
   const HD=b.sz*HH;
   skewSil(c,cell,sx,sy+HD*.62,HD*.62,.55,.5,.26*Math.min(1,b.prog));
@@ -13463,6 +13910,19 @@ function execCmd(c){
    }
    if(p===G.human)lastSelSig='';
    break}
+  case 'paint':{ // v88: the Choktaw marks a box and everything of theirs inside it
+   /* Refused HERE, not in the panel, on the rule every ability door in this file
+      follows: the panel is client-local and a peer can send whatever it likes.
+      ONE aircraft paints, and it is the first in the list that is actually able
+      to - a second Choktaw over the same box would only restart a clock that is
+      already running, so spending its cooldown too would be a straight loss. */
+   const x=clamp(a.x,1,G.map.N-2),y=clamp(a.y,1,G.map.N-2);
+   for(const u of cmdUnits(p,a.ids)){
+    if(!u.t.paint||u.garrisoned||u.abCool>0)continue;
+    paintArea(u,x,y);break;
+   }
+   if(p===G.human)lastSelSig='';
+   break}
   case 'pour':{ // v87: the Foundry finishes what every Garage is holding
    const b=entById(a.bid);
    if(!b||b.kind!=='bld'||!b.t.pour||b.p!==p||b.prog<1||b.hp<=0||b.abilityCool>0)break;
@@ -13546,6 +14006,7 @@ function execCmd(c){
    else if(a.mode==='barrage')radioBarrage(b,x,y);
    else if(a.mode==='paradrop')radioParadrop(b,x,y);
    else if(a.mode==='supply')radioSupply(b,x,y);
+   else if(a.mode==='smokescr')radioSmokescreen(b,x,y); // v88: reached only past radioAllowed above, which is where a non-Gray peer is refused
    else if(a.mode==='lift'){
     /* the id list is re-filtered from scratch: own units, alive, on the field,
        infantry, capped. cmdUnits already applies the ownership half, so this adds
@@ -13623,11 +14084,11 @@ function hashState(){
      makeAIBrain, which is fixed, so the walk is deterministic. */
   if(p.ai&&p.ai.enc)for(const k in p.ai.enc)h=hF(h,p.ai.enc[k]);
  }
- for(const u of G.units){h=hI(h,u.id);h=hF(h,u.x);h=hF(h,u.y);h=hF(h,u.hp);h=hF(h,u.cool);h=hS(h,u.state);h=hF(h,u.cargo||0);h=hF(h,u.face);h=hI(h,u.entrenched?1:0);h=hI(h,u.garrisoned?1:0);h=hI(h,u.kl||0);h=hI(h,u.hold?1:0);h=hI(h,u.oq?u.oq.length:0);h=hI(h,u.patrol?u.patrol.leg+1:0);h=hF(h,u.burnT||0);h=hI(h,u.salv||0);h=hF(h,u.cool2||0);h=hF(h,u.calmT||0);h=hI(h,u.onMe?1:0);h=hI(h,u.smoke?1:0);h=hI(h,u.wf||0);h=hI(h,u.wfT||0);h=hI(h,u.valve?1:0);h=hI(h,u.thr?1:0);h=hI(h,u.vrt||0);h=hF(h,u.burnDps||0);h=hF(h,u.shotT||0);h=hI(h,u.cs?1:0);h=hI(h,u.rip?1:0);h=hI(h,u.flat?1:0);h=hI(h,u.aslt?1:0);h=hI(h,u.fo?1:0);h=hI(h,u.mvg?1:0);h=hI(h,u.spr?1:0);h=hI(h,u.bcast?1:0);h=hF(h,u.fuel||0);h=hF(h,u.abCool||0)} // v85: the Sprint toggle. v51: salvo counter & secondary cooldown are sim state. v79: calm timer, the two Green toggles and the Walking Fire streak. v80: the two Tan toggles, and the burn RATE - hashed now that Cook-Off is a second writer of it at a different value from the fire ant's. v81: the shot clock the concealment test reads, and the two Gray toggles. v82: the two Blue toggles, the per-passenger firing-out flag its carrier writes, and the movement flag Evasive multiplies damage by. v86: the Broadcast toggle, and the balloon's remaining gas - a clock that decides when a unit dies is sim state whether or not anything else reads it. v87: the first UNIT ability cooldown, on the same footing as the building one that has been hashed since v30
+ for(const u of G.units){h=hI(h,u.id);h=hF(h,u.x);h=hF(h,u.y);h=hF(h,u.hp);h=hF(h,u.cool);h=hS(h,u.state);h=hF(h,u.cargo||0);h=hF(h,u.face);h=hI(h,u.entrenched?1:0);h=hI(h,u.garrisoned?1:0);h=hI(h,u.kl||0);h=hI(h,u.hold?1:0);h=hI(h,u.oq?u.oq.length:0);h=hI(h,u.patrol?u.patrol.leg+1:0);h=hF(h,u.burnT||0);h=hI(h,u.salv||0);h=hF(h,u.cool2||0);h=hF(h,u.calmT||0);h=hI(h,u.onMe?1:0);h=hI(h,u.smoke?1:0);h=hI(h,u.wf||0);h=hI(h,u.wfT||0);h=hI(h,u.valve?1:0);h=hI(h,u.thr?1:0);h=hI(h,u.vrt||0);h=hF(h,u.burnDps||0);h=hF(h,u.shotT||0);h=hI(h,u.cs?1:0);h=hI(h,u.rip?1:0);h=hI(h,u.flat?1:0);h=hI(h,u.aslt?1:0);h=hI(h,u.fo?1:0);h=hI(h,u.mvg?1:0);h=hI(h,u.spr?1:0);h=hI(h,u.bcast?1:0);h=hF(h,u.fuel||0);h=hF(h,u.abCool||0);h=hF(h,u.paintT||0)} // v85: the Sprint toggle. v51: salvo counter & secondary cooldown are sim state. v79: calm timer, the two Green toggles and the Walking Fire streak. v80: the two Tan toggles, and the burn RATE - hashed now that Cook-Off is a second writer of it at a different value from the fire ant's. v81: the shot clock the concealment test reads, and the two Gray toggles. v82: the two Blue toggles, the per-passenger firing-out flag its carrier writes, and the movement flag Evasive multiplies damage by. v86: the Broadcast toggle, and the balloon's remaining gas - a clock that decides when a unit dies is sim state whether or not anything else reads it. v87: the first UNIT ability cooldown, on the same footing as the building one that has been hashed since v30. v88: the Paint mark, which is the first ability clock written onto a unit by SOMEBODY ELSE - it decides how hard every future shot lands, so it is sim state on exactly the footing the others are
  for(const b of G.blds){h=hI(h,b.id);h=hF(h,b.hp);h=hF(h,b.prog);h=hI(h,b.queue.length);h=hF(h,b.prodT);h=hF(h,b.techT||0);h=hS(h,b.techCur||'');h=hI(h,b.garrison.length);h=hF(h,b.abilityCool||0);h=hF(h,b.burnT||0);h=hF(h,b.upT||0)} // v30: tower cooldown is sim state. v79: so is the uplink's remaining duration
  for(const pr of G.projs){h=hF(h,pr.x);h=hF(h,pr.y);h=hF(h,pr.z||0);h=hF(h,pr.dm)}
  for(const n of G.map.nodes){h=hF(h,n.amt);h=hI(h,n.wreck?1:0)}
- for(const m of G.map.mines)h=hI(h,m.live?1:0);
+ for(const m of G.map.mines){h=hI(h,m.live?1:0);h=hI(h,m.gray?1:0);h=hI(h,m.pi==null?-1:m.pi);h=hF(h,m.x);h=hF(h,m.y)} // v88: a buried mine is state the SIM created, so where it is has to be agreed as well as whether it is armed - the map's own are fixed by generation and cost nothing extra to carry
  for(const ns of (G.map.nests||[])){h=hI(h,ns.alive|0);h=hI(h,ns.dead?1:0);h=hI(h,ns.poked|0)}
  for(const cr of (G.neutrals||[])){h=hI(h,cr.id);h=hF(h,cr.x);h=hF(h,cr.y);h=hF(h,cr.hp);h=hI(h,cr.wave?1:0)}
  for(const s of (G.strikes||[])){h=hS(h,s.kind);h=hF(h,s.t)}
@@ -13705,7 +14166,7 @@ function saveState(){
   flags:(G.flags||[]).map(f=>({hx:f.hx,hy:f.hy,x:f.x,y:f.y,home:f.home,$owner:f.owner?f.owner.i:null,$carrier:_encRef(f.carrier)})),
   hill:G.hill?{x:G.hill.x,y:G.hill.y,r:G.hill.r,$holder:G.hill.holder?G.hill.holder.i:null}:null,
   nodes:G.map.nodes.map(n=>({t:n.t,x:n.x,y:n.y,amt:n.amt,max:n.max,wreck:!!n.wreck,col:n.col||null})),
-  mines:G.map.mines.map(m=>({x:m.x,y:m.y,live:!!m.live})),
+  mines:G.map.mines.map(m=>({x:m.x,y:m.y,live:!!m.live,gray:m.gray?1:0,pi:m.pi==null?-1:m.pi})), // v88
   nests:(G.map.nests||[]).map(ns=>({alive:ns.alive,aggro:ns.aggro,respT:ns.respT||0,dead:!!ns.dead,poked:ns.poked||0})),
   pass:packPass(),
   surv:G.surv?{no:G.surv.no,t:G.surv.t,done:G.surv.done,fx:G.surv.fx,fy:G.surv.fy}:null, // v33: wave state
@@ -13731,7 +14192,7 @@ function loadState(json){
  // gone ghosts that collide with a live loaded pile (an earlier save can resurrect one).
  if(G.ghost){const old=G.ghost.nodes;G.ghost.nodes=[];G.map.nodes.forEach((n,i)=>{const g=(old||[]).find(g2=>g2&&g2.x===n.x&&g2.y===n.y);if(g)G.ghost.nodes[i]=g;});
   G.ghost.goneNodes=(G.ghost.goneNodes||[]).filter(g=>!G.map.nodes.some(n=>n.x===g.x&&n.y===g.y));}
- G.map.mines=S.mines.map(m=>({x:m.x,y:m.y,live:m.live}));
+ G.map.mines=S.mines.map(m=>({x:m.x,y:m.y,live:m.live,gray:m.gray?1:0,pi:(m.pi==null||m.pi<0)?null:m.pi})); // v88: a pre-v88 save has neither field, and a map mine that answers to everybody is the honest default
  (G.map.nests||[]).forEach((ns,i)=>{const s2=S.nests[i];if(s2){ns.alive=s2.alive;ns.aggro=s2.aggro;if(s2.respT)ns.respT=s2.respT;ns.dead=!!s2.dead;if(s2.poked)ns.poked=s2.poked}});
  // the snapshot's pass grid is authoritative (regen only restores the static base)
  if(S.pass)unpackPass(S.pass);
@@ -13753,7 +14214,7 @@ function loadState(json){
   byId[e.id]=e;
   return e;
  }
- G.units=S.units.map(o=>{const u=decEnt(o);u.t=u.kind==='creature'?CREATURE[u.species]:U[u.key];if(!u.oq)u.oq=[];if(u.hold==null)u.hold=false;if(u.kl==null)u.kl=0;if(u.vr==null)u.vr=0;if(u.calmT==null)u.calmT=0;if(u.t.rally&&u.onMe==null)u.onMe=false;if(u.t.smokeCap&&u.smoke==null)u.smoke=false;if(u.t.wf&&u.wf==null){u.wf=0;u.wfT=0}if(u.t.valve&&u.valve==null){u.valve=false;u.vrt=0}if(u.t.throttle&&u.thr==null)u.thr=false;if(u.t.camo&&u.shotT==null)u.shotT=999;if(u.t.cshot&&u.cs==null)u.cs=false;if(u.t.ripple&&u.rip==null)u.rip=false;if(u.t.evade&&u.mvg==null)u.mvg=false;if(u.t.flat&&u.flat==null)u.flat=false;if(u.t.assault&&u.aslt==null)u.aslt=false;if(u.t.cap&&u.fo==null)u.fo=false;if(u.t.sprint&&u.spr==null)u.spr=false;if(u.t.bcast&&u.bcast==null)u.bcast=false;if(u.t.balloon&&u.fuel==null)u.fuel=BALLOON_FUEL;if(u.t.abCd&&u.abCool==null)u.abCool=0;return u}); // v87: a pre-v87 save carries no unit cooldown, and ready is the honest default // v86: a pre-v86 save has neither, and a balloon in one has never burned any gas // v29: pre-v29 saves get queue/hold/vet defaults. v79: and the ability fields, which a pre-v79 save has none of
+ G.units=S.units.map(o=>{const u=decEnt(o);u.t=u.kind==='creature'?CREATURE[u.species]:U[u.key];if(!u.oq)u.oq=[];if(u.hold==null)u.hold=false;if(u.kl==null)u.kl=0;if(u.vr==null)u.vr=0;if(u.calmT==null)u.calmT=0;if(u.t.rally&&u.onMe==null)u.onMe=false;if(u.t.smokeCap&&u.smoke==null)u.smoke=false;if(u.t.wf&&u.wf==null){u.wf=0;u.wfT=0}if(u.t.valve&&u.valve==null){u.valve=false;u.vrt=0}if(u.t.throttle&&u.thr==null)u.thr=false;if(u.t.camo&&u.shotT==null)u.shotT=999;if(u.t.cshot&&u.cs==null)u.cs=false;if(u.t.ripple&&u.rip==null)u.rip=false;if(u.t.evade&&u.mvg==null)u.mvg=false;if(u.t.flat&&u.flat==null)u.flat=false;if(u.t.assault&&u.aslt==null)u.aslt=false;if(u.t.cap&&u.fo==null)u.fo=false;if(u.t.sprint&&u.spr==null)u.spr=false;if(u.t.bcast&&u.bcast==null)u.bcast=false;if(u.t.balloon&&u.fuel==null)u.fuel=BALLOON_FUEL;if(u.t.abCd&&u.abCool==null)u.abCool=0;if(u.paintT==null)u.paintT=0;return u}); // v88: paintT is defaulted for EVERY unit and not gated on a table flag, because unlike every field beside it the mark is worn by units whose own row says nothing about it // v87: a pre-v87 save carries no unit cooldown, and ready is the honest default // v86: a pre-v86 save has neither, and a balloon in one has never burned any gas // v29: pre-v29 saves get queue/hold/vet defaults. v79: and the ability fields, which a pre-v79 save has none of
  G.blds=S.blds.map(o=>{const b=decEnt(o);b.t=B[b.key];if(b.abilityCool==null)b.abilityCool=0;if(b.upT==null)b.upT=0;return b}); // v30: pre-v30 saves get the cooldown default. v79: and the uplink timer
  G.projs=S.projs.map(o=>{const pr={};for(const k in o){if(k[0]==='$')continue;pr[k]=o[k]}return pr});
  G.neutrals=S.neutrals.map(o=>{const cr=decEnt(o);cr.t=CREATURE[cr.species];cr.p=G.neutral;return cr});
@@ -14298,6 +14759,12 @@ function handleRadioClick(mx,my){
   submitCmd('entrench',{ids:crew.filter(g=>g&&g.hp>0).map(g=>g.id),x:w.x,y:w.y});
   G.radioTargeting=null;lastSelSig='';sClick();return;
  }
+ if(rt.mode==='paint'){
+  const u=rt.unit;
+  if(!u||u.hp<=0||!G.units.includes(u)||(u.abCool||0)>0){cancelRadioTargeting();return;}
+  submitCmd('paint',{ids:[u.id],x:w.x,y:w.y});
+  G.radioTargeting=null;lastSelSig='';sClick();return;
+ }
  // v30: call-downs come from the Radio Tower
  const b=rt.bld;
  if(!b||b.hp<=0||!G.blds.includes(b)){cancelRadioTargeting();return;}
@@ -14478,6 +14945,38 @@ function drawStrikes(c){
    else if((s.kind==='paradrop'||s.kind==='lift')&&s.drops.length){rx=s.drops[0].x;ry=s.drops[0].y} // v85: a hostile redeploy is hidden by fog on the same rule as a hostile paradrop
    if(fogAt(rx,ry)!==2)continue;
   }
+  if(s.kind==='smokescr'){
+   /* v88: the square the cloud actually covers, drawn faintly under the drifting
+      particles so the player can read its EDGE. The particles alone would leave
+      the boundary guesswork, and the boundary is the whole tactical content of a
+      screen you have to stand your army inside. */
+   const f=clamp(1-s.t/SMOKESCR_T,0,1),hh=s.n/2;
+   c.save();c.globalAlpha=.16+f*.20;
+   c.fillStyle='#e2e2de';
+   c.beginPath();
+   c.moveTo(isoX(s.x-hh,s.y-hh),isoY(s.x-hh,s.y-hh));c.lineTo(isoX(s.x+hh,s.y-hh),isoY(s.x+hh,s.y-hh));
+   c.lineTo(isoX(s.x+hh,s.y+hh),isoY(s.x+hh,s.y+hh));c.lineTo(isoX(s.x-hh,s.y+hh),isoY(s.x-hh,s.y+hh));
+   c.closePath();c.fill();
+   c.strokeStyle='rgba(230,230,226,.75)';c.lineWidth=1.6;c.setLineDash([7,5]);c.lineDashOffset=-G.tick*.8;c.stroke();
+   c.restore();c.globalAlpha=1;
+   continue;
+  }
+  if(s.kind==='paint'){
+   /* v88: a marker, and nothing but a marker - the RULE is each victim's own
+      paintT and this box carries none of it. Drawn in the painting army's colour
+      so a Gray player reads his own mark and an enemy reads whose it is. */
+   const col=FAC[(G.players[s.pi]||G.human||{fac:'gray'}).fac].color,rb=hx2rgb(col);
+   const f=clamp(1-s.t/PAINT_T,0,1);
+   c.save();c.globalAlpha=.35+f*.45;
+   c.strokeStyle=col;c.lineWidth=2;c.setLineDash([6,4]);c.lineDashOffset=-G.tick*1.6;
+   c.beginPath();
+   c.moveTo(isoX(s.x,s.y),isoY(s.x,s.y));c.lineTo(isoX(s.x+s.n,s.y),isoY(s.x+s.n,s.y));
+   c.lineTo(isoX(s.x+s.n,s.y+s.n),isoY(s.x+s.n,s.y+s.n));c.lineTo(isoX(s.x,s.y+s.n),isoY(s.x,s.y+s.n));
+   c.closePath();c.stroke();
+   c.setLineDash([]);c.fillStyle=rgba(rb.r,rb.g,rb.b,.10*f);c.fill();
+   c.restore();c.globalAlpha=1;
+   continue;
+  }
   if(s.kind==='barrage'){
    /* each shell arcs in from off-map over BARRAGE_FLY seconds. Pure render: the
       impact point and bearing were fixed by srand() when the strike was created. */
@@ -14545,10 +15044,34 @@ function drawTargeting(c){
   const u=rt.unit;
   const dir=Math.atan2(w.y-u.y,w.x-u.x);
   drawGroundCone(c,u.x,u.y,dir,u.t.rg,CONE_HALF,col,.18);
+ } else if(rt.mode==='paint'){
+  /* v88: the box the click will actually mark, snapped to the tile grid exactly
+     as paintArea snaps it - so what is under the reticle is what gets painted. */
+  const x0=Math.floor(w.x),y0=Math.floor(w.y),n=PAINT_BOX;
+  c.save();c.strokeStyle=col;c.lineWidth=2;c.setLineDash([5,4]);c.lineDashOffset=-G.tick*1.2;
+  c.beginPath();
+  c.moveTo(isoX(x0,y0),isoY(x0,y0));c.lineTo(isoX(x0+n,y0),isoY(x0+n,y0));
+  c.lineTo(isoX(x0+n,y0+n),isoY(x0+n,y0+n));c.lineTo(isoX(x0,y0+n),isoY(x0,y0+n));
+  c.closePath();c.stroke();
+  c.setLineDash([]);c.fillStyle=rgba(hx2rgb(col).r,hx2rgb(col).g,hx2rgb(col).b,.14);c.fill();
+  c.restore();
  } else {
   // v30: no reach ring - the targeted call-downs land anywhere the player has vision
   const inR=rt.mode==='paradrop'||fogAt(w.x,w.y)===2;const mark=inR?'rgba(120,255,120,.85)':'rgba(255,90,70,.85)';
-  if(rt.mode==='napalm'){
+  if(rt.mode==='smokescr'){
+   /* v88: the actual square, anchored the way radioSmokescreen anchors it, so
+      what the player sees under the reticle is what the cloud will cover. Drawn
+      in the army's own colour rather than the red/green vision mark, because
+      this call-down needs no vision and the mark would always read green. */
+   const hh=SMOKESCR_BOX/2,cx2=Math.floor(w.x)+.5,cy2=Math.floor(w.y)+.5,rb2=hx2rgb(col);
+   c.save();c.strokeStyle=col;c.lineWidth=2;c.setLineDash([6,4]);c.lineDashOffset=-G.tick*1.2;
+   c.beginPath();
+   c.moveTo(isoX(cx2-hh,cy2-hh),isoY(cx2-hh,cy2-hh));c.lineTo(isoX(cx2+hh,cy2-hh),isoY(cx2+hh,cy2-hh));
+   c.lineTo(isoX(cx2+hh,cy2+hh),isoY(cx2+hh,cy2+hh));c.lineTo(isoX(cx2-hh,cy2+hh),isoY(cx2-hh,cy2+hh));
+   c.closePath();c.stroke();
+   c.setLineDash([]);c.fillStyle=rgba(rb2.r,rb2.g,rb2.b,.12);c.fill();
+   c.restore();
+  } else if(rt.mode==='napalm'){
    c.save();c.strokeStyle=mark;c.lineWidth=1.6;c.setLineDash([5,4]);
    c.beginPath();c.moveTo(isoX(w.x-5,w.y-5),isoY(w.x-5,w.y-5));c.lineTo(isoX(w.x+5,w.y-5),isoY(w.x+5,w.y-5));c.lineTo(isoX(w.x+5,w.y+5),isoY(w.x+5,w.y+5));c.lineTo(isoX(w.x-5,w.y+5),isoY(w.x-5,w.y+5));c.closePath();c.stroke();c.restore();
   } else if(rt.mode==='barrage'){
@@ -14719,6 +15242,27 @@ function renderCore(){
    c.beginPath();c.ellipse(sx,sy,rr2,rr2*.5,0,0,7);c.stroke();
    c.restore();c.globalAlpha=1;
   }
+ }
+ /* ---- v88: THE BURIED MINES ONLY THEIR OWNER CAN SEE ----
+    The map's own scattered mines are drawn by nobody and stay that way. A wall's
+    mine is drawn for the army that buried it and for its allies alone, which is
+    the whole of "only Gray can see it" - a client-local read of G.human, exactly
+    like the fog it sits under, so the sim never learns who is looking. A
+    spectator sees none of them, on the same rule that gives a spectator no army.
+    Deliberately small and dull: it is a reminder of where your own field is, not
+    a beacon. */
+ if(G.human&&G.map.mines)for(const mn of G.map.mines){
+  if(!mn.live||!mn.gray)continue;
+  const ow=G.players[mn.pi];
+  if(!ow||!allied(ow,G.human))continue;
+  if(fogAt(mn.x,mn.y)===0)continue;
+  const mx2=isoX(mn.x,mn.y),my2=isoY(mn.x,mn.y),pf=.45+.25*Math.sin(G.tick*.05+mn.x);
+  c.save();c.globalAlpha=pf;
+  c.strokeStyle=FAC[ow.fac].color;c.lineWidth=1.4;c.setLineDash([3,3]);
+  c.beginPath();c.ellipse(mx2,my2,9,4.5,0,0,7);c.stroke();
+  c.setLineDash([]);c.fillStyle='rgba(255,120,90,.75)';
+  c.beginPath();c.ellipse(mx2,my2,2.4,1.2,0,0,7);c.fill();
+  c.restore();c.globalAlpha=1;
  }
  // ---- MEDIC HEALING RADIUS rings (team-coloured, on the ground under sprites) ----
  for(const u of G.units){
@@ -15130,7 +15674,9 @@ function infoStatsHtml(kind,key){
   if(t.fly)sp+='Flies over terrain, water, walls & landmines. ';
   if(t.aaOnly)sp+='Engages AIRCRAFT ONLY \u2014 it cannot fire on ground units or structures at all. ';
   if(t.sal)sp+='Fires a '+t.sal+'-missile salvo, then reloads for '+t.rt+'s. ';
-  if(t.sec)sp+='Hull flamethrower burns infantry & wildlife within '+t.sec.rg+' tiles on its own target, at the same time as the main gun. ';
+  /* v88: reads the row rather than naming the Bull's hose, now that a second unit
+    carries a secondary and it is a machine gun. */
+ if(t.sec)sp+=(t.sec.w==='b'?'Door gun engages':'Hull flamethrower burns')+' infantry & wildlife within '+t.sec.rg+' tiles on its own target, at the same time as the main gun. ';
   if(t.spl)sp+='Splash damage (radius '+t.spl+'). ';
   if(t.entrench)sp+='Can entrench: locked '+Math.round(CONE_HALF*2*180/Math.PI)+'\u00b0 cone, '+ENTRENCH_RATE+'\u00d7 fire rate. ';
   if(t.heal)sp+='Passively heals allied units & structures within '+(t.healR||MEDIC_HEAL_RADIUS)+' tiles. '

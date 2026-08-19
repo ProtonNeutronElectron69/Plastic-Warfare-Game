@@ -22,10 +22,10 @@ section('T24 v44: medic station keeping');
    repin_v73.py for the instrumented counts and for why the four tables that
    passed unedited are blind to a unit-stat edit rather than evidence of one. */
 const BASE45_AI={
-  'backyard:dm:normal:green:3:441001': [2578825296, 926932209, 3530724790],
-  'kitchen:ctf:hard:tan:2:441002': [3596652281, 2769067784, 730280040],
-  'sandbox:koth:easy:gray:3:441003': [2342952441, 1270219095, 1717626750],
-  'livingroom:dm:hard:blue:3:441004': [1351035779, 1017323996, 3397718516],
+  'backyard:dm:normal:green:3:441001': [2614088221, 2947900068, 3465276804],
+  'kitchen:ctf:hard:tan:2:441002': [1186581798, 2421415688, 1821227739],
+  'sandbox:koth:easy:gray:3:441003': [4271432840, 4118033128, 386904890],
+  'livingroom:dm:hard:blue:3:441004': [1590178223, 1362946512, 2636681176],
 };
 // every key a v43 medic could carry into a snapshot (captured from the v43 build),
 // plus 'mesc': the v44.1 order tag, movement-only and deliberately unhashed. It is
@@ -36,7 +36,9 @@ const BASE45_AI={
    is about station keeping not growing state of its own, and calmT is not that. */
 const BASE44_MKEYS=['$flag','$node','$target','ai','anchor','calmT','cargo','cargoT','coneDir','cool','dest','dm','mesc',
  'entrenched','face','hold','hp','id','key','kind','kl','lastHit','lastProg','mhp','mining','oq','parkAtHQ',
- 'parked','path','patrol','pi','rot','sp','state','stuck','tface','upg','vr','wedge','wp','x','y'];
+ 'paintT','parked','path','patrol','pi','rot','sp','state','stuck','tface','upg','vr','wedge','wp','x','y'];
+// v88: every unit is SERIALIZED with paintT, not merely every unit that can carry an
+// ability - the Choktaw's mark is written onto its victims, and a medic is a victim.
 
 const DT44=1/30;
 const COV44=MEDIC_HEAL_RADIUS+0.5;                 // what updateUnit's heal test actually reaches

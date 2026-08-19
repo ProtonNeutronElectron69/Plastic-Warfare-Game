@@ -132,28 +132,36 @@ section('T51.C one ability table feeds the panel, the card and the vision gate')
      row to carry a `fac`, which is what makes the field's semantics testable rather
      than a special case for one army: two DIFFERENT armies each get exactly one row
      nobody else can see, off the same mechanism. */
-  ok('T51.C five call-downs, three of them shared', RADIO_ABILITIES.length === 5);
+  /* v88: SIX rows, two of them shared, and the table is now COMPLETE - every one
+     of the four armies carries exactly one call-down nobody else can see, off a
+     single field on a single table. That is what roadmap 2 was for, and it is the
+     strongest statement this section can make: four exclusives arrived across four
+     releases and not one of them needed a second table, a special case or a panel
+     that merely declines to offer something. */
+  ok('T51.C six call-downs, two of them shared', RADIO_ABILITIES.length === 6);
   ok('T51.C the modes are the ones the command path dispatches',
-    RADIO_ABILITIES.map(a => a.mode).join(',') === 'napalm,barrage,paradrop,lift,supply');
+    RADIO_ABILITIES.map(a => a.mode).join(',') === 'napalm,barrage,paradrop,lift,supply,smokescr');
   /* v87: THREE rows carry a `fac` now, and one of them - the Napalm Strike - got
      there by LEAVING the shared pool rather than by being added beside it. That is
      the strongest form of the claim this section makes: the field is not a way of
      bolting a bonus onto an army, it is the whole of what "whose call-down is
      this" means, and moving a row between the two states is one word.
      Gray is deliberately down to two until v88 gives it the Smokescreen. */
-  ok('T51.C an absent `fac` means everybody, and three rows claim an army each',
+  ok('T51.C an absent `fac` means everybody, and FOUR rows claim an army each',
     RADIO_ABILITIES.filter(a => !a.fac).length === 2 &&
-    RADIO_ABILITIES.filter(a => a.fac).length === 3 &&
+    RADIO_ABILITIES.filter(a => a.fac).length === 4 &&
     radioAbility('lift').fac === 'blue' && radioAbility('supply').fac === 'green' &&
-    radioAbility('napalm').fac === 'tan');
+    radioAbility('napalm').fac === 'tan' && radioAbility('smokescr').fac === 'gray');
+  ok('T51.C ...and every army is claimed exactly once, which is roadmap 2 finished',
+    ['green','tan','gray','blue'].every(f => RADIO_ABILITIES.filter(a => a.fac === f).length === 1));
   ok('T51.C the two shared rows are the barrage and the paradrop',
     RADIO_ABILITIES.filter(a => !a.fac).map(a => a.mode).sort().join() === 'barrage,paradrop');
-  ok('T51.C the filter hands three armies three, and Gray two until v88',
-    ['green', 'tan', 'blue'].every(f => radioListFor({ fac: f }).length === 3) &&
-    radioListFor({ fac: 'gray' }).length === 2);
+  ok('T51.C the filter hands every army three: the two shared plus its own',
+    ['green', 'tan', 'gray', 'blue'].every(f => radioListFor({ fac: f }).length === 3));
   ok('T51.C ...and no faction row leaks into another army that has one',
     !radioAllowed({ fac: 'green' }, 'lift') && !radioAllowed({ fac: 'blue' }, 'supply') &&
-    !radioAllowed({ fac: 'green' }, 'napalm') && !radioAllowed({ fac: 'tan' }, 'supply'));
+    !radioAllowed({ fac: 'green' }, 'napalm') && !radioAllowed({ fac: 'tan' }, 'supply') &&
+    !radioAllowed({ fac: 'green' }, 'smokescr') && !radioAllowed({ fac: 'gray' }, 'napalm'));
   /* v86: `hint` joined the row for the same reason `panel` is on it - the armed
      message was a chain of mode-name tests in the panel, i.e. a hand-kept copy of
      this table's membership. */

@@ -14,13 +14,13 @@
 section('T23 v43: cleanup invariants (behaviour must be identical to v42)');
 
 const BASE45_TRAILS={
-  'backyard:dm:777001': [3226726539, 822207351, 2557202735, 666289160, 2616322386, 4056604291, 2807265277, 1121485707, 2132990976, 4002436764],
-  'kitchen:dm:777001': [4135592763, 3577263521, 2482385187, 1593486062, 3599651334, 3263336653, 843945040, 372573694, 4169424292, 162137850],
-  'livingroom:dm:777001': [3962533127, 1605461289, 2009065673, 49400468, 3797386074, 1697940407, 2004045008, 525098406, 3421205843, 3891447888],
-  'sandbox:dm:777001': [826570579, 2178358331, 94959947, 3440534182, 828809228, 3279937941, 3272487094, 3993763989, 3239237489, 3580349222],
-  'backyard:koth:424243': [2238017518, 3161219333, 107457745, 2809795791, 1722793700, 2835075629, 864382191, 1068159227, 243931010, 632081843],
-  'kitchen:ctf:424243': [2984328661, 3884760173, 3659033323, 2535731511, 105221830, 185835177, 2886980219, 2014327192, 254182272, 1941676947],
-  'desk:surv:424243': [2460804623, 2192447933, 4170039532, 547590164, 926854181, 3052375370, 2081271673, 263618824, 2153817119, 4289622571, 2811673575, 3548346638, 1843289993, 2426474162, 1398430841, 1770204085, 3523239625, 4282614878, 1824991798, 1404750661, 950942284, 2992746805, 3074710010, 2777269868, 1032640759, 448261861],
+  'backyard:dm:777001': [878166853, 1753763297, 1431950781, 1239215714, 2958341408, 1187649125, 755748859, 1711895297, 1315105786, 2575747334],
+  'kitchen:dm:777001': [2087679718, 856119264, 3618923214, 2058115603, 1005216923, 3789097852, 538533377, 1743577667, 3098213793, 2608850475],
+  'livingroom:dm:777001': [609462547, 565513189, 2371656829, 225442840, 113201750, 3690818731, 258757364, 2545773778, 4220890855, 1944234028],
+  'sandbox:dm:777001': [768672292, 436319292, 1859334160, 194196945, 1625050143, 1226950034, 599475361, 2187372898, 1966448466, 2923646357],
+  'backyard:koth:424243': [1891708546, 3507717113, 3746632333, 1932110507, 2048766432, 3125811209, 1730908374, 2783344403, 3382877984, 2534791757],
+  'kitchen:ctf:424243': [3912544875, 2757394531, 729788237, 3753707145, 2415661468, 133454543, 4291730329, 2323576116, 2419835360, 3586781928],
+  'desk:surv:424243': [1661632587, 2469025864, 3969413972, 3507938602, 3776163843, 4248901972, 806260051, 2291621544, 3516144461, 2367615333, 615537907, 962116119, 2203739645, 3716485660, 445679745, 8947875, 206865495, 3436482747, 2891844524, 518388950, 4259347239, 3039917097, 1823278924, 1846682269, 4212367808, 1837706982],
 };
 const BASE43_LAYOUTS={"backyard:11":1255837022,"backyard:22":1262884325,"backyard:33":3816844854,"kitchen:11":2736043710,"kitchen:22":317751797,"kitchen:33":3447831333,"livingroom:11":859166094,"livingroom:22":3229224006,"livingroom:33":3594163030,"sandbox:11":3903799714,"sandbox:22":2051225923,"sandbox:33":1330770731,"desk:11":2502437368,"desk:22":864639349,"desk:33":1711599493};
 /* ---------- A: BEHAVIOUR EQUALITY vs v42 (the point of the release) ----------
@@ -265,7 +265,10 @@ ok('T23.B SURV_WAVE_N is derived from the wave table',SURV_WAVE_N===SURV_WAVES.l
    them - and the Bunker's Lockdown deliberately reuses upT above rather than
    adding a b.lockT, because that timer already ticks for every structure. */
 {
- const KNOWN_UNIT=["ai","aiCarry","aiDigT","aiPatrol","aiRole","aiRoleT","aiWave","aiWp","anchor","aslt","burnDps","burnT","calmT","cargo","cargoT","coneDir","cool","cool2","cs","dest","dm","entrenched","face","flag","flat","flash","flashAng","fleeT","fo","garrisoned","hT","helpT","hold","hp","id","key","kind","kl","lastHit","lastProg","lastShrap","mesc","mhp","onMe","mining","mvg","node","oq","p","parkAtHQ","parked","path","patrol","retalT","rot","salv","rip","savedDest","sel","shotT","smoke","sp","state","stuck","t","target","target2","targetB","tface","thr","tvis","upg","valve","vr","vrt","wedge","wf","wfT","wp","x","y"];
+ /* v88: paintT joins the list. It is the first entry here that is NOT gated on a
+    table flag - the Choktaw's mark is worn by units whose own row says nothing
+    about it, so makeUnit writes it onto every unit rather than onto a few. */
+ const KNOWN_UNIT=["ai","aiCarry","aiDigT","aiPatrol","aiRole","aiRoleT","aiWave","aiWp","anchor","aslt","burnDps","burnT","calmT","cargo","cargoT","coneDir","cool","cool2","cs","dest","dm","entrenched","face","flag","flat","flash","flashAng","fleeT","fo","garrisoned","hT","helpT","hold","hp","id","key","kind","kl","lastHit","lastProg","lastShrap","mesc","mhp","onMe","mining","mvg","node","oq","p","paintT","parkAtHQ","parked","path","patrol","retalT","rot","salv","rip","savedDest","sel","shotT","smoke","sp","state","stuck","t","target","target2","targetB","tface","thr","tvis","upg","valve","vr","vrt","wedge","wf","wfT","wp","x","y"];
  const KNOWN_BLD=["abilityCool","burnT","cool","garrison","helpT","hp","id","key","kind","lastHit","lastShrap","mhp","nsi","p","prodT","prog","queue","rally","sel","sz","t","target","techCur","techT","tface","tvis","tx","ty","upT","upg","x","y"];
  const ku=new Set(KNOWN_UNIT), kb=new Set(KNOWN_BLD), newU=new Set(), newB=new Set();
  for(const [m,md,opp,tk] of [['backyard','dm',3,600],['kitchen','ctf',3,400],['desk','surv',1,2000]]){

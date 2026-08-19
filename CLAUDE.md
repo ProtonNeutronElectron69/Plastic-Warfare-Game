@@ -31,7 +31,7 @@ both, and why you run it before every test pass.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 4,842 checks at v87.1.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 4,989 checks at v88.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -79,40 +79,52 @@ the real problem instead of recording it.
 
 ## What is in flight
 
-**Roadmap 2 (v85–v88): every army fields a full exclusive set** — two exclusive
-buildings, an exclusive unit from the Barracks, the Garage and the Helipad, and
-its own Radio Tower call-in.
+**Roadmap 2 (v85–v88) is COMPLETE.** Every army fields a full exclusive set —
+two exclusive buildings, an exclusive unit from the Barracks, the Garage and the
+Helipad, and its own Radio Tower call-in.
 
-- **v85 — Blue. LANDED.** Signal Runner, Forward Pad, Rapid Redeploy.
-- **v86 — Green. LANDED.** Command Truck, Observation Balloon, Command Post,
-  Supply Drop.
-- **v87 — Tan. LANDED.** Firebomb Heli, Foundry, Napalm became Tan-exclusive.
-- **v88 — Gray. NEXT, and the last.** Choktaw Heli, Heavy Barricade, Smokescreen.
+- **v85 — Blue.** Signal Runner, Forward Pad, Rapid Redeploy.
+- **v86 — Green.** Command Truck, Observation Balloon, Command Post, Supply Drop.
+- **v87 — Tan.** Firebomb Heli, Foundry, Napalm became Tan-exclusive.
+- **v88 — Gray.** Choktaw Heli, Heavy Barricade, Smokescreen.
 
 **v87.1 landed between v87 and v88** and is not part of the roadmap: three
 interface repairs (team-coloured drag box, `UNIT_TOGGLES` group buttons, the sell
-teardown and its plastic heap). None of them moved the simulation, which is why
-Gray is still v88.
+teardown and its plastic heap). None of them moved the simulation.
 
-**The full specification for v88 is written down and settled**, including
-every clarification the owner gave. It is in `harness/README.md` under *Roadmap
-2: the remaining three armies*. **Build it as written** — it is decided, not
-proposed. Do not re-ask the questions it already answers.
+`tail_v88.js` T62.J states the completion claim in one section, derived off `FAC`
+rather than transcribed — so an army that grew a third exclusive structure, or
+lost one, fires there.
 
-Two things to know before starting one of them:
+## The one open question v88 left behind
 
-- **One faction per version.** Self-contained, so trail divergence stays
-  attributable to a single release.
-- **`u.abCool` EXISTS now**, built at v87 for Tan's Napalm Blast. The duration
-  lives on the table row as `t.abCd`; `makeUnit` writes the clock only onto rows
-  that declare one, `updateUnit` ticks it, and it is hashed, serialized and
-  zeroed by testing mode. Gray's Paint needs `abCd:20` on its row and no new
-  machinery at all.
-- **The build-menu alphabet is now exactly full.** `MENU_KEYS` holds fourteen
-  keys and the widest menu is fourteen tiles. Gray reaches fourteen too when it
-  gets its second structure, so nothing more is needed — but a new
-  structure on top of roadmap 2 would need a fifteenth key, and there is no
-  unclaimed letter left. See the v86 note in `harness/README.md`.
+**The Machine Gunner is back to 1 supply, and is again the best per-supply buy in
+the game.** This is not a bug and it was not avoidable at v88. The Choktaw is the
+roster's 25th trainable unit; 25 does not divide by four, so `SUP_U`'s quartile
+cuts slid and the three units sitting on the old boundaries — Gunner, Medic,
+Sarge — each dropped one rank. Every total cost from 10 to 700 was measured
+before the row went in: the only band that moves nobody is under the Gunner's own
+112, which is not a price a gunship can carry.
+
+The consequence is that the roster-wide per-supply spread widened 5.84× → 9.51×,
+which is partly the cliff the v69 supply ladder was built to remove. `T48.B` and
+`T50.C` record it two-sided, so a further widening fires and so does a fix. **It
+is a standing v89 question** — the levers are listed in the v88 note in
+`harness/README.md`. Do not "fix" it by loosening those pins.
+
+Two things to know before the next release:
+
+- **One faction per version** was the roadmap's rule, and it is why trail
+  divergence stayed attributable to a single release each time.
+- **`u.abCool` has two users now** — v87's Napalm Blast and v88's Paint. The
+  duration lives on the table row as `t.abCd`; `makeUnit` writes the clock only
+  onto rows that declare one, `updateUnit` ticks it, and it is hashed, serialized
+  and zeroed by testing mode. A third ability needs a row and nothing else.
+- **The build menu has one key spare.** `MENU_KEYS` holds fourteen and every
+  army's Construct menu is now thirteen tiles — all four hold exactly two
+  exclusive structures, so they are all the same width. A fifteenth tile would
+  need a fifteenth letter and there is no unclaimed one left. See the v86 note in
+  `harness/README.md`.
 
 ## The patterns worth copying
 
@@ -143,12 +155,25 @@ When adding a faction exclusive, the v85 work is the closest model:
   The test that catches it drives `G.rngS` across a sell, not the source text.
 - **A faction-only call-in is a `fac` field on the shared `RADIO_ABILITIES`
   table**, refused at the `execCmd` door — not a second table, and never relying
-  on the panel simply not offering it. Three armies carry one each now, and at
+  on the panel simply not offering it. All four armies carry one each now, and at
   v87 the Napalm Strike moved INTO that state rather than being added beside it,
   which is the strongest form of the claim. **The bot is the surface that hides:**
   `aiTick` calls `radioNapalm` directly and never through `execCmd`, so it had to
   be taught the same gate separately. Grep for the ability's own function name,
   not just for the mode string.
+- **An aura is read off its source; a MARK is written onto its victim.** Every
+  aura before v88 asks "is the affected unit in reach of a source", so it ends
+  when the source dies. v88's Paint does not: the aircraft can be shot down and
+  the tank stays lit. That makes the mark sim state — hashed, serialized, and
+  defaulted for EVERY unit rather than for the rows that declare an ability,
+  because it is worn by units whose own row says nothing about it.
+- **When a table flag would answer, never key a test on a KEY.** The Heavy
+  Barricade is the second `barr` row, and fourteen tests that said
+  `key==='barricade'` meant "is a wall". Three of them were load-bearing: the
+  RESCALE skip (a miss would have cubed the wall's HP), `kill()`'s lightweight
+  teardown, and `checkElim` — an army left holding only heavy walls would never
+  have been eliminated. Before adding a second row of an existing kind, grep for
+  the first one's key.
 - **"Cannot be targeted" needs an acquisition gate AND a damage rule.** v86's
   balloon has both, because a zero multiplier is not a refusal to aim: without
   `ballOk` every rifleman on the map would stand under one forever dealing

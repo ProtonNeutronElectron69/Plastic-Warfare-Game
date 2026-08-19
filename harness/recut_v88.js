@@ -1,21 +1,22 @@
-/* recut_v87.js - regenerate the hash-trail baselines that v87 moved.
+/* recut_v88.js - regenerate the hash-trail baselines that v88 moved.
  *
- *   cat shim_head.js game.js recut_v87.js > rc87.js && node rc87.js
+ *   cat shim_head.js game.js recut_v88.js > rc88.js && node rc88.js
  *
- * v87 is Tan's second pass: a Firebomb Heli out of the Helipad, a Foundry as the
- * second structure, and the Napalm Strike leaving the shared pool to become Tan's
- * alone. It also builds the first UNIT ability cooldown in the game (u.abCool),
- * which widens hashState by one field on every unit that declares one.
+ * v88 is GRAY's pass and the last of roadmap 2: a Choktaw Heli out of the Helipad,
+ * a Heavy Barricade as the second structure, and a Smokescreen call-down.
  *
- * FOUR doors move the trails this time, and the fourth is the interesting one:
- *   - a 24th entry in U reshapes the research plan and the production draw;
- *   - a 12th entry in B does the same for the build wish list;
- *   - hashState gained u.abCool, so every hash after a Firebomb exists differs;
- *   - and the NAPALM CHANGED HANDS. Three of the four armies' bots now shell a
- *     soft clump they used to burn, which changes what their target survives and
- *     therefore what every unit after it does. That one moves matches with no Tan
- *     player in them at all, and it is the reason a trail moving here proves even
- *     less than usual.
+ * FIVE doors move the trails this time, and the fifth reaches every match in the
+ * suite whether or not a Gray player is in it:
+ *   - a 25th entry in U reshapes the research plan and the production draw;
+ *   - a 13th entry in B does the same for the build wish list;
+ *   - hashState gained u.paintT on EVERY unit and three fields on every mine;
+ *   - the bots gained two more ability paths to spend a tick on;
+ *   - and THE SUPPLY RANKS MOVED. 25 trainable units slides the quartile cuts, so
+ *     the Machine Gunner, the Medic and Sarge each cost one supply less than they
+ *     did. Every bot's army cap is a function of supply, so every bot in every
+ *     match now fields a slightly different army from tick one. That is why a
+ *     trail moving here proves even less than usual, and why the layout gate below
+ *     is the check that actually matters.
  *
  * What must NOT move is the map. Nothing in this release touches a prop, a node,
  * a nest or anything that fills M.pass.
@@ -108,7 +109,7 @@ if (moved.length) {
   console.error('LAYOUT GATE FAILED - ' + moved.length + ' of 42 pins moved. Nothing cut.');
   for (const l of moved) console.error('  ' + l);
   console.error('A moved layout hash means this release touched map generation, which is');
-  console.error('not what v87 claims to do. Fix that before repinning any trail.');
+  console.error('not what v88 claims to do. Fix that before repinning any trail.');
   process.exit(1);
 }
 console.error('layout gate: all 42 pins hold. Cutting trails.\n');

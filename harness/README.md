@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v87.1)
+# Plastic Warfare headless test harness (updated at v88)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -358,10 +358,12 @@ Two are not:
 lesson one layer down: the cfgs are not interchangeable and neither are the
 capture preambles. A recut script must mirror each fixture verbatim.
 
-## Roadmap 2: the remaining three armies (DECIDED - build as written)
+## Roadmap 2: all four armies (COMPLETE at v88)
 
-Blue landed at v85. The three below are specified in full, including every
-clarification the owner gave, so they can be built without re-asking.
+Blue landed at v85, Green at v86, Tan at v87 and Gray at v88. The specification
+below is kept VERBATIM as it was written and agreed, so what each release was
+told to build can still be read against what it cost - the per-release notes
+further down are the other half of that record.
 
 ### v86 - GREEN ARMY
 
@@ -405,7 +407,7 @@ clarification the owner gave, so they can be built without re-asking.
     Tan gets Barrage + Paradrop + Napalm. The `fac` field v85 added to
     RADIO_ABILITIES is the mechanism - see below.
 
-### v88 - GRAY ARMY
+### v88 - GRAY ARMY. LANDED, and roadmap 2 is finished. See the v88 notes below.
 
   CHOKTAW HELI (Helipad). Carries the Huey machine gun (row `b`) AND the Apache
     rocket pods (row `r`) - use the Bull's `sec` secondary-weapon machinery. HP
@@ -426,6 +428,187 @@ clarification the owner gave, so they can be built without re-asking.
     structures inside, 10 seconds. Deliberately stronger than the Mortar's Smoke
     Rounds (SMOKE_RED 0.2, radius 2, 5s, units only) - that is intended, not an
     oversight to be balanced away.
+
+## v88 note: what v88 actually added, and the derivation that could NOT be held
+
+Gray's set, and with it roadmap 2 is finished: every army now fields an exclusive
+out of the Barracks, the Garage and the Helipad, holds two exclusive structures,
+and carries one Radio Tower call-down nobody else can see. T62.J states that as
+one section, derived off FAC rather than transcribed.
+
+  CHOKTAW HELI (Helipad, Gray). 265/58 pre-scale -> 203 HP effective, above the
+    Apache's 187 by specification, and 244 once Gray's x1.2 hull is on it. It is
+    the FIRST unit in the game carrying two ordinary guns: rocket pods (row 'r',
+    the Apache's) as the main weapon and a door gun (row 'b') as a `sec`.
+    The split needed NO change to secOwns. The Bull's cannon already hands
+    infantry and wildlife to its hull flamer, so the Choktaw's rockets hand the
+    same two classes to its door gun and keep armour, aircraft and structures.
+    What DID need changing is fireSec, which had three of the Bull's facts baked
+    into it - spawnFlame, splash on row 'f', and the hose's sound. It reads sc.w
+    now, the way fireAt reads u.t.w, and the Bull's path is byte-identical.
+    vi 9, one above every other helicopter, and load-bearing rather than
+    decorative: both its abilities are about what it can SEE.
+  FORWARD OBSERVER. +2 tiles to friendly INDIRECT fire against anything the
+    Choktaw can see. This is the first aura in the file that asks about the
+    TARGET rather than about the unit receiving it, and that decides its whole
+    shape: rgOf takes an optional second argument, and a call with no target -
+    an acquisition sweep, the entrenched cone, the ring the renderer draws - gets
+    the unextended range, which is correct rather than an omission because
+    nothing has been spotted yet.
+    "Indirect" is `t.mrg`, the minimum-range flag the Mortar Squad and the Rocket
+    Artillery already carry. That is the file's own word for an arcing weapon, so
+    a third one added later is covered without being remembered into a list.
+  PAINT. A 2x2 box, +25% damage from ALL sources for 10s, 20s cooldown on the
+    v87 u.abCool clock - which is the proof v87 built machinery and not one
+    helicopter's special case: the Choktaw's row declares `abCd:PAINT_CD` and
+    nothing else new was needed. "From ALL sources" is one line, and it has to be
+    the line in applyDmg, because that is the single defender-side door every
+    shell, burn tick, mine and crush already routes through.
+    Written onto the VICTIM as a clock rather than read off the Choktaw the way
+    Forward Observer is, and the difference is deliberate: an aura ends when its
+    source dies and a mark does not. Repainting RESTARTS the clock rather than
+    stacking, which is why Paint has no group button - a second Choktaw over one
+    box spends a cooldown for nothing.
+  HEAVY BARRICADE (second structure, Gray). 150 HP, three times the wall at
+    three times the plastic, so HP per plastic is flat and what the extra 40
+    buys is the aura and the mine. NO activated ability, by specification.
+    The aura is -15% damage taken on the ring of tiles around it, STACKING to a
+    ceiling of 60%, and covering structures and other walls as well as units. It
+    is the first defender-side reduction in the file that COUNTS its sources
+    instead of taking the first and breaking, and the cap is on the TOTAL rather
+    than on the number of walls so it cannot be walked around by mixing wall
+    types. It does not shelter itself: "the tiles immediately surrounding it" is
+    the owner's wording and it excludes the tile the wall stands on.
+    On completion a one-time 10% roll buries a mine 3 tiles toward the nearest
+    enemy HQ. It joins G.map.mines with two extra fields - `gray` and `pi` - so
+    the existing sweep, hash and serializer carry it; the sweep consults mineArms
+    and lets the owner's army walk over it, and the renderer draws it for that
+    army alone. The map's own scattered mines carry neither field and behave
+    exactly as they always did.
+  SMOKESCREEN (call-in, Gray). 7x7, -40% to friendly units AND structures, 10s.
+    A `fac` row on the shared RADIO_ABILITIES table refused at the execCmd door.
+    It sits OUTSIDE the `tgt.kind==='unit'` block that holds the mortar's cloud,
+    because covering structures is the single largest difference between the two
+    and is the reason it could not reuse that loop with bigger numbers.
+
+### THE DERIVATION THAT MOVED, and why no price could have held it
+
+Rule 4 says a constant derived as a min or a max over the whole table is a trap
+for the next row. Both traps were measured BEFORE the row went in, as the rule
+requires. MEDIC_HEAL_RATE held - the Choktaw's dm/rt is 12.3 against the Grunt's
+3.03, nowhere near the floor. **SUP_U did not hold, and could not have.**
+
+The Choktaw is the roster's 25th trainable unit. 25 does not divide by four, so
+the quartile cuts slide from after the 6th/12th/18th to after the 7th/13th/19th,
+and the three units sitting exactly ON the old cuts each drop one rank:
+
+    gunner  2 -> 1        medic  3 -> 2        sarge  4 -> 3
+
+All three fell by one, none rose, and nothing else moved. The sweep that
+established this ran every total cost from 10 to 700 against the v87 build and
+counted the movers:
+
+    total <= 111 ...... 0 move   (cheaper than the Machine Gunner)
+    112 .. ~299 ....... 1 moves  (gunner)
+    ~300 .. ~382 ...... 2 move   (+ medic)
+    >= ~383 ........... 3 move   (+ sarge)
+
+The only clean band is under the Machine Gunner's 112, which is not a price a
+gunship can be given. The alternative was to re-price the Machine Gunner - an
+edit to an existing unit this release was not asked to make, cascading through
+T50.C, T26.H and the whole v73/v78 record - so the movement is RECORDED rather
+than engineered around. tail_v88 T62.A reproduces the sweep rather than quoting
+it, so the claim cannot rot.
+
+### THE CONSEQUENCE, stated plainly because it is the largest thing v88 did
+
+The Machine Gunner at 1 supply is once again the best per-supply buy in the game
+by 63% over the Bazooka, and the roster-wide per-supply spread widens 5.84x ->
+9.51x. That is precisely the cliff the v69 ladder was built to remove, and it has
+partially reopened - not because the ladder stopped working but because the
+roster grew past a multiple of four.
+
+T48.B and T50.C are rewritten around it rather than repinned quietly. Both stay
+two-sided, so a further widening fires and so does a fix. **This is a standing
+v89 question**, in the same shape as v73's `air:1`: a named, measured, recorded
+consequence that a later release has to decide about, not a defect in v88.
+
+The obvious levers, none of them taken here because none is v88's to take:
+  - price the Machine Gunner over the new tier-1 boundary (dearer than the
+    Flamethrower's 120), which puts him back on 2 and costs nothing else;
+  - add a 26th, 27th and 28th trainable unit, which restores a multiple of four;
+  - or make SUP_U cut on absolute cost bands rather than on roster rank, which
+    is the v69 -> v70 change in reverse and would need its own release.
+
+### The fourteen tests that said "the barricade" and meant "a wall"
+
+The Heavy Barricade is a `barr` row, and that one flag hands it the ordinary
+wall's whole life: drag laying, the 1x1 footprint, the passability block, the
+lightweight teardown in kill(), and its exclusion from veterancy, from the
+under-attack alert, from the base-value sum and from elimination.
+
+The cost of that is that FOURTEEN tests keyed on `key==='barricade'` had to move
+to `t.barr`. Every one of them meant "is a wall" and with one wall in the game
+those were the same question. Three of the fourteen were load-bearing:
+
+  - the RESCALE pass skipped 'barricade' because BARR_HP is already rescaled.
+    HBARR_HP derives from BARR_HP, so a missed skip would have CUBED the wall.
+  - kill()'s lightweight teardown. A heavy wall falling through to the full
+    building blast would have spawned a garrison pop and an elimination check.
+  - checkElim. An army left holding only heavy walls would never have been
+    eliminated, and a deathmatch would never have ended.
+
+Two source-text tests broke on the rename and were RE-AIMED, not relaxed:
+tail_v40's T20.5 slices kill() between the nest branch and the wall branch, and
+its indexOf now searches FROM the nest marker because `!e.t.barr` also appears on
+the veterancy line above it. tail_v49's T30.C paint sweep skipped one wall by key
+and handed drawBarricade a stub with no `t`; it now sweeps both walls off the
+flag and passes a real row, which is also how the heavy wall's own art got
+covered.
+
+### Two traps this release walked into and out of
+
+  - **A COMMENT tripped the sim-purity lint.** T23.H matches the SOURCE TEXT of
+    the functions on its list for `Math.random`, and updateBld is on that list.
+    The mine roll uses srand() correctly, but the comment explaining WHY named
+    `Math.random` in prose and the lint cannot tell code from commentary. Same
+    shape as v87.1's nocmt61 helper, in the opposite direction. Reworded.
+  - **The new unit's name collided with a retired one.** The first cut called it
+    the "Choktaw" Gunship, and T52.F4 refuses any manual that names a retired
+    unit - one of which is Blue's old **Gunship**. The check is a plain substring
+    and it was right to fire: a reader would have had the same collision. Renamed
+    to **Choktaw Heli**, which is what the roadmap specified in the first place
+    and matches Tan's Firebomb Heli. T52.F4 gained an arm asserting no LIVE unit
+    name contains a retired one.
+
+### Also moved, measured rather than assumed
+
+  - **The competitive pool: medium 8 -> 9**, and the ninth member IS the Choktaw.
+    Every other class unmoved, and no existing unit entered or left any pool.
+    A release that adds an armed unit and widens exactly the column that unit
+    belongs in is the release landing, so it is repinned at the measured figure.
+    AIR IS STILL 1 - the Choktaw's rockets read 1.30 into air but its DPS per
+    plastic sits under the 55% cut, so the standing v74 question is untouched.
+  - **RES_REF 0.2317 -> 0.2392** (+3.2%), the harvester's plastic:electricity
+    preference. The Heavy Barricade is excluded from it, on the flag, for the
+    same reason the ordinary wall always was.
+  - **AI_SUP_UNIT 2.444 -> 2.421**, the bot's average combat-unit supply cost.
+  - **USCALE gained four rows.** The Choktaw, the Firebomb, the Balloon and the
+    Command Truck were all falling through to 1.0 - a pre-existing v86/v87 gap
+    found while the Choktaw's own art was being drawn, and fixed for all four.
+
+### Verification actually run at v88
+`./build.sh`; `node --check`; `./triage.sh` before and after - **all 42 layout
+pins hold**, which is the gate that had to pass before a single trail was recut;
+`recut_v88.js` + `repin_v88.py` regenerated the five baseline tables behind that
+gate (the v87 pair was rolled forward and deleted); `QUIET=1 ./seg.sh all` =
+2349 / 500 / 48 / 233 / 1859 = **4,989 checks, 0 failures** (tail_v88 contributes
+127); `python3 verify_v58.py` 32 passed. Driven in real Chromium at 1400x900:
+Gray's Helipad offers the Choktaw, its panel shows the Paint button and its
+cooldown readout, a paint call marked 4 of 4 enemies in the box, the Radio Tower
+panel lists Barrage / Paradrop / Smokescreen, a Heavy Barricade line and a buried
+mine both render, and `REN_ERRS` stayed empty throughout. The real-canvas render
+tails were NOT run.
 
 ## v87.1 note: three interface repairs, and the one that could have desynced a match
 
@@ -688,7 +871,9 @@ Segment 3 carries tail_v87 alongside tail_v79 through tail_v86. No further split
 needed. The five segments at v87 run 2341 / 495 / 48 / 235 / 1662 = 4781 checks,
 0 failures, plus verify_v58.py's 32 and the six real-canvas tails
 (60 / 25 / 60 / 164 / 9 / 4). v87.1 added tail_v87_1 to the same segment: 2343 /
-495 / 48 / 235 / 1721 = 4842.
+495 / 48 / 235 / 1721 = 4842. v88 added tail_v88 to it as well: 2349 / 500 / 48 /
+233 / 1859 = 4989. Segment 3 now carries eleven tails and is still not the long
+pole - 2b's single tail_v59 remains that, for the reason the seg.sh header gives.
 
 ## v86 note: what v86 actually added, and the four seams worth knowing
 

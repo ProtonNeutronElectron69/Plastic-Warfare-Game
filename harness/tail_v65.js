@@ -144,8 +144,14 @@ section('T44.B the +15% electricity pass');
     Balloon both draw battery, and so does the Command Post; all three are declared
     on the lines below at their pre-pass baselines, so the count is guarding the
     same claim it always did. */
- ok('T44.B fifteen units and twelve buildings, no more and no fewer',
-    Object.keys(U).filter(k=>U[k].ce>0).length===15&&Object.keys(B).filter(k=>B[k].ce>0).length===12);
+ /* v88: sixteen and twelve. The Choktaw draws battery and is declared below at its
+    pre-pass baseline; the Heavy Barricade draws NONE, which is the ordinary wall's
+    rule inherited along with everything else `barr` carries, so the building count
+    is unmoved even though a building was added. */
+ ok('T44.B sixteen units and twelve buildings, no more and no fewer',
+    Object.keys(U).filter(k=>U[k].ce>0).length===16&&Object.keys(B).filter(k=>B[k].ce>0).length===12);
+ ok('T44.B the v88 unit is the new one, and the pass reached it; the v88 WALL draws none',
+    Math.abs(U.choktaw.ce-120*1.15)<1e-3&&B.hbarricade.ce===0);
  ok('T44.B the Forward Pad is the tenth, and the pass reached it',
     Math.abs(B.fwdpad.ce-70*1.15)<1e-3&&U.runner.ce===0);
  ok('T44.B the three v86 rows are the new ones, and the pass reached all three',
@@ -179,8 +185,12 @@ section('T44.B the +15% electricity pass');
     the Sniper's to 170, and those two totals still put them where v65 said. The
     ladder itself is T35.A's to own; this only checks that the v65 pass still
     feeds it the same two numbers. */
- ok('T44.B the v65 pass still puts the Medic on 173 total, which v70 prices at 3 supply',
-    U.medic.cp+U.medic.ce===173&&supOf('medic')===3);
+ /* v88: the TOTAL is what v65 legislated and it is unmoved; the RANK it buys slid
+    from 3 to 2 when the roster reached 25 trainable units, which is arithmetic
+    about the roster and not about this pass. Split in two so the two claims stay
+    distinguishable - the point of this line was always the 173. */
+ ok('T44.B the v65 pass still puts the Medic on 173 total',U.medic.cp+U.medic.ce===173);
+ ok('T44.B ...which v88 prices at 2 supply, one rank cheaper than v70 did',supOf('medic')===2);
  ok('T44.B ...and the Sniper on 170 total, three plastic below it and a whole rank cheaper',
     U.sniper.cp+U.sniper.ce===170&&supOf('sniper')===2);
  ok('T44.B the ceiling moved at v69 and is no longer this tail\'s to pin',SUP_CAP>=80);
@@ -233,7 +243,13 @@ section('T44.C the Grunt at 36');
  const V69_CP={grunt:36,grenadier:55,gunner:112,bazooka:90,truck:20,medic:150,jeep:130,
   aatruck:180,tank:220,heli:200,sarge:260,mortar:150,flamer:120,bulltank:391,sniper:170,
   arty:320,bike:90,apache:300,apc:260,chinook:300,para:0,runner:62, // v85: +Signal Runner
-  cmdtruck:145,balloon:250,firebomb:280}; // v86: +Green's two, both priced inside the supply band that leaves every existing rank where it was (see T35.A). v87: +Tan's one, on the same rule
+  cmdtruck:145,balloon:250,firebomb:280,
+  /* v88: Gray's Choktaw at 330 plastic. It is the FIRST addition since v85 whose
+     price could NOT be chosen inside a band that leaves every existing rank where
+     it was, because at 25 trainable units no such band exists above the Machine
+     Gunner - measured across every total from 10 to 700 before the row went in.
+     Three units drop one rank each and T35.A names them. */
+  choktaw:330};
  const moved=Object.keys(U).filter(k=>U[k].cp!==V69_CP[k]);
  ok('T44.C no plastic cost has drifted from the v69 record'+(moved.length?' ('+moved.join(', ')+')':''),
     moved.length===0&&Object.keys(V69_CP).length===Object.keys(U).length);

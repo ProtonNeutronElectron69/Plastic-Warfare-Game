@@ -21,7 +21,7 @@ function cfg45(map,mode,seed,opp){return{map,mode,diff:'normal',fac:'tan',opp:(o
 /* The Desk survival trail with the Gunner at its pre-v45 price of 90, recut from
    the v48 build (the AI overhaul moves every trail, so the original pre-v45
    capture can no longer reproduce under any price). Kept here, only for G. */
-const BASE43_DESK=[2460804623, 2192447933, 4170039532, 547590164, 926854181, 3052375370, 3640192946, 2595061420, 2919312107, 4216672807, 2187184140, 4077207961, 2488162271, 156082381, 1996277373, 1883838545, 366155411, 888084415, 2822967564, 737430247, 187688823, 659311970, 1152025189, 1091752694, 2029365163, 896611496];
+const BASE43_DESK=[1661632587, 2469025864, 3969413972, 3507938602, 3776163843, 4248901972, 806260051, 2291621544, 3516144461, 2367615333, 615537907, 1551722208, 1514339188, 2206591020, 2172665592, 4001097920, 1239378949, 2979865703, 143242084, 4204335019, 2156482639, 3202294194, 2174051993, 3675629927, 2234021387, 1858436691];
 /* ---------- A: table shape ---------- */
 {
  const WCS=['b','g','r','s','m','f','d','a','q','x'], COLS=ARMOR_ORDER.concat(['bug']);
@@ -76,7 +76,12 @@ const BASE43_DESK=[2460804623, 2192447933, 4170039532, 547590164, 926854181, 305
    /* v87: the Firebomb Heli is a helicopter and classes as one. Nothing about it
       is special-cased here - what makes it Tan's is the weapon row and the two
       abilities, not the armour it wears. */
-   firebomb:'air'};
+   firebomb:'air',
+   /* v88: the Choktaw is a helicopter and classes as one, exactly as the Firebomb
+      does. What makes it Gray's is the two weapons and the two abilities, not the
+      armour it wears - and its dual armament changes nothing here either, because
+      armorOf answers for what a unit IS, never for what it shoots. */
+   choktaw:'air'};
  let bad=[];
  for(const k in U){const got=armorOf({kind:'unit',t:U[k]});if(got!==WANT[k])bad.push(k+'='+got);}
  ok('T26.B every unit in the roster lands in its intended armor class'+(bad.length?' ('+bad.join(', ')+')':''),
@@ -123,8 +128,18 @@ const BASE43_DESK=[2460804623, 2192447933, 4170039532, 547590164, 926854181, 305
   // small-arms row - identical to the Grunt's. That is the point of not giving a
   // sidearm a tenth weapon row: it changes what he does, not what small arms do.
   runner:[1.00,1.00,0.85,0.60,1.00,0.70],
-  aatruck:[0.00,0.00,0.00,0.00,1.60,0.00]
+  aatruck:[0.00,0.00,0.00,0.00,1.60,0.00],
+  /* v88: the Choktaw's MAIN weapon is row 'r' - the Apache's rocket row - so its
+     line here is the Apache's line, character for character. That is deliberate
+     and is asserted as an identity just below: a unit carrying two weapons did not
+     need a new weapon class, because the grid answers for the ROW and the door gun
+     is scored separately through t.sec (which fires row 'b' with wc 'b'). */
+  choktaw:[0.70,1.10,1.35,1.50,1.30,0.90]
  };
+ ok('T26.C the Choktaw\'s rocket row IS the Apache\'s, not a new one',
+    ARMOR_ORDER.every(ar=>dmgMulFor('choktaw',U.choktaw.w,ar)===dmgMulFor('apache',U.apache.w,ar)));
+ ok('T26.C ...and its door gun scores on the small-arms row, through t.sec',
+    U.choktaw.sec.wc==='b'&&dmgMulFor(null,'b','inf')===dmgMulFor(null,U.grunt.w,'inf'));
  let bad=[];
  for(const k in GRID)ARMOR_ORDER.forEach((ar,i)=>{
   const got=dmgMulFor(k,U[k].w,ar);
@@ -198,7 +213,18 @@ const BASE43_DESK=[2460804623, 2192447933, 4170039532, 547590164, 926854181, 305
     damage per plastic is dm/(rt*cp) and 0.5*112 === 0.4*140, so every column
     he appears in sees exactly the unit he was. A narrowing still fires - light
     and medium are recorded DOWN, and the check stays two-sided. */
- const WANT_POOL={inf:5,light:8,medium:8,heavy:2,air:1,bldg:8};
+/* v88 MOVED EXACTLY ONE OF THESE, and it moved the safe way. Measured by running
+    the same scan with and without the choktaw row on the v88 build:
+      medium 8 -> 9, and the ninth member IS the Choktaw.
+      inf 5, light 8, heavy 2, air 1, bldg 8 - all unmoved, and no existing unit
+      entered or left any pool.
+    A release that adds an armed unit and widens exactly the one column that unit
+    belongs in is the release landing, the same way v69's and v73's widenings were,
+    so it is recorded at the measured figure and any future NARROWING still fires.
+    AIR IS STILL 1, and the Choktaw does NOT answer it: its rockets are 1.30 into
+    air, which reads well, but unitDPS/cp puts it under the 55% cut against the AA
+    Missile Truck. The standing v74 question is untouched by this release. */
+ const WANT_POOL={inf:5,light:8,medium:9,heavy:2,air:1,bldg:8};
  let uncounterable=[],poolDrift=[];
  for(const ar of ARMOR_ORDER){
   const scored=armed.map(k=>({k,v:eff(k,ar)})).sort((a,b)=>b.v-a.v);

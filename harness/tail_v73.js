@@ -287,10 +287,18 @@ section('T50.C the Machine Gunner loses 15% DPS');
      rt and cp both took -20%, so dm/(rt*cp) is unchanged and every efficiency
      figure below holds by arithmetic. Asserted as the product, not as two
      literals, so a future release that moves one without the other fires. */
+  /* v88: his SUPPLY RANK left this line and got one of its own. Nothing about the
+     Machine Gunner changed at v88 - not his hull, his price, his range, his speed
+     or his reload - but the roster reached 25 trainable units and the quartile cut
+     slid past him, so supOf('gunner') is 1. Keeping the rank inside this
+     conjunction would have made a v88 arithmetic fact look like a v78 unit edit,
+     which is the opposite of what this line exists to say. */
   ok('T50.C the hull and the price moved with it, and nothing else did',
      U.gunner.hp === Math.round(100 * HP_SCALE) && U.gunner.cp === 112 && U.gunner.ce === 0 &&
      U.gunner.rg === 4 && U.gunner.sp === 1.9 && U.gunner.entrench === 1 &&
-     ENTRENCH_RATE === 1.5 && supOf('gunner') === 2);
+     ENTRENCH_RATE === 1.5);
+  ok('T50.C ...and his supply rank is 1 since v88, by roster arithmetic and not by any edit to him',
+     supOf('gunner') === 1 && Object.keys(U).filter(k => !U[k].noTrain).length === 25);
   ok('T50.C ...and reload x price is unchanged, which is why his efficiency is',
      Math.abs(U.gunner.rt * U.gunner.cp - .4 * 140) < 1e-12);
 
@@ -348,14 +356,24 @@ section('T50.C the Machine Gunner loses 15% DPS');
   const effDps = k => unitDPS(U[k]) * dmgMulFor(k, U[k].w, 'medium');
   const rank = armed.map(k => ({ k, v: effDps(k) / supOf(k) })).filter(o => o.v > 0)
                     .sort((a, b) => b.v - a.v);
-  ok(`T50.C per-supply he sits third now, behind the Apache (${rank.slice(0, 3).map(o => o.k).join(' > ')})`,
-     rank[0].k === 'bazooka' && rank[1].k === 'apache' && rank[2].k === 'gunner');
+  /* v73 put him third here by charging him 2 supply. v88's 25th unit charges him
+     1 again, so he is back at the top of this table - and this is the same fact
+     T48.B records at length, seen from the release that pushed him down. Pinned in
+     the same two-sided shape: the order is transcribed, so any further movement in
+     either direction fires. */
+  ok(`T50.C per-supply he leads again since v88 (${rank.slice(0, 4).map(o => o.k).join(' > ')})`,
+     rank[0].k === 'gunner' && rank[1].k === 'bazooka' && rank[2].k === 'apache' && rank[3].k === 'choktaw');
 
   /* 3. The roster-wide per-supply spread is UNCHANGED, because he sits at
         neither end of it. This is the figure T48.B pins, and it must not move. */
   const v = armed.map(k => effDps(k) / supOf(k)).filter(x => x > 0);
-  ok(`T50.C the roster per-supply spread is untouched at the v69 figure (${(Math.max(...v) / Math.min(...v)).toFixed(2)}x)`,
-     Math.abs(Math.max(...v) / Math.min(...v) - 5.84) < 0.05);
+  /* v73 left the spread untouched because the Gunner sat at neither end of it.
+     v88 puts him at the TOP end, so this figure moved with him: 5.84x -> 6.47x on
+     the live reload (T48.B measures 9.51x on the borrowed v72 reload, which is the
+     same movement seen through the faster gun this section historically used).
+     Both are recorded, and both are two-sided. */
+  ok(`T50.C the roster per-supply spread moved with him at v88 (${(Math.max(...v) / Math.min(...v)).toFixed(2)}x, was 5.84x)`,
+     Math.abs(Math.max(...v) / Math.min(...v) - 6.47) < 0.05);
 
   /* 4. MEDIC_HEAL_RATE keys off the roster's LOWEST dm/rt. That is the Grunt and
         it is nowhere near him, so the heal rate cannot have followed him down. */

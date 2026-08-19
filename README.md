@@ -23,11 +23,12 @@ you use during the battle.
 |---|---|---|---|---|
 | 🟢 **Green Army** | Balanced — everything costs 8% less | Sarge, Mortar Squad, Command Truck, Observation Balloon | Radar Tent, Command Post | Supply Drop |
 | 🟤 **Tan Army** | +15% damage, slightly slower | Flamethrower, "Bull" Heavy Tank, Firebomb Heli | Munitions Dump, Foundry | Napalm Strike |
-| ⚪ **Gray Army** | +20% tougher, slightly slower | Sniper, Rocket Artillery | Bunker | — |
+| ⚪ **Gray Army** | +20% tougher, slightly slower | Sniper, Rocket Artillery, Choktaw Heli | Bunker, Heavy Barricade | Smokescreen |
 | 🔵 **Blue Army** | +15% speed, lighter plastic (−10% health) | Scout Bike, Chinook, Signal Runner | Wind Turbine, Forward Pad | Rapid Redeploy |
 
-Blue, Green and Tan have a *full* exclusive set. Gray is brought up to the same
-shape at v88 — see the version history below.
+All four armies now have a *full* exclusive set: an exclusive unit out of the
+Barracks, the Garage and the Helipad, two exclusive buildings, and one call-in of
+their own.
 
 A few examples of what those abilities actually do:
 
@@ -106,22 +107,38 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 87.1**.
+The game is at **version 88**.
 
 **Roadmap 1 (v79–v82) — complete.** Every exclusive unit and building that
 existed then got one passive and one toggleable ability: Green at v79, Tan at
 v80, Gray at v81, Blue at v82.
 
-**Roadmap 2 (v85–v88) — in progress.** Every army gets two exclusive buildings,
-an exclusive unit out of the Barracks, the Garage *and* the Helipad, and a Radio
-Tower call-in of its own. **Blue landed at v85, Green at v86 and Tan at v87**;
-Gray is v88 and is the last. Its specification is already written down and settled
-— see *Roadmap 2: the remaining three armies* in
-[`harness/README.md`](harness/README.md).
+**Roadmap 2 (v85–v88) — complete.** Every army got two exclusive buildings, an
+exclusive unit out of the Barracks, the Garage *and* the Helipad, and a Radio
+Tower call-in of its own. Blue landed at v85, Green at v86, Tan at v87 and **Gray
+at v88**, which closed it.
 
 One consequence is deliberate and visible in the table above: the **Napalm Strike**
-used to belong to every army and is now Tan's alone, so Gray fields only the two
-shared call-downs until v88 hands it the Smokescreen.
+used to belong to every army and is now Tan's alone. Every army has exactly one
+call-in nobody else can use, plus the two shared ones.
+
+**v88 — Gray.** The **Choktaw Heli** carries two weapons at once and fires both:
+rocket pods for armour and structures, a door gun for infantry. Its *Forward
+Observer* gives friendly mortars and rocket artillery +2 tiles of reach against
+anything the Choktaw can see, and its *Paint* marks a 2×2 area where everything
+of the enemy's takes +25% damage from every source for 10 seconds. The **Heavy
+Barricade** is a 150 HP wall whose shadow cuts damage to everything of yours
+beside it by 15%, stacking up to 60% — and one in ten of them buries a mine
+toward the enemy that only your army can see and that your own men can walk over.
+The **Smokescreen** call-in lays a 7×7 cloud in which your units *and your
+structures* take 40% less damage for 10 seconds.
+
+One side effect is worth knowing about, because it is a real balance change and
+not a bug: adding a 25th trainable unit slid the supply-cost quartiles, so the
+Machine Gunner, the Medic and Sarge each cost one supply less than they used to.
+No price for the Choktaw avoided it. It is measured, recorded and left as an open
+question for a later release — see the v88 note in
+[`harness/README.md`](harness/README.md).
 
 **v87.1 — three interface repairs**, off the roadmap and touching no simulation.
 The drag-selection box is drawn in your army's colour instead of a fixed yellow;

@@ -149,8 +149,19 @@ section('T20 v40: clickable piles + APC speed + team-color towers + turret aim +
  // and wildlife nests still drop nothing (their branch returns before any spawnWreck).
  const ks=kill.toString();
  ok('T20.5 unit + building salvage use 0.34',SALVAGE_FRAC===0.34&&ks.includes('mods.cost)*SALVAGE_FRAC')&&!ks.includes('mods.cost)*0.5')); // v43: reads the named constant
- ok('T20.5 barricade branch spawns a wreck',/barricade[\s\S]*spawnWreck/.test(ks));
- const nestSeg=ks.slice(ks.indexOf("e.key==='nest'"),ks.indexOf("e.key==='barricade'"));
+ ok('T20.5 barricade branch spawns a wreck',/e\.t\.barr[\s\S]*spawnWreck/.test(ks)); // v88: keyed on the flag the branch now tests
+ /* v88: the slice used to end at `e.key==='barricade'`. That branch is keyed on
+    t.barr now, because the Heavy Barricade joined the game and fourteen tests that
+    said "the barricade" meant "a wall". An indexOf that returns -1 would have
+    sliced to the END of kill() and swept the whole building teardown into the
+    "nest" segment, so this is re-aimed rather than relaxed - it still measures
+    exactly the span between the nest branch and the wall branch.
+    The search for the wall marker starts FROM the nest marker: `!e.t.barr` also
+    appears near the top of kill(), on the veterancy line, so a bare indexOf would
+    find that one and slice backwards. */
+ const nestAt=ks.indexOf("e.key==='nest'"), barrAt=ks.indexOf("e.t.barr",nestAt);
+ const nestSeg=ks.slice(nestAt,barrAt);
+ ok('T20.5 ...and the slice really found both markers, in that order',nestAt>=0&&barrAt>nestAt);
  ok('T20.5 wildlife nest branch drops no salvage',nestSeg.length>0&&!nestSeg.includes('spawnWreck'));
 }
 

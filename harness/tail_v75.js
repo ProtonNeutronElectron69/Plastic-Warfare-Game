@@ -252,6 +252,18 @@ function spot75() {
   }
 }
 
+/* v88: the reconstruction above proves the ratio matches its own derivation, which
+   a shared bug would satisfy. This is the independent half: remove a wall's price
+   from the tables and RES_REF must NOT move, because walls are not in it. */
+function RES_REF_EXCLUDES_WALLS() {
+  const keep = B.hbarricade.cp;
+  B.hbarricade.cp = keep + 10000;
+  let cp = 0, ce = 0;
+  for (const k in U) { if (U[k].noTrain) continue; cp += U[k].cp; ce += U[k].ce; }
+  for (const k in B) { if (k === 'nest' || B[k].barr) continue; cp += B[k].cp; ce += B[k].ce; }
+  B.hbarricade.cp = keep;
+  return Math.abs(RES_REF - ce / cp) < 1e-12;
+}
 /* ================================================== C: the servo =========== */
 {
   section('T52.C the resource servo is signed, normalised and symmetric');
@@ -260,9 +272,17 @@ function spot75() {
     (() => {
       let cp = 0, ce = 0;
       for (const k in U) { if (U[k].noTrain) continue; cp += U[k].cp; ce += U[k].ce; }
-      for (const k in B) { if (k === 'nest' || k === 'barricade') continue; cp += B[k].cp; ce += B[k].ce; }
+      /* v88: the exclusion is t.barr, not the key 'barricade'. The Heavy Barricade
+         is a wall and is excluded for the same reason the ordinary one is - a
+         spammable obstacle is not part of the roster whose price mix this ratio
+         describes. Reconstructed here off the same flag the shipped derivation
+         uses, so the two cannot drift apart. */
+      for (const k in B) { if (k === 'nest' || B[k].barr) continue; cp += B[k].cp; ce += B[k].ce; }
       return cp > 0 && Math.abs(RES_REF - ce / cp) < 1e-12;
     })());
+  ok('T52.C ...and BOTH walls are outside it, on the flag rather than on a key',
+    B.barricade.barr === 1 && B.hbarricade.barr === 1 &&
+    RES_REF_EXCLUDES_WALLS());
   ok('T52.C the bias and the filter threshold are sane',
     RES_BIAS > 0 && RES_HARD > 0 && RES_HARD < 1);
 

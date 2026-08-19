@@ -73,7 +73,14 @@ function mkCr52(sp,x,y){
      At 24 trainable units the quartile cuts land after the 6th, 12th and 18th,
      which is where they already were at 23, so the ONLY safe insertion point is
      past the 18th - i.e. dearer than Sarge. See T35.A. */
-  firebomb:[280,103.5]};
+  firebomb:[280,103.5],
+  /* v88: Gray's Choktaw. 468 total, and unlike v85-v87 it is NOT inside a band
+     that leaves every rank untouched - at 25 trainable units the quartile cuts
+     land after the 7th, 13th and 19th where they used to land after the 6th, 12th
+     and 18th, so the three units sitting ON the old cuts drop one rank whatever
+     the new unit costs. The only band with no movement at all is under the Machine
+     Gunner's 112, which is not a price a gunship can carry. See T35.A. */
+  choktaw:[330,138]};
  const drift=[];
  for(const k in U)if(V65[k]&&(U[k].cp!==V65[k][0]||U[k].ce!==V65[k][1]))drift.push(k);
  ok('T33.A the whole v65 cost roster is intact'+(drift.length?' (drift: '+drift.join(', ')+')':''),
