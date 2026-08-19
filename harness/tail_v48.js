@@ -28,6 +28,10 @@ function cfg48(map,mode,seed,opp,fac){return{map,mode,diff:'normal',fac:fac||'gr
 function put48(k,p,x,y){const u=makeUnit(k,p,x,y);u.state='idle';u.anchor={x,y};u.path=null;u.target=null;return u}
 function bld48(k,p,dx,dy){const hq=p.blds[0];return makeBuilding(k,p,Math.floor(hq.tx)+dx,Math.floor(hq.ty)+dy,true)}
 function bot48(){return G.players.find(p=>p.ai)}
+/* v87: a bot of a NAMED faction. cfg48's fac is the HUMAN's, so asking for a Tan
+   human is exactly the way to guarantee there is no Tan bot; with the default
+   green human the three bots are gray, tan and blue. */
+function bot48f(fac){return G.players.find(p=>p.ai&&p.fac===fac)}
 function foe48(p){return G.players.find(q=>q!==p&&q.alive&&!allied(q,p))}
 
 /* ---------- A: plumbing ---------- */
@@ -164,15 +168,35 @@ function drop48(u){const i=G.units.indexOf(u);if(i>=0)G.units.splice(i,1);const 
  ok('T29.E the shot spends the shared cooldown and clears the patience clock',
     p.blds.find(b=>b.t.radio).abilityCool>0&&p.ai.radioReadyT==null);
  ok('T29.E no laser, ever',!G.strikes.some(s=>s.kind==='laser'));
- /* the other side of the v76 branch: a clump of MEN, same scorer, same map. */
+ /* the other side of the v76 branch: a clump of MEN, same scorer, same map.
+    v87: THE TAN BOT, because the Napalm Strike became Tan's alone and the bot that
+    picks between the two munitions now asks radioAllowed before it reaches for the
+    fire. Any other army here would be testing the fallback rather than the branch -
+    and the fallback is worth a check of its own, which it gets just below, off the
+    SAME seed and the same clump so the only difference is who is holding the tower. */
+ const soft48=(bot,foeq)=>{
+  bld48('radiotower',bot,6,0);
+  for(let i=0;i<45;i++)put48('grunt',foeq,M.x+(i%6)*0.55,M.y+((i/6)|0)*0.55);
+  put48('truck',bot,M.x-4,M.y);
+  aiTick(bot);
+ };
  G=null;newGame(cfg48('backyard','dm',480004,3));
- const p9=bot48(), q9=foe48(p9);
- bld48('radiotower',p9,6,0);
- for(let i=0;i<45;i++)put48('grunt',q9,M.x+(i%6)*0.55,M.y+((i/6)|0)*0.55);
- put48('truck',p9,M.x-4,M.y);
- aiTick(p9);
- ok('T29.E a soft clump still draws napalm',
-    !!G.strikes.find(s=>s.kind==='napalm')&&!G.strikes.find(s=>s.kind==='barrage'));
+ const p9=bot48f('tan');
+ if(!p9)ok('T29.E a Tan bot was fielded to test the napalm branch against',false);
+ else{
+  soft48(p9,foe48(p9));
+  ok('T29.E a soft clump still draws napalm',
+     !!G.strikes.find(s=>s.kind==='napalm')&&!G.strikes.find(s=>s.kind==='barrage'));
+ }
+ G=null;newGame(cfg48('backyard','dm',480004,3));
+ const p10=bot48f('gray');
+ if(!p10)ok('T29.E a Gray bot was fielded to test the fallback against',false);
+ else{
+  soft48(p10,foe48(p10));
+  ok('T29.E v87: a bot that does not own the napalm shells the soft clump instead',
+     !!G.strikes.find(s=>s.kind==='barrage')&&!G.strikes.find(s=>s.kind==='napalm')&&
+     !radioAllowed(p10,'napalm'));
+ }
 
  // paradrop: nothing napalm-grade in sight, patience expired -> hit the economy
  G=null;newGame(cfg48('backyard','dm',480005,3));

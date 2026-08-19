@@ -51,11 +51,19 @@ ok('T11 sprite scale entries live',uScale({key:'apache'})===1.18&&uScale({key:'a
     paraMun(tBld)===PARA_MUN.he&&paraMun(tTank)===PARA_MUN.at&&paraMun(tInf)===PARA_MUN.smg&&paraMun(null)===PARA_MUN.smg);
  ok('T11 HE charge is the slow long-cycle throw',PARA_MUN.he.gsp<PARA_MUN.at.gsp&&PARA_MUN.he.rt>PARA_MUN.at.rt&&PARA_MUN.he.k===7.5);}
 
-/* ================= runtime: radio tower call-downs ================= */
-G=null;newGame(cfg('backyard','dm','normal','green',3,909001));
+/* ================= runtime: radio tower call-downs =================
+   v87: THIS BLOCK IS TAN NOW, and the change is forced rather than cosmetic. The
+   Napalm Strike left the shared pool at v87 and belongs to Tan alone, so a Green
+   tower is refused it at the command door and every napalm check below would have
+   been testing the refusal instead of the strike. Tan carries the same hp mod as
+   Green (x1), so the 293 HP the tower is pinned at is unmoved, and nothing else in
+   the block reads the faction. The refusal itself is asserted on its own, just
+   below, so the reason this fixture changed army is a checked fact rather than a
+   note in a comment. */
+G=null;newGame(cfg('backyard','dm','normal','tan',3,909001));
 const hu=G.human;
 const rt2=makeBuilding('radiotower',hu,Math.floor(hu.blds[0].tx)+5,Math.floor(hu.blds[0].ty),true);
-ok('T11 tower builds at 293 HP (green mods hp x1)',rt2.prog>=1&&rt2.mhp===293&&rt2.abilityCool===0);
+ok('T11 tower builds at 293 HP (tan mods hp x1, as green\'s was)',rt2.prog>=1&&rt2.mhp===293&&rt2.abilityCool===0);
 // find a genuinely fogged point for the vision gate
 let fx=-1,fy=-1;
 outer:for(let y=4;y<G.map.N-4;y+=6)for(let x=4;x<G.map.N-4;x+=6){if(!pVision(hu,x,y)){fx=x;fy=y;break outer;}}
@@ -67,6 +75,18 @@ submitCmd('radio',{bid:rt2.id,mode:'napalm',x:rt2.x+3,y:rt2.y+3});execCmds();
 ok('T11 in-vision napalm fires + 180s shared cooldown',G.strikes.length===s0+1&&Math.abs(rt2.abilityCool-RADIO_CD)<0.5);
 {const s=G.strikes[G.strikes.length-1];
  ok('T11 napalm covers ~70% of the 10x10 with a burn list',s.kind==='napalm'&&s.cells.length>=55&&s.cells.length<=85&&Array.isArray(s.burn));}
+/* v87: and the other half of the same fact - the army that no longer owns it is
+   refused at the command door, not merely left out of the panel. */
+{const g2=G.players.find(p2=>p2!==hu&&p2.fac!=='tan');
+ if(!g2)ok('T11 a non-Tan army was fielded to test the napalm refusal against',false);
+ else{
+  const gt=makeBuilding('radiotower',g2,Math.floor(g2.start.x)+4,Math.floor(g2.start.y)+4,true);
+  gt.prog=1;gt.hp=gt.mhp;gt.abilityCool=0;
+  const n0=G.strikes.length;
+  execCmd({op:'radio',pi:g2.i,a:{bid:gt.id,mode:'napalm',x:gt.x+2,y:gt.y+2}});
+  ok('T11 v87: a non-Tan tower is refused the napalm at the command door',
+     G.strikes.length===n0&&gt.abilityCool===0);
+ }}
 submitCmd('radio',{bid:rt2.id,mode:'paradrop',x:rt2.x,y:rt2.y+6});execCmds();
 ok('T11 cooldown blocks a second call',G.strikes.length===s0+1);
 G.strikes.length=0; // clear the live strike so the burn does not muddy later checks

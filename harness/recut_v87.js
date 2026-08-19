@@ -1,23 +1,21 @@
-/* recut_v86.js - regenerate the hash-trail baselines that v86 moved.
+/* recut_v87.js - regenerate the hash-trail baselines that v87 moved.
  *
- *   cat shim_head.js game.js recut_v86.js > rc86.js && node rc86.js
+ *   cat shim_head.js game.js recut_v87.js > rc87.js && node rc87.js
  *
- * v86 is Green's second pass: a Command Truck out of the Garage, an Observation
- * Balloon out of the Helipad, a Command Post as the second structure, and a
- * Supply Drop call-down. Nothing in it is a refactor of a shared table, so unlike
- * v85 there is no neutral-first step to separate: every line of it is content.
+ * v87 is Tan's second pass: a Firebomb Heli out of the Helipad, a Foundry as the
+ * second structure, and the Napalm Strike leaving the shared pool to become Tan's
+ * alone. It also builds the first UNIT ability cooldown in the game (u.abCool),
+ * which widens hashState by one field on every unit that declares one.
  *
- * It moves the trails through the same two doors v85 did and one more. Two new
- * entries in U reshape the research plan and the production draw for every army
- * that can see them; an eleventh entry in B does the same for the build wish
- * list; and the three doors that changed for EVERYBODY - rtOf, rgOf and vetSteps
- * each gained a scan - consume no RNG but do change what the AI reads, so a bot's
- * decisions diverge from the first tick a Green bot researches anything.
- *
- * A trail moving in a match with no Green bot in it is therefore expected too:
- * the seeded stream is shared, and a Green bot that spends differently shifts
- * every draw after it. That is the v79 lesson and it is why this file exists
- * rather than the trails being read as evidence.
+ * FOUR doors move the trails this time, and the fourth is the interesting one:
+ *   - a 24th entry in U reshapes the research plan and the production draw;
+ *   - a 12th entry in B does the same for the build wish list;
+ *   - hashState gained u.abCool, so every hash after a Firebomb exists differs;
+ *   - and the NAPALM CHANGED HANDS. Three of the four armies' bots now shell a
+ *     soft clump they used to burn, which changes what their target survives and
+ *     therefore what every unit after it does. That one moves matches with no Tan
+ *     player in them at all, and it is the reason a trail moving here proves even
+ *     less than usual.
  *
  * What must NOT move is the map. Nothing in this release touches a prop, a node,
  * a nest or anything that fills M.pass.
@@ -110,7 +108,7 @@ if (moved.length) {
   console.error('LAYOUT GATE FAILED - ' + moved.length + ' of 42 pins moved. Nothing cut.');
   for (const l of moved) console.error('  ' + l);
   console.error('A moved layout hash means this release touched map generation, which is');
-  console.error('not what v86 claims to do. Fix that before repinning any trail.');
+  console.error('not what v87 claims to do. Fix that before repinning any trail.');
   process.exit(1);
 }
 console.error('layout gate: all 42 pins hold. Cutting trails.\n');

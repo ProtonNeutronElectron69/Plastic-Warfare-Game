@@ -279,9 +279,15 @@ function spot50(p,key,fromX,fromY){
   ok('T31.H the tower did not go on cooldown',rt.abilityCool===0);
   submitCmd('radio',{bid:rt.id,mode:'paradrop',x:p.start.x-3,y:p.start.y-3});execCmds();
   ok('T31.H a second call-down fires immediately',G.strikes.length===n0+2);
-  // napalm still respects the vision rule (it is a targeting rule, not a cooldown)
-  submitCmd('radio',{bid:rt.id,mode:'napalm',x:rt.x+1,y:rt.y+1});execCmds();
-  ok('T31.H napalm fires in vision too',G.strikes.length===n0+3&&rt.abilityCool===0);
+  /* a VISION-GATED call-down still respects the vision rule, because that is a
+     targeting rule and not a cooldown - which is the only thing this block is
+     about. v87: the barrage rather than the napalm. Both are vision-gated, and
+     the napalm became Tan's alone at v87 while this fixture boots Green; reaching
+     for the shared one means the claim can never be broken again by a call-down
+     changing hands, which is a better check than the one it replaces. */
+  submitCmd('radio',{bid:rt.id,mode:'barrage',x:rt.x+1,y:rt.y+1});execCmds();
+  ok('T31.H a vision-gated call-down fires in vision too',G.strikes.length===n0+3&&rt.abilityCool===0);
+  ok('T31.H ...and it really is vision-gated, so the claim is not vacuous',radioNeedsVision('barrage'));
  }
  // a normal match still charges the full cooldown
  boot50({test:0});

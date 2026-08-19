@@ -67,7 +67,13 @@ function mkCr52(sp,x,y){
      between the Mortar Squad and the Sniper and 319 lands the Balloon between the
      APC and Sarge, which is exactly where the two gaps are - see T35.A, which
      asserts all twenty-one existing units kept the rank they had. */
-  cmdtruck:[145,23],balloon:[250,69]};
+  cmdtruck:[145,23],balloon:[250,69],
+  /* v87: Tan's Firebomb Heli. 383.5 total is chosen the same way v86's two were -
+     it is the band that leaves all 23 existing units on the supply rank they had.
+     At 24 trainable units the quartile cuts land after the 6th, 12th and 18th,
+     which is where they already were at 23, so the ONLY safe insertion point is
+     past the 18th - i.e. dearer than Sarge. See T35.A. */
+  firebomb:[280,103.5]};
  const drift=[];
  for(const k in U)if(V65[k]&&(U[k].cp!==V65[k][0]||U[k].ce!==V65[k][1]))drift.push(k);
  ok('T33.A the whole v65 cost roster is intact'+(drift.length?' (drift: '+drift.join(', ')+')':''),

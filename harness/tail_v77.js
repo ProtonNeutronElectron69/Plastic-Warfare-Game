@@ -86,6 +86,11 @@ section('T52.B the Magnifying Glass removal left nothing behind');
   // v86: N is five - Green's Supply Drop is the second faction row.
   ok('T52.B and the roster is the three survivors, plus the two added since',
     RADIO_ABILITIES.length === 5 && !RADIO_ABILITIES.some(a => a.mode === 'magnify'));
+  /* v87: the count is unchanged because the napalm did not LEAVE the table when it
+     became Tan's - it gained a field. Worth its own line: "removed" and "narrowed
+     to one army" are different things, and this section is about the first. */
+  ok('T52.B a call-down that narrowed to one army is still in the table, unlike a removed one',
+    !!radioAbility('napalm') && radioAbility('napalm').fac === 'tan');
   ok('T52.B radioMagnify is not a function any more', typeof radioMagnify === 'undefined');
   ok('T52.B its audio cue went with it', typeof sfxLaser === 'undefined');
   ok('T52.B the flame roster no longer names it',

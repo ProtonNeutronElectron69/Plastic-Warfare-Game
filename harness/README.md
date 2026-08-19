@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v86)
+# Plastic Warfare headless test harness (updated at v87)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -23,10 +23,10 @@ the Barracks, the Garage AND the Helipad (each with a passive and an ability),
 and one unique Radio Tower call-in.** Same cadence as roadmap 1 - ONE FACTION PER
 VERSION, so trail divergence stays attributable (rule 7a below still governs).
 
-**Blue landed at v85 and Green at v86.** Tan is v87 and Gray v88. The full
-specification for both outstanding armies is in "Roadmap 2: the remaining three
-armies" below; it is DECIDED, not proposed. The v86 entry there is left in place
-as the record of what Green was told to build, exactly as the roadmap-1 phases are.
+**Blue landed at v85, Green at v86 and Tan at v87.** Gray is v88 and is the last.
+The full specification for it is in "Roadmap 2: the remaining three armies" below;
+it is DECIDED, not proposed. The v86 and v87 entries there are left in place as the
+record of what each was told to build, exactly as the roadmap-1 phases are.
 
 Rule 1a below was OVERRIDDEN BY THE OWNER for roadmap 2: cooldown abilities on
 units are now in scope, and the `u.abCool` machinery they need is to be built
@@ -34,7 +34,8 @@ when the first one lands (Tan's Napalm Blast at v87, Gray's Paint at v88). v85
 needed none of it - Sprint is a sustained mode in the roadmap-1 shape - and v86
 needed none either: Broadcast is a sustained mode, and Bail is an instantaneous
 one-shot that destroys the unit offering it, so there is nothing to recharge. The
-machinery is STILL NOT BUILT. Do not assume it exists; v87 is where it lands.
+machinery LANDED AT v87 and is `t.abCd` / `u.abCool` - see the v87 note below.
+Gray's Paint needs `abCd:20` on its row and nothing else.
 
 ### The two structural decisions that govern all four phases
 
@@ -387,7 +388,7 @@ clarification the owner gave, so they can be built without re-asking.
 
 ### v86 - GREEN ARMY. LANDED. See the v86 notes below for what it cost.
 
-### v87 - TAN ARMY
+### v87 - TAN ARMY. LANDED. See the v87 notes below for what it cost.
 
   FIREBOMB HELI (Helipad).
     Passive `Scorched Earth` - its hits leave the ground burning.
@@ -425,6 +426,177 @@ clarification the owner gave, so they can be built without re-asking.
     structures inside, 10 seconds. Deliberately stronger than the Mortar's Smoke
     Rounds (SMOKE_RED 0.2, radius 2, 5s, units only) - that is intended, not an
     oversight to be balanced away.
+
+## v87 note: what v87 actually added, and the four seams worth knowing
+
+  FIREBOMB HELI (Helipad, Tan). 280 plastic + 90 battery, weapon row `f` - the row
+    Tan already lives on, since the Flamethrower's hose, the Bull's hull flamer and
+    the tower's napalm all score there. 1.35 into infantry and 0.45 into heavy
+    armour, so a tank column ignores it; that is the point of it. It hits softer
+    than the Apache (13.12 DPS against 15.88) because it also carries the ability.
+    Passive `Scorched Earth` - every hit leaves the GROUND burning for 4s.
+    Ability `Napalm Blast` - 10 blasts on random tiles within 3 of itself, each
+    leaving 8 seconds of fire that burns friendly units and structures as readily
+    as enemy ones. 30-second cooldown, and THE FIRST UNIT COOLDOWN IN THE GAME.
+  FOUNDRY (Tan's second structure). 260 + 50. Vehicles produced while it stands
+    roll out with +10% hull, permanently. `Pour` finishes the vehicle at the front
+    of every Garage queue at once for 50% of each one's plastic on top, 45s.
+  THE NAPALM STRIKE CHANGED HANDS. It left the shared pool and is Tan's alone. It
+    did not move to a second table and did not gain a second mechanism: it gained
+    the `fac` field v85 put on the row for exactly this. Gray is down to the two
+    shared call-downs until v88 gives it the Smokescreen; that is the roadmap
+    working, not a gap. The Fuel-Air Bomb the roadmap said to drop was never built,
+    so there was nothing to remove.
+
+**Seam 1 - `u.abCool` is MACHINERY, and the duration lives on the table row.**
+Roadmap 1 ruled cooldown abilities on units out; the owner overrode that for
+roadmap 2, and v85's Sprint, v86's Broadcast and v86's Bail all turned out not to
+need it - two sustained modes and a one-shot that destroys the unit offering it.
+Napalm Blast does. The row declares `abCd` and `makeUnit` writes `u.abCool` only
+onto rows that declare one, so a match with no Firebomb in it snapshots exactly as
+a v86 match did. It is ticked in `updateUnit` for the same reason `updateBld` ticks
+`b.abilityCool` for EVERY building rather than inside a branch: a timer parked in a
+branch never runs out. It is hashed, serialized, defaulted for a pre-v87 save, and
+zeroed by testing mode. **v88's Paint needs `abCd:20` on its row and nothing else.**
+
+**Seam 2 - `napalmBurn` was generalised by three fields, and every default
+reproduces the v30 napalm exactly.** `s.bdps` is the burn rate (`GROUND_DPS`, which
+was a bare 4.3 until a second caller forced it to be named), `s.ff` is friendly
+fire, and `s.gnd` is "this fire is on the ground and cannot reach an aircraft".
+With `ff` set the allied test **disappears** rather than being inverted -
+indiscriminate is the absence of a side, not the other side. The tower's napalm is
+deliberately NOT given `gnd`: changing what the call-down does to a loitering
+aircraft is not this release's business, and the asymmetry is declared rather than
+accidental.
+
+**Seam 3 - "prolonged" is the DURATION, not a hotter fire.** The Firebomb's blast
+and the tower's napalm burn at the same `GROUND_DPS`; what differs is `FB_BURN` 8
+against `NAPALM_T` 3. `NAPALM_T` is new only in the sense that the 3 was a literal
+in two places before. Scorched Earth is the exception and burns at `SCORCH_DPS` 3,
+under the shared rate, because it fires on every hit and the call-down fires once:
+a passive on a 1.6-second reload has to be worth less per tile or it is simply a
+better napalm.
+
+**Seam 4 - the Foundry is a PRODUCTION buff and not an aura, and it rides the door
+the Garage upgrade already used.** "Produced while it stands" means the hull is
+baked in at `makeUnit` and the vehicle keeps it if the Foundry burns down an hour
+later - `T60.D` drives exactly that. "Vehicle" is `prodBldOf(key)==='garage'`, the
+file's own answer to what a Garage builds, rather than a hand-written class list
+that would need revisiting every time an archetype is added. It multiplies with the
+upgrade rather than replacing it: the upgrade is a Garage that builds better, the
+Foundry is an army that does. Determinism is free here and worth stating: the buff
+lands on `hp` as well as `mhp`, and `hp` is hashed, so a client that disagreed about
+whether a Foundry was standing would diverge on the tick the vehicle spawned rather
+than silently carrying a different maximum for the rest of the match.
+
+## v87 note: the price is 383.5 because the quartile cuts did not move
+
+The v86 note records that two new rows had to be priced into bands that left all 21
+existing units on the rank they had. v87 adds ONE row and the arithmetic is tighter,
+not looser. At 23 trainable units the cuts land after the 6th, 12th and 18th; at 24
+they land after the 6th, 12th and 18th as well, because 24 divides by four and 23's
+`floor()` happened to land in the same three places. **The boundaries did not move at
+all**, so the only insertion point that shifts nobody across one is past the LAST
+boundary - the new unit has to be dearer than Sarge (329). 280+103.5 = 383.5 puts the
+Firebomb between Sarge and the Chinook, and nothing moved.
+
+`MEDIC_HEAL_RATE` was exposed for real this time, unlike at v86: the Firebomb is
+ARMED, so it enters the `Math.min` over everything that fights. It clears the floor
+comfortably (13.12 against the Grunt's 3.03 in scaled units) and the Grunt still
+sets it. T60.A asserts the SOURCE rather than just the value, so a future row that
+undercut the Grunt would name itself.
+
+`AI_SUP_UNIT` moved 2.353 -> 2.444, which is the mean supply rank over the trainable
+combat roster doing exactly what it is derived to do when a rank-4 fighter joins.
+Nothing pins it, by design.
+
+## v87 note: a call-down changing hands has FIVE surfaces, and the bot is the one that hides
+
+Making the napalm Tan's is one word on one row - `fac:'tan'` - because v85 put the
+field there and routed every UI surface through `radioListFor(p)`. Four surfaces
+took it for free: the panel, the Field Manual list, the vision gate and `execCmd`'s
+refusal at the command door.
+
+The fifth did not. `aiTick` reaches `radioNapalm(radio,...)` **directly**, never
+through `execCmd`, so it never consulted `radioAllowed`. That was harmless while
+both munitions were shared and would have had three of the four armies' bots
+calling down a strike they do not own. It is now written as a fallback rather than
+a second branch - `if(hard>soft||!radioAllowed(p,'napalm'))` - because the barrage
+is the munition every army has and there is no case where a bot owns the napalm and
+not the barrage.
+
+**Generalises, and matters at v88:** a faction gate is only as good as its least
+obvious reader, and the bot's is the one that does not go through the door the
+player's does. Grep for the ability's own function name, not just for the mode
+string.
+
+## v87 note: three fixtures were reading a faction they only incidentally had
+
+None of these were v87 regressions in the sim. All three had picked an army for
+reasons that had nothing to do with what they were testing, and the napalm changing
+hands is what surfaced it.
+
+  T11 (tail_v30) booted GREEN and fired the napalm through five checks about the
+    strike machinery. It now boots TAN - the same 293 HP tower, since Tan's hp mod
+    is also x1 - and carries a new check for the refusal a non-Tan tower now gets,
+    so the reason it changed army is a checked fact rather than a comment.
+  T29.E (tail_v48) needed a TAN BOT, and the first attempt at fixing it made the
+    mistake worth recording: `cfg48`'s `fac` is the HUMAN's faction, so asking for
+    a Tan human is precisely the way to guarantee there is no Tan bot. With the
+    default green human the three bots are gray, tan and blue. It now selects by
+    faction through a new `bot48f(fac)`, and the fallback arm - a Gray bot shelling
+    the same clump off the same seed - is a check of its own.
+  T31.H (tail_v50) fired the napalm to prove that TESTING MODE does not charge a
+    cooldown while the VISION rule still applies. The claim was never about the
+    napalm; it now uses the barrage, which is vision-gated and shared by every
+    army, so it can never be broken again by a call-down changing hands.
+
+## v87 trap: an indiscriminate weapon has to be told what "indiscriminate" excludes
+
+The Napalm Blast burns friendlies by design. The first cut burned the helicopter
+that dropped it: the Firebomb hovers over its own fire, `ff` removes the allied
+test, and nothing else was stopping it. `s.gnd` is the answer - a fire on the ground
+burns what is on the ground - and it is why the flag exists at all rather than being
+implied by `ff`.
+
+The measurement that found it is worth recording separately, because the first three
+attempts to measure it were all wrong. Running `update()` for 200 ticks and reading
+the helicopter's HP showed it taking damage - from **wildlife**, which had wandered
+over and bitten it, and on one run the Firebomb's HP went UP because a veterancy
+promotion raised its maximum mid-measurement. The burn is now measured by driving
+`updateStrikes()` alone, and the fixture carries `burn87()` for it. That is the v85
+heal-rate lesson and the v86 crate lesson in a third shape: **a fixture that measures
+one thing inside `update()` is measuring the whole match.**
+
+## v87 traps learned
+
+  - **A generalised function must reproduce its FIRST caller exactly.** `napalmBurn`
+    gained three fields and every default is the v30 behaviour, including the one
+    that looks like a fix: the allied test still runs against a DEAD owner, because
+    a dead-but-referenced tower still has `.p` and cutting the burn short when the
+    tower fell would be a balance change dressed as a null guard. What did change is
+    a genuine null guard for the RELOAD case, where `loadState` resolves a dead
+    owner to null and the old code threw inside `update()` and took the tick with it.
+  - **`ucost` returns 0 in testing mode**, so any ability priced as a share of a
+    unit cost is free in the sandbox. That is consistent with everything else there
+    and is not a bug, but a fixture that asserts a non-zero charge must not run in
+    testing mode.
+  - **A pour must not lift the supply cap.** The queue entry was reserved when it was
+    queued; a pour that fielded a unit past the cap would be a way of buying supply
+    with plastic. Refusing leaves the unit in the queue to finish normally.
+  - **A fixture that stands a victim in a fire before taking a snapshot has no victim
+    after the reload.** T60.F stands the man on a cell that is still alight AFTER
+    loading, read off the reloaded strike, rather than before.
+  - **T43.M's voice-collision flake is still there** and still not this release's
+    doing - `gun:smg/gun:amg`, exactly the pair the v84 note names. Three clean
+    re-runs of segment 3 either side of it.
+
+## v87 note: tail_v87 rides segment 3, and the check count
+
+Segment 3 carries tail_v87 alongside tail_v79 through tail_v86. No further split was
+needed. The five segments at v87 run 2341 / 495 / 48 / 235 / 1662 = 4781 checks,
+0 failures, plus verify_v58.py's 32 and the six real-canvas tails
+(60 / 25 / 60 / 164 / 9 / 4).
 
 ## v86 note: what v86 actually added, and the four seams worth knowing
 
@@ -1702,10 +1874,10 @@ now runs each table from its own cfg and asserts both the equality that should h
 
 ## Contents
 
-v86 adds tail_v86.js (T59). recut_v86.js and repin_v86.py are this release's
-one-shot recut pair, carried forward from the v85 pair and replacing it, per the
-standing rule that only the CURRENT release's one-shots ship. v85's tail_v85.js
-(T58) stays, as every release tail does.
+v87 adds tail_v87.js (T60). recut_v87.js and repin_v87.py are this release's
+one-shot recut pair, carried forward from the v86 pair and replacing it, per the
+standing rule that only the CURRENT release's one-shots ship. v86's tail_v86.js
+(T59) stays, as every release tail does.
 
 v82 added tail_v82.js (T56). recut_v82.js and repin_v82.py were one-shot records
 that shipped beside the release and are NOT carried forward in this bundle;
@@ -1713,6 +1885,13 @@ probe_v82_chin2.js, probe_v82_audit.js, probe_v82_bike2.js,
 probe_v82_calldown.js and probe_v82_od.js are the scoping probes behind the v82
 notes above and are likewise records rather than harness machinery.
 - run.sh         harness runner: ./run.sh [standard|mini|full|render <tail>]
+- tail_v87.js    T60, the v87 Tan release. Sections A-H: the tables and the supply
+                 band the Firebomb's price had to land in, the u.abCool machinery
+                 stated as machinery rather than as one unit's case, Scorched Earth
+                 and Napalm Blast including who the fire does and does not burn, the
+                 Foundry's baked-in hull and Pour, the Napalm Strike changing hands
+                 at all five of its surfaces, the burning ground through a snapshot
+                 with a dead owner, and the two bot rules driven rather than read.
 - tail_v86.js    T59, the v86 Green release. Sections A-H: the tables and the two
                  roster-wide derivations that had to be checked before two rows went
                  into U, the Command Truck's travelling build anchor and Broadcast at

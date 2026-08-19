@@ -432,9 +432,9 @@ canvas{display:block}
   <b>Trucks</b>: right-click a pile to harvest it; right-click your <b>HQ</b> to force them to unload right now. Destroyed units leave a salvageable <b>scrap wreck</b> worth <span data-tune="salvagePct"></span>% of their plastic cost — send a truck to pick it up.<br><br>
   Build a <b>Barracks</b> for infantry, a <b>Garage</b> for vehicles, a <b>Helipad</b> for choppers. With a production building selected, right-click sets its rally point. Every building (barricades included) must be placed within <b><span data-tune="hqR"></span> tiles of one of your HQs</b> or <b><span data-tune="opR"></span> tiles of one of your Outposts</b> — only the HQ and Outpost themselves are exempt: they can go anywhere you can see (even far from base, but not into the fog of war). Nobody can build within <b><span data-tune="foeR"></span> tiles of an enemy HQ</b>, and every structure needs <b><span data-tune="gap"></span> clear <span data-tune="gapT"></span></b> between it and any other structure so your units can always drive out of your own base; barricades are exempt from each other, so walls still lay solid. Build an <b>Outpost</b> to push your borders out: it builds Dump Trucks, acts as a resource drop-off so trucks don't have to drive all the way home, and opens a <span data-tune="opR"></span>-tile build zone for a forward defensive line.<br><br>
   <b>Machine Gunner</b> (Barracks): tough, heavy MG. Select him and hit <b>Entrench</b>, then click to aim — he digs in and fires <span data-tune="entrench"></span>× as fast inside a 100° cone (shown on the ground). Give him a move order to pack up.<br><br>
-  <b>Radio Tower</b> (Lab unlock, 1 per army): a static uplink that opens the call-down panel on the right — <b><span data-tune="radioList"></span></b>. Napalm rains fire and a lingering burn across a <span data-tune="napBox"></span>×<span data-tune="napBox"></span> area; the Artillery Barrage walks <span data-tune="barrN"></span> off-map shells through a <span data-tune="barrBox"></span> box, <span data-tune="barrGap"></span>s apart, at <span data-tune="barrDmg"></span> damage inside a <span data-tune="barrR"></span>-tile blast (×<span data-tune="barrInf"></span> against infantry). Those <span data-tune="radioVis"></span> need vision. Paradrop puts <span data-tune="paraN"></span> elite Paratroopers anywhere, even in fog — SMGs shred infantry, AT grenades crack vehicles, slow HE charges level buildings. <b>Rapid Redeploy</b> is Blue's alone and is the only call-down that creates nobody: select up to <span data-tune="liftMax"></span> of your own infantry, click anywhere on the map even in fog, and they come down under canopies at the far end a moment later. <b>Supply Drop</b> is Green's alone: two crates on canopies, one carrying <span data-tune="dropP"></span> ⬢ and one carrying <span data-tune="dropE"></span> ⚡, which lie where they land with no expiry until one of <em>your</em> units walks over them — nobody else can pick them up, and nothing on the board can destroy them. Click an ability, then click the map (right-click cancels). One shared <span data-tune="radioCd"></span> cooldown.<br><br>
+  <b>Radio Tower</b> (Lab unlock, 1 per army): a static uplink that opens the call-down panel on the right — <b><span data-tune="radioList"></span></b>. Every army gets the Artillery Barrage and the Paradrop; the rest belong to one army each, and you only ever see your own. <b>Napalm</b> is Tan's: it rains fire and a lingering burn across a <span data-tune="napBox"></span>×<span data-tune="napBox"></span> area; the <b>Artillery Barrage</b> walks <span data-tune="barrN"></span> off-map shells through a <span data-tune="barrBox"></span> box, <span data-tune="barrGap"></span>s apart, at <span data-tune="barrDmg"></span> damage inside a <span data-tune="barrR"></span>-tile blast (×<span data-tune="barrInf"></span> against infantry). Those <span data-tune="radioVis"></span> need vision. Paradrop puts <span data-tune="paraN"></span> elite Paratroopers anywhere, even in fog — SMGs shred infantry, AT grenades crack vehicles, slow HE charges level buildings. <b>Rapid Redeploy</b> is Blue's alone and is the only call-down that creates nobody: select up to <span data-tune="liftMax"></span> of your own infantry, click anywhere on the map even in fog, and they come down under canopies at the far end a moment later. <b>Supply Drop</b> is Green's alone: two crates on canopies, one carrying <span data-tune="dropP"></span> ⬢ and one carrying <span data-tune="dropE"></span> ⚡, which lie where they land with no expiry until one of <em>your</em> units walks over them — nobody else can pick them up, and nothing on the board can destroy them. Click an ability, then click the map (right-click cancels). One shared <span data-tune="radioCd"></span> cooldown.<br><br>
   <b>Green Army exclusives.</b> <b>Sarge</b> patches himself up at <span data-tune="sargeRegen"></span> HP/sec once he has been out of contact for <span data-tune="sargeCalm"></span> seconds, and his <b>On Me!</b> toggle gives allied infantry within <span data-tune="sargeR"></span> tiles +<span data-tune="sargeAura"></span>% damage while cutting his own by <span data-tune="sargeSelf"></span>%. <b>Mortar Squads</b> ramp +<span data-tune="wfStep"></span>% per consecutive shell on one target up to +<span data-tune="wfCap"></span>%, and their <b>Smoke Rounds</b> toggle shells your own men instead: no damage, but a <span data-tune="smokeR"></span>-tile cloud that cuts damage taken by <span data-tune="smokeRed"></span>% for <span data-tune="smokeT"></span> seconds. The <b>Radar Tent</b>'s <b>Target Uplink</b> gives your whole army +<span data-tune="upRg"></span> range and +<span data-tune="upVi"></span> sight for <span data-tune="upT"></span> seconds on a <span data-tune="upCd"></span>-second cooldown. The <b>Command Truck</b> carries no guns at all: its <b>Forward Command</b> is a build zone that travels, opening <span data-tune="cmdR"></span> tiles of buildable ground around it for three structures and no others — <span data-tune="cmdBlds"></span> — and its <b>Broadcast</b> toggle makes allies within <span data-tune="bcastR"></span> tiles reload <span data-tune="bcastRt"></span>% faster while pinning the truck exactly where it stands. The <b>Observation Balloon</b> has the best sight in the game at <span data-tune="ballVi"></span> tiles, drifts slowly, and is the one thing on the board that ordinary weapons cannot touch: only AA missiles can target it at all and they land for <span data-tune="ballAa"></span>% damage, while splash never reaches it. Its <b>High Ground</b> gives every ally inside that vision +<span data-tune="highRg"></span> range. It is a clock, though — the gas lasts <span data-tune="ballFuel"></span> seconds and then it falls, killing everyone aboard, so spend <b>Bail</b> before that to put <span data-tune="bailCrew"></span> on the ground beneath it and scuttle the balloon yourself. The <b>Command Post</b> makes your army learn faster within <span data-tune="cpostR"></span> tiles — promotions cost <span data-tune="cpostVet"></span>% fewer kills — and its <b>Regroup</b> hands every unit in that radius <span data-tune="regroupHp"></span>% of its own maximum health back at once, on a <span data-tune="regroupCd"></span>-second cooldown.<br><br>
-  <b>Tan Army exclusives.</b> The <b>Flamethrower</b>'s <b>Cook-Off</b> leaves everything he touches burning for <span data-tune="cookDps"></span> damage/sec, and his <b>Pressure Valve</b> toggle adds <span data-tune="valveDmg"></span>% damage and +<span data-tune="valveRg"></span> range at the price of <span data-tune="valveBack"></span>% of the damage he deals being taken by the man holding the hose. The <b>&quot;Bull&quot; Heavy Tank</b>'s ablative plate ignores small-arms fire completely, which is to say <span data-tune="plateRow"></span> cannot hurt it at all, and its <b>Full Throttle</b> toggle adds <span data-tune="thrSpd"></span>% speed and crushes enemy infantry and barricades it drives over, but silences both its weapons while it rolls. The <b>Munitions Dump</b>'s <b>Scuttle</b> blows the building itself for <span data-tune="scDm"></span> damage across <span data-tune="scR"></span> tiles, and your own units and structures take <span data-tune="scFf"></span>% of it.<br><br>
+  <b>Tan Army exclusives.</b> The <b>Flamethrower</b>'s <b>Cook-Off</b> leaves everything he touches burning for <span data-tune="cookDps"></span> damage/sec, and his <b>Pressure Valve</b> toggle adds <span data-tune="valveDmg"></span>% damage and +<span data-tune="valveRg"></span> range at the price of <span data-tune="valveBack"></span>% of the damage he deals being taken by the man holding the hose. The <b>&quot;Bull&quot; Heavy Tank</b>'s ablative plate ignores small-arms fire completely, which is to say <span data-tune="plateRow"></span> cannot hurt it at all, and its <b>Full Throttle</b> toggle adds <span data-tune="thrSpd"></span>% speed and crushes enemy infantry and barricades it drives over, but silences both its weapons while it rolls. The <b>Munitions Dump</b>'s <b>Scuttle</b> blows the building itself for <span data-tune="scDm"></span> damage across <span data-tune="scR"></span> tiles, and your own units and structures take <span data-tune="scFf"></span>% of it. The <b>Firebomb Heli</b> sows fire rather than shooting at things: <b>Scorched Earth</b> leaves the ground burning for <span data-tune="scorchT"></span> seconds at <span data-tune="scorchDps"></span> damage/sec under everything it hits, so a target that holds its position keeps burning and one that walks away does not. Its <b>Napalm Blast</b> empties the racks — <span data-tune="fbN"></span> firebombs on random tiles within <span data-tune="fbR"></span> of the helicopter, <span data-tune="fbDm"></span> damage each, every one leaving <span data-tune="fbBurn"></span> seconds of fire at <span data-tune="groundDps"></span>/sec that burns <em>your</em> men and buildings exactly as readily as theirs — on a <span data-tune="fbCd"></span>-second cooldown, the first cooldown ability any unit in the game has carried. The fire is on the ground, so it cannot reach an aircraft: the helicopter that dropped it is safe above it, and so is everything else with rotors. The <b>Foundry</b> gives every vehicle built while it stands +<span data-tune="foundryHp"></span>% hull permanently, and its <b>Pour</b> finishes the vehicle at the front of <em>every</em> Garage queue at once for <span data-tune="pourCost"></span>% of each one's plastic on top, on a <span data-tune="pourCd"></span>-second cooldown.<br><br>
   <b>Gray Army exclusives.</b> The <b>Sniper</b> cannot be picked as a target at all until he fires, and drops back out of sight <span data-tune="camoT"></span> seconds after his last shot — an approach tool above all, since it covers him on the way in rather than through a firefight — and his <b>Called Shot</b> toggle adds <span data-tune="csDmg"></span>% damage but restricts him to enemy infantry for as long as it runs. <b>Rocket Artillery</b> shell-shocks whoever lives through the blast, adding <span data-tune="shockSet"></span> <span data-tune="shockSetT"></span> to a survivor's reload on top of whatever it already reads, and its <b>Ripple Fire</b> toggle trades the single shell for a salvo of <span data-tune="ripN"></span> rockets at <span data-tune="ripDm"></span>% damage each, bursting wider and scattered across the target, paid for with <span data-tune="ripRt"></span>% more reload. The <b>Bunker</b> garrisons <span data-tune="bunkGar"></span> infantry who fire from cover and cannot be caught by splash, and its <b>Lockdown</b> buttons them up: the garrison stops firing entirely, but the bunker takes <span data-tune="lockRed"></span>% less damage for <span data-tune="lockT"></span> seconds, on a <span data-tune="lockCd"></span>-second cooldown.<br><br>
   <b>Blue Army exclusives.</b> The <b>Scout Bike</b> is evasive, taking <span data-tune="evadeRed"></span>% less damage in any moment he is genuinely moving — which is worth nothing while he sits still trading shots, and that is where most of his damage is taken — and his <b>Flat Out</b> toggle adds <span data-tune="flatSpd"></span>% speed and +<span data-tune="flatVi"></span> sight, but holds his fire completely and refuses attack orders while it runs. The <b>Chinook</b> lifts <span data-tune="chinCap"></span> infantry and makes friendly infantry near it hit <span data-tune="chinAura"></span>% harder, and its <b>Air Assault</b> toggle opens the hold so the squad fires out at whatever it can reach — they can be shot back at while they do it, and the aircraft cannot move at all until you close it again. The <b>Wind Turbine</b>'s <b>Overdrive</b> runs it at ×<span data-tune="overMul"></span> output for <span data-tune="overT"></span> seconds and then produces nothing whatsoever for <span data-tune="overOff"></span> seconds, on a <span data-tune="overCd"></span>-second cooldown; across the full cycle that is less electricity than leaving it alone, so it buys the power earlier rather than cheaper. The <b>Signal Runner</b> is weaker and worse-armed than a Grunt on purpose — what you are buying is his radio. <b>Radio Net</b> passively gives friendly infantry within <span data-tune="rnetR"></span> tiles +<span data-tune="rnetVi"></span> sight, and his <b>Sprint</b> toggle gives every friendly infantryman within <span data-tune="sprintR"></span> tiles, himself included, +<span data-tune="sprintSpd"></span>% movement speed — but nobody inside the radius will fire, take an attack order, or so much as acquire a target while it runs. The <b>Forward Pad</b> repairs friendly aircraft within <span data-tune="padR"></span> tiles at <span data-tune="padRep"></span> HP/sec, which is the only aircraft repair in the game, and its <b>Scramble</b> gives every aircraft you own — anywhere on the map, not just the ones on the pad — +<span data-tune="scramSpd"></span>% speed for <span data-tune="scramT"></span> seconds on a <span data-tune="scramCd"></span>-second cooldown.<br><br>
   <b>APC</b> (Garage): unarmed transport carrying 10 infantry — right-click it with infantry selected to load, press <b>U</b> (or the panel button) to unload. It shields itself and nearby allied infantry (−25% damage); if destroyed, the squad bails out losing only 15% health.<br><br>
@@ -966,6 +966,49 @@ const REGROUP_AI_N=3;      // Regroup: hurt units inside the radius before a bot
 const REGROUP_AI_FLOOR=0.7;// ...counting a unit as hurt below this share of its own health
 const BAIL_AI_T=6;         // Bail: seconds of gas left at which a bot gets its crew out rather than losing them
 const AI_DROP_FLOOR=120;   // Supply Drop: the plastic a bot must be under before it calls for crates instead of a strike
+/* v87 TAN, SECOND PASS. Tan already fielded a Barracks exclusive (Flamethrower)
+   and a Garage one (the Bull), so what lands here is the Helipad slot, the second
+   structure, and the call-down - which Tan does not gain so much as INHERIT, since
+   the Napalm Strike leaves the shared pool and becomes Tan's alone.
+
+   THE FIRST UNIT COOLDOWN IN THE GAME lands here too. Roadmap 1 ruled cooldown
+   abilities on units out and the owner overrode that for roadmap 2; v85's Sprint
+   and v86's Broadcast are sustained modes and v86's Bail destroys the unit that
+   offers it, so none of them needed a clock. Napalm Blast does. See t.abCd.
+
+   SIZING NOTES, on the same rule as the v85 and v86 blocks above.
+   FB_CD, FB_N and FB_R are the owner's figures: 30 seconds, ten blasts, three
+   tiles. FB_DM and FB_SPL are the tower napalm's own bomblet (32 over 1.3 tiles)
+   rounded to 30, because a unit ability that hit harder per blast than the
+   army-wide call-down would make the call-down pointless.
+   FB_BURN is 8 against the tower napalm's 3, which is the whole of "prolonged":
+   the RATE is the same constant for both, so the Firebomb's field is not a hotter
+   fire, it is a fire that stays.
+   SCORCH_DPS is deliberately under GROUND_DPS. Scorched Earth fires on every hit
+   and the call-down fires once, so the passive has to be worth less per tile or
+   it is simply a better napalm on a 1.6-second reload.
+   FOUNDRY_HP is 0.10 against the Garage upgrade's 0.20, and it stacks with it:
+   the upgrade is a Garage that builds better, the Foundry is an army that does.
+   POUR_COST is half the vehicle's plastic again, which is the price of the ~14
+   build-seconds it skips. */
+const FB_CD=30;        // Napalm Blast: seconds before it may be used again, on the new u.abCool
+const FB_N=10;         // ...blasts per use
+const FB_R=3;          // ...scattered on random tiles within this many tiles of the helicopter
+const FB_DM=30;        // ...each one hitting this hard
+const FB_SPL=1.3;      // ...over this radius
+const FB_BURN=8;       // ...and the PROLONGED burn each one leaves on the ground
+const SCORCH_T=4;      // Scorched Earth: seconds the ground burns under one of the Firebomb's hits
+const SCORCH_DPS=3;    // ...and how hard that fire burns
+const GROUND_DPS=4.3;  // the shared ground-fire rate: the tower's napalm and the Blast both burn at it
+const NAPALM_T=3;      // ...and how long the TOWER's napalm leaves a tile burning, against FB_BURN
+const FOUNDRY_HP=0.10; // Foundry: the hull a Garage vehicle gains for being built while one stands
+const POUR_COST=0.5;   // Pour: the surcharge, as a share of the poured vehicle's plastic cost
+const POUR_CD=45;      // ...and the cooldown, on the building's existing abilityCool
+/* The four BOT thresholds, named here on the same rule as v86's and LOCK_AI_FLOOR's. */
+const FB_AI_CLUMP=3;   // Napalm Blast: enemy ground units inside the disc before a bot empties its racks...
+const FB_AI_OWN=1;     // ...and the most of its OWN it will accept standing in the fire
+const AI_POUR_BANK=900;// Pour: the plastic a bot must be holding before it buys time with it...
+const AI_POUR_N=2;     // ...and how many Garages must have something queued to be worth the cooldown
 /* Help-panel slots. The static help markup carries <span data-tune="key"> holes;
    applyHelpTune fills them once at boot. Pure UI: nothing here is hashed. */
 const HELP_TUNE={
@@ -1048,6 +1091,10 @@ const HELP_TUNE={
  cpostR:()=>CPOST_R, cpostVet:()=>Math.round((1-CPOST_VET)*100),
  regroupHp:()=>Math.round(REGROUP_HP*100), regroupCd:()=>REGROUP_CD,
  dropP:()=>DROP_P, dropE:()=>DROP_E,
+ /* v87: the Tan numbers. Same rule as every slot above it. */
+ fbCd:()=>FB_CD, fbN:()=>FB_N, fbR:()=>FB_R, fbDm:()=>FB_DM, fbBurn:()=>FB_BURN,
+ scorchT:()=>SCORCH_T, scorchDps:()=>SCORCH_DPS, groundDps:()=>GROUND_DPS,
+ foundryHp:()=>Math.round(FOUNDRY_HP*100), pourCost:()=>Math.round(POUR_COST*100), pourCd:()=>POUR_CD,
  plateRow:()=>wcRoster('b')
 };
 function helpTuneValue(k){const f=HELP_TUNE[k];return f?f():null}
@@ -1980,7 +2027,7 @@ function updateMineAmbience(){
    array rather than an empty string for the same reason uu is already []. */
 const FAC={
  green:{name:'Green Army',color:'#4caf50',mods:{cost:.92,hp:1,dmg:1,speed:1},desc:'Balanced forces, 8% cheaper everything.',uu:['sarge','mortar','cmdtruck','balloon'],ub:['radar','cmdpost']},
- tan:{name:'Tan Army',color:'#d2b074',mods:{cost:1,hp:1,dmg:1.15,speed:.95},desc:'+15% damage, slightly slower.',uu:['flamer','bulltank'],ub:['dump']},
+ tan:{name:'Tan Army',color:'#d2b074',mods:{cost:1,hp:1,dmg:1.15,speed:.95},desc:'+15% damage, slightly slower.',uu:['flamer','bulltank','firebomb'],ub:['dump','foundry']},
  gray:{name:'Gray Army',color:'#9b9ba3',mods:{cost:1,hp:1.2,dmg:.95,speed:.92},desc:'+20% toughness, slightly slower.',uu:['sniper','arty'],ub:['bunker']},
  blue:{name:'Blue Army',color:'#4a7de0',mods:{cost:1,hp:.9,dmg:1,speed:1.15},desc:'+15% speed, lighter plastic (-10% HP).',uu:['bike','chinook','runner'],ub:['turbine','fwdpad']},
  bug:{name:'Wildlife',color:'#6e5a2a',mods:{cost:1,hp:1,dmg:1,speed:1},desc:'',uu:[],ub:[]}
@@ -2056,6 +2103,16 @@ const U={
  bike:{n:'Scout Bike',a:'bike',hp:70,dm:7,rg:3.5,rt:.625,sp:5.1,vi:9,cp:90,ce:5,bt:6,w:'b',evade:1,flat:1,tech:'u_bike',d:`Blazing fast scout. Evasive: takes ${Math.round(EVADE_RED*100)}% less damage on any tick he actually moved. Flat Out adds ${Math.round(FLAT_SPD*100)}% speed and +${FLAT_VI} sight, but he cannot fire or be sent at a target`},
  // v30 additions - table values are pre-load-scale baselines; effective (in-game) numbers in the comments
  apache:{n:'Apache',a:'heli',hp:244,dm:66.9,rg:4.8,rt:1.7,sp:3.8,vi:8,cp:300,ce:110,bt:16,w:'r',spl:.75,ex:1,fly:1,tech:'u_apache',d:'Rocket attack chopper'}, // 170 HP / 30 dmg effective
+ /* v87 TAN, Helipad slot. Weapon row 'f', which is the row Tan already lives on -
+    the Flamethrower's hose and the Bull's hull flamer both score there - so the
+    Firebomb reads as the same army's idea carried into the air rather than as a
+    second Apache. Row 'f' is 1.35 into infantry and 0.45 into heavy armour, so it
+    is a soft-target weapon that a tank column ignores; that is the point of it.
+    Priced above the Observation Balloon so it lands in the top supply rank without
+    shoving anything below it across a boundary - see the note on SUP_U.
+    abCd is the first entry of its kind in this table: a UNIT ability with a clock.
+    See the machinery note at updateUnit. */
+ firebomb:{n:'Firebomb Heli',a:'heli',hp:210,dm:52,rg:4.2,rt:1.6,sp:3.6,vi:8,cp:280,ce:90,bt:17,w:'f',spl:1,ex:1,fly:1,scorch:1,fbomb:1,abCd:FB_CD,tech:'u_firebomb',d:`Sows fire from the air. Scorched Earth leaves the ground burning for ${SCORCH_T}s under everything it hits. Napalm Blast drops ${FB_N} firebombs on random tiles within ${FB_R} of itself, each leaving a ${FB_BURN}s fire that burns YOUR men too — ${FB_CD}s cooldown`},
  apc:{n:'APC',a:'apc',hp:287,dm:0,rg:0,rt:0,sp:2.3,vi:6,cp:260,ce:40,bt:14,w:0,rad:.46,cap:10,shield:1,tech:'u_apc',d:'Carries 10 infantry (right-click to load, U to unload). Shields itself & nearby infantry (-25% damage); troops bail out at 85% HP if destroyed'}, // 220 HP effective
  // v46: Blue's exclusive, replacing the Gunship. Unarmed tandem-rotor transport - the
  // APC's hull literal (220 effective), the fastest chopper in the game, 15 seats, and a
@@ -2141,6 +2198,14 @@ const B={
     in the game. Scramble is the timed half, on the building's existing upT and
     abilityCool exactly as Overdrive and Lockdown already are. */
  fwdpad:{n:'Forward Pad',hp:480,sz:2,cp:230,ce:70,bt:12,vi:6,req:'garage',tech:'b_fwdpad',pad:1,scram:1,d:`Repairs friendly aircraft within ${PAD_R} tiles at ${PAD_REP} HP/s — the only thing in the game that does. Scramble gives every aircraft you own +${Math.round(SCRAM_SPD*100)}% speed for ${SCRAM_T}s`},
+ /* v87 TAN, second structure. The passive is a PRODUCTION buff rather than an
+    aura, which is what "produced while it stands" means: the hull is baked in at
+    makeUnit and the vehicle keeps it if the Foundry burns down an hour later. It
+    rides the same door the Garage upgrade's unitBuff already uses, and stacks with
+    it - the upgrade is a Garage that builds better, the Foundry is an army that
+    does. Pour is the timed half, on the abilityCool every other structure ability
+    already uses, and it is instantaneous, so it writes no upT. */
+ foundry:{n:'Foundry',hp:660,sz:2,cp:260,ce:50,bt:13,vi:5,req:'garage',tech:'b_foundry',foundry:1,pour:1,d:`Vehicles built while it stands roll out with +${Math.round(FOUNDRY_HP*100)}% hull, for good. Pour finishes the vehicle at the front of every Garage queue at once, for ${Math.round(POUR_COST*100)}% of its plastic on top, on a ${POUR_CD}s cooldown`},
  /* v86 GREEN, second structure. Both halves are the same radius and the same
     scan, which is why they share CPOST_R: a post is a place your army gets better
     at being, not two overlapping effects with different reaches. The passive is a
@@ -2250,7 +2315,7 @@ function supQueued(p){let n=0;for(const b of p.blds)for(const k of (b.queue||[])
 function supFree(p){return supCap(p)-supUsed(p)-supQueued(p);}
 const FAC_INF={green:['sarge','mortar'],tan:['flamer'],gray:['sniper'],blue:['runner']}; // v85: Blue's Barracks slot was the one empty cell in this table
 const FAC_VEH={green:['cmdtruck'],tan:['bulltank'],gray:['arty'],blue:['bike']}; // v86: Green's Garage slot was one of the two empty cells left in this pair
-const FAC_AIR={green:['balloon'],tan:[],gray:[],blue:['chinook']};
+const FAC_AIR={green:['balloon'],tan:['firebomb'],gray:[],blue:['chinook']}; // v87: Tan's Helipad slot fills, leaving Gray's as the last empty cell in the three tables
 
 /* ---------------- RESEARCH CATALOG ----------------
    Flat tech tree run from the Research Lab. Every entry is available from the
@@ -4482,7 +4547,24 @@ function makeUnit(key,p,x,y,srcBld){
  // (only applies to real production, i.e. when srcBld is the upgraded building.)
  let buff=1;
  if(srcBld&&srcBld.upg&&UPGRADES[srcBld.key]&&UPGRADES[srcBld.key].unitBuff)buff=1+UPGRADES[srcBld.key].unitBuff;
- const hp=Math.round(t.hp*m.hp*buff);
+ /* v87 THE FOUNDRY. Hull only, and only for what the GARAGE builds - the file's
+    own word for "vehicle" is "the thing the Garage produces", so prodBldOf is the
+    test rather than a hand-written class list that would have to be revisited
+    every time an archetype is added. Multiplies WITH the Garage upgrade rather
+    than replacing it: the upgrade is a Garage that builds better, the Foundry is
+    an army that does.
+    It is deliberately NOT gated on srcBld the way the upgrade above is. The
+    upgrade belongs to one building, so it can only mean anything when that
+    building is the producer; the Foundry belongs to the army, and "produced while
+    it stands" is a fact about the army's industry rather than about which Garage
+    the order went to.
+    Determinism: this reads p.blds, which every client agrees about (prog and hp
+    are both hashed), and it lands on hp as well as mhp - so a client that
+    disagreed would diverge in hashState on the very first tick rather than
+    silently carrying a different maximum. */
+ let fhp=1;
+ if(prodBldOf(key)==='garage'&&p.blds&&p.blds.some(b=>b.t.foundry&&b.prog>=1&&b.hp>0))fhp=1+FOUNDRY_HP;
+ const hp=Math.round(t.hp*m.hp*buff*fhp);
  const u={id:EID++,kind:'unit',key,t,p,x,y,hp,mhp:hp,
   dm:t.dm*m.dmg*buff,sp:t.sp*m.speed,face:srand()*6.28,tface:0,
   upg:buff>1,
@@ -4533,6 +4615,13 @@ function makeUnit(key,p,x,y,srcBld){
     off the unit and does not need G.tick to interpret it. */
  if(t.bcast)u.bcast=false;
  if(t.balloon)u.fuel=BALLOON_FUEL;
+ /* v87 THE FIRST UNIT COOLDOWN. Written only onto rows that declare one, exactly
+    as every ability field above it is, so a match with no Firebomb Heli in it
+    snapshots byte-identically to a v86 match. The DURATION lives on the table row
+    (t.abCd) rather than in the ability's own code, which is what makes this
+    machinery rather than one unit's special case: v88's Paint declares 20 and
+    needs nothing else. The building pair it mirrors is b.abilityCool. */
+ if(t.abCd)u.abCool=0;
  if(t.assault)u.aslt=false;
  if(t.cap)u.fo=false;
  // machine gunner faces its entrench cone forward by default
@@ -5545,6 +5634,13 @@ function refreshSelPanel(){
   if(e.kind==='unit'&&e.t.bcast)sig+='|bc'+(e.bcast?1:0);
   if(e.kind==='bld'&&e.t.regroup)sig+='|rg'+Math.ceil(e.abilityCool||0);
   if(e.kind==='unit'&&e.t.balloon)sig+='|fu'+Math.ceil(e.fuel||0);
+  /* v87: the unit cooldown and the Foundry's. Both are COUNTDOWNS printed on their
+     own buttons, so both have to move the signature once a second or the readout
+     freezes at whatever it said when the panel last rebuilt - the trap the
+     Overdrive pair records. Pour's readout also counts what is queued elsewhere in
+     the base, so that count rides along too. */
+  if(e.kind==='unit'&&e.t.abCd)sig+='|ab'+Math.ceil(e.abCool||0);
+  if(e.kind==='bld'&&e.t.pour){let n=0;for(const g of e.p.blds)if(g.key==='garage'&&g.prog>=1&&g.queue&&g.queue.length)n++;sig+='|po'+Math.ceil(e.abilityCool||0)+'_'+n;}
  }
  // radio operators inside a multi-unit selection: track their ability state too
  // machine gunners inside a multi-unit selection: track their entrench state
@@ -5555,6 +5651,8 @@ function refreshSelPanel(){
  if(G.sel.length>1)for(const e of G.sel)if(e.kind==='unit'&&e.t.sprint)sig+='|gp'+e.id+(e.spr?1:0);
  // v86: and Command Trucks, which get the same group button for the same reason
  if(G.sel.length>1)for(const e of G.sel)if(e.kind==='unit'&&e.t.bcast)sig+='|gb'+e.id+(e.bcast?1:0);
+ // v87: and Firebombs, whose group button counts only the ones off cooldown
+ if(G.sel.length>1)for(const e of G.sel)if(e.kind==='unit'&&e.t.fbomb)sig+='|gf'+e.id+((e.abCool||0)>0?1:0);
  // any selected building: re-render as its research project (lab or production) progresses / tech set grows
  if(G.sel.length===1){const e=G.sel[0];if(e.kind==='bld'&&(e.t.lab||e.t.prod)){sig+='|res'+(e.techCur||'-')+':'+Math.round(e.techT*4)+':'+e.p.tech.size+':'+Math.floor(e.p.res.p)+'_'+Math.floor(e.p.res.e);}}
  if(sig===lastSelSig)return;lastSelSig=sig;
@@ -5626,6 +5724,25 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>Scramble</b><br><span style="font-size:10px;opacity:.75">${live?Math.ceil(e.upT)+'s remaining':(ready?`+${Math.round(SCRAM_SPD*100)}% speed to every aircraft, ${SCRAM_T}s`:Math.ceil(e.abilityCool)+'s cooldown')}</span>`;
    bt.title=`Scramble the flight: every aircraft you own, anywhere on the map, moves ${Math.round(SCRAM_SPD*100)}% faster for ${SCRAM_T} seconds. ${SCRAM_CD}-second cooldown.`;
    bt.onclick=()=>{submitCmd('scramble',{bid:e.id});sClick();};
+   pb.appendChild(bt);
+  }
+  /* --- Foundry: pour, added at v87 ---
+     The readout counts the Garages that would actually be finished, because "Pour"
+     over an empty queue is a wasted minute of cooldown and the button should say
+     so before it is pressed rather than after. Client-side arithmetic only: the
+     command re-derives the same list and is what decides. */
+  if(e.kind==='bld'&&e.p===G.human&&e.t.pour&&e.prog>=1){
+   const ready=(e.abilityCool||0)<=0;
+   let n87=0,fee87=0;
+   for(const g of e.p.blds){
+    if(g.key!=='garage'||g.prog<1||g.hp<=0||!g.queue||!g.queue.length)continue;
+    n87++;fee87+=Math.round(ucost(e.p,g.queue[0]).p*POUR_COST);
+   }
+   const bt=document.createElement('button');bt.className='bb';
+   bt.disabled=!ready||!n87;
+   bt.innerHTML=`<b>Pour (${n87})</b><br><span style="font-size:10px;opacity:.75">${ready?(n87?`finish ${n87} vehicle${n87===1?'':'s'} now for ⬢${fee87}`:'no Garage has anything queued'):Math.ceil(e.abilityCool)+'s cooldown'}</span>`;
+   bt.title=`Finish the vehicle at the front of every Garage queue at once, for ${Math.round(POUR_COST*100)}% of each one's plastic on top. ${POUR_CD}-second cooldown.`;
+   bt.onclick=()=>{if(!ready||!n87)return;submitCmd('pour',{bid:e.id});sClick();};
    pb.appendChild(bt);
   }
   /* --- Command Post: regroup, added at v86 ---
@@ -5842,6 +5959,20 @@ function refreshSelPanel(){
    bt.onclick=()=>{submitCmd('sprint',{ids:[e.id],on:!e.spr});sClick();};
    pb.appendChild(bt);
   }
+  /* --- Firebomb Heli: napalm blast, added at v87 ---
+     The first unit button in the file with a cooldown on it, so it is also the
+     first that reads a clock off the UNIT rather than off a building. Shaped like
+     the Radar Tent's, which is the closest existing thing: a live readout when it
+     is recharging and the effect when it is not. */
+  if(e.kind==='unit'&&e.p===G.human&&e.t.fbomb){
+   const ready=(e.abCool||0)<=0;
+   const bt=document.createElement('button');bt.className='bb';
+   bt.disabled=!ready;
+   bt.innerHTML=`<b>🔥 Napalm Blast</b><br><span style="font-size:10px;opacity:.75">${ready?`${FB_N} firebombs within ${FB_R}; the fire burns your men too`:Math.ceil(e.abCool)+'s cooldown'}</span>`;
+   bt.title=`Empty the racks: ${FB_N} firebombs on random tiles within ${FB_R} of the helicopter, each leaving ${FB_BURN} seconds of fire that burns FRIENDLY units and structures as readily as enemy ones. ${FB_CD}-second cooldown.`;
+   bt.onclick=()=>{if(!ready)return;submitCmd('napalmblast',{ids:[e.id]});sClick();};
+   pb.appendChild(bt);
+  }
   /* --- Command Truck: broadcast, added at v86 --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.bcast){
    const bt=document.createElement('button');bt.className='bb'+(e.bcast?' sel':'');
@@ -5929,6 +6060,18 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${anyV?'Close Valve':'Pressure Valve'} (${hoses.length})</b><br><span style="font-size:10px;opacity:.75">+${Math.round(VALVE_DMG*100)}% damage, ${Math.round(VALVE_BACK*100)}% of it back on them</span>`;
    bt.title='Open or close the valve on every selected flamethrower.';
    bt.onclick=()=>{submitCmd('valve',{ids:hoses.map(g=>g.id),on:!anyV});sClick();};
+   pb.appendChild(bt);
+  }
+  /* v87: Firebombs get a group button on the same argument the Bulls below do -
+     the whole value of ten firebombs is that they land at one moment. Only the
+     ones that are actually off cooldown are counted or sent, so the button says
+     how many will fire rather than how many are selected. */
+  const fbs=G.watch?[]:G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t.fbomb&&(s.abCool||0)<=0);
+  if(fbs.length){
+   const bt=document.createElement('button');bt.className='bb';
+   bt.innerHTML=`<b>🔥 Napalm Blast (${fbs.length})</b><br><span style="font-size:10px;opacity:.75">${FB_N} firebombs each, and the fire burns your men too</span>`;
+   bt.title='Empty the racks on every selected Firebomb Heli that is off cooldown.';
+   bt.onclick=()=>{submitCmd('napalmblast',{ids:fbs.map(g=>g.id)});sClick();};
    pb.appendChild(bt);
   }
   const bulls=G.watch?[]:G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t.throttle);
@@ -7370,6 +7513,15 @@ function fireAt(u,tgt){
      him exactly as any other damage would be. */
   const dealt80=splash(tgt.x,tgt.y,u.t.spl,dm,'fire',u,wc,u.t.cook?COOK_DPS:0);
   if(u.t.valve&&u.valve&&dealt80>0)applyDmg(u,dealt80*VALVE_BACK,'f',null);
+  /* --- v87 SCORCHED EARTH ---
+     Keyed on t.scorch, so it belongs to the Firebomb Heli and not to weapon row
+     'f' - exactly as Cook-Off above it is keyed on t.cook rather than on the row
+     the Flamethrower, the Bull's hull flamer and the tower's napalm all share.
+     The two are deliberately different weapons: Cook-Off sets the TARGET alight
+     and moves with him, Scorched Earth sets the GROUND alight and stays where the
+     bomb fell, so a target that walks away walks out of it and one that holds its
+     position does not. */
+  if(u.t.scorch)scorchGround(u,tgt.x,tgt.y);
  } else if(w==='g'){
   // GRENADE: a hand-lobbed frag that arcs to the target and bursts with minor splash.
   // Modeled as a fast, high arc projectile with no homing (it lands where aimed).
@@ -7508,7 +7660,7 @@ const DROP_ICON='\ud83d\udce6'; // v86: the Supply Drop's crate
    is a hand-kept copy of the table's own membership: a fourth mode already made
    that chain a nested ternary, and a fifth would have made it wrong. */
 const RADIO_ABILITIES=[
- {mode:'napalm',  icon:'\ud83d\udd25',name:'Napalm Strike',   short:'Napalm',  panel:'Heavy fire + burn, '+NAPALM_BOX+'\u00d7'+NAPALM_BOX+' (needs vision)', vision:true, hint:'Click a target anywhere you have vision.'},
+ {mode:'napalm',  icon:'\ud83d\udd25',name:'Napalm Strike',   short:'Napalm',  panel:'Heavy fire + burn, '+NAPALM_BOX+'\u00d7'+NAPALM_BOX+' (needs vision)', vision:true, fac:'tan', hint:'Click a target anywhere you have vision.'}, // v87: Tan's alone now. It did not move to a second table or gain a second mechanism - it gained the field v85 put here for exactly this
  {mode:'barrage', icon:'\ud83c\udfaf',name:'Artillery Barrage',short:'Barrage',panel:BARRAGE_N+' heavy shells, '+BARRAGE_BOX+'\u00d7'+BARRAGE_BOX+' (needs vision)', vision:true, hint:'Click a target anywhere you have vision.'},
  {mode:'paradrop',icon:'\ud83e\ude82',name:'Paradrop',        short:'Paradrop',panel:PARA_N+' Paratroopers anywhere, even in fog',      vision:false, hint:'Click anywhere (even in fog) to drop your squad.'},
  {mode:'lift',    icon:LIFT_ICON,     name:'Rapid Redeploy',  short:'Redeploy',panel:'Airlift up to '+LIFT_MAX+' SELECTED infantry anywhere', vision:false, fac:'blue', hint:'Click anywhere (even in fog) to airlift the selected infantry.'},
@@ -7609,6 +7761,43 @@ function landLifted(d){
  u.garrisoned=false;u.x=lx;u.y=ly;u.state='idle';u.anchor={x:lx,y:ly};u.dest=null;u.savedDest=null;u.stuck=0;u.lastProg={x:lx,y:ly};
  spawnSmoke(lx,ly,4);spawnShrapnel(lx,ly,'#d9cf8f',4,.6);
 }
+/* --- THE FIREBOMB HELI'S TWO FIRES (added at v87) ---
+   Both are the napalm strike's own shape with different fields, which is the whole
+   reason napalmBurn was generalised rather than copied: one sweep, one rate
+   constant, one set of FX, and two weapons that differ only in what they say about
+   duration and about whose men are standing in it.
+
+   SCORCHED EARTH appends to a strike this helicopter already owns rather than
+   pushing a new one per shot. A Firebomb reloads every 1.6s and its fire lasts
+   SCORCH_T, so a per-shot strike would leave three live entries per helicopter and
+   the sweep is O(strikes x entities); appending keeps it at one. Expired cells are
+   spliced out in updateStrikes, so the entry is removed when its last tile goes
+   out rather than on a schedule it would have to be told about.
+
+   NAPALM BLAST is its own entry every time, because it is a one-shot on a clock
+   and merging two of them would let the second use extend the first's fire. */
+function scorchGround(u,x,y){
+ let s=null;
+ for(const q of G.strikes)if(q.kind==='fbomb'&&q.scorch&&q.owner===u){s=q;break}
+ if(!s){s={kind:'fbomb',scorch:1,owner:u,pi:u.p.i,cells:[],i:0,t:0,every:0.045,burn:[],bdps:SCORCH_DPS,gnd:1};G.strikes.push(s)}
+ s.burn.push({x,y,until:s.t+SCORCH_T});
+ stampScorch(x,y,6);
+}
+/* The blast pattern is drawn from srand(), the seeded sim stream, exactly as the
+   tower's napalm grid and the barrage's scatter are. Naming the host RNG here
+   would trip the banned-token lint on its own prose, which is the v58 trap. */
+function napalmBlast(u){
+ const cells=[];
+ for(let i=0;i<FB_N;i++){
+  const a=srand()*6.28, r=Math.sqrt(srand())*FB_R; // sqrt keeps the scatter even across the disc rather than clustered at the hub
+  cells.push({x:clamp(u.x+dcos(a)*r,1,G.map.N-2),y:clamp(u.y+dsin(a)*r,1,G.map.N-2)});
+ }
+ G.strikes.push({kind:'fbomb',owner:u,pi:u.p.i,cells,i:0,t:0,every:0.045,burn:[],bdps:GROUND_DPS,ff:1,gnd:1,dm:FB_DM,spl:FB_SPL,until:FB_BURN});
+ u.abCool=(G&&G.test)?0:u.t.abCd;
+ sfxWhoosh(u.x,u.y);
+ if(u.p.human)msg(`Napalm Blast — ${FB_N} firebombs away. Get your own men clear.`);
+ return true;
+}
 /* SUPPLY DROP (v86, Green). Two crates on canopies, one carrying plastic and one
    carrying electricity, and nothing else about it is a strike at all: the crates
    OUTLIVE the call-down. They sit on the ground with no expiry until one of the
@@ -7672,16 +7861,38 @@ function dropTrooper(p,x,y){
 // still-burning cell (overlapping cells stack, so the heart of the field is
 // lethal), plus light flame FX. Mirrors splash's defensive slice() since
 // applyDmg can kill mid-iteration.
+/* v87: THREE fields generalise this, and every default reproduces the v30 napalm
+   exactly, so the tower's call-down is untouched.
+     s.bdps  the burn rate, GROUND_DPS unless the caller says otherwise. It was a
+             bare 4.3 here; naming it was forced by there now being two callers.
+     s.ff    friendly fire. The Firebomb's Blast burns everyone and the tower's
+             napalm burns the enemy, which is the difference between an area
+             denial weapon you drop on your own line and one you call down on
+             theirs. With ff set the allied test disappears entirely rather than
+             being inverted - "indiscriminate" is the absence of a side, not the
+             other side.
+     s.gnd   this fire is ON THE GROUND and cannot reach an aircraft. Set only by
+             the Firebomb's two strikes, and set at all because the aircraft that
+             dropped the fire is hovering directly over it: without this an
+             indiscriminate burn would set light to the helicopter that laid it.
+             The tower's napalm is deliberately NOT given it - changing what the
+             call-down does to a loitering aircraft is not this release's business.
+   The one behaviour change to the existing path is the null guard on s.owner. A
+   strike outlives the entity that fired it, and loadState resolves a dead owner to
+   null, so a snapshot taken after the tower died and reloaded mid-burn used to
+   throw inside update() and take the tick with it. */
 function napalmBurn(s,dt){
  const cs=s.burn;if(!cs||!cs.length)return;
- const dm=4.3*dt;
+ const dm=(s.bdps!=null?s.bdps:GROUND_DPS)*dt;
+ const ff=!!s.ff, gnd=!!s.gnd, own=s.owner;
+ const skip=e=>ff?(gnd&&e.t&&e.t.fly):(!own||!own.p||allied(e.p,own.p));
  for(const e of G.units.slice()){
-  if(e.garrisoned||e.hp<=0||allied(e.p,s.owner.p))continue;
-  for(const bc of cs){if(s.t>=bc.until)continue;if(dhyp(e.x-bc.x,e.y-bc.y)<1.2){applyDmg(e,dm,'fire',s.owner);if(e.hp<=0)break;}}
+  if(e.garrisoned||e.hp<=0||skip(e))continue;
+  for(const bc of cs){if(s.t>=bc.until)continue;if(dhyp(e.x-bc.x,e.y-bc.y)<1.2){applyDmg(e,dm,'fire',own,'f');if(e.hp<=0)break;}}
  }
  for(const b of G.blds.slice()){
-  if(b.hp<=0||allied(b.p,s.owner.p))continue;
-  for(const bc of cs){if(s.t>=bc.until)continue;if(dhyp(b.x-bc.x,b.y-bc.y)<1.2+b.sz*.5){applyDmg(b,dm,'fire',s.owner);if(b.hp<=0)break;}}
+  if(b.hp<=0||(ff?false:(!own||!own.p||allied(b.p,own.p))))continue;
+  for(const bc of cs){if(s.t>=bc.until)continue;if(dhyp(b.x-bc.x,b.y-bc.y)<1.2+b.sz*.5){applyDmg(b,dm,'fire',own,'f');if(b.hp<=0)break;}}
  }
  for(const bc of cs)if(s.t<bc.until&&Math.random()<dt*.35)spawnFlame(bc.x,bc.y,bc.x+(Math.random()-.5),bc.y-(Math.random()*.8));
 }
@@ -7698,10 +7909,10 @@ function updateStrikes(dt){
     spawnSmoke(cell.x,cell.y,2);stampScorch(cell.x,cell.y,7);
     if(s.i%6===0)spawnExplosion(cell.x,cell.y,.8);
     if(s.i%10===0)shakeAt(cell.x,cell.y,2.5);
-    if(s.burn)s.burn.push({x:cell.x,y:cell.y,until:s.t+3});
+    if(s.burn)s.burn.push({x:cell.x,y:cell.y,until:s.t+NAPALM_T});
    }
-   napalmBurn(s,dt); // v30: struck ground keeps burning for 3s per cell
-   if(s.i>=s.cells.length && s.t>s.cells.length*s.every+3.4)G.strikes.splice(i,1);
+   napalmBurn(s,dt); // v30: struck ground keeps burning for NAPALM_T per cell (v87: named, because the Firebomb burns for longer off the same machinery)
+   if(s.i>=s.cells.length && s.t>s.cells.length*s.every+NAPALM_T+0.4)G.strikes.splice(i,1);
   } else if(s.kind==='barrage'){
    /* one shell per scheduled impact time. splash already paints an explosion, a
       scorch and a shake; the block below is the oversized dressing on top. */
@@ -7724,6 +7935,24 @@ function updateStrikes(dt){
    // v85: same schedule as the paradrop, but the men already exist - this puts them back
    for(const d of s.drops){if(!d.done && s.t>=d.delay){d.done=true;landLifted(d);}}
    if(s.drops.every(d=>d.done))G.strikes.splice(i,1);
+  } else if(s.kind==='fbomb'){
+   /* v87: the same cadence the tower's napalm drops on. A scorch entry carries no
+      cells at all, so this loop does nothing for it and the burn list alone keeps
+      the entry alive - which is what lets a helicopter append to it shot by shot. */
+   while(s.i<s.cells.length && s.t>=s.i*s.every){
+    const cell=s.cells[s.i++];
+    if(s.owner&&s.owner.hp>0)splash(cell.x,cell.y,s.spl,s.dm,'fire',s.owner,'f');
+    spawnFlame(cell.x,cell.y,cell.x,cell.y-1);spawnFlame(cell.x,cell.y,cell.x+(Math.random()-.5),cell.y-.6);
+    spawnSmoke(cell.x,cell.y,2);stampScorch(cell.x,cell.y,7);
+    if(s.i%3===0)spawnExplosion(cell.x,cell.y,.9);
+    if(s.i===FB_N)shakeAt(cell.x,cell.y,3);
+    s.burn.push({x:cell.x,y:cell.y,until:s.t+s.until});
+   }
+   napalmBurn(s,dt);
+   // burnt-out tiles leave the list, so the entry dies with its last fire rather
+   // than on a schedule, and an appended scorch cell extends it by itself
+   for(let j=s.burn.length-1;j>=0;j--)if(s.t>=s.burn[j].until)s.burn.splice(j,1);
+   if(s.i>=s.cells.length&&!s.burn.length)G.strikes.splice(i,1);
   } else if(s.kind==='supply'){
    // v86: the strike's whole job is the fall. What it leaves behind is a crate in
    // G.crates, which has no clock at all and is not this list's business afterwards
@@ -8072,6 +8301,7 @@ function updateUnit(u,dt){
     the two windows are SARGE_CALM and HURT_WINDOW. */
  if(u.calmT<999)u.calmT+=dt;
  if(u.shotT!=null&&u.shotT<999)u.shotT+=dt; // v81: seconds since he last fired, read by the concealment test
+ if(u.abCool>0)u.abCool-=dt; // v87: the unit ability clock, ticked here for the same reason updateBld ticks b.abilityCool for EVERY building - a timer parked inside a branch never runs out
  /* --- v86 THE BALLOON'S GAS ---
     Counted DOWN in seconds on the unit, so the remaining life reads straight off
     u.fuel with no need to know what tick it launched on, and a snapshot restores
@@ -9386,7 +9616,14 @@ function aiTick(p){
     if(e3.t.a==='inf')soft++;else hard++;
    }
    for(const q3 of foes)for(const b3 of q3.blds){if(b3.hp>0&&b3.key!=='barricade'&&dhyp(b3.x-nt.x,b3.y-nt.y)<=5)hard++;}
-   if(hard>soft)radioBarrage(radio,nt.x,nt.y);else radioNapalm(radio,nt.x,nt.y);
+   /* v87: the bot picked between these two munitions without ever asking whether
+      it owns them, which was harmless while both were shared and is not now that
+      napalm is Tan's. radioAllowed is the same gate execCmd refuses a human at, so
+      a Green, Gray or Blue bot simply shells a clump it would once have burned.
+      Written as a fallback rather than as a second branch because the barrage is
+      the munition every army has: there is no case where a bot has napalm and not
+      the barrage. */
+   if(hard>soft||!radioAllowed(p,'napalm'))radioBarrage(radio,nt.x,nt.y);else radioNapalm(radio,nt.x,nt.y);
    fired=true;
   }
   else if(ai.t>ai.radioReadyT+AI_RADIO_WAIT){
@@ -9803,6 +10040,35 @@ function aiTick(p){
   if(!u.t.bail||u.garrisoned||u.hp<=0)continue;
   if(u.fuel!=null&&u.fuel<=BAIL_AI_T)balloonDown(u,true);
  }
+ /* --- v87: the two Tan rules.
+    NAPALM BLAST is scored the way the tower's own strike is - on a CLUMP - because
+    that is what it is, and it is the same trap in miniature: an area weapon spent
+    on one man is spent. The count is of enemies inside the blast disc, and the
+    friendly count is a veto rather than a discount, since the burn does not care
+    whose men are standing in it and a bot that traded evenly would be trading its
+    own line for the enemy's at a helicopter's price. Read live off positions, so
+    there is nothing to remember and nothing to expire.
+    POUR is spent on a bot that is BANKED rather than on one that is desperate: the
+    surcharge buys time, and time is only worth plastic to somebody who has plastic
+    spare. A poor bot pouring is a poor bot buying nothing twice. */
+ for(const u of p.units){
+  if(!u.t.fbomb||u.garrisoned||u.hp<=0||(u.abCool||0)>0)continue;
+  let foe87=0,own87=0;
+  for(const e of G.units){
+   if(e.hp<=0||e.garrisoned||e.t.fly)continue;
+   if((e.x-u.x)**2+(e.y-u.y)**2>FB_R*FB_R)continue;
+   if(allied(e.p,u.p))own87++;else foe87++;
+  }
+  if(foe87>=FB_AI_CLUMP&&own87<=FB_AI_OWN)napalmBlast(u);
+ }
+ for(const b of p.blds){
+  if(!b.t.pour||b.prog<1||b.hp<=0||b.abilityCool>0)continue;
+  if(p.res.p<AI_POUR_BANK)continue;
+  let q87=0;
+  for(const g of p.blds)if(g.key==='garage'&&g.prog>=1&&g.hp>0&&g.queue&&g.queue.length)q87++;
+  if(q87<AI_POUR_N)continue;
+  execCmd({op:'pour',pi:p.i,a:{bid:b.id}});
+ }
  const rad79=p.blds.find(b=>b.t.uplink&&b.prog>=1&&b.hp>0&&b.abilityCool<=0&&b.upT<=0);
  if(rad79){
   let hit79=0;
@@ -9861,7 +10127,7 @@ function aiResearch(p){
   ['u_tank','u_jeep','u_gunner','u_bazooka','u_grenadier','u_heli','u_aatruck','u_medic','u_apache','u_apc'].forEach(push); // v30: Apache replaces the retired Radio Operator; v48: +APC (transport doctrine)
   // 4) economy + defensive structure unlocks, this faction's OWN structure first (v63)
   for(const ub of (FAC[p.fac].ub||[]))if(B[ub]&&B[ub].tech)push(B[ub].tech);
-  ['b_generator','b_turbine','b_fwdpad','b_cmdpost','b_guardtower','b_radiotower','b_dump','b_bunker','b_radar'].forEach(push); // v48: +radio tower (napalm/paradrop call-downs). v85: +forward pad; techAvailable gates it to Blue, so the other three armies skip it exactly as they already skip the turbine. v86: +command post, gated to Green the same way
+  ['b_generator','b_turbine','b_fwdpad','b_cmdpost','b_foundry','b_guardtower','b_radiotower','b_dump','b_bunker','b_radar'].forEach(push); // v48: +radio tower (napalm/paradrop call-downs). v85: +forward pad; techAvailable gates it to Blue, so the other three armies skip it exactly as they already skip the turbine. v86: +command post, gated to Green the same way. v87: +foundry, gated to Tan
   // 5) upgrades — army buffs first, then the lab, then the rest
   ['up_barracks','up_garage','up_helipad','up_lab','up_guardtower','up_dump','up_bunker','up_generator','up_turbine'].forEach(push);
   ai.researchPlan=plan;
@@ -10620,12 +10886,13 @@ const SS=3; // bake supersample: crisp up to max zoom (2.4)
 const SPR={inf:{},veh:{},bld:{},done:false};
 const VEH_BOX={truck:[-18,-14,18,14],medic:[-18,-14,18,14],jeep:[-15,-13,15,13],bike:[-12,-9,12,9],
  tank:[-16,-13,16,13],bulltank:[-22,-17,22,17],aatruck:[-18,-13,18,13],arty:[-16,-13,17,13],heli:[-28,-11,16,11],chinook:[-38,-16,24,16],apache:[-32,-13,18,13],apc:[-20,-14,20,14],
- cmdtruck:[-20,-30,20,15],balloon:[-26,-52,26,20]}; // v86: both boxes are TALL - the Command Truck's aerials stand well above the cab and the balloon is mostly envelope
+ cmdtruck:[-20,-30,20,15],balloon:[-26,-52,26,20],
+ firebomb:[-34,-15,20,15]}; // v87: wider than the Huey's box - the belly racks hang outside the hull // v86: both boxes are TALL - the Command Truck's aerials stand well above the cab and the balloon is mostly envelope
 const BLD_BOX={hq:[-102,-80,102,86],barracks:[-70,-52,70,62],lab:[-70,-48,70,62],garage:[-102,-64,102,86],
  supply:[-68,-54,68,62],
  helipad:[-102,-30,102,86],generator:[-70,-34,70,62],turbine:[-38,-54,38,36],guardtower:[-38,-66,38,36],
  radar:[-70,-44,70,62],radiotower:[-70,-78,70,62],dump:[-70,-38,70,62],bunker:[-70,-34,70,62],outpost:[-70,-40,70,62],
- cmdpost:[-70,-56,70,62]};
+ cmdpost:[-70,-56,70,62],foundry:[-70,-58,70,62]};
 function bakeCell(x0,y0,x1,y1,paint){
  const w=x1-x0,h=y1-y0;
  const cv=document.createElement('canvas');cv.width=Math.ceil(w*SS);cv.height=Math.ceil(h*SS);
@@ -10828,6 +11095,29 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
    c.fillStyle='#1f1f25';rr(c,2.2,-8.4,3.6,1.8,.8);c.fill();rr(c,2.2,6.6,3.6,1.8,.8);c.fill();
    c.fillStyle='#ff7a3a';c.beginPath();c.arc(5.8,-7.5,.6,0,7);c.fill();c.beginPath();c.arc(5.8,7.5,.6,0,7);c.fill();
   }
+ }
+ else if(key==='firebomb'){
+  /* v87: a gunship hull carrying belly racks of firebombs. It has to be tellable
+     from the Apache at a glance, which the racks and the fat cabin do: the Apache
+     is a thin dart with rocket pods, this is a broad one with drums slung under
+     it. The rotor, like every other helicopter's, is live-painted in drawUnit. */
+  plLimb(c,shade(col,.72),-6,0,-27,-1,5);                                   // tail boom
+  c.fillStyle=shade(col,.6);c.beginPath();c.moveTo(-25,-1);c.lineTo(-31,-9);c.lineTo(-28,0);c.closePath();c.fill(); // tail fin
+  (function(){const g=c.createLinearGradient(-8,-9,8,9);
+   g.addColorStop(0,rgb(litc.r,litc.g,litc.b));g.addColorStop(.55,rgb(b.r,b.g,b.b));g.addColorStop(1,rgb(deep.r,deep.g,deep.b));
+   c.fillStyle=g;rr(c,-10,-8,25,16,6);c.fill();})();                         // fat cabin
+  c.fillStyle='#bfe9ff';rr(c,8,-5.5,6,11,3);c.fill();                        // canopy
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.55)';rr(c,9,-4.6,2.2,4.4,1);c.fill();c.restore();
+  // belly racks: two drums a side, painted in the incendiary's own orange
+  c.fillStyle='#2b2b31';rr(c,-6,-11.6,16,2.4,1);c.fill();rr(c,-6,9.2,16,2.4,1);c.fill();
+  for(const ry of [-13.4,10.6])for(const rx of [-3,4]){
+   plSphere(c,'#c8621f',rx,ry,2.6,.72,false);
+   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,200,120,.5)';c.beginPath();c.ellipse(rx-.9,ry-.7,1,.7,0,0,7);c.fill();c.restore();
+  }
+  // skids
+  c.strokeStyle='#3a3a42';c.lineWidth=1.6;
+  c.beginPath();c.moveTo(-6,-9.8);c.lineTo(9,-9.8);c.moveTo(-6,9.8);c.lineTo(9,9.8);c.stroke();
+  plRim(c,col,2,0,10,8);gloss(c,-2,-5,2.6,3.2);glint(c,10,-4,.9);
  }
  else if(key==='chinook'){ // v46: tandem-rotor troop transport - long slab hull, rear ramp, no weapon hardpoints
   c.scale(1.25,1.25);
@@ -11268,6 +11558,29 @@ function bldBody(c,k,col,sz){
   c.strokeStyle='rgba(44,44,50,.7)';c.lineWidth=1;
   c.beginPath();c.moveTo(0,body.topY-22);c.lineTo(-S*.5,HD*.62);c.moveTo(0,body.topY-22);c.lineTo(S*.42,HD*.7);c.stroke();
  }
+ else if(k==='foundry'){
+  /* v87: a casting shed - a low hall with a banded stack, a glowing pour spout cut
+     into the SE wall and slag heaped on the pad. The heat is what the building IS,
+     so it is in the silhouette rather than in an overlay; the PULSE on the spout is
+     the live half, in bldLive. */
+  const body=prism(c,shade(col,.86),0,HD*.55,S*.7,HD*.7,15);
+  const seW=wallCorners(body,1),swW=wallCorners(body,-1);
+  c.fillStyle='#2a1c12';quadPatch(c,seW,.3,0,.4,.55);c.fill();               // the spout, recessed
+  c.fillStyle='#ff7a1e';quadPatch(c,seW,.34,.04,.32,.4);c.fill();
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,220,120,.5)';quadPatch(c,seW,.38,.06,.24,.26);c.fill();c.restore();
+  c.save();c.globalAlpha=.4;const sm=mixc(B0,AMB,.5);c.strokeStyle=rgb(sm.r,sm.g,sm.b);c.lineWidth=1;
+  for(const uu of [.3,.5,.7]){const p0=qp(swW,uu,.06),p1=qp(swW,uu,.92);c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.stroke();}
+  c.restore();
+  const stx=-S*.4, stop=body.topY-40;                                         // the stack
+  c.fillStyle=shade(col,.6);c.fillRect(stx-4,stop,8,body.topY-stop+3);
+  c.fillStyle='#3a3a42';for(let i2=0;i2<3;i2++)c.fillRect(stx-4.6,stop+6+i2*11,9.2,2.4);
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.22)';c.fillRect(stx-3.4,stop,2,body.topY-stop);c.restore();
+  c.fillStyle='#20242a';c.beginPath();c.ellipse(stx,stop,4.2,1.8,0,0,7);c.fill();
+  c.fillStyle=shade('#6b5a44',1);                                             // slag heaps
+  c.beginPath();c.ellipse(S*.62,HD*.6,S*.16,HD*.2,0,0,7);c.fill();
+  c.beginPath();c.ellipse(S*.44,HD*.74,S*.12,HD*.16,0,0,7);c.fill();
+  plSphere(c,'#8a6a3c',S*.62,HD*.56,3,.7,false);
+ }
  else if(k==='cmdpost'){
   /* v86: a low sandbagged command hut under a map awning, with a standard on a
      short pole. It has to read as a place men gather rather than as a machine, so
@@ -11467,6 +11780,17 @@ function bldLive(c,b,col){
   const body={topY:HD*.55-12};
   const gar=b.garrison||[]; // v27.1: ghost snapshots carry an empty garrison
   if(gar.length){c.fillStyle='#fff';c.font='bold 10px sans-serif';c.textAlign='center';c.fillText(gar.length+'/'+garCap(b),0,body.topY-S*.5);c.textAlign='left';}
+ }
+ else if(k==='foundry'){
+  // v87: the pour spout breathes. Same clock every other live overlay reads
+  // (G.tick and the building id), never srand - this is the render layer.
+  const body={topY:HD*.55-15};
+  const gl=.45+Math.sin(G.tick*.09+b.id)*.35;
+  c.save();c.globalCompositeOperation='lighter';c.globalAlpha=gl*.8;
+  const g=c.createRadialGradient(S*.22,body.topY+HD*.2,1,S*.22,body.topY+HD*.2,S*.5);
+  g.addColorStop(0,'rgba(255,180,80,.75)');g.addColorStop(.5,'rgba(255,120,30,.3)');g.addColorStop(1,'rgba(255,110,20,0)');
+  c.fillStyle=g;c.beginPath();c.ellipse(S*.22,body.topY+HD*.2,S*.5,HD*.5,0,0,7);c.fill();
+  c.restore();c.globalAlpha=1;
  }
  else if(k==='cmdpost'){
   // v86: the standard on the pole baked above it. Same wave the HQ and the Outpost
@@ -13080,6 +13404,41 @@ function execCmd(c){
    }
    if(p===G.human)lastSelSig='';
    break}
+  case 'napalmblast':{ // v87: the Firebomb Heli empties its racks around itself
+   for(const u of cmdUnits(p,a.ids)){
+    /* the cooldown is refused HERE rather than in the panel, on the same rule the
+       faction call-downs are refused at this door: the panel is client-local and a
+       peer can send whatever it likes. Garrisoned is in the list for form's sake -
+       nothing carries a Firebomb - and hp>0 because cmdUnits already filtered it. */
+    if(!u.t.fbomb||u.garrisoned||u.abCool>0)continue;
+    napalmBlast(u);
+   }
+   if(p===G.human)lastSelSig='';
+   break}
+  case 'pour':{ // v87: the Foundry finishes what every Garage is holding
+   const b=entById(a.bid);
+   if(!b||b.kind!=='bld'||!b.t.pour||b.p!==p||b.prog<1||b.hp<=0||b.abilityCool>0)break;
+   /* Walked in p.blds order and paid for one Garage at a time, so a player who can
+      afford three pours and owns four gets three - deterministically the same
+      three on every client. A pour that nobody can pay for spends no cooldown at
+      all, which is the same courtesy radioLift pays a redeploy with nobody in it. */
+   let poured=0;
+   for(const g of p.blds){
+    if(g.key!=='garage'||g.prog<1||g.hp<=0||!g.queue||!g.queue.length)continue;
+    const k=g.queue[0], fee=Math.round(ucost(p,k).p*POUR_COST);
+    if(p.res.p<fee)continue;
+    /* supply is NOT lifted: the queue entry was reserved when it was queued, and a
+       pour that fielded a unit past the cap would be a way of buying supply with
+       plastic. Refusing here leaves the unit in the queue to finish normally. */
+    if(supUsed(p)+supOf(k)>supCap(p))continue;
+    p.res.p-=fee;
+    g.prodT=U[k].bt; // finished as far as updateBld is concerned; it spawns on the next tick through the ordinary path, so nothing about spawning is duplicated here
+    poured++;
+   }
+   if(!poured)break;
+   b.abilityCool=(G&&G.test)?0:POUR_CD;
+   if(p===G.human){msg(`Pour — ${poured} vehicle${poured===1?'':'s'} finished on the spot.`);updateTopbar();lastSelSig='';}
+   break}
   case 'bail':{ // v86: the crew steps out of the Observation Balloon, and the balloon is gone
    for(const u of cmdUnits(p,a.ids)){
     if(!u.t.bail||u.garrisoned||u.hp<=0)continue;
@@ -13216,7 +13575,7 @@ function hashState(){
      makeAIBrain, which is fixed, so the walk is deterministic. */
   if(p.ai&&p.ai.enc)for(const k in p.ai.enc)h=hF(h,p.ai.enc[k]);
  }
- for(const u of G.units){h=hI(h,u.id);h=hF(h,u.x);h=hF(h,u.y);h=hF(h,u.hp);h=hF(h,u.cool);h=hS(h,u.state);h=hF(h,u.cargo||0);h=hF(h,u.face);h=hI(h,u.entrenched?1:0);h=hI(h,u.garrisoned?1:0);h=hI(h,u.kl||0);h=hI(h,u.hold?1:0);h=hI(h,u.oq?u.oq.length:0);h=hI(h,u.patrol?u.patrol.leg+1:0);h=hF(h,u.burnT||0);h=hI(h,u.salv||0);h=hF(h,u.cool2||0);h=hF(h,u.calmT||0);h=hI(h,u.onMe?1:0);h=hI(h,u.smoke?1:0);h=hI(h,u.wf||0);h=hI(h,u.wfT||0);h=hI(h,u.valve?1:0);h=hI(h,u.thr?1:0);h=hI(h,u.vrt||0);h=hF(h,u.burnDps||0);h=hF(h,u.shotT||0);h=hI(h,u.cs?1:0);h=hI(h,u.rip?1:0);h=hI(h,u.flat?1:0);h=hI(h,u.aslt?1:0);h=hI(h,u.fo?1:0);h=hI(h,u.mvg?1:0);h=hI(h,u.spr?1:0);h=hI(h,u.bcast?1:0);h=hF(h,u.fuel||0)} // v85: the Sprint toggle. v51: salvo counter & secondary cooldown are sim state. v79: calm timer, the two Green toggles and the Walking Fire streak. v80: the two Tan toggles, and the burn RATE - hashed now that Cook-Off is a second writer of it at a different value from the fire ant's. v81: the shot clock the concealment test reads, and the two Gray toggles. v82: the two Blue toggles, the per-passenger firing-out flag its carrier writes, and the movement flag Evasive multiplies damage by. v86: the Broadcast toggle, and the balloon's remaining gas - a clock that decides when a unit dies is sim state whether or not anything else reads it
+ for(const u of G.units){h=hI(h,u.id);h=hF(h,u.x);h=hF(h,u.y);h=hF(h,u.hp);h=hF(h,u.cool);h=hS(h,u.state);h=hF(h,u.cargo||0);h=hF(h,u.face);h=hI(h,u.entrenched?1:0);h=hI(h,u.garrisoned?1:0);h=hI(h,u.kl||0);h=hI(h,u.hold?1:0);h=hI(h,u.oq?u.oq.length:0);h=hI(h,u.patrol?u.patrol.leg+1:0);h=hF(h,u.burnT||0);h=hI(h,u.salv||0);h=hF(h,u.cool2||0);h=hF(h,u.calmT||0);h=hI(h,u.onMe?1:0);h=hI(h,u.smoke?1:0);h=hI(h,u.wf||0);h=hI(h,u.wfT||0);h=hI(h,u.valve?1:0);h=hI(h,u.thr?1:0);h=hI(h,u.vrt||0);h=hF(h,u.burnDps||0);h=hF(h,u.shotT||0);h=hI(h,u.cs?1:0);h=hI(h,u.rip?1:0);h=hI(h,u.flat?1:0);h=hI(h,u.aslt?1:0);h=hI(h,u.fo?1:0);h=hI(h,u.mvg?1:0);h=hI(h,u.spr?1:0);h=hI(h,u.bcast?1:0);h=hF(h,u.fuel||0);h=hF(h,u.abCool||0)} // v85: the Sprint toggle. v51: salvo counter & secondary cooldown are sim state. v79: calm timer, the two Green toggles and the Walking Fire streak. v80: the two Tan toggles, and the burn RATE - hashed now that Cook-Off is a second writer of it at a different value from the fire ant's. v81: the shot clock the concealment test reads, and the two Gray toggles. v82: the two Blue toggles, the per-passenger firing-out flag its carrier writes, and the movement flag Evasive multiplies damage by. v86: the Broadcast toggle, and the balloon's remaining gas - a clock that decides when a unit dies is sim state whether or not anything else reads it. v87: the first UNIT ability cooldown, on the same footing as the building one that has been hashed since v30
  for(const b of G.blds){h=hI(h,b.id);h=hF(h,b.hp);h=hF(h,b.prog);h=hI(h,b.queue.length);h=hF(h,b.prodT);h=hF(h,b.techT||0);h=hS(h,b.techCur||'');h=hI(h,b.garrison.length);h=hF(h,b.abilityCool||0);h=hF(h,b.burnT||0);h=hF(h,b.upT||0)} // v30: tower cooldown is sim state. v79: so is the uplink's remaining duration
  for(const pr of G.projs){h=hF(h,pr.x);h=hF(h,pr.y);h=hF(h,pr.z||0);h=hF(h,pr.dm)}
  for(const n of G.map.nodes){h=hF(h,n.amt);h=hI(h,n.wreck?1:0)}
@@ -13346,7 +13705,7 @@ function loadState(json){
   byId[e.id]=e;
   return e;
  }
- G.units=S.units.map(o=>{const u=decEnt(o);u.t=u.kind==='creature'?CREATURE[u.species]:U[u.key];if(!u.oq)u.oq=[];if(u.hold==null)u.hold=false;if(u.kl==null)u.kl=0;if(u.vr==null)u.vr=0;if(u.calmT==null)u.calmT=0;if(u.t.rally&&u.onMe==null)u.onMe=false;if(u.t.smokeCap&&u.smoke==null)u.smoke=false;if(u.t.wf&&u.wf==null){u.wf=0;u.wfT=0}if(u.t.valve&&u.valve==null){u.valve=false;u.vrt=0}if(u.t.throttle&&u.thr==null)u.thr=false;if(u.t.camo&&u.shotT==null)u.shotT=999;if(u.t.cshot&&u.cs==null)u.cs=false;if(u.t.ripple&&u.rip==null)u.rip=false;if(u.t.evade&&u.mvg==null)u.mvg=false;if(u.t.flat&&u.flat==null)u.flat=false;if(u.t.assault&&u.aslt==null)u.aslt=false;if(u.t.cap&&u.fo==null)u.fo=false;if(u.t.sprint&&u.spr==null)u.spr=false;if(u.t.bcast&&u.bcast==null)u.bcast=false;if(u.t.balloon&&u.fuel==null)u.fuel=BALLOON_FUEL;return u}); // v86: a pre-v86 save has neither, and a balloon in one has never burned any gas // v29: pre-v29 saves get queue/hold/vet defaults. v79: and the ability fields, which a pre-v79 save has none of
+ G.units=S.units.map(o=>{const u=decEnt(o);u.t=u.kind==='creature'?CREATURE[u.species]:U[u.key];if(!u.oq)u.oq=[];if(u.hold==null)u.hold=false;if(u.kl==null)u.kl=0;if(u.vr==null)u.vr=0;if(u.calmT==null)u.calmT=0;if(u.t.rally&&u.onMe==null)u.onMe=false;if(u.t.smokeCap&&u.smoke==null)u.smoke=false;if(u.t.wf&&u.wf==null){u.wf=0;u.wfT=0}if(u.t.valve&&u.valve==null){u.valve=false;u.vrt=0}if(u.t.throttle&&u.thr==null)u.thr=false;if(u.t.camo&&u.shotT==null)u.shotT=999;if(u.t.cshot&&u.cs==null)u.cs=false;if(u.t.ripple&&u.rip==null)u.rip=false;if(u.t.evade&&u.mvg==null)u.mvg=false;if(u.t.flat&&u.flat==null)u.flat=false;if(u.t.assault&&u.aslt==null)u.aslt=false;if(u.t.cap&&u.fo==null)u.fo=false;if(u.t.sprint&&u.spr==null)u.spr=false;if(u.t.bcast&&u.bcast==null)u.bcast=false;if(u.t.balloon&&u.fuel==null)u.fuel=BALLOON_FUEL;if(u.t.abCd&&u.abCool==null)u.abCool=0;return u}); // v87: a pre-v87 save carries no unit cooldown, and ready is the honest default // v86: a pre-v86 save has neither, and a balloon in one has never burned any gas // v29: pre-v29 saves get queue/hold/vet defaults. v79: and the ability fields, which a pre-v79 save has none of
  G.blds=S.blds.map(o=>{const b=decEnt(o);b.t=B[b.key];if(b.abilityCool==null)b.abilityCool=0;if(b.upT==null)b.upT=0;return b}); // v30: pre-v30 saves get the cooldown default. v79: and the uplink timer
  G.projs=S.projs.map(o=>{const pr={};for(const k in o){if(k[0]==='$')continue;pr[k]=o[k]}return pr});
  G.neutrals=S.neutrals.map(o=>{const cr=decEnt(o);cr.t=CREATURE[cr.species];cr.p=G.neutral;return cr});

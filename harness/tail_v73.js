@@ -142,7 +142,7 @@ section('T50.A the minimap reserve tracks the size cycle');
      radioListFor(p).length === RADIO_ABILITIES.filter(a => !a.fac).length
                               + RADIO_ABILITIES.filter(a => a.fac === p.fac).length &&
      radioListFor(p).every(a => !a.fac || a.fac === p.fac) &&
-     RADIO_ABILITIES.filter(a => !a.fac).length === 3);
+     RADIO_ABILITIES.filter(a => !a.fac).length === 2);   // v87: the napalm left the shared pool for Tan, so the barrage and the paradrop are what every army has
   ok('T50.A ...still as .bb buttons', bx.children[0].className.indexOf('bb') === 0);
 }
 

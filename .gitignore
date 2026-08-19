@@ -22,9 +22,9 @@ harness/seg2c.js
 harness/seg3.js
 harness/.seg*.out
 harness/rc.js
-harness/rc86.js
+harness/rc87.js
 harness/tri.js
-harness/cut_v86.json
+harness/cut_v87.json
 
 # ---------------------------------------------------------------------------
 # Ordinary clutter your computer creates on its own

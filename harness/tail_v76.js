@@ -135,15 +135,25 @@ section('T51.C one ability table feeds the panel, the card and the vision gate')
   ok('T51.C five call-downs, three of them shared', RADIO_ABILITIES.length === 5);
   ok('T51.C the modes are the ones the command path dispatches',
     RADIO_ABILITIES.map(a => a.mode).join(',') === 'napalm,barrage,paradrop,lift,supply');
-  ok('T51.C an absent `fac` means everybody, and two rows claim an army each',
-    RADIO_ABILITIES.filter(a => !a.fac).length === 3 &&
-    RADIO_ABILITIES.filter(a => a.fac).length === 2 &&
-    radioAbility('lift').fac === 'blue' && radioAbility('supply').fac === 'green');
-  ok('T51.C the filter hands two armies three and Blue and Green four each',
-    ['tan', 'gray'].every(f => radioListFor({ fac: f }).length === 3) &&
-    radioListFor({ fac: 'blue' }).length === 4 && radioListFor({ fac: 'green' }).length === 4);
-  ok('T51.C ...and neither faction row leaks into the other army that has one',
-    !radioAllowed({ fac: 'green' }, 'lift') && !radioAllowed({ fac: 'blue' }, 'supply'));
+  /* v87: THREE rows carry a `fac` now, and one of them - the Napalm Strike - got
+     there by LEAVING the shared pool rather than by being added beside it. That is
+     the strongest form of the claim this section makes: the field is not a way of
+     bolting a bonus onto an army, it is the whole of what "whose call-down is
+     this" means, and moving a row between the two states is one word.
+     Gray is deliberately down to two until v88 gives it the Smokescreen. */
+  ok('T51.C an absent `fac` means everybody, and three rows claim an army each',
+    RADIO_ABILITIES.filter(a => !a.fac).length === 2 &&
+    RADIO_ABILITIES.filter(a => a.fac).length === 3 &&
+    radioAbility('lift').fac === 'blue' && radioAbility('supply').fac === 'green' &&
+    radioAbility('napalm').fac === 'tan');
+  ok('T51.C the two shared rows are the barrage and the paradrop',
+    RADIO_ABILITIES.filter(a => !a.fac).map(a => a.mode).sort().join() === 'barrage,paradrop');
+  ok('T51.C the filter hands three armies three, and Gray two until v88',
+    ['green', 'tan', 'blue'].every(f => radioListFor({ fac: f }).length === 3) &&
+    radioListFor({ fac: 'gray' }).length === 2);
+  ok('T51.C ...and no faction row leaks into another army that has one',
+    !radioAllowed({ fac: 'green' }, 'lift') && !radioAllowed({ fac: 'blue' }, 'supply') &&
+    !radioAllowed({ fac: 'green' }, 'napalm') && !radioAllowed({ fac: 'tan' }, 'supply'));
   /* v86: `hint` joined the row for the same reason `panel` is on it - the armed
      message was a chain of mode-name tests in the panel, i.e. a hand-kept copy of
      this table's membership. */

@@ -21,7 +21,7 @@ function cfg45(map,mode,seed,opp){return{map,mode,diff:'normal',fac:'tan',opp:(o
 /* The Desk survival trail with the Gunner at its pre-v45 price of 90, recut from
    the v48 build (the AI overhaul moves every trail, so the original pre-v45
    capture can no longer reproduce under any price). Kept here, only for G. */
-const BASE43_DESK=[3817863487, 1975056909, 3953311996, 3360033604, 460338485, 2493753066, 2747429346, 749544012, 3577953867, 3490394663, 2318146140, 817414121, 2684494303, 2326773613, 3323682061, 1875289937, 2110703955, 718411423, 3013676780, 3711738631, 79140199, 2195978290, 1240149893, 3140158662, 2307153883, 3089326520];
+const BASE43_DESK=[2460804623, 2192447933, 4170039532, 547590164, 926854181, 3052375370, 3640192946, 2595061420, 2919312107, 4216672807, 2187184140, 4077207961, 2488162271, 156082381, 1996277373, 1883838545, 366155411, 888084415, 2822967564, 737430247, 187688823, 659311970, 1152025189, 1091752694, 2029365163, 896611496];
 /* ---------- A: table shape ---------- */
 {
  const WCS=['b','g','r','s','m','f','d','a','q','x'], COLS=ARMOR_ORDER.concat(['bug']);
@@ -72,7 +72,11 @@ const BASE43_DESK=[3817863487, 1975056909, 3953311996, 3360033604, 460338485, 24
       belongs in. The Observation Balloon is 'air' by the t.fly fallback, exactly as
       the three helicopters are; what makes it untouchable is NOT its armor class but
       the pair of rules at ballOk and targetDmgMul, which sit above the matrix. */
-   cmdtruck:'light', balloon:'air'};
+   cmdtruck:'light', balloon:'air',
+   /* v87: the Firebomb Heli is a helicopter and classes as one. Nothing about it
+      is special-cased here - what makes it Tan's is the weapon row and the two
+      abilities, not the armour it wears. */
+   firebomb:'air'};
  let bad=[];
  for(const k in U){const got=armorOf({kind:'unit',t:U[k]});if(got!==WANT[k])bad.push(k+'='+got);}
  ok('T26.B every unit in the roster lands in its intended armor class'+(bad.length?' ('+bad.join(', ')+')':''),
@@ -109,6 +113,12 @@ const BASE43_DESK=[3817863487, 1975056909, 3953311996, 3360033604, 460338485, 24
   arty:[1.15,1.00,0.90,0.70,0.40,1.45],   bike:[1.00,1.00,0.85,0.60,1.00,0.70],
   apache:[0.70,1.10,1.35,1.50,1.30,0.90],
   para:[1.30,1.00,0.85,0.60,1.00,0.70],
+  /* v87: the Firebomb Heli fires weapon row 'f' - the row the Flamethrower, the
+     Bull's hull flamer and the tower's napalm already share - so its row is the
+     plain flame row, identical to the Flamethrower's. That is the point of not
+     inventing an eleventh weapon class for it: what changed is what Tan can do
+     with fire, not what fire does. */
+  firebomb:[1.35,1.05,0.75,0.45,0.50,0.90],
   // v85: the Signal Runner's pistol is weapon row 'b', so his row is the plain
   // small-arms row - identical to the Grunt's. That is the point of not giving a
   // sidearm a tenth weapon row: it changes what he does, not what small arms do.
