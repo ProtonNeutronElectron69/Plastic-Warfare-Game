@@ -429,6 +429,41 @@ further down are the other half of that record.
     Rounds (SMOKE_RED 0.2, radius 2, 5s, units only) - that is intended, not an
     oversight to be balanced away.
 
+## harness note: the report's generated prose has now been wrong three times
+
+Every one of these was in a sentence the page writes about itself, none was in a
+number the simulation produced, and every one was found by running the tool on a
+dataset it had not been written against. The count is the point: this is not a bug
+that got fixed, it is a CLASS of bug that keeps producing new instances.
+
+- **Two coincidences of the first batch** were baked in as facts: that the army
+  producing the most units was also the one trading worst, and that the champion had
+  won and lost on the same doctrine. Neither held on the second batch.
+- **A literal `'0 wins from '`** in the "never won" card. Two batches running, the
+  weakest doctrine happened to have won nothing, so the hard-coded zero was true by
+  accident. At 16 matches `defensive` won once and the card stated a figure that was
+  simply false, under a heading that was also false. It now reads the count and
+  relabels itself "Weakest doctrine" when it is not zero.
+- **A list that was never deduplicated**, which is invisible at four matches and
+  printed "harasser and harasser and defensive and defensive and defensive" at
+  sixteen. The same paragraph named one army twice ("Tan drew it 5 times; Tan drew it
+  5") whenever the champion was also the army that drew the weakest doctrine most.
+
+The rule that falls out: **a generated sentence is a claim, and it needs the same
+evidence as a generated number.** It is worse than a number in one specific way -
+it reads perfectly against the data it was written from, so reviewing the page you
+generated tells you nothing. Only a second dataset does. Both `sim_report.js` and the
+notes now branch on the condition instead of asserting it, and any batch of a size
+the page has not seen before is worth reading once, in full, before believing it.
+
+**A blank page was the other failure mode, and it now cannot ship.** A quoted string
+wrapped across a line inside a template literal is a syntax error, and the resulting
+page loads, paints its empty shell and fills in nothing - no title, no tables, no
+error a reader would see as anything but an odd blank report. `sim_report.js` now
+compiles the page's script block with `new Function` before writing (compiles, does
+not run) and refuses to emit a page that cannot execute. Verified by injecting that
+exact bug: exit 2, and the message names the block.
+
 ## harness note: sim.sh, and what eight bot matches can and cannot tell you
 
 `./sim.sh` plays whole deathmatches with a CPU in every seat and writes
