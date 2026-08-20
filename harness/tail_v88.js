@@ -86,7 +86,7 @@ function hit88(e, amt) { const b = e.hp; applyDmg(e, amt, 'b', null); return b -
     const v87ranks = ranksWith(null);                      // the roster WITHOUT the Choktaw
     const movers = Object.keys(v87ranks).filter(k => k !== 'choktaw' && supOf(k) !== v87ranks[k]);
     ok('T62.A exactly three existing units changed supply rank' + (movers.length ? ' (' + movers.slice().sort().join(', ') + ')' : ''),
-      movers.slice().sort().join(',') === 'gunner,medic,sarge');
+      movers.slice().sort().join(',') === 'flamer,medic,sarge'); // v88.1: the Gunner was re-priced back onto 2 and the Flamethrower took the seventh slot
     ok('T62.A ...and every one of them fell by exactly one rank, none rose',
       movers.every(k => v87ranks[k] - supOf(k) === 1));
     ok('T62.A ...and they are precisely the units that sat ON the old quartile cuts',

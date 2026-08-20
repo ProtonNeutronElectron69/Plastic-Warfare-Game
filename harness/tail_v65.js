@@ -240,7 +240,7 @@ section('T44.C the Grunt at 36');
     mover; v69 moved the Gunner 115 -> 140 as its own approved decision, so the
     record advances to v69 and the claim becomes the standing one: this table IS
     the plastic column, and nothing may drift from it silently. */
- const V69_CP={grunt:36,grenadier:55,gunner:112,bazooka:90,truck:20,medic:150,jeep:130,
+ const V69_CP={grunt:36,grenadier:55,gunner:125,bazooka:90,truck:20,medic:150,jeep:130,
   aatruck:180,tank:220,heli:200,sarge:260,mortar:150,flamer:120,bulltank:391,sniper:170,
   arty:320,bike:90,apache:300,apc:260,chinook:300,para:0,runner:62, // v85: +Signal Runner
   cmdtruck:145,balloon:250,firebomb:280,
@@ -253,7 +253,12 @@ section('T44.C the Grunt at 36');
  const moved=Object.keys(U).filter(k=>U[k].cp!==V69_CP[k]);
  ok('T44.C no plastic cost has drifted from the v69 record'+(moved.length?' ('+moved.join(', ')+')':''),
     moved.length===0&&Object.keys(V69_CP).length===Object.keys(U).length);
- ok('T44.C the Gunner is the only one that moved since v65',V69_CP.gunner===112&&V69_CP.grunt===36);
+ /* v88.1: 112 -> 125, and the record advances again. v69 moved him 115 -> 140 to
+    take him off the head of the per-supply table; v78 moved him 140 -> 112 with a
+    matching reload cut so his efficiency held; v88.1 moves him 112 -> 125 for the
+    SUPPLY RANK alone, because v88's 25th trainable unit slid the quartile cut past
+    him and put him back on 1. Nothing else about him moved. */
+ ok('T44.C the Gunner is the only one that has ever moved since v65',V69_CP.gunner===125&&V69_CP.grunt===36);
  ok('T44.C the Grunt is still the cheapest thing the Barracks trains',
     B.barracks.prod.every(k=>k==='grunt'||U[k].cp+U[k].ce>U.grunt.cp+U.grunt.ce));
 }

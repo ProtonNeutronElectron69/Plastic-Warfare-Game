@@ -106,8 +106,17 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
      the whole v73/v78 record - so the figure is pinned at what it measures and
      named as a standing v89 question, the way v73's air:1 was.
      Both arms stay two-sided: a further widening fires, and so does a fix. */
-  ok(`T48.B the roster-wide per-supply spread is the v88 figure (${nowSpread.toFixed(2)}x, was ${thenSpread.toFixed(2)}x under the median rule)`,
-     Math.abs(nowSpread - 9.51) < 0.05 && Math.abs(thenSpread - 7.04) < 0.05);
+  /* v88.1 CLOSED IT. The v88 note above stands as the record of what a 25th unit
+     did; re-pricing the Machine Gunner 112 -> 125 undoes the consequence without
+     touching the rule. He is 8th-cheapest now, back on 2 supply, and the spread
+     comes back from 9.51x to 6.19x - INSIDE the 5.84x this section pinned from v69
+     to v87, and the residual gap is the Medic and Sarge, who are still one rank
+     cheaper than they were and are not this edit's to move.
+     The standing v89 question the v88 note raised is therefore ANSWERED for the
+     Gunner and open for nobody: what is left is a flatter table than v88's and a
+     wider one than v87's, recorded at the measured figure. Two-sided as always. */
+  ok(`T48.B the roster-wide per-supply spread is the v88.1 figure (${nowSpread.toFixed(2)}x, was ${thenSpread.toFixed(2)}x under the median rule)`,
+     Math.abs(nowSpread - 6.19) < 0.05 && Math.abs(thenSpread - 7.04) < 0.05);
   /* v85: THE DIRECTION FLIPPED, and the flip is honest rather than a fix.
      At v69 the ladder measured WIDER than the median rule (5.84 vs 4.76) and that
      was recorded above as the scope estimate having been wrong. Over a 21-unit
@@ -126,10 +135,14 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
      measures it wider again (9.51 vs 7.04) and the ladder's figure is the half
      that changed. Recorded as the comparison it now is, with both prior readings
      left standing above as what those rosters honestly said. */
-  ok(`T48.B ...and at 25 units the ladder is the WIDER of the two again (${nowSpread.toFixed(2)}x vs ${thenSpread.toFixed(2)}x)`,
-     nowSpread > thenSpread);
-  ok('T48.B ...and this time it is the LADDER arm that moved, not the median',
-     Math.abs(nowSpread - 9.51) < 0.05 && Math.abs(thenSpread - 7.04) < 0.05);
+  /* v88.1: the direction flips a third time, and the ladder is narrower again.
+     v69 wider (5.84 vs 4.76); v85 narrower (5.84 vs 7.04); v88 wider (9.51 vs 7.04);
+     v88.1 narrower (6.19 vs 7.04). Every reading is left standing above as what
+     that roster honestly said, and this is the current one. */
+  ok(`T48.B ...and with the re-price the ladder is the NARROWER of the two again (${nowSpread.toFixed(2)}x vs ${thenSpread.toFixed(2)}x)`,
+     nowSpread < thenSpread);
+  ok('T48.B ...and it is the LADDER arm that moved both times, not the median',
+     Math.abs(nowSpread - 6.19) < 0.05 && Math.abs(thenSpread - 7.04) < 0.05);
 
   /* The specific cliff: under the median rule the Gunner was the single best
      per-supply buy in the game by a wide margin, and it got there by being the
@@ -146,12 +159,20 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
      is written as the IDENTITY rather than as a placing, so it says what actually
      happened - his score is the old-rule score, because he is paying the old-rule
      supply again. */
-  ok('T48.B at 25 units the cut slides past him and he leads the table again',
-     newTop[0].k === 'gunner' && newTop[1].k === 'bazooka');
-  ok('T48.B ...and his figure is exactly the one the retired median rule gave him',
-     Math.abs(newTop.find(o => o.k === 'gunner').v - oldTop[0].v) < 1e-9 && supOf('gunner') === 1);
-  ok('T48.B ...i.e. it DOUBLED against v87, which is the whole of the movement',
-     Math.abs(newTop.find(o => o.k === 'gunner').v / 2 - oldTop[0].v / 2) < 1e-9);
+  /* v88 slid the cut past him and he led the table again at exactly the retired
+     median rule's figure. v88.1's re-price puts him back on 2 and off the head of
+     it: the Flamethrower leads now, by 1.06x rather than the Gunner's 1.11x, and
+     the Flamethrower is Tan-exclusive so three armies in four cannot buy the
+     leader at all. That is the same mitigation T50.C records for the
+     damage-per-plastic table, arriving here for the same reason. */
+  ok('T48.B under the ladder he is not the head of it, and the leader is Tan-only',
+     newTop[0].k === 'flamer' && newTop[1].k === 'bazooka' &&
+     FAC_INF.tan.indexOf('flamer') >= 0 &&
+     ['green', 'gray', 'blue'].every(f => FAC_INF[f].indexOf('flamer') < 0));
+  ok('T48.B ...and the new leader\'s margin is flatter than the Gunner\'s ever was',
+     newTop[0].v / newTop[1].v < oldTop[0].v / oldTop[1].v);
+  ok('T48.B ...and the Gunner pays 2 supply again, which is the whole of the fix',
+     supOf('gunner') === 2);
   /* The consequence, pinned by name so it cannot be discovered again by surprise:
      the three units the ladder demotes hardest are the siege pieces, and every one
      of them carries splash or reach that this measure cannot see. */
@@ -188,7 +209,7 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
      non-vacuity arm below keeps it from passing on any rank at all. */
   ok('T48.B a Gunner reserves his own supply rank from the queue, whatever it is',
      okTrain && supFree(p) === free0 - supOf('gunner'));
-  ok('T48.B ...and that rank is 1 since the roster reached 25 units', supOf('gunner') === 1);
+  ok('T48.B ...and that rank is 2 again since the v88.1 re-price', supOf('gunner') === 2);
   ok('T48.B MUTATION: a flat reservation of 1 would be indistinguishable, so a\n     dearer unit is reserved too', (function(){
        const f1 = supFree(p);
        const okT = trainUnit(bar, 'apache');

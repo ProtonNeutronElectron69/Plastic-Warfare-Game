@@ -1,9 +1,16 @@
-/* recut_v88.js - regenerate the hash-trail baselines that v88 moved.
+/* recut_v88_1_1.js - regenerate the hash-trail baselines that v88 moved.
  *
- *   cat shim_head.js game.js recut_v88.js > rc88.js && node rc88.js
+ *   cat shim_head.js game.js recut_v88_1_1.js > rc881.js && node rc881.js
  *
- * v88 is GRAY's pass and the last of roadmap 2: a Choktaw Heli out of the Helipad,
- * a Heavy Barricade as the second structure, and a Smokescreen call-down.
+ * v88.1 is four small updates on top of v88: the Machine Gunner re-priced
+ * 112 -> 125 so he pays 2 supply again, the Forward Pad's repair rate 1.6 -> 3,
+ * a Field Manual gallery reordered and recoloured, and a wording pass over every
+ * unit and structure description.
+ *
+ * ONE of those four moves the simulation, and it is the price: RESEARCH.u_gunner
+ * derives its cost and time from the unit's cost at load, every bot's supply
+ * budget reads supOf, and a bot that can afford a different army at minute two
+ * fights a different match from tick one. The other three are display only.
  *
  * FIVE doors move the trails this time, and the fifth reaches every match in the
  * suite whether or not a Gray player is in it:

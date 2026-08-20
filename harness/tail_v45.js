@@ -242,8 +242,13 @@ const BASE43_DESK=[1661632587, 2469025864, 3969413972, 3507938602, 3776163843, 4
      again rather than silently kept passing. */
   const sc=armed.map(k=>({k,v:eff(k,'air')})).sort((a,b)=>b.v-a.v);
   const share=sc[1].v/sc[0].v;
+  /* v88.1: the runner-up changed identity, not standing. The Machine Gunner's
+     price rose 112 -> 125, which drops HIS air figure below the Grunt's, so the
+     Grunt is now the second-best answer to aircraft at 53% of the AA truck. The
+     pool is still ONE and the question is still standing - what moved is which
+     unit is closest to answering it. Kept two-sided so a fix fires. */
   ok(`T26.C AIR has ONE competitive answer and it is the dedicated counter - the runner-up (${sc[1].k}) sits at ${(share*100).toFixed(0)}% of it against a 55% cut. A STANDING v74 QUESTION`,
-     sc[0].k==='aatruck'&&U.aatruck.aaOnly===1&&sc[1].k==='gunner'&&share<0.55&&share>0.50);
+     sc[0].k==='aatruck'&&U.aatruck.aaOnly===1&&sc[1].k==='grunt'&&share<0.55&&share>0.50);
  }
  ok('T26.C air keeps a DEDICATED hard counter at the head of its pool',
     armed.map(k=>({k,v:eff(k,'air')})).sort((a,b)=>b.v-a.v)[0].k==='aatruck'&&U.aatruck.aaOnly===1);
@@ -399,12 +404,15 @@ const BASE43_DESK=[1661632587, 2469025864, 3969413972, 3507938602, 3776163843, 4
  ok('T26.G the Gunner-at-90 Desk trail reproduces the v54 baseline exactly',
     got.length===BASE43_DESK.length&&got.every((v,i)=>v===BASE43_DESK[i]));
  ok('T26.G ...and everything was put back afterwards',
-    U.gunner.cp===112&&RESEARCH.u_gunner.cp===keepR.cp&&RESEARCH.u_gunner.time===keepR.time);
+    U.gunner.cp===125&&RESEARCH.u_gunner.cp===keepR.cp&&RESEARCH.u_gunner.time===keepR.time);
 }
 
 /* ---------- H: the Gunner ---------- */
 {
- ok('T26.H Machine Gunner costs 112 plastic',U.gunner.cp===112&&U.gunner.ce===0);
+ /* v88.1: 112 -> 125, and for the supply rank alone - v88's 25th trainable unit
+    slid the quartile cut past him and put him back on 1 supply. The reload did NOT
+    move with it this time, so unlike v78 this is a genuine efficiency cut. */
+ ok('T26.H Machine Gunner costs 125 plastic since v88.1',U.gunner.cp===125&&U.gunner.ce===0);
  /* v78: hull, reload and price all moved together and the DAMAGE did not,
     which is the shape of the change - dm is still the v30 figure. */
  ok('T26.H the v78 hull and reload, and nothing else about him moved',
@@ -421,10 +429,15 @@ const BASE43_DESK=[1661632587, 2469025864, 3969413972, 3507938602, 3776163843, 4
     Accepted rather than merely tolerated because the Flamethrower is
     TAN-EXCLUSIVE: for green, gray and blue the Gunner still leads their own
     infantry, which T50.C proves faction by faction. */
- ok('T26.H the Flamethrower leads infantry damage per plastic now, and he is second',
-    best[0]==='flamer'&&best[1]==='gunner');
- ok(`T26.H the new lead is the v73 figure (${(perCost(best[0])/perCost('gunner')).toFixed(4)}x, was 1.1621x the other way at v69)`,
-    Math.abs(perCost(best[0])/perCost('gunner')-1.0124)<0.005);
+ /* v88.1 crosses it a second time and in the same direction: the price rise puts
+    the plain Grunt ahead of him too, so he is THIRD. Re-aimed on the same rule
+    v73's crossing was - same shape, same two-sided bound, new order - and the
+    reason it is accepted rather than merely tolerated is unchanged and checked in
+    T50.C: this measure cannot see Entrench or his hull, which are what he is for. */
+ ok('T26.H the Flamethrower leads infantry damage per plastic, and the Gunner is third',
+    best[0]==='flamer'&&best[1]==='grunt'&&best[2]==='gunner');
+ ok(`T26.H the lead is the v88.1 figure (${(perCost(best[0])/perCost('gunner')).toFixed(4)}x, was 1.0124x at v73 and 1.1621x the other way at v69)`,
+    Math.abs(perCost(best[0])/perCost('gunner')-1.1299)<0.005);
  ok('T26.H the Barracks still trains him',B.barracks.prod.includes('gunner'));
 }
 
@@ -442,7 +455,7 @@ const BASE43_DESK=[1661632587, 2469025864, 3969413972, 3507938602, 3776163843, 4
  ok('T26.I ...and states an armor class for each'+(missingArmor.length?' ('+missingArmor.join(', ')+')':''),missingArmor.length===0);
 
  const gh=infoStatsHtml('unit','gunner');
- ok('T26.I the Gunner card shows the new price',gh.indexOf('112')>=0);
+ ok('T26.I the Gunner card shows the new price',gh.indexOf('125')>=0);
  const bh=infoStatsHtml('unit','bazooka');
  ok('T26.I a rocket unit is listed strong against armor and weak against infantry',
     bh.indexOf('Strong vs')>=0&&bh.indexOf('Weak vs')>=0&&

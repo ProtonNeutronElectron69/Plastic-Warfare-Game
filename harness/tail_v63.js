@@ -489,7 +489,22 @@ const FACS63 = ['green', 'tan', 'gray', 'blue'];
      Four rather than six is the time budget: each seed is a 400-second match and
      this section runs the census twice, so six would put ~120 seconds on the
      segment for a third decimal place. */
-  const SEEDS63 = [630080, 630081, 630082, 630083];
+  /* v88.1: FOUR BECAME SIX, and it is the same finding the v86 note above records,
+     recurring for the same reason. Re-pricing the Machine Gunner moves the shared
+     RNG stream and every bot's supply budget, and on the four-seed set Gray's
+     bunker count read 0.25 against the 0.5 floor. Measured per seed over eight:
+       blue 2,2,2,2,2,3,2,1   gray 1,0,0,0,2,3,0,3
+     Gray's count is LUMPY - four of the eight seeds build none at all - so a
+     four-sample mean of it is noise, which is exactly what the v86 note says a
+     two-sample mean of it was. The running means settle from six on:
+       first 4 -> 0.250   first 5 -> 0.600   first 6 -> 1.000
+       first 7 -> 0.857   first 8 -> 1.125
+     Six is the smallest set that clears the floor and stays clear at seven and
+     eight, so the seed count is widened rather than the floor lowered. It is the
+     six v86 measured on and declined to ship for the time budget; two more 400-
+     second matches per census run is the price of a threshold that means
+     something, and segment 2c still finishes well inside 2b. */
+  const SEEDS63 = [630080, 630081, 630082, 630083, 630084, 630085];
   /* 400 sim-seconds. This section costs four full matches and is the most expensive
      thing in the file, so it buys the claim it can afford: that signature units are
      a real share of production and that the structures get built. Whether the bot
@@ -529,6 +544,11 @@ const FACS63 = ['green', 'tan', 'gray', 'blue'];
     const b = live.blue, gy = live.gray;
     ok(`T42.H the scaling structures get built, and a second exclusive now shares the budget (blue turbine ${b ? (b.bld / b.n).toFixed(2) : '-'}, gray bunker ${gy ? (gy.bld / gy.n).toFixed(2) : '-'})`,
       !!b && !!gy && b.bld / b.n >= 1.0 && gy.bld / gy.n >= 0.5);
+    /* NON-VACUITY, added at v88.1 with the widened seed set: the sample really is
+       six matches per army, so a count read off four seeds cannot pass this by
+       accident of how many were run. */
+    ok('T42.H ...over six seeds, not the four that read this count as noise',
+      SEEDS63.length === 6 && !!gy && gy.n >= 6);
   }
   // MUTATION: the same seeds with the floor at zero. If the shares above came from
   // matches that would have built exclusives anyway, this arm matches them.
