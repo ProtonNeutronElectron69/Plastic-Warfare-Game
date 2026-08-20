@@ -429,6 +429,51 @@ further down are the other half of that record.
     Rounds (SMOKE_RED 0.2, radius 2, 5s, units only) - that is intended, not an
     oversight to be balanced away.
 
+## harness note: sim.sh, and what eight bot matches can and cannot tell you
+
+`./sim.sh` plays whole deathmatches with a CPU in every seat and writes
+`sim_out/battle-report.html`. Three tracked pieces: `sim_dm.js` runs ONE match and
+prints a JSON record, `sim_report.js` turns a directory of those into the page, and
+`sim_page.html` IS the page - the report generator only substitutes the data, so the
+page is edited as ordinary HTML rather than as strings inside a script.
+
+**It needed almost no new mechanism, because the game already had all of it.** v55's
+spectate flag (`watch:true`) seats a CPU in slot 0 like the rest, so the roster is
+all bots and every faction fields exactly one army; without it slot 0 is a human seat
+with no brain, a sitting duck that decides the match by not playing. And `newGame`
+already deals behaviour profiles from a seeded shuffle WITHOUT replacement, so a
+four-army match always gets four different ones of the five. Assigning profiles in
+the tool would have been a second mechanism racing the game's own. The seed is the
+whole control surface and a match re-runs identically from it.
+
+Do NOT reach for `G.test` to get bots: testing mode boots every slot HUMAN, so no
+slot is handed an AI brain and `aiTick` never fires at all.
+
+**The results move much more than eight matches suggests.** Two batches on the SAME
+eight seeds, differing only in which map each seed ran on, gave Green 6 wins in one
+and 4 in the other. Turtle went 0-for-8 in both, then won a match in a four-game
+batch on different seeds. The profile deal is the loudest term: four drawn from five
+means the counts drift every batch, and a profile that never wins dragging one army
+down twice as often as another is enough to reorder the table. Any claim off one
+batch wants a second batch on a different `SEED0` before it is worth writing down.
+
+**Two bugs here were only findable by running the tool on a SECOND dataset**, and
+both were in the generated prose rather than the numbers. The page writes its own
+summary paragraphs off the data; the first cut of those was written while looking at
+one batch, and it silently baked in two coincidences of that batch - that the army
+which produced the most units was also the one that traded worst, and that the
+champion had won and lost on the same doctrine. On the second batch the first read
+as one army's unit count followed by another army's kills, and the second asserted an
+overlap that was not there. A generated sentence is as capable of being confidently
+wrong as a generated number, and it does not look wrong on the batch it was written
+against. The fix in both cases was to branch on the condition instead of assuming it.
+A four-way tie on wins now reports as a tie, too, rather than naming whichever army
+sorted first.
+
+`sim.js`, `simrep.js` and `sim_out/` are git-ignored on the same rule as `tri.js`:
+they regenerate from the seeds, so committing them would put a second, staler copy of
+a reproducible result in the tree.
+
 ## harness note: triage's layout gate could report clean on a short walk
 
 `recut_v88_1.js` walks 42 layout pins and refuses to cut a single trail unless
