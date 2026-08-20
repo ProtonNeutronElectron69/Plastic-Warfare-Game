@@ -166,9 +166,19 @@ function put85(k, p, x, y) { const u = makeUnit(k, p, x, y); u.state = 'idle'; u
     for (let i = 0; i < 60; i++) updateBld(pad, DT85);
     ok('T58.C it never overheals', full.hp === full.mhp);
   }
-  /* deliberately the quieter of the two field hospitals */
-  ok('T58.C the rate sits under the Medic\'s, which is the sizing call',
-    PAD_REP < MEDIC_HEAL_RATE);
+  /* v85 set PAD_REP DELIBERATELY under the Medic's rate, so the Pad read as the
+     quiet half of the building. v88.1 raised it to 3, i.e. deliberately ABOVE, and
+     the reason is recorded in the constants block: at 1.6 a Huey took over a minute
+     on the pad and an Apache two, which is longer than the match phase either is
+     bought for. The ordering between the two was never load-bearing - the Medic
+     follows the fight and heals anything on legs, the Pad is a fixed 2x2 that
+     repairs only what flies, and nothing else in the game repairs that at all.
+     Re-aimed at the claim that still holds, and pinned two-sided so a further
+     rise fires as loudly as this one did. */
+  ok('T58.C the rate is 3 HP/s, raised past the Medic\'s at v88.1',
+    PAD_REP === 3 && PAD_REP > MEDIC_HEAL_RATE);
+  ok('T58.C ...and it is still slow enough that a wreck is a real commitment',
+    U.apache.hp / PAD_REP > 45 && U.apache.hp / PAD_REP < 90);
 
   /* Scramble: army-wide, on the building's own two clocks, exactly as Overdrive
      and Lockdown are - no new building state was added for it. */

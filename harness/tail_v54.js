@@ -110,17 +110,29 @@ function bot55(){return G.players.find(p=>p.ai)}
     The transcription below is the v88 truth and the three movers are named on
     their own line, so a FOURTH mover - or a mover in the other direction - still
     fires here as loudly as this one did. */
- const T1=['truck','para','grunt','grenadier','bazooka','bike','runner','gunner']; // v88: +gunner, dropped from 2
- const T2=['flamer','jeep','mortar','sniper','cmdtruck','medic'];                  // v88: -gunner, +medic (dropped from 3)
+ /* v88.1: the seventh slot CHANGED HANDS. Re-pricing the Machine Gunner 112 -> 125
+    puts him past the Flamethrower's 120, so he is 8th-cheapest and back on 2 - and
+    the Flamethrower is 7th and takes the 1-supply rank in his place. The slot does
+    not disappear: at 25 trainable units the cheap tier holds seven, and somebody is
+    always in it. The Flamethrower is the better occupant, and for the reason T50.C
+    records about the damage-per-plastic table - he is TAN-EXCLUSIVE, so three armies
+    in four cannot field the per-supply leader at all.
+    The Medic and Sarge are UNMOVED by this edit and stay where v88 put them: their
+    ranks are a function of the roster reaching 25, not of the Gunner's price. */
+ const T1=['truck','para','grunt','grenadier','bazooka','bike','runner','flamer']; // v88.1: -gunner, +flamer
+ const T2=['gunner','jeep','mortar','sniper','cmdtruck','medic'];                  // v88.1: +gunner back, -flamer
  const T3=['aatruck','tank','heli','apc','balloon','sarge'];                       // v88: -medic, +sarge (dropped from 4)
  const T4=['arty','chinook','apache','bulltank','firebomb','choktaw'];             // v88: -sarge, +the Choktaw itself
- ok('T35.A v88 moved EXACTLY these three, each down exactly one rank',
-    supOf('gunner')===1&&supOf('medic')===2&&supOf('sarge')===3);
+ ok('T35.A v88.1 put the Gunner back on 2, and the Flamethrower took the slot',
+    supOf('gunner')===2&&supOf('flamer')===1);
+ ok('T35.A ...while the Medic and Sarge stay where v88 put them, one rank cheaper',
+    supOf('medic')===2&&supOf('sarge')===3);
  ok('T35.A ...and every other unit kept the rank it had at v87',
     (function(){const V87={truck:1,grunt:1,grenadier:1,runner:1,bazooka:1,bike:1,para:1,
       flamer:2,jeep:2,mortar:2,sniper:2,cmdtruck:2,
       aatruck:3,tank:3,heli:3,apc:3,balloon:3,
       arty:4,chinook:4,apache:4,bulltank:4,firebomb:4};
+     delete V87.gunner; delete V87.flamer; // the two the v88.1 re-price swapped; both are asserted by name above
      return Object.keys(V87).every(k=>supOf(k)===V87[k])})());
  ok('T35.A the cheap tier costs 1 supply',T1.every(k=>supOf(k)===1));
  ok('T35.A the second tier costs 2',T2.every(k=>supOf(k)===2));
@@ -141,13 +153,13 @@ function bot55(){return G.players.find(p=>p.ai)}
  /* v88: the Gunner's PRICE is unmoved and is still pinned; his RANK fell to 1 for
     the arithmetic reason above, not because anything about him changed. Both
     halves are asserted so a price edit and a re-ranking stay distinguishable. */
- ok('T35.A the Gunner still costs 112, the v78 price',U.gunner.cp===112);
- ok('T35.A ...and holds supply 1 since the roster reached 25 units',supOf('gunner')===1);
+ ok('T35.A the Gunner costs 125 since v88.1, up from the v78 112',U.gunner.cp===125);
+ ok('T35.A ...and that is what puts him back on supply 2',supOf('gunner')===2&&U.gunner.cp>U.flamer.cp);
  /* v78: the quartile boundary is what matters here, not the price. Tier 1 ends
     at the Scout Bike on 95 total, so 112 clears it by 17 and a further cut past
     95 would silently drop him a tier and push the Bike up one. */
- ok('T35.A ...and is still dearer than the Scout Bike, who shares the rank with him now',
-    U.gunner.cp+U.gunner.ce>U.bike.cp+U.bike.ce&&supOf('bike')===1);
+ ok('T35.A ...and the Scout Bike, who shared the cheap rank with him at v88, keeps it',
+    U.gunner.cp+U.gunner.ce>U.bike.cp+U.bike.ce&&supOf('bike')===1&&supOf('gunner')===2);
  /* v70 moved the Medic 2 -> 3 on the quartile cut; v88's 25th unit moved him back
     to 2 without touching his price, which is the same arithmetic that moved the
     Gunner. The PRICE is what v70 legislated and it is still pinned. */

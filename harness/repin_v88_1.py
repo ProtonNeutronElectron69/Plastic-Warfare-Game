@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""repin_v88.py - write the recut_v88 tables into the tails that pin them.
+"""repin_v88_1.py - write the recut_v88_1_1 tables into the tails that pin them.
 
-    cat shim_head.js game.js recut_v88.js > rc88.js && node rc88.js > cut_v88.json
-    python3 repin_v88.py cut_v88.json
+    cat shim_head.js game.js recut_v88_1_1.js > rc881.js && node rc881.js > cut_v88_1.json
+    python3 repin_v88_1.py cut_v88_1.json
 
 Five tables across four files:
 
@@ -27,7 +27,7 @@ import json
 import re
 import sys
 
-CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v88.json'
+CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v88_1.json'
 cut = json.load(open(CUT, encoding='utf-8'))
 
 # ---- shape gate: refuse a cut that does not look like the tables it replaces --
@@ -52,7 +52,7 @@ if any(len(v) != 3 for v in cut['BASE45_AI'].values()):
 if len(cut['BASE43_DESK']) != 26:
     sys.exit('BASE43_DESK should hold 26 samples (2400/90), got %d' % len(cut['BASE43_DESK']))
 if cut['BASE45_TRAILS'] != cut['BASE62_TRAILS']:
-    sys.exit('the two tan tables disagree - recut_v88 should have caught this')
+    sys.exit('the two tan tables disagree - recut_v88_1_1 should have caught this')
 
 
 def obj(table, indent):
@@ -72,6 +72,12 @@ EDITS = [
     ('tail_v62.js', 'BASE62_TRAILS', obj(cut['BASE62_TRAILS'], '  '), 'const'),
 ]
 
+# Tables this release is EXPECTED to leave alone, with the reason. Anything not
+# listed here that comes back unchanged is treated as a failed recut, not a no-op.
+UNMOVED_OK = {
+    'BASE43_DESK': 'cut with U.gunner.cp forced to 90, so the shipped price cannot reach it',
+}
+
 pending = []
 for path, name, body, kw in EDITS:
     src = open(path, encoding='utf-8').read()
@@ -81,6 +87,15 @@ for path, name, body, kw in EDITS:
         sys.exit('%s: expected exactly 1 %s table, found %d' % (path, name, len(hits)))
     new = pat.sub(lambda m: m.group(1) + body + m.group(3), src, count=1)
     if new == src:
+        # v88.1: a table that legitimately did NOT move is not a re-run. BASE43_DESK
+        # is cut from a fixture that sets U.gunner.cp=90 before it runs, so the one
+        # thing this release changed in the simulation - the Gunner's shipped price -
+        # cannot reach it, and its numbers are expected to be identical. Named
+        # explicitly rather than allowed in general, because for the other four an
+        # unchanged table really would mean the recut had not run.
+        if name in UNMOVED_OK:
+            print('unchanged %-14s in %s (expected: %s)' % (name, path, UNMOVED_OK[name]))
+            continue
         sys.exit('%s: %s already carries these numbers - is this a re-run?' % (path, name))
     pending.append((path, new, name))
 

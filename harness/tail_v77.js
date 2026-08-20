@@ -269,8 +269,8 @@ section('T52.E the seven audited defects, each fixed by derivation');
     Object.keys(UPGRADES).every(k => UPGRADES[k].eff === undefined || !!(B[k].eps || B[k].gar)));
   ok('T52.E D4 both card strings derive from the constants',
     B.dump.d === '+' + Math.round(DUMP_AURA * 100) + '% damage to friends within ' + DUMP_R + ' tiles'
-      + '. Scuttle detonates it for ' + SCUTTLE_DM + ' over ' + SCUTTLE_R + ' tiles, and your own men take '
-      + Math.round(SCUTTLE_FF * 100) + '% of it' &&   /* v80: the card grew a second sentence; every number in it still derives */
+      + '. Scuttle detonates it for ' + SCUTTLE_DM + ' over ' + SCUTTLE_R + ' tiles, '
+      + Math.round(SCUTTLE_FF * 100) + '% of it onto your own' &&   /* v80: the card grew a second sentence; every number in it still derives. v88.1: the second sentence was shortened in the description pass and every number still derives, which is the whole of what this line checks */
     UPGRADES.dump.d.includes('+' + Math.round(DUMP_AURA * 100) + '%') &&
     UPGRADES.dump.d.includes('+' + Math.round(DUMP_AURA_UP * 100) + '%'));
   {
@@ -349,7 +349,11 @@ section('T52.F the manual lint now catches claims that carry no number');
     for (const k in B) {
       const d = B[k].d || '';
       if (!/[Rr]esearch/.test(d)) continue;
-      if (/every unit|all unit|unit unlock/i.test(d) && !/researched at the/i.test(d)) {
+      /* v88.1: the Lab card says "unit unlocks happen at the ..." since the wording
+         pass; the exemption matched "researched at the" alone, so it is widened to
+         the CLAIM rather than to one phrasing - a card that names where the unlocks
+         live is not claiming to own them, however it words it. */
+      if (/every unit|all unit|unit unlock/i.test(d) && !/(researched|happen) at the/i.test(d)) {
         const owns = Object.keys(TECH_BLD).some(t =>
           RESEARCH[t] && RESEARCH[t].kind === 'unlock' && !RESEARCH[t].bkey && TECH_BLD[t] === k);
         if (!owns) bad.push(k);

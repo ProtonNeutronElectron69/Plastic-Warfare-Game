@@ -86,7 +86,7 @@ function burn87(n) { for (let i = 0; i < n; i++) updateStrikes(DT87); }
     const moved = Object.keys(V86).filter(k => supOf(k) !== V86[k]);
     ok('T60.A v87 itself moved nobody; the only drift from the v86 table is v88\'s three' +
        (moved.length ? ' (' + moved.join(', ') + ')' : ''),
-      moved.slice().sort().join(',') === 'gunner,medic,sarge' &&
+      moved.slice().sort().join(',') === 'flamer,medic,sarge' && // v88.1: the Gunner was re-priced back onto 2 and the Flamethrower took the seventh slot
       moved.every(k => V86[k] - supOf(k) === 1));
     ok('T60.A ...and the arrival took the top rank its price bought', supOf('firebomb') === 4);
     /* COUNTERFACTUAL. At 24 trainable units the quartile cuts land in exactly the

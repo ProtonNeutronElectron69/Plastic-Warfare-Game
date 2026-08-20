@@ -107,7 +107,7 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 88**.
+The game is at **version 88.1**.
 
 **Roadmap 1 (v79–v82) — complete.** Every exclusive unit and building that
 existed then got one passive and one toggleable ability: Green at v79, Tan at
@@ -133,12 +133,28 @@ toward the enemy that only your army can see and that your own men can walk over
 The **Smokescreen** call-in lays a 7×7 cloud in which your units *and your
 structures* take 40% less damage for 10 seconds.
 
-One side effect is worth knowing about, because it is a real balance change and
+One side effect was worth knowing about, because it was a real balance change and
 not a bug: adding a 25th trainable unit slid the supply-cost quartiles, so the
 Machine Gunner, the Medic and Sarge each cost one supply less than they used to.
-No price for the Choktaw avoided it. It is measured, recorded and left as an open
-question for a later release — see the v88 note in
-[`harness/README.md`](harness/README.md).
+No price for the Choktaw avoided it. **v88.1 fixed the part of that which
+mattered** — see below.
+
+**v88.1 — four small updates.** The **Machine Gunner** is re-priced 112 → 125
+plastic so he pays 2 supply again, which was the one consequence of v88's roster
+growth worth undoing: at 1 supply he was the best value-per-supply unit in the
+game. The seventh cheap-tier slot passes to the Flamethrower instead, who is
+Tan-only, so three armies in four cannot field the leader at all. The **Forward
+Pad** now repairs aircraft at 3 HP/s instead of 1.6 — at the old rate a damaged
+Apache sat on the pad for two minutes, which is longer than the match phase it is
+bought for. The **Field Manual** gallery is reordered and recoloured: units run
+Barracks, then Garage, then Helipad, cheapest first in each group, structures run
+cheapest to dearest, and everything any army can build is drawn in green while
+each army's exclusives keep their own colour. And every unit and structure
+description was rewritten shorter.
+
+Reordering that gallery turned up a bug v88 had shipped: both barricade
+thumbnails had been rendering blank, and nobody could see it while they sat in
+the middle of the list.
 
 **v87.1 — three interface repairs**, off the roadmap and touching no simulation.
 The drag-selection box is drawn in your army's colour instead of a fixed yellow;

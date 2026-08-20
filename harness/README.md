@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v88)
+# Plastic Warfare headless test harness (updated at v88.1)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -428,6 +428,161 @@ further down are the other half of that record.
     structures inside, 10 seconds. Deliberately stronger than the Mortar's Smoke
     Rounds (SMOKE_RED 0.2, radius 2, 5s, units only) - that is intended, not an
     oversight to be balanced away.
+
+## v88.1 note: four small updates, and the regression the third one exposed
+
+Four unrelated requests. Only ONE reaches the simulation - the Machine Gunner's
+price - and that one is why this release recuts trails. The other three are
+display, and the interesting thing about them is that reordering a gallery found
+a bug v88 shipped and nothing caught.
+
+### 1. The Machine Gunner, 112 -> 125 plastic
+
+This closes the standing v89 question the v88 note left open, and it closes it
+the way that note listed first. v88's 25th trainable unit slid SUP_U's quartile
+cuts one place and left him the 7th-cheapest, i.e. back on 1 supply and back to
+being the best per-supply buy in the game. 125 clears the Flamethrower's 120,
+which makes him 8th and puts him on 2.
+
+**The seventh slot does not disappear, it changes hands.** At 25 units the cheap
+tier holds seven, so somebody is always in it, and it is the Flamethrower now.
+That is strictly the better occupant and for a reason the file already records:
+he is TAN-EXCLUSIVE, so three armies in four cannot field the per-supply leader
+at all, and his lead over the Bazooka is 1.06x against the Gunner's 1.11x. The
+roster-wide spread comes back 9.51x -> 6.19x, against 5.84x from v69 to v87; the
+residual is the Medic and Sarge, still one rank cheaper, which is not this edit's
+to move.
+
+**It is a real efficiency cut and is recorded as one.** v78 paired the reload and
+the price so `rt x cp` held at 56 and his damage-per-plastic did not move. This
+release breaks that pairing deliberately: the reload stays at .5, so `rt x cp`
+goes to 62.5 and his efficiency falls 10.4%. The consequences, all measured:
+
+  - he drops to THIRD on infantry damage-per-plastic, behind the Flamethrower AND
+    the plain Grunt (1.1299x and 1.0851x). T26.H and T50.C are re-aimed on the
+    same two-sided shape v73's crossing was;
+  - for green, gray and blue the head of their own infantry table is the GRUNT
+    now, where it used to be the Gunner;
+  - T26.C's air runner-up changes identity, not standing: the Grunt is the second
+    best answer to aircraft at 53% of the AA truck, where the Gunner was. The
+    pool is still one and the v74 question is still open;
+  - the v69 heavy-armour relation widens again, 7.78 -> 6.97 against the
+    Bazooka's unmoved 10.76, which is the safe direction.
+
+What he keeps is what none of those measures can see, and T50.C and T63.A both
+assert it now rather than leaving it as consolation: Entrench, a 1.5x fire rate
+in a cone nothing else in the roster has, and the toughest hull among the
+infantry every army can build.
+
+### 2. The Forward Pad, 1.6 -> 3 HP/s
+
+v85 set PAD_REP deliberately UNDER MEDIC_HEAL_RATE so the Pad read as the quiet
+half of the building. The ordering is deliberately reversed now, and the reason
+is that 1.6 made the capability technically present and practically unusable: a
+Huey taken to a sliver sat on the pad for over a minute and an Apache for two,
+which is longer than the match phase either aircraft is bought for. At 3 those
+are about 36 and 62 seconds.
+
+It does not make the Pad a better Medic, and T58.C is re-aimed on that rather
+than on the rate ordering: the Medic follows the fight and heals anything on
+legs, the Pad is a fixed 2x2 that repairs only what flies, and nothing else in
+the game repairs that at all. The rate ordering between two different
+capabilities was never load-bearing.
+
+### 3. The Field Manual gallery: one colour for shared, the owner's for exclusive
+
+`infoFacOf` returned the READER's own army for anything shared, so a Grunt was
+painted Tan to a Tan player. That made the manual say something about ownership
+that is not true, and it made the same tile change colour between two readings of
+the same page - the one thing a reference must not do. The default is `green`
+now, exclusives keep their owner's colour, and the function no longer reads `G`
+at all. T27.H's "it shows YOUR army" claim was the v46 behaviour and is
+deliberately retired; what survives is the half that matters, which is that the
+panel opens over a live match without disturbing it.
+
+### 4. The gallery order, and the regression it exposed
+
+Both lists were `Object.keys` order - the order things were ADDED to the game,
+which is a development record and not a reading order. Units are grouped by
+`prodBldOf` (Barracks, Garage, Helipad) and run cheapest to dearest inside each
+group; structures are one run, cheapest to dearest. Both sorts break ties on key
+name for the reason SUP_U's does: the Garage and the Outpost are both 263, and a
+gallery that reshuffles between loads is one nobody can point at. The drop-only
+Paratrooper sorts LAST in his group whatever he costs, because cp 0 put a free
+unit at the head of the Barracks column and that reads as "the cheapest thing you
+can build", which is the one thing he is not.
+
+**THE REGRESSION.** Putting the cheapest structures first landed the two walls in
+the first two cells, and both were blank. Two faults, both shipped at v88:
+
+  - `drawBarricade` gained a `b.t.hbarr` test at v88 to pick its silhouette, and
+    the manual's thumbnail stub passed no `t` - so the ORDINARY wall threw inside
+    `infoPortraitCv`'s try and drew nothing;
+  - the stub was keyed `key==='barricade'`, so the Heavy Barricade fell through to
+    `SPR.bld`, which is empty for a wall because neither wall is baked - it drew
+    nothing either.
+
+The fifteenth key-based wall test, in other words, plus a stub that v88's own
+sweep fix did not reach. T30.C was taught to pass a real row at v88 and that
+covered the sweep; this call site is the one it does not touch, so T63.E covers
+it directly, with a mutation arm that shows a row-less stub really does throw.
+
+**The lesson is the v88 one, one layer down.** "Grep for the first one's key"
+found fourteen sites. It did not find this one, because this site is a
+CONSTRUCTED STUB rather than a real entity - it never had a `t` to be wrong
+about, so a search for `key==='barricade'` found it and a search for what reads
+`t` did not. When a function starts reading a new field, the thing to grep for is
+its CALLERS, not the field.
+
+### The description pass
+
+Every unit and structure card was rewritten shorter. The longest unit card went
+356 -> 327 characters and the longest structure 291 -> 257. Three cards that
+carried typed numbers now read constants instead - the Machine Gunner's entrench
+multiplier, the Medic's radius and the Barricade's HP and price - and
+`MEDIC_HEAL_RADIUS` moved above the U table to make the second of those possible,
+on U0AURA's rule: it was declared BELOW the table it is read from, which is the
+temporal-dead-zone trap the v86 note records.
+
+T63.F pins the pass as a PROPERTY rather than as transcribed lengths, which would
+rot on the next word changed: no card past 340 characters, every figure still
+reads a live constant (21 of them driven), the two derived cards still read their
+lists off the tables, and nothing leaked a `${...}`, an `undefined` or a `NaN`.
+
+### The census that needed six seeds, again
+
+T42.H's Gray bunker count read 0.25 against its 0.5 floor. Measured per seed over
+eight on this build:
+
+    blue 2,2,2,2,2,3,2,1     gray 1,0,0,0,2,3,0,3
+
+Gray's count is LUMPY - four of the eight seeds build none at all - so a
+four-sample mean of it is noise, which is exactly what the v86 note says a
+two-sample mean of it was. Running means: 4 -> 0.250, 5 -> 0.600, 6 -> 1.000,
+7 -> 0.857, 8 -> 1.125. Six is the smallest set that clears the floor and stays
+clear, so the seed count is widened rather than the floor lowered - the same
+decision v86 made, on the same evidence, one step further along.
+
+### repin_v88_1 learned that an unchanged table can be correct
+
+`BASE43_DESK` came back byte-identical and the repin script exited on it as a
+suspected re-run. It was right to be suspicious and wrong about this table: the
+Desk trail is cut from a fixture that forces `U.gunner.cp=90` before it runs, so
+the one thing this release changed in the simulation cannot reach it. The script
+now carries an `UNMOVED_OK` map naming that table and the reason; anything not in
+it that comes back unchanged is still a hard failure.
+
+### Verification actually run at v88.1
+`./build.sh`; `node --check`; `./triage.sh` before and after - **all 42 layout
+pins hold**; `recut_v88_1.js` + `repin_v88_1.py` regenerated four of the five
+baseline tables behind that gate (the v88 pair was rolled forward and deleted);
+`QUIET=1 ./seg.sh all` = 2350 / 501 / 48 / 234 / 1910 = **5,043 checks, 0
+failures** (tail_v88_1 contributes 46); `python3 verify_v58.py` 32 passed. Driven
+in real Chromium at 1400x900: the Field Manual opens on both tabs, the unit
+gallery reads Barracks / Garage / Helipad cheapest-first with the exclusives in
+their own colours, the structure gallery runs Barricade to HQ, both wall
+thumbnails render, the Gunner's card shows 125, and `REN_ERRS` stayed empty. The
+real-canvas render tails were NOT run.
 
 ## v88 note: what v88 actually added, and the derivation that could NOT be held
 
@@ -872,8 +1027,10 @@ needed. The five segments at v87 run 2341 / 495 / 48 / 235 / 1662 = 4781 checks,
 0 failures, plus verify_v58.py's 32 and the six real-canvas tails
 (60 / 25 / 60 / 164 / 9 / 4). v87.1 added tail_v87_1 to the same segment: 2343 /
 495 / 48 / 235 / 1721 = 4842. v88 added tail_v88 to it as well: 2349 / 500 / 48 /
-233 / 1859 = 4989. Segment 3 now carries eleven tails and is still not the long
-pole - 2b's single tail_v59 remains that, for the reason the seg.sh header gives.
+233 / 1859 = 4989. v88.1 adds tail_v88_1 to the same segment and two seeds to
+T42.H's census in 2c: 2350 / 501 / 48 / 234 / 1910 = 5043. Segment 3 now carries
+twelve tails and is still not the long pole - 2b's single tail_v59 remains that,
+for the reason the seg.sh header gives.
 
 ## v86 note: what v86 actually added, and the four seams worth knowing
 

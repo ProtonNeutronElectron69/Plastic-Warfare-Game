@@ -31,7 +31,7 @@ both, and why you run it before every test pass.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 4,989 checks at v88.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,043 checks at v88.1.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -96,21 +96,26 @@ teardown and its plastic heap). None of them moved the simulation.
 rather than transcribed — so an army that grew a third exclusive structure, or
 lost one, fires there.
 
-## The one open question v88 left behind
+**v88.1 closed v88's open question and made three display changes.** The Machine
+Gunner was re-priced 112 → 125 so he pays 2 supply again; the Forward Pad's
+repair rate went 1.6 → 3 HP/s; the Field Manual gallery is cost-ordered and
+paints shared entries green and exclusives in their owner's colour; and every
+unit and structure description was shortened.
 
-**The Machine Gunner is back to 1 supply, and is again the best per-supply buy in
-the game.** This is not a bug and it was not avoidable at v88. The Choktaw is the
-roster's 25th trainable unit; 25 does not divide by four, so `SUP_U`'s quartile
-cuts slid and the three units sitting on the old boundaries — Gunner, Medic,
-Sarge — each dropped one rank. Every total cost from 10 to 700 was measured
-before the row went in: the only band that moves nobody is under the Gunner's own
-112, which is not a price a gunship can carry.
+## What v88.1 left behind
 
-The consequence is that the roster-wide per-supply spread widened 5.84× → 9.51×,
-which is partly the cliff the v69 supply ladder was built to remove. `T48.B` and
-`T50.C` record it two-sided, so a further widening fires and so does a fix. **It
-is a standing v89 question** — the levers are listed in the v88 note in
-`harness/README.md`. Do not "fix" it by loosening those pins.
+**The seventh supply slot.** At 25 trainable units the cheap tier holds seven, so
+somebody always pays 1 supply. It is the Flamethrower now rather than the Machine
+Gunner, which is the better occupant because he is Tan-exclusive — three armies
+in four cannot field the per-supply leader at all. The Medic and Sarge are still
+one rank cheaper than they were at v87; that is roster arithmetic and nobody has
+asked for it to change.
+
+**The Machine Gunner is third on infantry damage-per-plastic**, behind the
+Flamethrower and the plain Grunt, because the re-price broke v78's `rt × cp`
+pairing on purpose. What he keeps is Entrench and the toughest hull among the
+infantry every army can build, and `T50.C`/`T63.A` assert both so "he is still
+worth it" is a checked claim. `T26.C`'s air question is untouched and still open.
 
 Two things to know before the next release:
 
@@ -174,6 +179,13 @@ When adding a faction exclusive, the v85 work is the closest model:
   teardown, and `checkElim` — an army left holding only heavy walls would never
   have been eliminated. Before adding a second row of an existing kind, grep for
   the first one's key.
+- **When a function starts reading a new field, grep for its CALLERS.** v88's
+  fifteenth wall site was missed by exactly the grep that found the other
+  fourteen, because it is a hand-built stub rather than a real entity: it never
+  had a `t` to be wrong about, so searching for `key==='barricade'` found it and
+  searching for what reads `t` did not. Both wall thumbnails in the Field Manual
+  were blank for a whole release, and only became visible when v88.1 reordered
+  the gallery and put them first.
 - **"Cannot be targeted" needs an acquisition gate AND a damage rule.** v86's
   balloon has both, because a zero multiplier is not a refusal to aim: without
   `ballOk` every rifleman on the map would stand under one forever dealing

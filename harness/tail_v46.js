@@ -344,7 +344,18 @@ function drop46(u){const i=G.units.indexOf(u);if(i>=0)G.units.splice(i,1);const 
   ok('T27.H it opens without disturbing the match',INFO.open===true&&G===gBefore&&hashState()===before);
   ok('T27.H the close button reads for a match, not for the menu',
      (document.getElementById('infoClose').textContent||'').indexOf('Close')>0);
-  ok('T27.H it shows YOUR army rather than the setup screen\u2019s pick',infoFacOf('unit','grunt')===G.human.fac);
+  /* v88.1 RETIRED this behaviour deliberately. A shared unit is shared, and
+     painting the Grunt in whichever army happens to be selected made the manual
+     say something about ownership that is not true. The gallery draws one colour
+     for "anyone can build this" and the owning army's colour for "only they can",
+     which is the distinction it exists to draw. The mid-match behaviour that DOES
+     survive is the one that matters - the panel opens over a live match without
+     disturbing it, which the lines around this one check. */
+  ok('T27.H a shared unit is Green whoever is reading it, not the reader\u2019s own army',
+     infoFacOf('unit','grunt')==='green'&&INFO_COMMON_FAC==='green');
+  ok('T27.H ...while an exclusive still shows in its OWN army\u2019s colours',
+     infoFacOf('unit','sniper')==='gray'&&infoFacOf('unit','runner')==='blue'&&
+     infoFacOf('bld','foundry')==='tan'&&infoFacOf('bld','cmdpost')==='green');
   infoShowTab('units');infoSelect('unit','chinook');
   ok('T27.H the Chinook has a card of its own in the grid',
      INFO.key==='chinook'&&!!INFO.fake&&INFO.fake.t===U.chinook);

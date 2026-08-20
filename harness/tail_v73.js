@@ -293,14 +293,25 @@ section('T50.C the Machine Gunner loses 15% DPS');
      slid past him, so supOf('gunner') is 1. Keeping the rank inside this
      conjunction would have made a v88 arithmetic fact look like a v78 unit edit,
      which is the opposite of what this line exists to say. */
-  ok('T50.C the hull and the price moved with it, and nothing else did',
-     U.gunner.hp === Math.round(100 * HP_SCALE) && U.gunner.cp === 112 && U.gunner.ce === 0 &&
+  /* v78 paired the reload and the price so rt x cp held and his efficiency did not
+     move. v88.1 breaks that pairing DELIBERATELY: the price goes 112 -> 125 for the
+     supply rank, and the reload stays at the v78 .5, so this is the first edit to
+     him since v69 that is a real efficiency cut rather than a re-expression. It is
+     10.4%, and it is the price of not being a 1-supply unit. */
+  ok('T50.C the hull is the v78 one, and everything but the price still is',
+     U.gunner.hp === Math.round(100 * HP_SCALE) && U.gunner.ce === 0 &&
      U.gunner.rg === 4 && U.gunner.sp === 1.9 && U.gunner.entrench === 1 &&
-     ENTRENCH_RATE === 1.5);
-  ok('T50.C ...and his supply rank is 1 since v88, by roster arithmetic and not by any edit to him',
-     supOf('gunner') === 1 && Object.keys(U).filter(k => !U[k].noTrain).length === 25);
-  ok('T50.C ...and reload x price is unchanged, which is why his efficiency is',
-     Math.abs(U.gunner.rt * U.gunner.cp - .4 * 140) < 1e-12);
+     ENTRENCH_RATE === 1.5 && U.gunner.rt === .5);
+  ok('T50.C the price is 125 since v88.1, and that is what buys the supply rank',
+     U.gunner.cp === 125 && supOf('gunner') === 2 &&
+     Object.keys(U).filter(k => !U[k].noTrain).length === 25);
+  /* the v78 identity, stated as the history it now is: rt x cp was 56 from v69 to
+     v88 and is 62.5 since v88.1, which IS the efficiency cut, asserted as a number
+     rather than left implied. */
+  ok('T50.C reload x price was 56 from v69 to v88, and is 62.5 since v88.1',
+     Math.abs(.4 * 140 - 56) < 1e-12 && Math.abs(U.gunner.rt * U.gunner.cp - 62.5) < 1e-12);
+  ok('T50.C ...i.e. an efficiency cut of 10.4%, which is what a price rise costs',
+     Math.abs((56 / 62.5) - 0.896) < 0.001);
 
   /* driven through the real fire path, not read off the table */
   const me = fresh73(730301, 1), foe = G.players[1];
@@ -329,19 +340,38 @@ section('T50.C the Machine Gunner loses 15% DPS');
         DESIGN STATEMENT crossing a line v69 drew on purpose - T26.H's bound was
         two-sided precisely so a release that flattened his lead away would fire.
         It fired, it was read, and this is the accepted answer. */
-  ok(`T50.C the Flamethrower now leads infantry damage-per-plastic (${order[0]}, then ${order[1]})`,
-     order[0] === 'flamer' && order[1] === 'gunner');
-  ok(`T50.C ...but only just (${(perCost('flamer') / perCost('gunner')).toFixed(4)}x)`,
-     Math.abs(perCost('flamer') / perCost('gunner') - 1.0124) < 0.005);
+  /* v73 put the Flamethrower ahead of the Gunner here by 1.0124x. v88.1's price
+     rise drops the Gunner to THIRD, behind the plain Grunt - a further crossing of
+     the line v69 drew, recorded rather than smoothed. The Gunner's case was never
+     raw damage per plastic: it is Entrench, a ${ENTRENCH_RATE}x fire rate in a cone
+     that nothing else in the roster has, and the toughest infantry hull in the
+     game. This measure cannot see either. */
+  ok(`T50.C the Gunner is third on infantry damage-per-plastic since v88.1 (${order.slice(0, 3).join(' > ')})`,
+     order[0] === 'flamer' && order[1] === 'grunt' && order[2] === 'gunner');
+  ok(`T50.C ...the Flamethrower leads him by ${(perCost('flamer') / perCost('gunner')).toFixed(4)}x`,
+     Math.abs(perCost('flamer') / perCost('gunner') - 1.1299) < 0.005);
+  ok(`T50.C ...and even the Grunt does, by ${(perCost('grunt') / perCost('gunner')).toFixed(4)}x`,
+     Math.abs(perCost('grunt') / perCost('gunner') - 1.0851) < 0.005);
+  /* the two things this measure cannot see, asserted so "he is still worth it" is
+     a checked claim rather than a consolation. The hull comparison is against the
+     infantry EVERY army can build - Sarge is a 1-max hero at 161 and is not the
+     line the Gunner is bought to hold. */
+  ok('T50.C ...while he keeps the two things it cannot see',
+     U.gunner.entrench === 1 &&
+     U.gunner.hp === Math.max(...B.barracks.prod.filter(k => U[k].a === 'inf').map(k => U[k].hp)));
   /* and the mitigating fact, which is the reason this was acceptable rather than
      merely tolerated: the Flamer is TAN-EXCLUSIVE, so for the other three
      factions the Gunner is still the head of their own infantry table. */
-  ok('T50.C the Flamethrower is tan-exclusive, so he still leads for green, gray and blue',
+  /* the mitigation, restated for what it now mitigates. The Flamethrower is still
+     Tan's alone, so three armies in four cannot buy the leader of this table - but
+     for those three the head is the GRUNT since v88.1, not the Gunner. */
+  ok('T50.C the Flamethrower is tan-exclusive, so three armies cannot field the leader',
      FAC_INF.tan.indexOf('flamer') >= 0 &&
-     ['green', 'gray', 'blue'].every(f => FAC_INF[f].indexOf('flamer') < 0) &&
+     ['green', 'gray', 'blue'].every(f => FAC_INF[f].indexOf('flamer') < 0));
+  ok('T50.C ...and for those three the head of their own table is the Grunt',
      ['green', 'gray', 'blue'].every(f => {
        const pool = B.barracks.prod.concat(FAC_INF[f]).filter(k => U[k].dm > 0 && U[k].cp > 0);
-       return pool.slice().sort((a, b) => perCost(b) - perCost(a))[0] === 'gunner';
+       return pool.slice().sort((a, b) => perCost(b) - perCost(a))[0] === 'grunt';
      }));
   // non-vacuity: under the v72 reload he led outright
   const keepRt = U.gunner.rt; U.gunner.rt = .34;
@@ -361,8 +391,11 @@ section('T50.C the Machine Gunner loses 15% DPS');
      T48.B records at length, seen from the release that pushed him down. Pinned in
      the same two-sided shape: the order is transcribed, so any further movement in
      either direction fires. */
-  ok(`T50.C per-supply he leads again since v88 (${rank.slice(0, 4).map(o => o.k).join(' > ')})`,
-     rank[0].k === 'gunner' && rank[1].k === 'bazooka' && rank[2].k === 'apache' && rank[3].k === 'choktaw');
+  /* v73 put him third here; v88's roster growth put him first; v88.1's re-price
+     takes him off the head again and the Flamethrower leads. Transcribed, so any
+     further movement in either direction fires. */
+  ok(`T50.C per-supply the Flamethrower leads since v88.1 (${rank.slice(0, 4).map(o => o.k).join(' > ')})`,
+     rank[0].k === 'flamer' && rank[1].k === 'bazooka' && rank[2].k === 'apache' && rank[3].k === 'choktaw');
 
   /* 3. The roster-wide per-supply spread is UNCHANGED, because he sits at
         neither end of it. This is the figure T48.B pins, and it must not move. */
@@ -372,8 +405,11 @@ section('T50.C the Machine Gunner loses 15% DPS');
      the live reload (T48.B measures 9.51x on the borrowed v72 reload, which is the
      same movement seen through the faster gun this section historically used).
      Both are recorded, and both are two-sided. */
-  ok(`T50.C the roster per-supply spread moved with him at v88 (${(Math.max(...v) / Math.min(...v)).toFixed(2)}x, was 5.84x)`,
-     Math.abs(Math.max(...v) / Math.min(...v) - 6.47) < 0.05);
+  /* 5.84x from v69 to v87; 6.47x at v88 when he slid to 1 supply; 6.19x since the
+     v88.1 re-price put him back on 2. The residual over v87 is the Medic and Sarge,
+     one rank cheaper each, which is not this edit's to move. */
+  ok(`T50.C the roster per-supply spread came back at v88.1 (${(Math.max(...v) / Math.min(...v)).toFixed(2)}x, was 6.47x at v88 and 5.84x before)`,
+     Math.abs(Math.max(...v) / Math.min(...v) - 6.19) < 0.05);
 
   /* 4. MEDIC_HEAL_RATE keys off the roster's LOWEST dm/rt. That is the Grunt and
         it is nowhere near him, so the heal rate cannot have followed him down. */
@@ -390,8 +426,13 @@ section('T50.C the Machine Gunner loses 15% DPS');
   const perP = (k, dps) => dps * dmgMulFor(k, U[k].w, 'heavy') / U[k].cp * 100;
   const gEnt = perP('gunner', unitDPS(U.gunner) * ENTRENCH_RATE);
   const baz = perP('bazooka', unitDPS(U.bazooka));
-  ok(`T50.C the v69 heavy-armor relation holds and widens (${gEnt.toFixed(2)} vs ${baz.toFixed(2)} per 100 plastic, was 9.15)`,
-     gEnt < baz && Math.abs(gEnt - 7.78) < 0.05);
+  /* v88.1 widens it again, for the same reason it widened at v73 and v78: his
+     figure is per PLASTIC, so a price rise moves it. 9.15 at v69, 7.78 from v73,
+     6.97 since v88.1, against the Bazooka's unmoved 10.76. The relation is what
+     matters and it is safer than it has ever been; the figure is pinned so a
+     future price CUT that reversed it would fire. */
+  ok(`T50.C the v69 heavy-armor relation holds and widens again (${gEnt.toFixed(2)} vs ${baz.toFixed(2)} per 100 plastic, was 7.78 and 9.15 before)`,
+     gEnt < baz && Math.abs(gEnt - 6.97) < 0.05);
 }
 
 /* ================================================ D: the hotkeys ============== */

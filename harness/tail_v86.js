@@ -80,7 +80,7 @@ function bld86(k, p, tx, ty) { const b = makeBuilding(k, p, tx, ty, true); b.pro
     const moved = Object.keys(V85).filter(k => supOf(k) !== V85[k]);
     ok('T59.A v86 itself moved nobody; the only drift from the v85 table is v88\'s three' +
        (moved.length ? ' (' + moved.join(', ') + ')' : ''),
-      moved.slice().sort().join(',') === 'gunner,medic,sarge');
+      moved.slice().sort().join(',') === 'flamer,medic,sarge'); // v88.1: the Gunner was re-priced back onto 2 and the Flamethrower took the seventh slot
     ok('T59.A ...and every one of the three fell by exactly one rank, none rose',
       moved.every(k => V85[k] - supOf(k) === 1));
     ok('T59.A ...and the two arrivals took the ranks their prices bought',
@@ -96,8 +96,14 @@ function bld86(k, p, tx, ty) { const b = makeBuilding(k, p, tx, ty, true); b.pro
     /* v88: measured against the LIVE ranks rather than the v85 transcription, since
        three of those have legitimately drifted - the counterfactual is still about
        whether the Command Truck's own price is load-bearing, and it still is. */
+    /* v88.1: measured against the LIVE ranks, and the unit it actually shifts is
+       the Flamethrower - a 20-plastic Command Truck slots in under him and pushes
+       him out of the seventh place the v88.1 re-price put him in. The disjunction
+       covers the four units nearest a boundary so the arm keeps working whichever
+       one a later roster change puts on the edge. */
     ok('T59.A COUNTERFACTUAL: a cheaper Command Truck really would re-tier the roster',
-      rank('bike') !== supOf('bike') || rank('gunner') !== supOf('gunner') || rank('medic') !== supOf('medic'));
+      rank('bike') !== supOf('bike') || rank('gunner') !== supOf('gunner') ||
+      rank('medic') !== supOf('medic') || rank('flamer') !== supOf('flamer'));
     U.cmdtruck.cp = keep;
   }
 }

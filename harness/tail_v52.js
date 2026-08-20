@@ -53,7 +53,7 @@ function mkCr52(sp,x,y){
  // advances. Everything else is byte-identical to the v65 cut.
  // v78: and again, 140 -> 112, alongside a matching -20% on his reload so his
  // damage per plastic does not move at all. Still the only mover.
- const V65={grunt:[36,0],grenadier:[55,0],gunner:[112,0],bazooka:[90,0],truck:[20,0],
+ const V65={grunt:[36,0],grenadier:[55,0],gunner:[125,0],bazooka:[90,0],truck:[20,0], // v88.1: gunner 112 -> 125, for the supply rank alone - see T35.A
   medic:[150,23],jeep:[130,11.5],aatruck:[180,34.5],tank:[220,46],heli:[200,80.5],sarge:[260,69],
   mortar:[150,0],flamer:[120,0],bulltank:[391,92.575],sniper:[170,0],arty:[320,103.5],bike:[90,5.75],
   apache:[300,126.5],apc:[260,46],chinook:[300,115],para:[0,0],
