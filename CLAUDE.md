@@ -36,6 +36,24 @@ QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
 
+## Watching the bots play
+
+```sh
+cd harness
+./sim.sh                 # 8 all-AI deathmatches, 2 per map, ~2min. Writes a report page.
+./sim.sh 16              # a bigger batch; SEED0=900 ./sim.sh for a different run
+```
+
+`sim.sh` runs whole matches with a CPU in every seat and builds
+`sim_out/battle-report.html` — winners, kills, and what every army produced. It is a
+MEASUREMENT tool, not a test: nothing it prints is pinned, and it is not part of
+`seg.sh`. Use it to answer "how does this actually play", not "did I break anything".
+
+**Its numbers move a lot between batches, and that is the honest signal.** Eight
+matches on the same seeds gave one army 6 wins under one map pairing and 4 under
+another. Read a batch as a hint about a direction, and re-run with a different
+`SEED0` before believing anything.
+
 **Start with `triage.sh`.** It re-runs the pinned hash trails and tells you
 whether the simulation actually moved, then ranks the test files by how rare the
 identifiers you touched are. Reading the diff is not a substitute: v83's

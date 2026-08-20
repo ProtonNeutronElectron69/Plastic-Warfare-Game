@@ -1,0 +1,629 @@
+<!-- sim_page.html - the battle report page. sim_report.js substitutes the run
+     data for the __DATA__ placeholder below and writes the result; nothing else in
+     this file is generated, so the page is edited here as ordinary HTML. -->
+<title>Plastic Warfare Battle Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#E7E7E1; --surface:#F4F4EF; --surface-2:#DEDFD6;
+  --ink:#212319; --ink-2:#4A4C41; --muted:#6E7065; --rule:#CBCCC2; --rule-2:#B6B8AC;
+  --f-green:#4caf50; --f-tan:#d2b074; --f-gray:#9b9ba3; --f-blue:#4a7de0;
+  --t-green:#2E7D32; --t-tan:#82661F; --t-gray:#56575E; --t-blue:#2F5DB0;
+  --ramp-1:rgba(33,35,25,.82); --ramp-2:rgba(33,35,25,.56); --ramp-3:rgba(33,35,25,.32); --ramp-4:rgba(33,35,25,.15);
+  --win:#1F6F3F; --win-bg:rgba(31,111,63,.11);
+  --shadow:0 1px 0 rgba(33,35,25,.06), 0 1px 3px rgba(33,35,25,.07);
+  --sans:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cond:"Barlow Condensed","Oswald",ui-sans-serif,system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#16180F; --surface:#1E2118; --surface-2:#282C20;
+  --ink:#E9EAE0; --ink-2:#C2C4B7; --muted:#8E9184; --rule:#333729; --rule-2:#454A38;
+  --t-green:#77CC7B; --t-tan:#DCBE8A; --t-gray:#B6B7BE; --t-blue:#82A6EE;
+  --ramp-1:rgba(233,234,224,.86); --ramp-2:rgba(233,234,224,.58); --ramp-3:rgba(233,234,224,.34); --ramp-4:rgba(233,234,224,.16);
+  --win:#5FBE84; --win-bg:rgba(95,190,132,.13);
+  --shadow:0 1px 0 rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --ground:#16180F; --surface:#1E2118; --surface-2:#282C20;
+  --ink:#E9EAE0; --ink-2:#C2C4B7; --muted:#8E9184; --rule:#333729; --rule-2:#454A38;
+  --t-green:#77CC7B; --t-tan:#DCBE8A; --t-gray:#B6B7BE; --t-blue:#82A6EE;
+  --ramp-1:rgba(233,234,224,.86); --ramp-2:rgba(233,234,224,.58); --ramp-3:rgba(233,234,224,.34); --ramp-4:rgba(233,234,224,.16);
+  --win:#5FBE84; --win-bg:rgba(95,190,132,.13);
+  --shadow:0 1px 0 rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:34px 22px 80px;display:flex;flex-direction:column;gap:34px}
+h1,h2,h3{margin:0;text-wrap:balance;font-family:var(--cond);font-weight:600;letter-spacing:.005em}
+a{color:inherit}
+.eyebrow{font-family:var(--cond);font-size:12px;font-weight:600;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---- masthead ---- */
+.mast{display:flex;flex-direction:column;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:18px}
+.mast h1{font-size:clamp(38px,7vw,64px);line-height:.94;letter-spacing:-.01em;text-transform:uppercase}
+.mast .sub{max-width:64ch;color:var(--ink-2);font-size:15.5px}
+.mast .meta{display:flex;flex-wrap:wrap;gap:8px 20px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+/* ---- verdict strip ---- */
+.verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;
+  background:var(--rule);border:1px solid var(--rule);box-shadow:var(--shadow)}
+.vcell{background:var(--surface);padding:15px 17px;display:flex;flex-direction:column;gap:3px}
+.vcell .k{font-family:var(--cond);font-size:11.5px;font-weight:600;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--muted)}
+.vcell .v{font-family:var(--cond);font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-.01em}
+.vcell .n{font-size:12.5px;color:var(--muted);line-height:1.4}
+
+/* ---- module ---- */
+.mod{display:flex;flex-direction:column;gap:13px}
+.mod-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px}
+.mod-head h2{font-size:23px;text-transform:uppercase;letter-spacing:.02em}
+.mod-head p{margin:0;color:var(--muted);font-size:13.5px;max-width:62ch}
+.hint{font-size:12px;color:var(--muted);font-family:var(--mono)}
+
+/* ---- controls ---- */
+.ctl{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.chip{font-family:var(--cond);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:5px 11px;border:1px solid var(--rule-2);background:var(--surface);color:var(--ink-2);
+  cursor:pointer;border-radius:2px;line-height:1.3}
+.chip:hover{border-color:var(--ink-2);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.chip:focus-visible,.sortbtn:focus-visible,.rowbtn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+/* ---- tables ---- */
+.scroll{overflow-x:auto;border:1px solid var(--rule);background:var(--surface);box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:9px 11px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left}
+thead th{position:sticky;top:0;z-index:2;background:var(--surface-2);
+  font-family:var(--cond);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-2);border-bottom:1px solid var(--rule-2);padding:0}
+.sortbtn{width:100%;height:100%;padding:9px 11px;background:none;border:0;cursor:pointer;
+  font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;text-align:right;
+  display:flex;align-items:center;justify-content:flex-end;gap:5px}
+th:first-child .sortbtn{text-align:left;justify-content:flex-start}
+.sortbtn:hover{color:var(--ink)}
+.sortbtn .ar{opacity:0;font-size:10px}
+.sortbtn[data-dir="asc"] .ar,.sortbtn[data-dir="desc"] .ar{opacity:1}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:0}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+tr.win-row{background:var(--win-bg)}
+tr.win-row:hover{background:var(--win-bg)}
+
+/* ---- faction marks ---- */
+.fac{display:inline-flex;align-items:center;gap:7px;font-weight:600;white-space:nowrap}
+.sw{width:10px;height:10px;flex:none;border-radius:1px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.22)}
+.f-green{color:var(--t-green)} .f-tan{color:var(--t-tan)}
+.f-gray{color:var(--t-gray)} .f-blue{color:var(--t-blue)}
+.bg-green{background:var(--f-green)} .bg-tan{background:var(--f-tan)}
+.bg-gray{background:var(--f-gray)} .bg-blue{background:var(--f-blue)}
+.pill{display:inline-block;font-family:var(--cond);font-size:11px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;padding:1px 7px;border-radius:2px;line-height:1.6}
+.pill-win{background:var(--win);color:var(--surface)}
+.pill-out{border:1px solid var(--rule-2);color:var(--muted)}
+.prof{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+
+/* ---- composition bar ---- */
+.bar{display:flex;height:9px;width:132px;background:var(--rule);border-radius:1px;overflow:hidden}
+.bar i{display:block;height:100%}
+.s1{background:var(--ramp-1)} .s2{background:var(--ramp-2)}
+.s3{background:var(--ramp-3)} .s4{background:var(--ramp-4)}
+.legend{display:flex;flex-wrap:wrap;gap:13px;font-size:12px;color:var(--muted);font-family:var(--mono)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:9px;border-radius:1px;display:block}
+
+/* ---- match log ---- */
+.rowbtn{background:none;border:0;font:inherit;color:inherit;cursor:pointer;padding:0;
+  display:inline-flex;align-items:center;gap:8px;font-family:var(--cond);font-weight:600;
+  font-size:15px;letter-spacing:.02em}
+.rowbtn .tw{font-family:var(--mono);font-size:11px;color:var(--muted);width:9px;display:inline-block}
+.gnum{font-family:var(--mono);font-size:12px;color:var(--muted);width:18px;display:inline-block}
+.detail td{padding:0;border-bottom:1px solid var(--rule)}
+.detail-in{padding:12px 14px 15px;background:var(--ground)}
+.detail table{font-size:12.5px}
+.detail thead th{background:var(--ground);border-bottom:1px solid var(--rule-2)}
+.detail tbody tr:hover{background:var(--surface-2)}
+.mini{border:1px solid var(--rule);background:var(--surface)}
+
+/* ---- notes ---- */
+.note{border-left:3px solid var(--rule-2);padding:2px 0 2px 15px;color:var(--ink-2);font-size:14px;
+  display:flex;flex-direction:column;gap:9px}
+.note strong{color:var(--ink)}
+.note p{margin:0;max-width:70ch}
+footer{border-top:1px solid var(--rule);padding-top:16px;color:var(--muted);font-size:12.5px;
+  display:flex;flex-direction:column;gap:6px}
+code{font-family:var(--mono);font-size:.92em;background:var(--surface-2);padding:1px 5px;border-radius:2px}
+@media (max-width:640px){
+  .wrap{padding:24px 14px 60px;gap:28px}
+  th,td{padding:8px 9px}
+  .bar{width:96px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<div class="wrap">
+
+<header class="mast">
+  <div class="eyebrow" id="eyebrow"></div>
+  <h1 id="mast-title"></h1>
+  <p class="sub" id="mast-sub"></p>
+  <div class="meta" id="mast-meta"></div>
+</header>
+
+<section class="verdict" id="verdict"></section>
+
+<section class="mod">
+  <div class="mod-head">
+    <div>
+      <h2>Standings</h2>
+      <p>Totals across all eight matches. Click any column to sort.</p>
+    </div>
+    <span class="hint">sortable</span>
+  </div>
+  <div class="scroll"><table id="tbl-fac">
+    <thead><tr id="fac-head"></tr></thead>
+    <tbody id="fac-body"></tbody>
+  </table></div>
+  <div class="legend">
+    <span><i class="s1"></i>infantry</span><span><i class="s2"></i>vehicles</span>
+    <span><i class="s3"></i>air</span><span><i class="s4"></i>anti-air</span>
+    <span>&mdash; share of units produced, by the game's own <code>aiUnitClass</code></span>
+  </div>
+</section>
+
+<section class="mod">
+  <div class="mod-head">
+    <div>
+      <h2>Match log</h2>
+      <p>One row per match, in the order they were run. Open a row for that match's armies.</p>
+    </div>
+    <span class="hint">click a match to expand</span>
+  </div>
+  <div class="scroll"><table id="tbl-log">
+    <thead><tr>
+      <th><span class="sortbtn" style="cursor:default">Match</span></th>
+      <th><span class="sortbtn" style="cursor:default">Map</span></th>
+      <th><span class="sortbtn" style="cursor:default">Winner</span></th>
+      <th><span class="sortbtn" style="cursor:default">Doctrine</span></th>
+      <th><span class="sortbtn" style="cursor:default">Length</span></th>
+      <th><span class="sortbtn" style="cursor:default">Kills</span></th>
+      <th><span class="sortbtn" style="cursor:default">Seed</span></th>
+    </tr></thead>
+    <tbody id="log-body"></tbody>
+  </table></div>
+</section>
+
+<section class="mod">
+  <div class="mod-head">
+    <div>
+      <h2>Doctrine</h2>
+      <p>How each behaviour profile fared, pooled across every faction that drew it.</p>
+    </div>
+    <span class="hint">sortable</span>
+  </div>
+  <div class="scroll"><table id="tbl-prof">
+    <thead><tr id="prof-head"></tr></thead>
+    <tbody id="prof-body"></tbody>
+  </table></div>
+</section>
+
+<section class="mod">
+  <div class="mod-head">
+    <div>
+      <h2>What they built</h2>
+      <p>Everything produced after the starting kit, summed over all eight matches.</p>
+    </div>
+    <span class="hint">sortable</span>
+  </div>
+  <div class="ctl" id="comp-ctl">
+    <button class="chip" data-kind="units" aria-pressed="true">Units</button>
+    <button class="chip" data-kind="blds" aria-pressed="false">Structures</button>
+    <span style="width:12px"></span>
+    <span id="cls-chips"></span>
+  </div>
+  <div class="scroll"><table id="tbl-comp">
+    <thead><tr id="comp-head"></tr></thead>
+    <tbody id="comp-body"></tbody>
+    <tfoot id="comp-foot"></tfoot>
+  </table></div>
+</section>
+
+<section class="mod">
+  <div class="mod-head"><div><h2>Reading it</h2></div></div>
+  <div class="note" id="notes"></div>
+</section>
+
+<footer>
+  <div id="foot-run"></div>
+  <div>Profiles are assigned by <code>newGame</code> from a seeded shuffle, so every match here
+  re-runs identically from its seed. Production was counted by wrapping <code>makeUnit</code> and
+  <code>makeBuilding</code> after setup, so the starting base and starting squad are excluded.</div>
+</footer>
+
+</div>
+<script>window.__DATA__=/*__DATA__*/null;</script>
+<script>
+(function(){
+'use strict';
+const D = window.__DATA__;
+const F = D.facOrder;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const el = (h) => { const t = document.createElement('template'); t.innerHTML = h.trim(); return t.content.firstElementChild; };
+const mmss = s => Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+const facMark = f => `<span class="fac f-${f}"><i class="sw bg-${f}"></i>${esc(D.fac[f].name)}</span>`;
+
+/* ---------- aggregate ---------- */
+const A = {};
+F.forEach(f => A[f] = {fac:f, wins:0, kills:0, lost:0, units:0, blds:0, uu:0, ub:0, sup:0,
+                       mined:0, elim:0, cls:{inf:0,veh:0,air:0,aa:0}, byU:{}, byB:{}});
+D.games.forEach(g => {
+  A[g.winner].wins++;
+  g.armies.forEach(a => {
+    const x = A[a.fac];
+    x.kills += a.kills; x.lost += a.lost; x.units += a.unitsBuilt; x.blds += a.bldsBuilt;
+    x.uu += a.uuBuilt; x.ub += a.ubBuilt; x.sup += a.supportBuilt; x.mined += a.mined;
+    if (!a.alive) x.elim++;
+    for (const c in a.cls) x.cls[c] += a.cls[c];
+    for (const k in a.builtU) x.byU[k] = (x.byU[k]||0) + a.builtU[k];
+    for (const k in a.builtB) x.byB[k] = (x.byB[k]||0) + a.builtB[k];
+  });
+});
+F.forEach(f => { const x = A[f]; x.kl = x.lost ? x.kills/x.lost : x.kills; });
+
+const P = {};
+D.profiles.forEach(p => P[p] = {prof:p, n:0, wins:0, kills:0, lost:0, units:0, secs:0});
+D.games.forEach(g => g.armies.forEach(a => {
+  const x = P[a.profile];
+  x.n++; x.kills += a.kills; x.lost += a.lost; x.units += a.unitsBuilt;
+  if (a.fac === g.winner) x.wins++;
+}));
+
+/* ---------- verdict strip ---------- */
+const champ = F.slice().sort((a,b) => A[b].wins - A[a].wins)[0];
+const topKill = F.slice().sort((a,b) => A[b].kills - A[a].kills)[0];
+const worstProf = D.profiles.slice().sort((a,b) => (P[a].wins - P[b].wins) || (P[b].n - P[a].n))[0];
+const bestProf = D.profiles.slice().sort((a,b) => (P[b].wins/P[b].n) - (P[a].wins/P[a].n))[0];
+const totKills = F.reduce((s,f) => s + A[f].kills, 0);
+const avgLen = Math.round(D.games.reduce((s,g) => s + g.simSeconds, 0) / D.games.length);
+
+document.getElementById('verdict').innerHTML = [
+  (function () {
+    const top = F.filter(f => A[f].wins === A[champ].wins);
+    return top.length > 1
+      ? ['Match winner', 'Tied', top.length + ' armies on ' + A[champ].wins
+          + ' win' + (A[champ].wins === 1 ? '' : 's') + ' each', null]
+      : ['Match winner', D.fac[champ].name.replace(' Army',''),
+         A[champ].wins + ' of ' + D.games.length + ' matches', champ];
+  })(),
+  ['Most kills', A[topKill].kills.toLocaleString(), D.fac[topKill].name.replace(' Army','') + ' · ' + (A[topKill].kills/D.games.length).toFixed(0) + ' per match', topKill],
+  ['Best doctrine', bestProf, P[bestProf].wins + ' wins from ' + P[bestProf].n + ' draws', null],
+  ['Never won', worstProf, '0 wins from ' + P[worstProf].n + ' draws', null],
+  ['Total kills', totKills.toLocaleString(), 'across ' + (D.games.length*F.length) + ' armies', null],
+  ['Mean length', mmss(avgLen), 'shortest ' + mmss(Math.min(...D.games.map(g=>g.simSeconds))) + ', longest ' + mmss(Math.max(...D.games.map(g=>g.simSeconds))), null],
+].map(([k,v,n,f]) => `<div class="vcell"><div class="k">${esc(k)}</div>
+  <div class="v${f ? ' f-'+f : ''}">${esc(v)}</div><div class="n">${esc(n)}</div></div>`).join('');
+
+const NW = ['Zero','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven',
+  'Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen','Twenty'];
+const nMatch = D.games.length, nArmy = F.length, nSeat = nMatch * nArmy;
+const mapCount = {}; D.games.forEach(g => mapCount[g.mapName] = (mapCount[g.mapName]||0) + 1);
+const mapNames = Object.keys(mapCount);
+const perMap = [...new Set(Object.values(mapCount))];
+const byElim = D.games.filter(g => g.endReason === 'elimination').length;
+
+document.getElementById('eyebrow').textContent =
+  'Plastic Warfare \u00b7 ' + D.version + ' \u00b7 After-action report';
+document.getElementById('mast-title').innerHTML =
+  esc((NW[nMatch] || nMatch) + ' Deathmatches,') + '<br>' + esc((NW[nArmy] || nArmy) + ' Armies Each');
+document.getElementById('mast-sub').textContent =
+  'Every army in all ' + nMatch + ' matches was driven by the game\u2019s own AI. Each match drew '
+  + nArmy + ' of the ' + D.profiles.length + ' behaviour profiles at random, without replacement, so no two armies '
+  + 'on a map ever played the same doctrine. '
+  + (perMap.length === 1
+      ? (NW[perMap[0]] || perMap[0]) + (perMap[0] === 1 ? ' match' : ' matches') + ' on each of the '
+        + mapNames.length + ' deathmatch maps.'
+      : 'Spread across ' + mapNames.length + ' deathmatch maps.');
+document.getElementById('mast-meta').innerHTML = [
+  nSeat + ' armies', nMatch + ' matches',
+  byElim === nMatch ? 'all decided by elimination' : byElim + ' of ' + nMatch + ' by elimination',
+  D.games.some(g => g.endReason === 'time') ? 'some reached the ' + mmss(D.dmTime) + ' cap'
+    : 'none reached the ' + mmss(D.dmTime) + ' cap',
+  nSeat + ' doctrine draws',
+].map(x => '<span>' + esc(x) + '</span>').join('');
+document.getElementById('foot-run').innerHTML =
+  'Run headless against <code>plastic-warfare.html</code> at ' + esc(D.version)
+  + (D.commit ? ' (<code>' + esc(D.commit) + '</code>)' : '')
+  + ' through the game\u2019s own v55 spectate mode, which seats a CPU in every slot and fields one army per faction.';
+
+/* ---------- generic sortable table ---------- */
+function sortable(headRow, bodyEl, cols, rows, initial, render) {
+  let key = initial, dir = 'desc';
+  headRow.innerHTML = cols.map(c =>
+    `<th${c.w ? ` style="width:${c.w}"` : ''}><button class="sortbtn" data-k="${c.k}"><span>${esc(c.t)}</span><span class="ar">▾</span></button></th>`
+  ).join('');
+  function paint() {
+    const col = cols.find(c => c.k === key);
+    const sorted = rows.slice().sort((a,b) => {
+      const va = col.v(a), vb = col.v(b);
+      const r = (typeof va === 'string') ? va.localeCompare(vb) : (va - vb);
+      return dir === 'asc' ? r : -r;
+    });
+    bodyEl.innerHTML = sorted.map(render).join('');
+    headRow.querySelectorAll('.sortbtn').forEach(b => {
+      if (b.dataset.k === key) { b.dataset.dir = dir; b.querySelector('.ar').textContent = dir === 'asc' ? '▴' : '▾'; }
+      else b.removeAttribute('data-dir');
+    });
+  }
+  headRow.querySelectorAll('.sortbtn').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.k;
+    if (k === key) dir = (dir === 'desc' ? 'asc' : 'desc');
+    else { key = k; dir = (cols.find(c => c.k === k).str ? 'asc' : 'desc'); }
+    paint();
+  }));
+  paint();
+  return { repaint: paint };
+}
+
+function compBar(cls, total) {
+  if (!total) return '<span class="bar"></span>';
+  const seg = ['inf','veh','air','aa'].map((c,i) =>
+    `<i class="s${i+1}" style="width:${(100*cls[c]/total).toFixed(2)}%" title="${c} ${(100*cls[c]/total).toFixed(1)}%"></i>`).join('');
+  return `<span class="bar">${seg}</span>`;
+}
+const pct = (a,b) => b ? (100*a/b).toFixed(1) + '%' : '—';
+
+/* ---------- standings ---------- */
+sortable(
+  document.getElementById('fac-head'), document.getElementById('fac-body'),
+  [ {k:'fac', t:'Army', v:r=>D.fac[r.fac].name, str:true},
+    {k:'wins', t:'Wins', v:r=>r.wins},
+    {k:'kills', t:'Kills', v:r=>r.kills},
+    {k:'lost', t:'Losses', v:r=>r.lost},
+    {k:'kl', t:'K/L', v:r=>r.kl},
+    {k:'units', t:'Units built', v:r=>r.units},
+    {k:'blds', t:'Structures', v:r=>r.blds},
+    {k:'mix', t:'Composition', v:r=>r.cls.inf/(r.units||1)},
+    {k:'inf', t:'Inf', v:r=>r.cls.inf/(r.units||1)},
+    {k:'veh', t:'Veh', v:r=>r.cls.veh/(r.units||1)},
+    {k:'air', t:'Air', v:r=>r.cls.air/(r.units||1)},
+    {k:'uu', t:'Excl. units', v:r=>r.uu},
+    {k:'ub', t:'Excl. bldgs', v:r=>r.ub} ],
+  F.map(f => A[f]), 'wins',
+  r => `<tr${r.wins ? ' class="win-row"' : ''}>
+    <td>${facMark(r.fac)}</td>
+    <td class="n"><strong>${r.wins}</strong></td>
+    <td class="n">${r.kills.toLocaleString()}</td>
+    <td class="n">${r.lost.toLocaleString()}</td>
+    <td class="n">${r.kl.toFixed(2)}</td>
+    <td class="n">${r.units.toLocaleString()}</td>
+    <td class="n">${r.blds}</td>
+    <td>${compBar(r.cls, r.units)}</td>
+    <td class="n">${pct(r.cls.inf, r.units)}</td>
+    <td class="n">${pct(r.cls.veh, r.units)}</td>
+    <td class="n">${pct(r.cls.air, r.units)}</td>
+    <td class="n">${r.uu}</td>
+    <td class="n">${r.ub}</td></tr>`
+);
+
+/* ---------- match log ---------- */
+const logBody = document.getElementById('log-body');
+logBody.innerHTML = D.games.map(g => {
+  const w = g.armies.find(a => a.fac === g.winner);
+  const detail = `<tr class="detail" id="d${g.n}" hidden><td colspan="7"><div class="detail-in">
+    <div class="scroll mini"><table>
+      <thead><tr><th>Army</th><th>Doctrine</th><th>Result</th><th>Kills</th><th>Losses</th>
+        <th>Units</th><th>Structures</th><th>Composition</th><th>Exclusive units</th>
+        <th>Base value</th><th>Standing at end</th></tr></thead>
+      <tbody>${g.armies.slice().sort((a,b) => b.kills - a.kills).map(a => `<tr${a.fac === g.winner ? ' class="win-row"' : ''}>
+        <td>${facMark(a.fac)}</td>
+        <td class="prof">${esc(a.profile)}</td>
+        <td>${a.fac === g.winner ? '<span class="pill pill-win">Won</span>'
+             : `<span class="pill pill-out">Out ${a.elimAt != null ? mmss(a.elimAt) : ''}</span>`}</td>
+        <td class="n">${a.kills}</td><td class="n">${a.lost}</td>
+        <td class="n">${a.unitsBuilt}</td><td class="n">${a.bldsBuilt}</td>
+        <td>${compBar(a.cls, a.unitsBuilt)}</td>
+        <td class="n">${a.uuBuilt}</td>
+        <td class="n">${a.baseWorth.toLocaleString()}</td>
+        <td class="n">${a.endUnits} u &middot; ${a.endBlds} b</td></tr>`).join('')}</tbody>
+    </table></div></div></td></tr>`;
+  return `<tr>
+    <td><button class="rowbtn" aria-expanded="false" aria-controls="d${g.n}" data-g="${g.n}">
+        <span class="tw">▸</span><span class="gnum">${g.n}</span></button></td>
+    <td>${esc(g.mapName)}</td>
+    <td>${facMark(g.winner)}</td>
+    <td class="prof">${esc(w.profile)}</td>
+    <td class="n">${mmss(g.simSeconds)}</td>
+    <td class="n">${g.armies.reduce((s,a) => s + a.kills, 0)}</td>
+    <td class="n">${g.seed}</td></tr>${detail}`;
+}).join('');
+logBody.addEventListener('click', e => {
+  const b = e.target.closest('.rowbtn'); if (!b) return;
+  const row = document.getElementById('d' + b.dataset.g);
+  const open = row.hasAttribute('hidden');
+  if (open) row.removeAttribute('hidden'); else row.setAttribute('hidden','');
+  b.setAttribute('aria-expanded', String(open));
+  b.querySelector('.tw').textContent = open ? '▾' : '▸';
+});
+
+/* ---------- doctrine ---------- */
+sortable(
+  document.getElementById('prof-head'), document.getElementById('prof-body'),
+  [ {k:'prof', t:'Doctrine', v:r=>r.prof, str:true},
+    {k:'n', t:'Times drawn', v:r=>r.n},
+    {k:'wins', t:'Wins', v:r=>r.wins},
+    {k:'rate', t:'Win rate', v:r=>r.wins/r.n},
+    {k:'ak', t:'Kills / match', v:r=>r.kills/r.n},
+    {k:'al', t:'Losses / match', v:r=>r.lost/r.n},
+    {k:'au', t:'Units / match', v:r=>r.units/r.n},
+    {k:'aggro', t:'Aggression', v:r=>D.profileMeta[r.prof].aggro},
+    {k:'push', t:'First push', v:r=>D.profileMeta[r.prof].firstPush},
+    {k:'tilt', t:'Army tilt', v:r=>D.profileMeta[r.prof].armyTilt, str:true},
+    {k:'want', t:'Wanted mix', v:r=>D.profileMeta[r.prof].mixWant.inf} ],
+  D.profiles.map(p => P[p]), 'wins',
+  r => { const m = D.profileMeta[r.prof];
+    return `<tr${r.wins ? ' class="win-row"' : ''}>
+      <td><strong style="font-family:var(--cond);font-size:15px;letter-spacing:.03em">${esc(r.prof)}</strong></td>
+      <td class="n">${r.n}</td><td class="n"><strong>${r.wins}</strong></td>
+      <td class="n">${(100*r.wins/r.n).toFixed(0)}%</td>
+      <td class="n">${(r.kills/r.n).toFixed(0)}</td>
+      <td class="n">${(r.lost/r.n).toFixed(0)}</td>
+      <td class="n">${(r.units/r.n).toFixed(0)}</td>
+      <td class="n">${m.aggro.toFixed(2)}</td>
+      <td class="n">${m.firstPush}</td>
+      <td class="prof">${esc(m.armyTilt)}</td>
+      <td class="n">${(100*m.mixWant.inf).toFixed(0)}/${(100*m.mixWant.veh).toFixed(0)}/${(100*m.mixWant.air).toFixed(0)}</td></tr>`; }
+);
+
+/* ---------- composition matrix ---------- */
+let kind = 'units', clsFilter = 'all';
+const clsChips = document.getElementById('cls-chips');
+clsChips.innerHTML = ['all','inf','veh','air','aa'].map(c =>
+  `<button class="chip" data-cls="${c}" aria-pressed="${c==='all'}">${c === 'all' ? 'All classes' : esc(c)}</button>`).join(' ');
+
+function compRows() {
+  if (kind === 'blds') {
+    return Object.keys(D.blds).map(k => ({key:k, name:D.blds[k].n, cls:D.blds[k].barr ? 'wall' : '—',
+      cp:D.blds[k].cp, tot:F.reduce((s,f) => s + (A[f].byB[k]||0), 0),
+      per:Object.fromEntries(F.map(f => [f, A[f].byB[k]||0])),
+      excl:F.filter(f => D.fac[f].ub.indexOf(k) >= 0)[0] || null })).filter(r => r.tot > 0);
+  }
+  return Object.keys(D.units).map(k => ({key:k, name:D.units[k].n, cls:D.units[k].cls,
+    cp:D.units[k].cp, tot:F.reduce((s,f) => s + (A[f].byU[k]||0), 0),
+    per:Object.fromEntries(F.map(f => [f, A[f].byU[k]||0])),
+    excl:F.filter(f => D.fac[f].uu.indexOf(k) >= 0)[0] || null }))
+    .filter(r => r.tot > 0 && (clsFilter === 'all' || r.cls === clsFilter));
+}
+
+let compTable = null;
+function buildComp() {
+  const rows = compRows();
+  const cols = [ {k:'name', t:kind === 'blds' ? 'Structure' : 'Unit', v:r=>r.name, str:true},
+                 {k:'cls', t:'Class', v:r=>r.cls, str:true},
+                 {k:'cp', t:'Cost', v:r=>r.cp} ]
+    .concat(F.map(f => ({k:f, t:D.fac[f].name.replace(' Army',''), v:r=>r.per[f]})))
+    .concat([{k:'tot', t:'Total', v:r=>r.tot}]);
+  compTable = sortable(
+    document.getElementById('comp-head'), document.getElementById('comp-body'), cols, rows, 'tot',
+    r => `<tr>
+      <td><strong>${esc(r.name)}</strong>${r.excl ? ` <span class="fac f-${r.excl}" style="font-size:11px">◆ ${esc(D.fac[r.excl].name.replace(' Army',''))}</span>` : ''}</td>
+      <td class="prof">${esc(r.cls)}</td>
+      <td class="n">${r.cp || '—'}</td>
+      ${F.map(f => `<td class="n"${r.per[f] === 0 ? ' style="color:var(--muted)"' : ''}>${r.per[f] || '·'}</td>`).join('')}
+      <td class="n"><strong>${r.tot}</strong></td></tr>`
+  );
+  const tot = rows.reduce((s,r) => s + r.tot, 0);
+  document.getElementById('comp-foot').innerHTML = `<tr style="background:var(--surface-2)">
+    <td><strong>${rows.length} ${kind === 'blds' ? 'structure types' : 'unit types'}</strong></td>
+    <td></td><td></td>
+    ${F.map(f => `<td class="n"><strong>${rows.reduce((s,r) => s + r.per[f], 0).toLocaleString()}</strong></td>`).join('')}
+    <td class="n"><strong>${tot.toLocaleString()}</strong></td></tr>`;
+}
+buildComp();
+
+document.getElementById('comp-ctl').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  if (b.dataset.kind) {
+    kind = b.dataset.kind;
+    document.querySelectorAll('#comp-ctl .chip[data-kind]').forEach(x =>
+      x.setAttribute('aria-pressed', String(x.dataset.kind === kind)));
+    clsChips.style.display = (kind === 'blds') ? 'none' : '';
+  } else if (b.dataset.cls) {
+    clsFilter = b.dataset.cls;
+    clsChips.querySelectorAll('.chip').forEach(x =>
+      x.setAttribute('aria-pressed', String(x.dataset.cls === clsFilter)));
+  }
+  buildComp();
+});
+
+/* ---------- scroll affordance ----------
+   Two of these tables are wider than the column at desktop width and scroll inside
+   their own container. A header clipped mid-word is the only cue otherwise, so the
+   hint says it - and says it only when it is actually true at the current width. */
+function markScroll() {
+  document.querySelectorAll('.mod').forEach(mod => {
+    const t = mod.querySelector('.scroll > table'), hint = mod.querySelector('.hint');
+    if (!t || !hint) return;
+    if (!hint.dataset.base) hint.dataset.base = hint.textContent;
+    const over = t.scrollWidth > t.parentElement.clientWidth + 1;
+    hint.textContent = hint.dataset.base + (over ? ' \u00b7 scroll \u2192' : '');
+  });
+}
+markScroll();
+addEventListener('resize', markScroll);
+
+/* ---------- notes ---------- */
+const turtleBy = {};
+F.forEach(f => turtleBy[f] = []);
+D.games.forEach(g => g.armies.forEach(a => { if (a.profile === worstProf) turtleBy[a.fac].push(g.n); }));
+const champProfiles = D.games.map(g => {
+  const a = g.armies.find(x => x.fac === champ);
+  return {n:g.n, prof:a.profile, won:a.fac === g.winner};
+});
+const champWon = champProfiles.filter(p => p.won);
+const drawCounts = D.profiles.map(p => `${p} ${P[p].n}×`).join(', ');
+
+const winless = F.filter(f => !A[f].wins);
+const drewWorstMost = F.slice().sort((a,b) => turtleBy[b].length - turtleBy[a].length)[0];
+const airShare = F.reduce((s2,f) => s2 + A[f].cls.air, 0) / F.reduce((s2,f) => s2 + A[f].units, 0);
+const aaShare  = F.reduce((s2,f) => s2 + A[f].cls.aa,  0) / F.reduce((s2,f) => s2 + A[f].units, 0);
+const airLeader = F.slice().sort((a,b) => (A[b].cls.air/A[b].units) - (A[a].cls.air/A[a].units))[0];
+const worstKL = F.slice().sort((a,b) => A[a].kl - A[b].kl)[0];
+const bulkiest = F.slice().sort((a,b) => A[b].units - A[a].units)[0];
+const narrowest = F.slice().sort((a,b) => (A[b].cls.inf/A[b].units) - (A[a].cls.inf/A[a].units))[0];
+const short = f => D.fac[f].name.replace(' Army','');
+
+const notes = [];
+{
+  const wonSet = [...new Set(champWon.map(p => p.prof))];
+  const lostProfs = champProfiles.filter(p => !p.won).map(p => p.prof);
+  const overlap = lostProfs.filter(p => wonSet.indexOf(p) >= 0);
+  const onlyOne = wonSet.length === 1;
+  const rest = wonSet.filter(w => overlap.indexOf(w) < 0);
+  let tail;
+  if (!lostProfs.length) tail = ' It did not lose one.';
+  else if (overlap.length) tail = ` It also lost on ${esc(overlap.join(' and '))}, so that doctrine went
+    both ways for it${rest.length ? ` &mdash; the ${rest.length === 1 ? 'other' : 'others'} it won on
+    every time ${rest.length === 1 ? 'it was' : 'they were'} dealt` : ''}.`;
+  else tail = ` Its ${lostProfs.length === 1 ? 'only loss came' : 'losses came'} on
+    ${esc([...new Set(lostProfs)].join(' and '))}, which it was never dealt in a win.`;
+  notes.push(`<p><strong>${esc(D.fac[champ].name)} took ${A[champ].wins} of the ${D.games.length}</strong>, on
+  ${onlyOne ? 'a single doctrine' : wonSet.length + ' different doctrines'}
+  (${esc(wonSet.join(', '))}).${tail}
+  ${onlyOne ? 'One doctrine is a thin base to read an army off.'
+    : 'That breadth is what makes this look like the army rather than the draw.'}</p>`);
+}
+
+if (P[worstProf].wins === 0) notes.push(`<p><strong>But the draw was not even, and it cuts one way.</strong>
+${esc(worstProf)} lost all ${P[worstProf].n} times it was dealt.
+${esc(D.fac[champ].name)} drew it ${turtleBy[champ].length} time${turtleBy[champ].length === 1 ? '' : 's'};
+${esc(D.fac[drewWorstMost].name)} drew it ${turtleBy[drewWorstMost].length}. With ${F.length} profiles
+dealt from ${D.profiles.length} each match the counts were always going to drift (${esc(drawCounts)}),
+and at ${D.games.length} matches that drift is large enough to matter. Treat the ranking as a strong
+hint, not a settled number.</p>`);
+
+if (winless.length) notes.push(`<p><strong>${esc(winless.map(short).join(' and '))}
+never won a match.</strong> ${winless.length === 1 && winless[0] === worstKL ? 'It' : esc(short(worstKL))}
+traded worst of anyone &mdash;
+${A[worstKL].kills.toLocaleString()} kills against ${A[worstKL].lost.toLocaleString()} losses, a K/L of
+${A[worstKL].kl.toFixed(2)} against ${esc(short(champ))}'s ${A[champ].kl.toFixed(2)}${
+  bulkiest === worstKL ? `, and it did that while producing more units than anyone
+  (${A[bulkiest].units.toLocaleString()}), so the volume bought it nothing`
+  : `. ${esc(short(bulkiest))} produced the most units of anyone (${A[bulkiest].units.toLocaleString()})`}.
+${esc(short(narrowest))} is the narrowest army of the ${F.length}:
+${pct(A[narrowest].cls.inf, A[narrowest].units)} infantry and almost no air
+(${pct(A[narrowest].cls.air, A[narrowest].units)}).</p>`);
+
+if (airShare < 0.12) notes.push(`<p><strong>Nobody built much air.</strong> Across all
+${D.games.length * F.length} armies air was ${(100*airShare).toFixed(1)}% of everything produced, and
+anti-air ${(100*aaShare).toFixed(1)}%. Only ${esc(short(airLeader))} fielded a real air arm
+(${pct(A[airLeader].cls.air, A[airLeader].units)}). That matches the open question already recorded
+against <code>T26.C</code>.</p>`);
+
+document.getElementById('notes').innerHTML = notes.join('\n');
+})();
+</script>

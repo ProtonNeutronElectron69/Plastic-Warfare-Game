@@ -24,6 +24,12 @@ harness/.seg*.out
 harness/rc.js
 harness/rc*.js
 harness/tri.js
+harness/sim.js
+harness/simrep.js
+
+# Battle-report runs (harness/sim.sh). Every match re-runs from its seed, so the
+# results are reproducible rather than worth committing.
+harness/sim_out/
 harness/cut_v*.json
 
 # ---------------------------------------------------------------------------
