@@ -79,14 +79,30 @@ const moved = [];
     if (!same(a, ai[key])) moved.push('ai-trail ' + key);
   }
 }
+/* Triage walks the 30 pins in tail_v43 and tail_v62 - the fast subset of the 42
+   the recut gate checks, whose third table (tail_v28's V271_LAYOUTS, 12 more) is
+   the part it skips. Count them the way recut_v88_1.js counts its own, because
+   the failure this guards against is the one shape of failure a triage run must
+   never have: a map dropped from the list below, or a table the regex in
+   pinned() stops reading, would leave the walk short and the verdict still
+   reading "all pins hold" - clean for the one reason clean must never mean. The
+   total is REPORTED off the walk rather than typed into the message, so the
+   number cannot drift from what was actually checked the way a literal 30 can. */
 const layoutMoved = [];
+let layoutChecked = 0;
+const gateStop = (why) => { console.error('triage: ' + why + ' The layout gate cannot run.'); process.exit(2); };
 for (const [file, tbl] of [['tail_v43.js', 'BASE43_LAYOUTS'], ['tail_v62.js', 'BASE62_LAYOUTS']]) {
   const want = pinned(file, tbl);
+  if (!want) gateStop('could not read ' + tbl + ' out of ' + file + '.');
   for (const m of ['backyard', 'kitchen', 'livingroom', 'sandbox', 'desk']) for (const sd of [11, 22, 33]) {
+    const key = `${m}:${sd}`;
+    if (!(key in want)) gateStop(tbl + ' has no pin for ' + key + '.');
     G = null; newGame(cfgTan(m, m === 'desk' ? 'surv' : 'dm', sd, m === 'desk' ? 1 : 3));
-    if (layoutHash() !== want[`${m}:${sd}`]) layoutMoved.push(`${tbl} ${m}:${sd}`);
+    layoutChecked++;
+    if (layoutHash() !== want[key]) layoutMoved.push(`${tbl} ${key}`);
   }
 }
+if (layoutChecked !== 30) gateStop('expected 30 pins, walked ' + layoutChecked + '.');
 
 /* ---- 2. which tails name what changed? ---- */
 let diff = '';
@@ -161,7 +177,7 @@ if (layoutMoved.length) {
   console.log('  LAYOUT MOVED (' + layoutMoved.length + ' pins) - this release touched MAP GENERATION.');
   for (const l of layoutMoved.slice(0, 6)) console.log('    ' + l);
   console.log('  Do not repin trails on top of this until that is intended and understood.');
-} else console.log('  layout: all 30 pins hold - map generation untouched');
+} else console.log('  layout: all ' + layoutChecked + ' pins hold - map generation untouched');
 console.log(simMoved
   ? '  TRAILS MOVED (' + moved.length + ' combos) -> run ./seg.sh all, and the release needs a REPIN\n    ' + moved.slice(0, 6).join('\n    ')
   : '  trails: every pinned combo reproduces - the simulation did NOT move, so no repin is due');

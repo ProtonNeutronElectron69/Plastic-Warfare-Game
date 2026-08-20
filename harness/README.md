@@ -429,6 +429,37 @@ further down are the other half of that record.
     Rounds (SMOKE_RED 0.2, radius 2, 5s, units only) - that is intended, not an
     oversight to be balanced away.
 
+## harness note: triage's layout gate could report clean on a short walk
+
+`recut_v88_1.js` walks 42 layout pins and refuses to cut a single trail unless
+`checked === 42`. `triage.js` walks the fast subset of 30 - the same two tables,
+minus tail_v28's third - and until now counted nothing. The printed verdict was a
+string literal: `all 30 pins hold`, whatever the loop had actually done.
+
+Measured rather than argued. Drop one map from the list the loop iterates and run
+the old code: it prints `all 30 pins hold - map generation untouched` and exits 0,
+having walked 24. That is the one direction a gate must never fail in. Every other
+way triage can break is loud - a moved hash names itself, a null trail table
+reports every combo as moved - but a short walk is silently clean, and clean is
+the answer that ends the investigation.
+
+The loop now counts what it walks, asserts 30, and REPORTS the count off
+`layoutChecked` instead of a literal, so the number cannot drift from the walk the
+way the literal already could. Two guards went in beside it that the recut gate
+does not have, both of which turn a misleading answer into an accurate one:
+`pinned()` returns null in triage where it exits 2 in the recut, so an unreadable
+table is now fatal at the call site rather than a TypeError; and a table missing a
+pin for a key would have compared a hash against `undefined` and reported the pin
+as MOVED - a map-generation alarm raised by a gap in the baseline. All three fire
+on their own failure mode, checked against mutated copies, exit 2 each.
+
+One thing deliberately left alone. `pinned()` is still non-fatal for the TRAIL
+check above the layout loop, where a table that stopped parsing makes `same()`
+return false for every combo - so triage would announce that the simulation moved
+and a repin is due when what actually broke is the harness. It is loud, and it is
+wrong in the expensive direction rather than the dangerous one. Worth a pass if
+anyone is in there, but it is not what this change touched.
+
 ## v88.1 note: four small updates, and the regression the third one exposed
 
 Four unrelated requests. Only ONE reaches the simulation - the Machine Gunner's
