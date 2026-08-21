@@ -68,6 +68,21 @@ const tplPath = 'sim_page.html';
 if (!fs.existsSync(tplPath)) stop('cannot find ' + tplPath + ' beside this script.');
 const tpl = fs.readFileSync(tplPath, 'utf8');
 if (tpl.indexOf('/*__DATA__*/null') < 0) stop(tplPath + ' has lost its /*__DATA__*/null placeholder.');
+/* A syntax error in the page's own script yields a page that loads, paints its
+   empty shell and fills in NOTHING - no title, no tables, no error a reader would
+   notice as anything but an odd blank report. That has happened once already, from
+   a quoted string wrapped across a line inside a template literal. Parse the block
+   here, where it is cheap, and refuse to write a page that cannot run. new Function
+   compiles without executing, so nothing in the page's script actually runs. */
+const script = /<script>(?![\s\S]{0,40}__DATA__)([\s\S]*?)<\/script>/g;
+let m, blocks = 0;
+while ((m = script.exec(tpl)) !== null) {
+  blocks++;
+  try { new Function(m[1]); }
+  catch (e) { stop(tplPath + ' script block ' + blocks + ' does not parse: ' + e.message); }
+}
+if (!blocks) stop(tplPath + ' has no runnable script block.');
+
 const html = tpl.replace('/*__DATA__*/null', JSON.stringify(data).replace(/</g, '\\u003c'));
 const out = path.join(dir, 'battle-report.html');
 fs.writeFileSync(out, html);

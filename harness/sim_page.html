@@ -161,7 +161,7 @@ code{font-family:var(--mono);font-size:.92em;background:var(--surface-2);padding
   <div class="mod-head">
     <div>
       <h2>Standings</h2>
-      <p>Totals across all eight matches. Click any column to sort.</p>
+      <p id="sub-standings">Click any column to sort.</p>
     </div>
     <span class="hint">sortable</span>
   </div>
@@ -216,7 +216,7 @@ code{font-family:var(--mono);font-size:.92em;background:var(--surface-2);padding
   <div class="mod-head">
     <div>
       <h2>What they built</h2>
-      <p>Everything produced after the starting kit, summed over all eight matches.</p>
+      <p id="sub-built">Everything produced after the starting kit.</p>
     </div>
     <span class="hint">sortable</span>
   </div>
@@ -302,7 +302,11 @@ document.getElementById('verdict').innerHTML = [
   })(),
   ['Most kills', A[topKill].kills.toLocaleString(), D.fac[topKill].name.replace(' Army','') + ' · ' + (A[topKill].kills/D.games.length).toFixed(0) + ' per match', topKill],
   ['Best doctrine', bestProf, P[bestProf].wins + ' wins from ' + P[bestProf].n + ' draws', null],
-  ['Never won', worstProf, '0 wins from ' + P[worstProf].n + ' draws', null],
+  (function () {
+    const w = P[worstProf];
+    return [w.wins === 0 ? 'Never won' : 'Weakest doctrine', worstProf,
+            w.wins + ' win' + (w.wins === 1 ? '' : 's') + ' from ' + w.n + ' draws', null];
+  })(),
   ['Total kills', totKills.toLocaleString(), 'across ' + (D.games.length*F.length) + ' armies', null],
   ['Mean length', mmss(avgLen), 'shortest ' + mmss(Math.min(...D.games.map(g=>g.simSeconds))) + ', longest ' + mmss(Math.max(...D.games.map(g=>g.simSeconds))), null],
 ].map(([k,v,n,f]) => `<div class="vcell"><div class="k">${esc(k)}</div>
@@ -335,6 +339,10 @@ document.getElementById('mast-meta').innerHTML = [
     : 'none reached the ' + mmss(D.dmTime) + ' cap',
   nSeat + ' doctrine draws',
 ].map(x => '<span>' + esc(x) + '</span>').join('');
+document.getElementById('sub-standings').textContent =
+  'Totals across all ' + nMatch + ' matches. Click any column to sort.';
+document.getElementById('sub-built').textContent =
+  'Everything produced after the starting kit, summed over all ' + nMatch + ' matches.';
 document.getElementById('foot-run').innerHTML =
   'Run headless against <code>plastic-warfare.html</code> at ' + esc(D.version)
   + (D.commit ? ' (<code>' + esc(D.commit) + '</code>)' : '')
@@ -569,6 +577,7 @@ const drawCounts = D.profiles.map(p => `${p} ${P[p].n}×`).join(', ');
 
 const winless = F.filter(f => !A[f].wins);
 const drewWorstMost = F.slice().sort((a,b) => turtleBy[b].length - turtleBy[a].length)[0];
+const drewWorstLeast = F.slice().sort((a,b) => turtleBy[a].length - turtleBy[b].length)[0];
 const airShare = F.reduce((s2,f) => s2 + A[f].cls.air, 0) / F.reduce((s2,f) => s2 + A[f].units, 0);
 const aaShare  = F.reduce((s2,f) => s2 + A[f].cls.aa,  0) / F.reduce((s2,f) => s2 + A[f].units, 0);
 const airLeader = F.slice().sort((a,b) => (A[b].cls.air/A[b].units) - (A[a].cls.air/A[a].units))[0];
@@ -583,14 +592,26 @@ const notes = [];
   const lostProfs = champProfiles.filter(p => !p.won).map(p => p.prof);
   const overlap = lostProfs.filter(p => wonSet.indexOf(p) >= 0);
   const onlyOne = wonSet.length === 1;
-  const rest = wonSet.filter(w => overlap.indexOf(w) < 0);
+  const both = [...new Set(overlap)];              // a doctrine it both won and lost on
+  const rest = wonSet.filter(w => both.indexOf(w) < 0);
+  const lostOnly = [...new Set(lostProfs)].filter(p => wonSet.indexOf(p) < 0);
+  const list = (a) => a.length > 1
+    ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0];
   let tail;
   if (!lostProfs.length) tail = ' It did not lose one.';
-  else if (overlap.length) tail = ` It also lost on ${esc(overlap.join(' and '))}, so that doctrine went
-    both ways for it${rest.length ? ` &mdash; the ${rest.length === 1 ? 'other' : 'others'} it won on
-    every time ${rest.length === 1 ? 'it was' : 'they were'} dealt` : ''}.`;
+  else if (both.length && !rest.length) {
+    tail = ' It lost on every one of them too, so the doctrine it drew says little about which'
+         + ' matches it won.';
+  } else if (both.length) {
+    const wentBoth = both.length === 1 ? 'so that one went' : 'so those went';
+    const kept = rest.length === 1
+      ? 'the remaining one it won every time it was dealt'
+      : 'the remaining ' + rest.length + ' it won every time they were dealt';
+    tail = ' It also lost on ' + esc(list(both)) + ', ' + wentBoth + ' both ways for it, and '
+         + kept + '.';
+  }
   else tail = ` Its ${lostProfs.length === 1 ? 'only loss came' : 'losses came'} on
-    ${esc([...new Set(lostProfs)].join(' and '))}, which it was never dealt in a win.`;
+    ${esc(list(lostOnly))}, which it was never dealt in a win.`;
   notes.push(`<p><strong>${esc(D.fac[champ].name)} took ${A[champ].wins} of the ${D.games.length}</strong>, on
   ${onlyOne ? 'a single doctrine' : wonSet.length + ' different doctrines'}
   (${esc(wonSet.join(', '))}).${tail}
@@ -598,10 +619,17 @@ const notes = [];
     : 'That breadth is what makes this look like the army rather than the draw.'}</p>`);
 }
 
-if (P[worstProf].wins === 0) notes.push(`<p><strong>But the draw was not even, and it cuts one way.</strong>
-${esc(worstProf)} lost all ${P[worstProf].n} times it was dealt.
-${esc(D.fac[champ].name)} drew it ${turtleBy[champ].length} time${turtleBy[champ].length === 1 ? '' : 's'};
-${esc(D.fac[drewWorstMost].name)} drew it ${turtleBy[drewWorstMost].length}. With ${F.length} profiles
+notes.push(`<p><strong>The draw is never even, and it moves the table.</strong>
+${P[worstProf].wins === 0
+  ? esc(worstProf) + ' lost all ' + P[worstProf].n + ' times it was dealt.'
+  : esc(worstProf) + ' won only ' + P[worstProf].wins + ' of the ' + P[worstProf].n
+    + ' times it was dealt.'}
+${turtleBy[drewWorstMost].length === turtleBy[drewWorstLeast].length
+  ? 'Every army drew it ' + turtleBy[drewWorstMost].length + ' time'
+    + (turtleBy[drewWorstMost].length === 1 ? '' : 's') + ' here, which is the even case and not the usual one.'
+  : esc(D.fac[drewWorstMost].name) + ' drew it ' + turtleBy[drewWorstMost].length + ' time'
+    + (turtleBy[drewWorstMost].length === 1 ? '' : 's') + '; ' + esc(D.fac[drewWorstLeast].name)
+    + ' only ' + turtleBy[drewWorstLeast].length + '.'} With ${F.length} profiles
 dealt from ${D.profiles.length} each match the counts were always going to drift (${esc(drawCounts)}),
 and at ${D.games.length} matches that drift is large enough to matter. Treat the ranking as a strong
 hint, not a settled number.</p>`);
