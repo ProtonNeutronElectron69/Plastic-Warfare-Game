@@ -464,6 +464,51 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## harness note: rank armies by DRAW-ADJUSTED wins, not by wins
+
+24 matches are now on record (`SIM-HANDOFF.md` beside this file carries the tables and
+is written to be handed to a session picking the work up cold). The headline is a
+method, not a number: **the raw win count ranks the armies wrongly, and it ranked them
+wrongly twice in a row before anyone noticed.**
+
+Four profiles are dealt from five per match, so each army's hand drifts. Over 96
+army-slots the doctrines are nowhere near equal - `balanced` 9 wins from 17 draws and
+`aggressive` 8 from 17, against `defensive` 1 from 21 and `turtle` 2 from 22. A dead
+profile landing on one army twice as often as another is worth more than any faction
+modifier in the table.
+
+The correction is cheap. Expected wins for an army is the sum over doctrines of (times
+it drew that doctrine x that doctrine's win rate) - what an average army would have won
+from that exact hand. The four expectations sum to 24.00 against 24 actual, so it is
+just an allocation of the same wins:
+
+    army    strong draws   actual   expected    delta    K/L
+    tan          7/24          10       5.47    +4.53   1.51
+    green        4/24           5       4.58    +0.42   0.79
+    gray        10/24           5       6.71    -1.71   0.93
+    blue        13/24           4       7.24    -3.24   0.65
+
+What that overturns: **Green is not the weak army.** On raw wins it looks worst or near
+it in every batch, and a 16-match run had it at 1 win with the worst K/L of the four.
+It drew 20 weak-or-mid hands out of 24 - the worst deal in the set - and lands within
+half a win of expectation once that is taken out. Blue is the weak one, and by more
+than the raw table shows: it drew the BEST hand of anyone, 13 strong of 24, and still
+finished last. Its 2-from-10 on `aggressive` is the sharpest cell in the matrix, against
+green's 3/3 and tan's 2/2 on the same profile.
+
+Two caveats that keep this honest. The doctrine rates are estimated from the same 96
+slots they then correct, and the faction-by-doctrine cells run n=1 to n=10, so this is a
+better estimate and not a verdict. And it says nothing about human play - it is a
+measurement of how the BOT plays v88.1.
+
+**The two dead profiles are the highest-value fix available**, ahead of any faction
+tuning: 43 of 96 slots were dealt a doctrine that wins under one time in ten, and that
+is the largest single source of noise in every comparison anyone runs next. Win rate
+tracks aggression almost monotonically (aggro 1.25 -> 47%, 1.00 -> 53%, 0.95 -> 21%,
+0.70 -> 5%, 0.55 -> 9%) and the two losers are the two slowest openers, `firstPush` 120
+and 150 against 42 and 70. A four-way FFA punishes a bot that has not pushed while two
+neighbours traded.
+
 ## harness note: sim.sh, and what eight bot matches can and cannot tell you
 
 `./sim.sh` plays whole deathmatches with a CPU in every seat and writes
