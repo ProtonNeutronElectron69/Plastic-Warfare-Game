@@ -26,10 +26,14 @@ harness/rc*.js
 harness/tri.js
 harness/sim.js
 harness/simrep.js
+harness/probev89.js
 
 # Battle-report runs (harness/sim.sh). Every match re-runs from its seed, so the
 # results are reproducible rather than worth committing.
 harness/sim_out/
+
+# Air-probe runs (harness/probe_v89.sh). Same deal as sim_out: re-runs from seeds.
+harness/probe_out/
 harness/cut_v*.json
 
 # ---------------------------------------------------------------------------

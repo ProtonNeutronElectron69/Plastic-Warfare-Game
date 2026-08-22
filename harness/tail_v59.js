@@ -78,9 +78,12 @@ const PROF59 = ['aggressive', 'balanced', 'defensive', 'harasser', 'turtle'];
   const a = makeAIBrain('balanced'), b = makeAIBrain('balanced');
   ok('T39.B the roll is private, never a handle on the shared literal',
     a.pr.mixWant !== AI_PROFILES.balanced.mixWant && b.pr.mixWant !== a.pr.mixWant);
+  // v89: retuned 0.50/0.33 -> 0.42/0.32 by the air pass. This pin is transcribed
+  // on purpose - it is what proves makeAIBrain's +-10% roll copies the literal
+  // instead of mutating it - so a deliberate retune has to come and edit it here.
   ok('T39.B the shared literal is left exactly as authored',
-    Math.abs(AI_PROFILES.balanced.mixWant.inf - 0.50) < 1e-9 &&
-    Math.abs(AI_PROFILES.balanced.mixWant.veh - 0.33) < 1e-9);
+    Math.abs(AI_PROFILES.balanced.mixWant.inf - 0.42) < 1e-9 &&
+    Math.abs(AI_PROFILES.balanced.mixWant.veh - 0.32) < 1e-9);
   ok('T39.B two bots on one profile do not roll the same list',
     ['inf', 'veh', 'air'].some(k => Math.abs(a.pr.mixWant[k] - b.pr.mixWant[k]) > 1e-9));
   ok('T39.B a rolled mix still sums to one',
@@ -367,9 +370,13 @@ const PROF59 = ['aggressive', 'balanced', 'defensive', 'harasser', 'turtle'];
   // raw count stays as a direction check. Measured post-v63: 6.0% -> 4.4%.
   ok(`T39.I zeroing the air targets cuts air production over six seeds (${liveAir} -> ${flatAir}, ${(ls*100).toFixed(1)}% -> ${(fs*100).toFixed(1)}% of everything trained), so the target is what drives it`,
     fs < ls * 0.85 && flatAir < liveAir);
+  // v89: 0.17 -> 0.26 by the air retune. The transcribed value is the point of the
+  // second clause - it proves the restore put the AUTHORED table back and not just
+  // some object - so it has to be re-transcribed whenever the table is retuned.
+  // The mutation arm above is untouched and still passes at the new targets.
   ok('T39.I every profile was put back',
     PROF59.every(k => AI_PROFILES[k].mixWant === keep[k]) &&
-    Math.abs(AI_PROFILES.balanced.mixWant.air - 0.17) < 1e-9);
+    Math.abs(AI_PROFILES.balanced.mixWant.air - 0.26) < 1e-9);
 }
 
 /* ---------- J: the wish list no longer stalls ---------- */

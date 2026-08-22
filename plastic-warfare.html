@@ -747,12 +747,29 @@ function mineDmg(d){return MINE_DMG*Math.max(0,1-d/MINE_R);}
                  while nobody can fly, so an all-ground match carries no dead weight.
    NOTE: timing fields are in AI-TICKS. aiTick runs ~every 0.6s, so e.g. firstPush:45 ≈ 27s.
 */
+/* v89 AIR RETUNE. The v59 target mixes were written before anything measured
+   whether they were ever DELIVERED, and they were not: probed over eight bot
+   matches at v88.1, air was 4.2% of everything built and AA 1.8%, while the
+   profiles between them asked for 6% to 30%. Two ratchets did it, and both are
+   fixed above - the bot filled its supply cap with one-supply infantry so a
+   three-supply Huey had nowhere to land, and it spent its plastic the instant it
+   arrived so it never held the 200 the Huey costs.
+   With the reserve carrying supply as well as plastic the mixes are honoured, so
+   the numbers below are now the actual lever on what a bot flies rather than a
+   wish. Infantry comes down across all five and air goes up across all five; the
+   personalities keep their ORDER on every axis, so a harasser is still the one
+   that lives in the air and an aggressive bot is still the one that floods bodies.
+   The AA pairs rise with them. That floor is the only PRE-EMPTIVE air defence in
+   the file - aiPickUnit scores an AA truck at a hard zero until something is
+   actually flying, so the standing pair is what puts a launcher on the field
+   before the first gunship arrives rather than after it. It stays dormant until a
+   rival can fly at all, so an all-ground match still carries no dead weight. */
 const AI_PROFILES={
- aggressive:{aggro:1.25,pushBase:6, pushGrow:2,pushCap:30,firstPush:42, repeat:[34,22], defendHold:150,defendFrac:0.10,scout:true, scoutEvery:60, harass:true, harassEvery:26,harassSize:[2,3],expand:true, vsAI:1.0,armyTilt:'cheap',mixWant:{inf:0.68,veh:0.26,air:0.06},aa:[1,1]},
- balanced:  {aggro:1.0, pushBase:7, pushGrow:3,pushCap:28,firstPush:70, repeat:[55,34], defendHold:220,defendFrac:0.18,scout:true, scoutEvery:80, harass:true, harassEvery:46,harassSize:[2,3],expand:true, vsAI:1.1,armyTilt:'heavy',mixWant:{inf:0.50,veh:0.33,air:0.17},aa:[1,2]},
- defensive: {aggro:0.7, pushBase:11,pushGrow:4,pushCap:26,firstPush:120,repeat:[78,48], defendHold:330,defendFrac:0.35,scout:false,scoutEvery:130,harass:false,harassEvery:130,harassSize:[2,2],expand:false,vsAI:1.0,armyTilt:'heavy',mixWant:{inf:0.38,veh:0.50,air:0.12},aa:[2,3]},
- harasser:  {aggro:0.95,pushBase:9, pushGrow:2,pushCap:22,firstPush:85, repeat:[60,38], defendHold:190,defendFrac:0.15,scout:true, scoutEvery:34, harass:true, harassEvery:20,harassSize:[3,4],expand:true, vsAI:1.2,armyTilt:'fast', mixWant:{inf:0.40,veh:0.30,air:0.30},aa:[1,1]},
- turtle:    {aggro:0.55,pushBase:14,pushGrow:4,pushCap:30,firstPush:150,repeat:[95,60], defendHold:380,defendFrac:0.45,scout:false,scoutEvery:170,harass:false,harassEvery:170,harassSize:[2,2],expand:false,vsAI:0.9,armyTilt:'range',mixWant:{inf:0.60,veh:0.32,air:0.08},aa:[2,3]}
+ aggressive:{aggro:1.25,pushBase:6, pushGrow:2,pushCap:30,firstPush:42, repeat:[34,22], defendHold:150,defendFrac:0.10,scout:true, scoutEvery:60, harass:true, harassEvery:26,harassSize:[2,3],expand:true, vsAI:1.0,armyTilt:'cheap',mixWant:{inf:0.60,veh:0.25,air:0.15},aa:[1,2]},
+ balanced:  {aggro:1.0, pushBase:7, pushGrow:3,pushCap:28,firstPush:70, repeat:[55,34], defendHold:220,defendFrac:0.18,scout:true, scoutEvery:80, harass:true, harassEvery:46,harassSize:[2,3],expand:true, vsAI:1.1,armyTilt:'heavy',mixWant:{inf:0.42,veh:0.32,air:0.26},aa:[2,3]},
+ defensive: {aggro:0.7, pushBase:11,pushGrow:4,pushCap:26,firstPush:120,repeat:[78,48], defendHold:330,defendFrac:0.35,scout:false,scoutEvery:130,harass:false,harassEvery:130,harassSize:[2,2],expand:false,vsAI:1.0,armyTilt:'heavy',mixWant:{inf:0.32,veh:0.46,air:0.22},aa:[2,4]},
+ harasser:  {aggro:0.95,pushBase:9, pushGrow:2,pushCap:22,firstPush:85, repeat:[60,38], defendHold:190,defendFrac:0.15,scout:true, scoutEvery:34, harass:true, harassEvery:20,harassSize:[3,4],expand:true, vsAI:1.2,armyTilt:'fast', mixWant:{inf:0.33,veh:0.29,air:0.38},aa:[2,3]},
+ turtle:    {aggro:0.55,pushBase:14,pushGrow:4,pushCap:30,firstPush:150,repeat:[95,60], defendHold:380,defendFrac:0.45,scout:false,scoutEvery:170,harass:false,harassEvery:170,harassSize:[2,2],expand:false,vsAI:0.9,armyTilt:'range',mixWant:{inf:0.50,veh:0.30,air:0.20},aa:[2,4]}
 };
 /* ---------------- DIFFICULTY ----------------
    The PROFILES above decide HOW a bot plays (build order, wave timing, scouting,
@@ -9379,6 +9396,41 @@ function aiArmyCap(p){
                own price and reload have moved twice since. Deliberately
                profile-independent - every personality wants the same 18%. */
 const AI_EXPLORE=0.08, AI_SAT_A=0.6, AI_RICH_P=1200, AI_FAC_FLOOR=0.18;
+/* v89: the composition classes aiUnitClass can return, in a FIXED order. The
+   reserve below picks the neediest of them, and picking by object-key iteration
+   would make that choice depend on which class the bot happened to unlock first.
+   A literal list keeps the comparator total and engine-independent, the way the
+   producer sort is already careful to be. */
+const AI_CLASSES=['inf','veh','air','aa'];
+/* v89 EXPENSIVE-CLASS RESERVE.
+   AI_RSV_SHORT how far under target a class must sit before the bot starts
+                banking for it. Matched to the 0.04 the producer stand-down
+                already uses, so "short enough to act on" means one thing in
+                both halves of the composition gate.
+   Measured over eight probed bot-matches at v88.1: the barracks failed its
+   affordability filter on 15.4% of its production chances, the garage on 44.7%
+   and the helipad on 45.8%. Plastic was never being RATIONED between the three -
+   it was being spent the instant it arrived, and a Grunt at 36 is affordable on
+   a tick where a Huey at 200 is not. So the target mixes were asking for air and
+   being refused delivery rather than being ignored: a balanced bot wanted 16.0%
+   of its army in the air and held 6.4%, a turtle wanted 7.0% and held 0.6%.
+   Standing the cheap producer DOWN cannot fix that. That gate only fires when a
+   class is OVER target, and air sat under target for whole matches while the bank
+   never once reached the price.
+   This is the saveExp reserve pointed at a CLASS instead of at an outpost.
+
+   PLASTIC WAS THE SMALLER HALF. Probing again with the reserve in, at a helipad
+   decision that had already cleared the plastic filter the bank held a median of
+   3,278 plastic - and supFree held 0. Below three, the price of a Huey in SUPPLY,
+   on 71.4% of them, against a supCap already pinned at the 110 ceiling. The bot
+   was not too poor to fly; it was full. Infantry at one supply a head reaches the
+   cap first and holds it, and an aircraft can only ever be bought in the gap left
+   by something dying, which the next Grunt closes at a third of the price.
+   So the reserve holds BOTH resources, and both for as long as the class is short.
+   The supply half is what actually moves air, and it costs nothing to be generous
+   with: holding three points free is invisible on a tick where twenty are free, and
+   is the whole game on a tick where none are. */
+const AI_RSV_SHORT=0.04;
 /* v84 ENCOUNTER LEDGER. aiFoeArmorMix has always read a LIVE census of the grudge
    target's surviving units: perfect intel on one rival, no memory, and nothing at
    all from the other two in a three-opponent match. A wave of infantry that wipes
@@ -9710,6 +9762,12 @@ function aiTick(p){
     mult entries lead, the singles sit after the radio tower - so this is a
     reshaping, not a reprioritising. */
  const ubs=FAC[p.fac].ub||[];
+ /* v89: moving the pad UP this list was tried and reverted - it changed nothing,
+    to the last decimal, across eight probed matches. The pad is not gated by its
+    position here but by its RESEARCH: the loop skips any entry whose tech is not in
+    yet, so the pad is passed over silently until b_helipad lands, and by then the
+    bot can afford it wherever it sits. Anything that wants aircraft on the field
+    sooner has to move b_helipad up aiResearch's plan, not this one. */
  const wish=[['barracks',1],['lab',1],['generator',2],['garage',1]];
  for(const ub of ubs)if(B[ub].mult)wish.push([ub,1]);
  wish.push(['guardtower',1],['helipad',1],['guardtower',Math.min(2,towerWant)],['radiotower',1]); // v48: +radiotower
@@ -9803,6 +9861,57 @@ function aiTick(p){
     property of the army, not of the producer, and the loop below must not see it
     change halfway through. */
  const gFacShort=aiFacShare(p)<AI_FAC_FLOOR;
+ /* v89: while a class is short and its own producer is standing there unable to
+    pay, every producer that CANNOT supply that class must leave the price of the
+    cheapest such unit in the bank. Re-derived per tick from the tables, p.res and
+    p.blds: it stores nothing, hashes nothing, and consumes no rng, so it cannot
+    desync two clients in lockstep.
+    Three guards keep it a pause rather than a stall. The producer that would spend
+    it must have a free queue slot, because plastic held against a full queue buys
+    nothing. The shortfall must clear AI_RSV_SHORT, so a class that is merely a
+    little behind never freezes the barracks. And the sum held is the CHEAPEST
+    option of the class rather than the one the pick would most like, so the bot
+    banks for a Huey and not for an Apache. Once the bank clears that price the
+    reserve lifts by itself - the producer sort above already serves the shortest
+    class first, so the very next pass spends it. */
+ const gRsv=(function(){
+  const cheap={},csup={};
+  for(const b of prodBlds){
+   if(b.queue.length>=2)continue;   // plastic or supply held against a full queue buys nothing
+   for(const k of roster(p,b.key)){
+    if(AI_SUPPORT[k]||U[k].noTrain)continue;
+    const c=aiUnitClass(k);
+    if(!gCls[c])continue;
+    if(U[k].lim&&p.units.filter(u=>u.key===k).length>=U[k].lim)continue;
+    const cp=ucost(p,k).p;
+    if(cheap[c]==null||cp<cheap[c]){cheap[c]=cp;csup[c]=supOf(k);}
+   }
+  }
+  /* The neediest class is the one furthest below target IN PROPORTION to that
+     target, not in raw share. Ranking on the raw gap hands the reserve to whichever
+     class was asked for in the largest quantity: probed at v88.1 the reserve chose
+     vehicles on 25.4% of ticks and air on 13.6%, even on bots holding a third of
+     the air they wanted, purely because a 0.32 vehicle target can be 0.10 adrift
+     while a 0.17 air target cannot be adrift by more than 0.17 in the first place.
+     The absolute floor stays as the ENTRY test, so a class a hair under target
+     still does not freeze anyone; the proportion only decides who wins once more
+     than one class is genuinely short. */
+  let bc=null,bd=0;
+  for(const c of AI_CLASSES){
+   if(cheap[c]==null)continue;
+   const w=gWant[c]||0,d=w-(gHave[c]||0);
+   if(d<=AI_RSV_SHORT||w<=0)continue;
+   const rel=d/w;
+   if(rel>bd){bd=rel;bc=c;}
+  }
+  /* Both halves stand for as long as the class is short. Lifting the plastic half
+     the moment the bank touched the price made it a race rather than a reserve -
+     the bank was released, the cheap producer took it back before the pricey one
+     was reached again, and the measured bank at a helipad decision sat at a median
+     of 106 against a Huey's 200, tick after tick. It is not a saving when anyone
+     may spend it. */
+  return bc===null?null:{cls:bc,p:cheap[bc],s:csup[bc]};
+ })();
  /* v75: the ceiling is aiArmyCap(p), derived from this bot's own supply capacity
     rather than from the clock. Profiles still shape army size via wave/commit
     behaviour below, and the difficulty multiplier still rides the ceiling. */
@@ -9817,7 +9926,19 @@ function aiTick(p){
       profile parked the one producer that could ever build them; the pick-level
       floor above could not help, because the pick was never reached. */
    if(gAnyShort&&gShort[b.id]<-0.04&&!(gFacShort&&aiBldHasFac(p,b.key)))continue;
-   const opts=roster(p,b.key).filter(k=>!AI_SUPPORT[k]) /* v86: the same four keys, off the table rather than retyped */ .filter(k=>{const c=ucost(p,k);const rsv=(gFacShort&&FAC[p.fac].uu.indexOf(k)>=0)?0:(saveExp?170:0);return p.res.p>=c.p+rsv&&p.res.e>=c.e&&(!U[k].lim||p.units.filter(u=>u.key===k).length<U[k].lim)});
+   /* v89: two reserves now stack on this filter, and the faction floor outranks
+      both - exactly as it already outranked the expansion one. An exclusive the
+      bot is under quota on is bought at its own price and nothing is held back
+      against it; everything else pays the expansion reserve, plus the class
+      reserve whenever it is not itself the class being banked for. */
+   const bSup=supFree(p); // read once per producer: trainUnit spends it as the loop goes
+   const opts=roster(p,b.key).filter(k=>!AI_SUPPORT[k]) /* v86: the same four keys, off the table rather than retyped */ .filter(k=>{
+    const c=ucost(p,k),fx=gFacShort&&FAC[p.fac].uu.indexOf(k)>=0;
+    let rsv=fx?0:(saveExp?170:0),sup=0;
+    if(!fx&&gRsv&&aiUnitClass(k)!==gRsv.cls){rsv+=gRsv.p;sup=gRsv.s;}
+    if(bSup-supOf(k)<sup)return false; // leave the short class room to land
+    return p.res.p>=c.p+rsv&&p.res.e>=c.e&&(!U[k].lim||p.units.filter(u=>u.key===k).length<U[k].lim);
+   });
    /* v63: the floor's other half - "only exclusives while under the floor" has to
       mean waiting for one, or the cheap line unit wins every tick by default. */
    if(gFacShort&&aiBldHasFac(p,b.key)&&!opts.some(k=>FAC[p.fac].uu.indexOf(k)>=0)){

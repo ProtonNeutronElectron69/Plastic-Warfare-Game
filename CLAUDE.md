@@ -120,6 +120,51 @@ repair rate went 1.6 → 3 HP/s; the Field Manual gallery is cost-ordered and
 paints shared entries green and exclusives in their owner's colour; and every
 unit and structure description was shortened.
 
+## v89 — the AI air pass (not part of the roadmap)
+
+**The bots now build roughly twice the air and AA they did**, measured on two seed
+sets with the same tool on both sides: air 3.6% → 8.6% of production and AA 1.2% →
+2.8% on the 16-match batch, with infantry down from 76.0% to 68.3%. Nothing about
+any unit's cost, damage or hull changed — this is entirely a change to how the bot
+SHOPS.
+
+The finding behind it is the part worth carrying forward: **the bots were not
+ignoring their air targets, they were unable to act on them.** They filled their
+supply cap with one-supply infantry (`supFree` was 0 at the median helipad decision,
+against a supply cap already at its 110 ceiling) and spent their plastic the instant
+it arrived (a median bank of 96 against a Huey's 200). Energy, which the cost table
+makes look like the obvious culprit at 80 a Huey against a Grunt's 0, was never the
+problem — median 2,287. The full write-up is the v89 section of `harness/README.md`.
+
+Three things changed, all in `aiTick` / `AI_PROFILES`:
+
+- **`gRsv`, an expensive-class reserve.** While a class is short and its producer is
+  ready to buy, every producer that cannot supply that class holds back the cheapest
+  such unit's price AND its supply cost. It is the `saveExp` reserve pointed at a
+  class instead of at an outpost, derived per tick, storing and hashing nothing.
+- **It ranks classes by shortfall IN PROPORTION to the target**, not by the raw gap.
+  The raw gap systematically hands the reserve to whichever class was asked for in
+  the largest quantity — measured, vehicles won it twice as often as air on bots
+  holding a third of the air they wanted.
+- **`mixWant` retuned toward air across all five profiles, and the AA pairs raised.**
+  With delivery working these numbers are now the real lever on what a bot flies.
+  The profiles keep their ORDER on every axis, and `T31.F` pins that.
+
+Three notes for whoever goes next:
+
+- **`sim.sh` alone could not have found this.** Its class shares are an OUTCOME, and
+  an outcome is consistent with a dozen causes. `harness/probe_v89.sh` buckets every
+  production decision by the first clause that refused it, which is what separated
+  "never chose air" from "chose air and could not pay for it". Reach for it before
+  re-pricing anything on the bot's behalf.
+- **The trails did not move and no repin was due.** Testing mode boots every slot
+  HUMAN, so `aiTick` never fires under the pinned hash trails — an AI-only change is
+  invisible to them. That is a real gap: the AI is exercised by the tails and by
+  `sim.sh`, never by the trails.
+- **Two doctrines are still near-dead** (`defensive`, `turtle`). That was the
+  handoff's second lead and this pass did not touch it. It is the largest remaining
+  source of noise in every faction comparison.
+
 ## What v88.1 left behind
 
 **The seventh supply slot.** At 25 trainable units the cheap tier holds seven, so
