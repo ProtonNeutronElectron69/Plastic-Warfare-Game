@@ -464,6 +464,86 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v89 finding: the bots were not ignoring air, they were unable to buy it
+
+`sim.sh` said air was 3.6% of everything built and AA 1.2%, against profile targets
+asking for 6% to 30%. The obvious readings were that air is overpriced or that
+`aiPickUnit` structurally under-rates it. **Both were wrong, and `probe_v89.sh` is
+the tool that says so** - it buckets every production decision by the FIRST clause
+that refused it, which an outcome table cannot do.
+
+What actually refused, at v88.1, in order of size:
+
+1. **Supply.** At a helipad decision that had the plastic in hand, `supFree` was 0
+   on the median and under a Huey's 3 on **71.4%** of them - with `supCap` already
+   pinned at its 110 ceiling, so there was no depot left to build. Infantry at one
+   supply a head reaches the cap first and holds it. An aircraft could only ever be
+   bought in the gap left by something dying, and the next Grunt closed that gap at
+   a third of the price.
+2. **Plastic, but not the way it looks.** Over all helipad decisions the bank held a
+   median of **96** against a Huey's 200. The bot was not saving badly; it was not
+   saving at all, because a Grunt at 36 is affordable on every tick and drains the
+   till before the expensive producer is reached again.
+3. **Energy was never the problem** - and this is the one worth recording, because
+   it is the one the cost table makes look damning. A Huey costs 80 energy and a
+   Grunt costs 0, so power reads like the obvious culprit; measured, energy at a
+   helipad decision sat at a median of **2,287** and blocked 4.7% of them. The
+   generator policy that looks too stingy on paper is fine in play.
+
+The fix is one mechanism, `gRsv` in `aiTick`: while a class is short and its own
+producer is ready to buy, every producer that cannot supply that class holds back
+the cheapest such unit's price **and its supply cost**. It is the `saveExp` reserve
+pointed at a class instead of at an outpost, derived per tick from the tables and
+`p.res`, storing nothing and hashing nothing.
+
+Two things about it were got wrong first and are worth not repeating:
+
+- **A reserve that lifts when the bank touches the price is a race, not a reserve.**
+  The first cut released the plastic the moment it reached 200; the cheap producer
+  took it back before the pricey one came round again, and the measured bank stayed
+  at 106 tick after tick. Both halves now stand for as long as the class is short.
+- **Ranking classes by RAW shortfall hands the reserve to whichever class was asked
+  for in the largest quantity.** Measured, it chose vehicles on 25.4% of ticks and
+  air on 13.6%, on bots holding a third of the air they wanted - because a 0.32
+  vehicle target can be 0.10 adrift and a 0.17 air target cannot be. Ranking on the
+  shortfall *in proportion to the target* fixes it; the absolute floor stays as the
+  entry test.
+
+With delivery working, the target mixes became the real lever and were retuned
+toward air (`AI_PROFILES`), and the standing AA pairs rose with them - that floor is
+the only PRE-EMPTIVE air defence in the file, because `aiPickUnit` scores an AA truck
+at a hard zero until something is actually flying.
+
+Measured end to end on identical seeds, same tool both sides:
+
+| batch | inf | veh | air | aa |
+|---|---|---|---|---|
+| 16 matches @ SEED0=2000, v88.1 | 76.0% | 19.2% | 3.6% | 1.2% |
+| ...same seeds, v89 | 68.3% | 20.3% | **8.6%** | **2.8%** |
+| 8 matches @ SEED0=101, v88.1 | 73.6% | 20.7% | 4.0% | 1.7% |
+| ...same seeds, v89 | 69.0% | 19.9% | **8.5%** | **2.6%** |
+
+Two side effects, both real and neither aimed at. Matches run about 90 seconds
+longer (13:21 to 14:53 on the 16-match batch), which is what a real air-and-AA layer
+costs in attrition. And the faction spread flattened hard on batch B - v88.1 had Tan
+on 8 wins and Green on 1, v89 had 5/4/4/3 - which is consistent with air being a
+rock-paper-scissors layer that was missing, but is one batch and should not be
+believed without re-running on a third seed set.
+
+**One thing was tried and reverted: moving the helipad up `aiTick`'s wish list.** It
+changed nothing, to the last decimal, across eight probed matches. The pad is not
+gated by its position in that list but by its RESEARCH - the loop skips any entry
+whose tech is not in yet, so the pad is passed over silently until `b_helipad` lands,
+and by then the bot can afford it wherever it sits. Anything wanting aircraft on the
+field sooner has to move `b_helipad` up `aiResearch`'s plan instead. `T31.D` and
+`T39.J` both pin the pad's position between the two guard towers, so that revert was
+also the thing that kept them green.
+
+`probev89.js` and `probe_out/` are git-ignored on the same rule as `sim.js`: they
+regenerate from the seeds. The probe MIRRORS `aiTick`'s own filter in order to name
+which clause refused, and that copy has to be kept in step with the original - if the
+two drift, the probe reports on a bot that does not exist.
+
 ## harness note: sim.sh, and what eight bot matches can and cannot tell you
 
 `./sim.sh` plays whole deathmatches with a CPU in every seat and writes

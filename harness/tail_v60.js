@@ -153,9 +153,16 @@ ok('T31.A AI_RICH_P is 1200',typeof AI_RICH_P==='number'&&AI_RICH_P===1200);
  ok("T31.F balanced now leans heavy",AI_PROFILES.balanced.armyTilt==='heavy');
  const tilts=Object.keys(AI_PROFILES).map(k=>AI_PROFILES[k].armyTilt);
  ok('T31.F no profile is left with a null tilt',tilts.every(t=>typeof t==='string'&&t.length>0));
- ok('T31.F mixWant targets are untouched at v60',
-    AI_PROFILES.balanced.mixWant.air===0.17&&AI_PROFILES.harasser.mixWant.air===0.30&&
-    AI_PROFILES.aggressive.mixWant.inf===0.68);
+ /* v89: retuned by the air pass - balanced air 0.17->0.26, harasser 0.30->0.38,
+    aggressive inf 0.68->0.60. The check is renamed to say what it now guards: not
+    that v60 left the table alone, but that the retune kept the personalities in
+    ORDER, which is the property v60 actually cared about. The three transcribed
+    values stay, so the next retune has to come here and declare itself too. */
+ ok('T31.F the air retune kept the profile leans in order',
+    AI_PROFILES.balanced.mixWant.air===0.26&&AI_PROFILES.harasser.mixWant.air===0.38&&
+    AI_PROFILES.aggressive.mixWant.inf===0.60&&
+    AI_PROFILES.harasser.mixWant.air>AI_PROFILES.balanced.mixWant.air&&
+    AI_PROFILES.aggressive.mixWant.inf>AI_PROFILES.balanced.mixWant.inf);
 }
 
 /* ---------- G: the new draw is still deterministic ---------- */
