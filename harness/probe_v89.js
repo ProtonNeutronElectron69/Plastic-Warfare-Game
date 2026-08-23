@@ -58,7 +58,7 @@ const rec = new Map();
 for (const p of real) rec.set(p.i, {
   fac: p.fac, prof: p.ai.profile,
   padPlaced: null, padDone: null,
-  trained: {}, opp: {}, rsv: {},
+  trained: {}, opp: {}, rsv: {}, tilt: [0,0],
   wantAir: 0, haveAir: 0, nAir: 0, aiTicks: 0
 });
 
@@ -135,6 +135,21 @@ aiTick = function (p) {
       if (capped) { bump(r.opp, b.key, 'capped'); continue; }
       if (b.queue.length >= 2) { bump(r.opp, b.key, 'queueFull'); continue; }
       if (gAnyShort && gShort[b.id] < -0.04 && !(gFacShort && aiBldHasFac(p, b.key))) { bump(r.opp, b.key, 'standdown'); continue; }
+      // v90: did the profile's buyTilt actually refuse anything on this tick?
+      {
+        const bt = pr.buyTilt || 0;
+        let tp = 0;
+        if (bt > 0) for (const k of roster(p, b.key)) {
+          if (AI_SUPPORT[k] || U[k].noTrain) continue;
+          const v = ucost(p, k).p; if (v > tp) tp = v;
+        }
+        const hold = bt > 0 && !gFacShort && p.res.p >= tp * AI_TILT_REACH;
+        if (bt > 0) {
+          r.tilt[0]++;
+          if (hold && roster(p, b.key).some(k => !AI_SUPPORT[k] && !U[k].noTrain &&
+              p.res.p >= ucost(p, k).p && p.res.p < ucost(p, k).p + bt * (tp - ucost(p, k).p))) r.tilt[1]++;
+        }
+      }
       const bSup = supFree(p);
       let byRsv = 0, byE = 0, ok = 0;
       for (const k of roster(p, b.key)) {
@@ -176,7 +191,7 @@ for (const p of real) {
     aiTicks: r.aiTicks, airTicks: r.nAir,
     wantAir: r.nAir ? +(r.wantAir / r.nAir).toFixed(4) : null,
     haveAir: r.nAir ? +(r.haveAir / r.nAir).toFixed(4) : null,
-    trained: r.trained, opp: r.opp, rsv: r.rsv, cls: CLSMAP
+    trained: r.trained, opp: r.opp, rsv: r.rsv, tilt: r.tilt, cls: CLSMAP
   });
 }
 console.log(JSON.stringify(out));

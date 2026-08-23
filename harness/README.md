@@ -464,6 +464,71 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v90 finding: the hash trails cover the AI's OPENING, not the AI
+
+v89's section below, and `CLAUDE.md` with it, claimed the pinned trails never fire
+`aiTick` because testing mode boots every slot human. **That is wrong.** `triage.js`
+builds its COMBOS trails with `cfgTan` / `cfgGreen`, neither of which sets
+`test:true`, so every one of them is a real match against three live CPU opponents.
+
+What is true is the window. They run 900 ticks and sample every 90: **thirty
+seconds**. At thirty seconds a bot owns a barracks and maybe a garage, has no
+helipad, and is still on its opening build. That is why v89's pass held them —
+target mixes, the AA floor and the class reserve all need a helipad or a mid-game
+bank before they do anything — and why v90 moved eighteen combos by touching one
+number, `firstPush`, which fires at about twenty-five seconds.
+
+The rule to carry: **a clean trail after an AI change means the opening is unchanged,
+not that the AI is unchanged.** Neither v89 nor v90 is a counterexample to the other;
+they are the two sides of a thirty-second boundary nobody had written down.
+
+## v90 finding: a "save up for better units" lever has two failure modes, and the first cut hit both
+
+`buyTilt` makes a profile hold back part of the gap up to the priciest unit its
+producer can currently build, instead of filling the slot with the cheapest thing.
+The first cut was gated on the bank reaching **half** that top price, borrowed
+deliberately from the faction floor's own `cheap*0.5` idiom so that "near enough to
+be worth waiting for" would mean one thing in both places.
+
+**It was inert.** Measured, the bank at a production decision runs near 100 plastic;
+against a 239-plastic Sarge the half-price gate is 120, so the tilt switched off in
+exactly the band where it was supposed to bite. The sim showed a defensive bot's mean
+unit cost going DOWN, and it took a mechanism probe to see that the reason was "it
+never fired" rather than anything about the scoring.
+
+The second failure mode is the opposite one and `T42.D` catches it: a bot **under its
+faction quota** that also holds out for a pricier unit buys nothing at all. The fix
+is not a bank threshold — it is that the quota outranks the tilt, exactly as it
+already outranks both v89 reserves. The bank threshold survives only as a coarse
+anti-stall floor, cut to a quarter.
+
+**Measure the mechanism, not the outcome.** `buyTilt`'s effect on mean unit cost is
+inside the noise of a 16-match batch, because the class mix dominates that number: a
+harasser wanting 38% air out-costs a turtle wanting 50% infantry however either
+shops. How often the tilt actually refuses a cheap unit is not noisy at all, and
+`probe_v89.sh` now reports it per profile:
+
+| profile | buyTilt | producer-ticks it held back |
+|---|---|---|
+| aggressive | 0.00 | 0% (never eligible, by design) |
+| harasser | 0.15 | 5.1% |
+| balanced | 0.30 | 10.7% |
+| defensive | 0.50 | 15.7% |
+| turtle | 0.60 | 17.6% |
+
+Monotonic in exactly the profile order, on 16 matches; the extremes reproduce on a
+second seed set (aggressive 0%, turtle 16.6%) while the middle two swap, which is
+what eight matches buys. Within-class unit cost moves the way the tilt intends where
+the price spread is wide enough to show it - defensive's mean vehicle cost 131.6 to
+138.9, turtle's 120.4 to 123.8, aggressive unmoved at 115 - and is lost in the noise
+on infantry, where most of the roster sits between 33 and 160.
+
+**Guard-tower counts are a want, not a count.** `towers` sets what the profile asks
+for, but what gets BUILT also carries the per-outpost tower rule, which is
+independent of the profile, plus rebuilds after losses. Aggressive drops (3.55 to
+2.18 per match) and defensive climbs (3.21 to 5.29), but the middle three do not
+sort cleanly and should not be expected to.
+
 ## v89 finding: the bots were not ignoring air, they were unable to buy it
 
 `sim.sh` said air was 3.6% of everything built and AA 1.2%, against profile targets
