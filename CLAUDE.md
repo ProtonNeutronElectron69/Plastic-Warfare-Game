@@ -157,13 +157,59 @@ Three notes for whoever goes next:
   production decision by the first clause that refused it, which is what separated
   "never chose air" from "chose air and could not pay for it". Reach for it before
   re-pricing anything on the bot's behalf.
-- **The trails did not move and no repin was due.** Testing mode boots every slot
-  HUMAN, so `aiTick` never fires under the pinned hash trails — an AI-only change is
-  invisible to them. That is a real gap: the AI is exercised by the tails and by
-  `sim.sh`, never by the trails.
+- **The trails did not move and no repin was due — but the reason given here was
+  WRONG, and v90 corrects it.** This section used to say testing mode boots every
+  slot HUMAN so `aiTick` never fires under the trails. It does not: `triage.js`'s
+  `cfgTan` / `cfgGreen` never set `test:true`, so every COMBOS trail is a real match
+  against three live CPU opponents. What is true is that they run 900 ticks —
+  **thirty seconds**. v89's pass needed a helipad or a mid-game bank to bite, and at
+  thirty seconds a bot has neither, so it changed nothing inside the window. v90
+  moved `firstPush`, which lands squarely inside it, and the trails moved at once.
+  Read a clean trail after an AI change as "the opening is unchanged", never as
+  "the AI is unchanged".
 - **Two doctrines are still near-dead** (`defensive`, `turtle`). That was the
   handoff's second lead and this pass did not touch it. It is the largest remaining
   source of noise in every faction comparison.
+
+## v90 — the AI personality pass (not part of the roadmap)
+
+**The five behaviour profiles now differ in what they BUILD, not just in when they
+attack.** Through v89 the construction wish list was almost identical for all five:
+a profile could bend it in only three small ways, and three of the five wanted the
+same number of guard towers. Four changes:
+
+- **`towers`, a declared trait spanning 1..5** (aggressive 1 → turtle 5), replacing
+  a two-branch guess off `defendFrac` and `aggro` that could only return 2, 3 or 4.
+  A faction whose STACKING exclusive is defensive follows the same ladder, so Gray's
+  Bunker is now a turtle's ring and a rusher's single. "Is it defensive" reads the
+  table's own `tower` / `gar` flags — never a key name, per the v88 lesson.
+- **`buyTilt`, the pacing half of `armyTilt`** (aggressive 0.00 → turtle 0.60). While
+  the bank is short of the priciest unit a producer can currently build, a profile
+  with a tilt leaves that share of the gap unspent rather than filling the slot with
+  the cheapest thing. `armyTilt` could never do this: it biases the CHOICE among
+  options already affordable, and the cheap one is affordable first.
+- **`firstPush` +15% on the three non-defensive profiles** (48 / 81 / 98; defensive
+  120 and turtle 150 untouched), narrowing the opening gap that makes the two slow
+  doctrines lose.
+- **A vestigial rolled `aggro` deleted from `makeAIBrain`** — written every match,
+  read nowhere — and the stale "(also scales economy push)" note removed from the
+  profile doc comment. The income assist reads DIFFICULTY and never read `aggro`.
+
+Two things worth carrying forward:
+
+- **Measure the mechanism, not the outcome — again.** `buyTilt`'s effect on mean unit
+  cost is inside the noise of a 16-match batch, because the class mix dominates that
+  number (a harasser wanting 38% air out-costs a turtle wanting 50% infantry no
+  matter how either shops). What is NOT noisy is how often the tilt actually refuses
+  a cheap unit, which `probe_v89.sh` reports per profile: 0% / 5.1% / 10.7% / 15.7% /
+  17.6%, monotonic in exactly the profile order. Reach for that before re-tuning it.
+- **The first cut of `buyTilt` was inert and the tests said so before the sim did.**
+  It was gated on the bank reaching half the top price, borrowed from the faction
+  floor's own idiom — but the bank at a production decision runs near 100 plastic, so
+  the gate switched the tilt off precisely where it was meant to bite. The real
+  anti-stall guard is not a bank threshold at all: it is that a bot **under its
+  faction quota never holds out**, because the floor already outranks both reserves
+  and stacking a savings tilt on it is the stall `T42.D` exists to catch.
 
 ## What v88.1 left behind
 

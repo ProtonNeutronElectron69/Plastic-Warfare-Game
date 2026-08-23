@@ -163,6 +163,47 @@ ok('T31.A AI_RICH_P is 1200',typeof AI_RICH_P==='number'&&AI_RICH_P===1200);
     AI_PROFILES.aggressive.mixWant.inf===0.60&&
     AI_PROFILES.harasser.mixWant.air>AI_PROFILES.balanced.mixWant.air&&
     AI_PROFILES.aggressive.mixWant.inf>AI_PROFILES.balanced.mixWant.inf);
+ /* v90: the two new personality traits, pinned the same way and for the same
+    reason - they are the whole of what the profile now says about BUILD ORDER, and
+    a future retune should have to come here and declare itself.
+    towers is asserted as a SPREAD rather than as five literals: the property that
+    matters is that all five profiles differ, which is exactly what v89's version
+    could not do (it derived 2, 3 or 4 from defendFrac and gave three profiles the
+    same ring). buyTilt is asserted as an ORDER against aggression, so a rusher can
+    never end up hoarding for a tank and a turtle can never end up flooding grunts. */
+ {
+  const PR90=Object.keys(AI_PROFILES);
+  const tw=PR90.map(k=>AI_PROFILES[k].towers);
+  ok(`T31.F every profile declares its own tower ring, spanning 1..5 (${tw.join(',')})`,
+     tw.every(n=>Number.isInteger(n)&&n>=1&&n<=5)&&new Set(tw).size===5&&
+     Math.min(...tw)===1&&Math.max(...tw)===5);
+  ok('T31.F the ring tracks how defensive the profile is',
+     AI_PROFILES.turtle.towers>AI_PROFILES.defensive.towers&&
+     AI_PROFILES.defensive.towers>AI_PROFILES.balanced.towers&&
+     AI_PROFILES.balanced.towers>AI_PROFILES.harasser.towers&&
+     AI_PROFILES.harasser.towers>AI_PROFILES.aggressive.towers);
+  ok('T31.F buyTilt runs the other way: the rusher hoards nothing, the turtle hoards most',
+     AI_PROFILES.aggressive.buyTilt===0&&
+     AI_PROFILES.turtle.buyTilt>AI_PROFILES.defensive.buyTilt&&
+     AI_PROFILES.defensive.buyTilt>AI_PROFILES.balanced.buyTilt&&
+     AI_PROFILES.balanced.buyTilt>AI_PROFILES.harasser.buyTilt&&
+     AI_PROFILES.harasser.buyTilt>AI_PROFILES.aggressive.buyTilt);
+  ok('T31.F every buyTilt is a share, so the hold-out can never exceed the gap it is taken from',
+     PR90.every(k=>{const v=AI_PROFILES[k].buyTilt;return typeof v==='number'&&v>=0&&v<=1}));
+  /* The two profiles the v90 firstPush pass deliberately left alone, pinned so a
+     later "make everyone slower" edit cannot quietly close the gap it opened. */
+  ok('T31.F the two slow openers kept their timing while the other three lengthened 15%',
+     AI_PROFILES.defensive.firstPush===120&&AI_PROFILES.turtle.firstPush===150&&
+     AI_PROFILES.aggressive.firstPush===48&&AI_PROFILES.balanced.firstPush===81&&
+     AI_PROFILES.harasser.firstPush===98);
+  ok('T31.F ...and the opening order across the five is unchanged',
+     AI_PROFILES.aggressive.firstPush<AI_PROFILES.balanced.firstPush&&
+     AI_PROFILES.balanced.firstPush<AI_PROFILES.harasser.firstPush&&
+     AI_PROFILES.harasser.firstPush<AI_PROFILES.defensive.firstPush&&
+     AI_PROFILES.defensive.firstPush<AI_PROFILES.turtle.firstPush);
+  ok('T31.F the vestigial rolled aggro is gone from the brain',
+     makeAIBrain('balanced').aggro===undefined&&!makeAIBrain.toString().includes('aggro:pr.aggro'));
+ }
 }
 
 /* ---------- G: the new draw is still deterministic ---------- */

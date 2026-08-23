@@ -1,29 +1,29 @@
-/* recut_v88_1_1.js - regenerate the hash-trail baselines that v88 moved.
+/* recut_v90.js - regenerate the hash-trail baselines that v90 moved.
  *
- *   cat shim_head.js game.js recut_v88_1_1.js > rc881.js && node rc881.js
+ *   cat shim_head.js game.js recut_v90.js > rc90.js && node rc90.js > cut_v90.json
+ *   python3 repin_v90.py cut_v90.json
  *
- * v88.1 is four small updates on top of v88: the Machine Gunner re-priced
- * 112 -> 125 so he pays 2 supply again, the Forward Pad's repair rate 1.6 -> 3,
- * a Field Manual gallery reordered and recoloured, and a wording pass over every
- * unit and structure description.
+ * v90 is an AI-personality pass and touches NO unit, no building and no cost:
+ * firstPush +15% on the three non-defensive profiles, two new profile fields
+ * (towers 1..5, buyTilt 0..0.6), a vestigial rolled `aggro` deleted from
+ * makeAIBrain, and the defensive stacking exclusive following the tower ladder.
  *
- * ONE of those four moves the simulation, and it is the price: RESEARCH.u_gunner
- * derives its cost and time from the unit's cost at load, every bot's supply
- * budget reads supOf, and a bot that can afford a different army at minute two
- * fights a different match from tick one. The other three are display only.
+ * WHY THIS MOVES TRAILS WHEN v89'S AI PASS DID NOT, which is the thing worth
+ * writing down. The COMBOS trails are not testing-mode matches - cfgTan and
+ * cfgGreen never set test:true, so every one of them boots three real CPU
+ * opponents and the AI is live. They run 900 ticks: THIRTY SECONDS. At thirty
+ * seconds a bot owns a barracks and perhaps a garage, has no helipad, and is
+ * still on its opening build. So v89's pass - target mixes, the AA floor and the
+ * class reserve, all of which need a helipad or a mid-game bank to bite - changed
+ * nothing inside that window and the trails held. firstPush lands squarely inside
+ * it: aggressive was 42 AI-ticks, about 25 seconds, so moving it to 48 decides
+ * whether the first wave launches before the trail stops sampling.
  *
- * FIVE doors move the trails this time, and the fifth reaches every match in the
- * suite whether or not a Gray player is in it:
- *   - a 25th entry in U reshapes the research plan and the production draw;
- *   - a 13th entry in B does the same for the build wish list;
- *   - hashState gained u.paintT on EVERY unit and three fields on every mine;
- *   - the bots gained two more ability paths to spend a tick on;
- *   - and THE SUPPLY RANKS MOVED. 25 trainable units slides the quartile cuts, so
- *     the Machine Gunner, the Medic and Sarge each cost one supply less than they
- *     did. Every bot's army cap is a function of supply, so every bot in every
- *     match now fields a slightly different army from tick one. That is why a
- *     trail moving here proves even less than usual, and why the layout gate below
- *     is the check that actually matters.
+ * The lesson generalises past this release: these trails cover the AI's OPENING
+ * and nothing after it. An AI change that moves them is an opening change; an AI
+ * change that does not is not thereby proven harmless, only proven not to have
+ * touched the first thirty seconds. CLAUDE.md said the trails never fire aiTick
+ * at all, which is wrong, and v90 corrects it there.
  *
  * What must NOT move is the map. Nothing in this release touches a prop, a node,
  * a nest or anything that fills M.pass.

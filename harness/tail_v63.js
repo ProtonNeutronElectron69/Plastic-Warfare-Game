@@ -361,10 +361,22 @@ const FACS63 = ['green', 'tan', 'gray', 'blue'];
   ok('T42.F exactly the two v63 structures carry it, and nothing else does',
     !!B.bunker.mult && !!B.turbine.mult &&
     Object.keys(B).filter(k => B[k].mult).length === 2);
-  ok('T42.F the scaling structure is asked for up front, as a pair, and as a third when rich',
+  /* v90: the second and third entries are no longer flat, and the claim changes
+     with them. A scaling exclusive that is DEFENSIVE now follows the profile's
+     tower ladder - 1, then min(2,towerWant), then towerWant - so a turtle rings
+     itself with bunkers and a rusher puts up one. A scaling exclusive that is not
+     defensive keeps the flat 1/2/3 this check pinned at v63, because Blue's
+     Turbine is power and a turtle needs no more electricity than a rusher. Both
+     halves are pinned below, and the second check is the one that matters most:
+     "is it defensive" has to be read off the TABLE, so a future defensive
+     structure declares its own habit instead of waiting to be named here. */
+  ok('T42.F the scaling structure is asked for up front, then a second and a third',
     src.includes('if(B[ub].mult)wish.push([ub,1]);') &&
-    src.includes('if(B[ub].mult)wish.push([ub,2]);') &&
-    src.includes('if(B[ub].mult)wish.push([ub,3]);'));
+    src.includes('if(B[ub].mult)wish.push([ub,defStack(ub)?Math.min(2,towerWant):2]);') &&
+    src.includes('if(B[ub].mult)wish.push([ub,defStack(ub)?towerWant:3]);'));
+  ok('T42.F ...and "is it defensive" is a table flag, not a key name',
+    /const defStack=k=>[^\n]*B\[k\]\.tower[^\n]*B\[k\]\.gar/.test(src) &&
+    !src.includes("ub==='bunker'") && !src.includes("k==='bunker'"));
   ok('T42.F the non-scaling structure keeps its single, in its old slot',
     src.includes('if(!B[ub].mult)wish.push([ub,1]);'));
   ok('T42.F the scaling structure is exempt from the "only build power when needed" gate',
@@ -390,9 +402,15 @@ const FACS63 = ['green', 'tan', 'gray', 'blue'];
     const p = bot63('gray');
     tech63(p, ['b_bunker', 'b_generator', 'b_guardtower', 'b_radiotower']);
     p.res.p = 99999; p.res.e = 99999;
+    /* v90: the Bunker is defensive, so how many this bot wants is its PROFILE's
+       tower appetite rather than a flat pair. The expectation is derived from that
+       profile: a hard >=2 would now pass or fail on which personality the seed
+       happened to deal, which is the test proving nothing about the behaviour. */
+    const want = Math.min(2, p.ai.pr.towers);
     let n = 0;
-    for (let i = 0; i < 200 && n < 2; i++) { aiTick(p); n = p.blds.filter(b => b.key === 'bunker').length; }
-    ok(`T42.F a rich Gray bot builds a pair of bunkers (${n})`, n >= 2);
+    for (let i = 0; i < 200 && n < want; i++) { aiTick(p); n = p.blds.filter(b => b.key === 'bunker').length; }
+    ok(`T42.F a rich Gray bot builds the bunkers its profile asks for (${p.ai.profile} wants ${want}, built ${n})`,
+      n >= want);
   }
   // ...and a Green bot must NOT gain a second radar, since Green was left alone.
   {

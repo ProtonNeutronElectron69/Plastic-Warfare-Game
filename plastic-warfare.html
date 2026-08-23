@@ -719,7 +719,11 @@ function mineDmg(d){return MINE_DMG*Math.max(0,1-d/MINE_R);}
 /* ---------------- AI BEHAVIOR PROFILES ----------------
    Each profile is a personality assigned (without replacement) to a CPU player at
    the start of the match. Fields:
-     aggro       overall willingness to commit to attacks (also scales economy push)
+     aggro       overall willingness to commit to attacks. v90: the trailing
+                 "(also scales economy push)" was stale and is gone - the bots'
+                 income assist in aiTick reads the DIFFICULTY multiplier (eco) and
+                 has never read this. Two live readers remain: the mid-match mood
+                 shift, and towers' old derivation, which v90 also retires.
      pushBase    base army size before a main attack wave launches
      pushGrow    how much the required wave size grows after each wave
      pushCap     ceiling on wave size
@@ -745,6 +749,20 @@ function mineDmg(d){return MINE_DMG*Math.max(0,1-d/MINE_R);}
      aa          v59: [lo,hi] anti-air trucks held as insurance once ANY rival can
                  fly - lo from 10 fighters, the larger of the pair from 24. Dormant
                  while nobody can fly, so an all-ground match carries no dead weight.
+     towers      v90: how many Guard Towers the profile rings its base with - and,
+                 for a faction whose STACKING exclusive is defensive, how many of
+                 those too (Gray's Bunker; Blue's Turbine is power and keeps its
+                 flat pair). A declared personality trait spanning 1..5. Through
+                 v89 it was derived from defendFrac and aggro and could only ever
+                 come out 2, 3 or 4, so three of the five profiles shared a value.
+     buyTilt     v90: how much of the gap up to the priciest unit this producer can
+                 CURRENTLY build the bot leaves in the bank rather than spending on
+                 a cheaper one. 0 buys the instant anything is affordable, so the
+                 army is many cheap bodies arriving early; 0.6 holds out, so it is
+                 fewer, pricier, tougher ones arriving later. This is the pacing
+                 half of armyTilt, which only ever biased the CHOICE between things
+                 the bot could already afford - and the cheap unit is affordable
+                 first, so the pricey one never got a tick where it was the option.
    NOTE: timing fields are in AI-TICKS. aiTick runs ~every 0.6s, so e.g. firstPush:45 ≈ 27s.
 */
 /* v89 AIR RETUNE. The v59 target mixes were written before anything measured
@@ -765,11 +783,11 @@ function mineDmg(d){return MINE_DMG*Math.max(0,1-d/MINE_R);}
    before the first gunship arrives rather than after it. It stays dormant until a
    rival can fly at all, so an all-ground match still carries no dead weight. */
 const AI_PROFILES={
- aggressive:{aggro:1.25,pushBase:6, pushGrow:2,pushCap:30,firstPush:42, repeat:[34,22], defendHold:150,defendFrac:0.10,scout:true, scoutEvery:60, harass:true, harassEvery:26,harassSize:[2,3],expand:true, vsAI:1.0,armyTilt:'cheap',mixWant:{inf:0.60,veh:0.25,air:0.15},aa:[1,2]},
- balanced:  {aggro:1.0, pushBase:7, pushGrow:3,pushCap:28,firstPush:70, repeat:[55,34], defendHold:220,defendFrac:0.18,scout:true, scoutEvery:80, harass:true, harassEvery:46,harassSize:[2,3],expand:true, vsAI:1.1,armyTilt:'heavy',mixWant:{inf:0.42,veh:0.32,air:0.26},aa:[2,3]},
- defensive: {aggro:0.7, pushBase:11,pushGrow:4,pushCap:26,firstPush:120,repeat:[78,48], defendHold:330,defendFrac:0.35,scout:false,scoutEvery:130,harass:false,harassEvery:130,harassSize:[2,2],expand:false,vsAI:1.0,armyTilt:'heavy',mixWant:{inf:0.32,veh:0.46,air:0.22},aa:[2,4]},
- harasser:  {aggro:0.95,pushBase:9, pushGrow:2,pushCap:22,firstPush:85, repeat:[60,38], defendHold:190,defendFrac:0.15,scout:true, scoutEvery:34, harass:true, harassEvery:20,harassSize:[3,4],expand:true, vsAI:1.2,armyTilt:'fast', mixWant:{inf:0.33,veh:0.29,air:0.38},aa:[2,3]},
- turtle:    {aggro:0.55,pushBase:14,pushGrow:4,pushCap:30,firstPush:150,repeat:[95,60], defendHold:380,defendFrac:0.45,scout:false,scoutEvery:170,harass:false,harassEvery:170,harassSize:[2,2],expand:false,vsAI:0.9,armyTilt:'range',mixWant:{inf:0.50,veh:0.30,air:0.20},aa:[2,4]}
+ aggressive:{aggro:1.25,pushBase:6, pushGrow:2,pushCap:30,firstPush:48, repeat:[34,22], defendHold:150,defendFrac:0.10,scout:true, scoutEvery:60, harass:true, harassEvery:26,harassSize:[2,3],expand:true, vsAI:1.0,armyTilt:'cheap',mixWant:{inf:0.60,veh:0.25,air:0.15},aa:[1,2],towers:1,buyTilt:0.00},
+ balanced:  {aggro:1.0, pushBase:7, pushGrow:3,pushCap:28,firstPush:81, repeat:[55,34], defendHold:220,defendFrac:0.18,scout:true, scoutEvery:80, harass:true, harassEvery:46,harassSize:[2,3],expand:true, vsAI:1.1,armyTilt:'heavy',mixWant:{inf:0.42,veh:0.32,air:0.26},aa:[2,3],towers:3,buyTilt:0.30},
+ defensive: {aggro:0.7, pushBase:11,pushGrow:4,pushCap:26,firstPush:120,repeat:[78,48], defendHold:330,defendFrac:0.35,scout:false,scoutEvery:130,harass:false,harassEvery:130,harassSize:[2,2],expand:false,vsAI:1.0,armyTilt:'heavy',mixWant:{inf:0.32,veh:0.46,air:0.22},aa:[2,4],towers:4,buyTilt:0.50},
+ harasser:  {aggro:0.95,pushBase:9, pushGrow:2,pushCap:22,firstPush:98, repeat:[60,38], defendHold:190,defendFrac:0.15,scout:true, scoutEvery:34, harass:true, harassEvery:20,harassSize:[3,4],expand:true, vsAI:1.2,armyTilt:'fast', mixWant:{inf:0.33,veh:0.29,air:0.38},aa:[2,3],towers:2,buyTilt:0.15},
+ turtle:    {aggro:0.55,pushBase:14,pushGrow:4,pushCap:30,firstPush:150,repeat:[95,60], defendHold:380,defendFrac:0.45,scout:false,scoutEvery:170,harass:false,harassEvery:170,harassSize:[2,2],expand:false,vsAI:0.9,armyTilt:'range',mixWant:{inf:0.50,veh:0.30,air:0.20},aa:[2,4],towers:5,buyTilt:0.60}
 };
 /* ---------------- DIFFICULTY ----------------
    The PROFILES above decide HOW a bot plays (build order, wave timing, scouting,
@@ -4853,7 +4871,6 @@ function makeAIBrain(profKey){
   stagePt:null,stageT:0,
   waveId:0,waveT:0,
   moodAt:700+srand()*1500,moodDone:false,feintDone:false,
-  aggro:pr.aggro*(0.85+srand()*0.35),
   rivalIdx:Math.floor(srand()*1000),
   // standing preference for WHICH foe to favor; re-rolled occasionally so
   // rivalries shift over a long game instead of being fixed forever
@@ -9431,6 +9448,14 @@ const AI_CLASSES=['inf','veh','air','aa'];
    with: holding three points free is invisible on a tick where twenty are free, and
    is the whole game on a tick where none are. */
 const AI_RSV_SHORT=0.04;
+/* v90: how close to a producer's top price the bank must be before buyTilt starts
+   holding out for it - an anti-stall floor, so a broke bot buys what it can instead
+   of hoarding for something far off. Cut from the faction floor's own half-price
+   idiom to a quarter after measuring: the bank at a production decision runs near
+   100 plastic, and against a 239 Sarge a half-price gate switched the tilt off in
+   exactly the band where it was supposed to bite, leaving the whole feature inert.
+   The real guard against stalling is the faction-quota test beside it, not this. */
+const AI_TILT_REACH=0.25;
 /* v84 ENCOUNTER LEDGER. aiFoeArmorMix has always read a LIVE census of the grudge
    target's surviving units: perfect intel on one rival, no memory, and nothing at
    all from the other two in a three-opponent match. A wave of infantry that wipes
@@ -9732,7 +9757,12 @@ function aiTick(p){
 
  // ---- BASE BUILDINGS ----
  // defensive/turtle profiles invest in more static defense; aggressive build fewer
- const towerWant=pr.defendFrac>=0.35?4:(pr.aggro>=1.2?2:3);
+ /* v90: a declared profile trait spanning 1..5 rather than a two-branch guess off
+    defendFrac and aggro, which could only return 2, 3 or 4 and gave three of the
+    five profiles the same ring. The fallback keeps a pre-v90 save loading: its
+    stored profile has no towers field, and 3 is the value the old expression gave
+    every profile that was neither a turtle nor a rusher. */
+ const towerWant=pr.towers||3;
  // lab is built early (right after barracks) so the AI can start unlocking its tree
  /* v59: [key,needed] pairs rather than a key list plus a needed expression that
     could not tell the two guardtower entries apart.
@@ -9768,16 +9798,25 @@ function aiTick(p){
     yet, so the pad is passed over silently until b_helipad lands, and by then the
     bot can afford it wherever it sits. Anything that wants aircraft on the field
     sooner has to move b_helipad up aiResearch's plan, not this one. */
+ /* v90: a stacking exclusive that is DEFENSIVE - it shoots or it garrisons, read
+    off the table's own tower/gar flags rather than by naming 'bunker' - now climbs
+    the SAME ladder the guard tower does (1, then min(2,towerWant), then towerWant),
+    so a turtle rings itself with bunkers and a rusher puts up one. One that is not
+    defensive keeps the flat 1/2/3 it has had since v63: Blue's Turbine is power,
+    and a turtle needs no more electricity than a rusher does. Keying this on the
+    flags is the v88 lesson applied forward - the Heavy Barricade is the second
+    'barr' row, and fourteen tests that meant "is a wall" had said key==='barricade'. */
+ const defStack=k=>!!(B[k].tower||B[k].gar);
  const wish=[['barracks',1],['lab',1],['generator',2],['garage',1]];
  for(const ub of ubs)if(B[ub].mult)wish.push([ub,1]);
  wish.push(['guardtower',1],['helipad',1],['guardtower',Math.min(2,towerWant)],['radiotower',1]); // v48: +radiotower
  for(const ub of ubs)if(!B[ub].mult)wish.push([ub,1]);
- for(const ub of ubs)if(B[ub].mult)wish.push([ub,2]);
+ for(const ub of ubs)if(B[ub].mult)wish.push([ub,defStack(ub)?Math.min(2,towerWant):2]);
  wish.push(['guardtower',towerWant],['generator',2]);
  /* v60: a bot banking more plastic than it can spend puts up a second barracks and
     garage. Appended rather than inserted, so it is the lowest priority in the list
     and a poor bot's order of business is untouched. */
- if(p.res.p>=AI_RICH_P){wish.push(['barracks',2],['garage',2]);for(const ub of ubs)if(B[ub].mult)wish.push([ub,3]);}
+ if(p.res.p>=AI_RICH_P){wish.push(['barracks',2],['garage',2]);for(const ub of ubs)if(B[ub].mult)wish.push([ub,defStack(ub)?towerWant:3]);}
  for(const [k,needed] of wish){
   if(count(k)>=needed)continue;
   if(B[k].req&&!has(B[k].req))continue; // v59: was break, which blocked the whole tail
@@ -9932,10 +9971,39 @@ function aiTick(p){
       against it; everything else pays the expansion reserve, plus the class
       reserve whenever it is not itself the class being banked for. */
    const bSup=supFree(p); // read once per producer: trainUnit spends it as the loop goes
+   /* v90 BUY TILT. The profile's appetite for holding out, as a share of the gap
+      between a unit's price and the priciest one this producer can build RIGHT NOW
+      (roster() is tech-gated, so the bot never banks for a Sarge it cannot train).
+      An aggressive bot is 0 and buys the moment anything is affordable, so it
+      floods cheap bodies early; a turtle is 0.6 and arrives later with fewer,
+      pricier, tougher ones. armyTilt could not do this on its own - it biases the
+      CHOICE among options already affordable, and the cheap one is affordable
+      first, so the expensive one never saw a tick where it was the only candidate.
+      Derived per tick from ucost and the roster; stores nothing, hashes nothing,
+      consumes no rng. Skipped outright at 0, so a rusher pays nothing for it. */
+   const bTilt=pr.buyTilt||0;
+   let topP=0;
+   if(bTilt>0)for(const k of roster(p,b.key)){
+    if(AI_SUPPORT[k]||U[k].noTrain)continue;
+    const v=ucost(p,k).p;if(v>topP)topP=v;
+   }
+   /* Two guards, and the FIRST is the one that matters. A bot under its faction
+      quota does not hold out at all: the floor already outranks both reserves
+      above, its whole job is to get signature units onto the field, and a savings
+      tilt stacked on top of it is the stall this file guards against twice over
+      (the v59 wish list falls through rather than parking on what it cannot
+      afford; the floor itself waits for an exclusive only while the bank is past
+      half its price). The second is a plain anti-stall floor: nowhere near the top
+      price, the bot buys what it can rather than hoarding for something a long way
+      off. Measured, the bank at a production decision sits near 100, so this
+      threshold decides whether the tilt does anything at all - at half the top
+      price it never fired and the feature was inert. */
+   const bHold=bTilt>0&&!gFacShort&&p.res.p>=topP*AI_TILT_REACH;
    const opts=roster(p,b.key).filter(k=>!AI_SUPPORT[k]) /* v86: the same four keys, off the table rather than retyped */ .filter(k=>{
     const c=ucost(p,k),fx=gFacShort&&FAC[p.fac].uu.indexOf(k)>=0;
     let rsv=fx?0:(saveExp?170:0),sup=0;
     if(!fx&&gRsv&&aiUnitClass(k)!==gRsv.cls){rsv+=gRsv.p;sup=gRsv.s;}
+    if(!fx&&bHold&&topP>c.p)rsv+=bTilt*(topP-c.p); // ...and hold out for the better one
     if(bSup-supOf(k)<sup)return false; // leave the short class room to land
     return p.res.p>=c.p+rsv&&p.res.e>=c.e&&(!U[k].lim||p.units.filter(u=>u.key===k).length<U[k].lim);
    });
