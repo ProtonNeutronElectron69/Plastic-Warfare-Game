@@ -167,9 +167,9 @@ Three notes for whoever goes next:
   moved `firstPush`, which lands squarely inside it, and the trails moved at once.
   Read a clean trail after an AI change as "the opening is unchanged", never as
   "the AI is unchanged".
-- **Two doctrines are still near-dead** (`defensive`, `turtle`). That was the
-  handoff's second lead and this pass did not touch it. It is the largest remaining
-  source of noise in every faction comparison.
+- **Two doctrines were near-dead** (`defensive`, `turtle`) when this was written.
+  Measured again at v90 over 64 matches, defensive recovered to 14.6% and turtle did
+  not move (14.5%). See the v90 balance baseline below.
 
 ## v90 — the AI personality pass (not part of the roadmap)
 
@@ -210,6 +210,38 @@ Two things worth carrying forward:
   anti-stall guard is not a bank threshold at all: it is that a bot **under its
   faction quota never holds out**, because the floor already outranks both reserves
   and stacking a savings tilt on it is the stall `T42.D` exists to catch.
+
+## Where the balance actually stands (64 matches, measured at v90)
+
+**Read this before acting on any faction claim elsewhere in this file or in the
+harness README.** Everything written before it came from a 24-match read at v88.1.
+This is 64 matches on v90 as merged, four seed sets, 64 distinct seeds. The full
+table, the reproduction recipe and the reasoning are in the v90 balance section of
+`harness/README.md`.
+
+Four things a new session should know before touching balance:
+
+- **Green has overshot and it is probably our own doing.** It was average at v88.1
+  (+0.4 over its expected wins) and this file said "Green is fine, do not fix it".
+  At v90 it is **+10.7**, the strongest army by a wide margin. The hypothesis: every
+  reserve added at v89 and v90 is a PLASTIC threshold, and Green pays 8% less for
+  everything, so it clears all of them sooner on every producer all match. Not yet
+  measured — check it with `probe_v89.sh` before re-pricing anything, and if it
+  holds, the fix is to scale the thresholds by `FAC[p.fac].mods.cost` so a reserve
+  means the same thing to every army, NOT to touch Green's discount.
+- **Blue is still last and nothing has been aimed at it.** K/L 0.63 against 0.65 at
+  v88.1, building the most units of any army and getting the least from them. It was
+  the first lead in the v88.1 brief, two passes have gone by, and it is untouched.
+- **`turtle` is the one doctrine that has responded to nothing** (14.5%, from 9.1%).
+  `defensive` recovered to 14.6% from 4.8% when v90 moved `firstPush`, so turtle's
+  problem is not its opening — that is the lever that just worked for the other one.
+- **`harasser` is now the BEST doctrine** (37.8%, from 21%), because it is the one
+  that asks for the most air and could not execute that plan before v89. The
+  doctrine spread did not flatten, it reordered — do not assume the old ranking.
+
+**Neither v89 nor v90 has a `tail_vNN.js` of its own**, the first two since v83
+without one. Their checks live in the tails that own the subsystems: `tail_v59.js`
+(T39.B, T39.I), `tail_v60.js` (T31.F) and `tail_v63.js` (T42.D, T42.F).
 
 ## What v88.1 left behind
 
