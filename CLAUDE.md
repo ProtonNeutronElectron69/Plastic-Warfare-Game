@@ -211,6 +211,38 @@ Two things worth carrying forward:
   faction quota never holds out**, because the floor already outranks both reserves
   and stacking a savings tilt on it is the stall `T42.D` exists to catch.
 
+## v90.2 — the HUD legibility pass (not part of the roadmap)
+
+Two interface changes the owner asked for, and a bug the second one uncovered.
+
+- **The message toasts moved from the bottom centre to the top centre.** At
+  `bottom:160px` they sat inside the selection panel — 118px minimum, 332 with a
+  Construct row — so every toast covered the build menu for five seconds. The new
+  offset is `calc(var(--topbarH) + 10px + var(--bannerH))`, which names the
+  survival banner's own slot rather than merely happening to clear it.
+- **The top bar is twice as tall (42 → 84) with bigger text** (14 → 20), buttons
+  (13 → 17) and army dot (14 → 20). Raising the `.tbtn` base is the only part with
+  reach: three `.tbtn` buttons live outside the bar and stay put only because each
+  overrides both font-size AND padding. `T65.C` asserts all six.
+- **The bar's height is a variable now, and that is the point.** Four boxes hang
+  off its bottom edge and every one was a hand-typed 50 or 52 that nothing tied
+  back to the 42 it came from. `T50.A` transcribed one of them in full and was
+  REWRITTEN to the claim it was making, not re-pinned.
+
+**The top screen edge has never scrolled the camera, in any release.** The test
+read `MOUSE.y<14&&MOUSE.y>44` — a condition no number satisfies — while the Field
+Manual has promised "push the screen edge" since v43. The `44` is the old bar's
+height, so doubling the bar meant touching the line anyway. Two lessons:
+`TOPBAR_H` is a deliberate second copy of a stylesheet number, allowed only
+because `T65.B` scrapes the sheet and asserts they agree (the `data-tune`
+contract applied to CSS); and it is the height and NOT the height plus the border,
+because the sheet is global `border-box` — the first cut was 86 and only a real
+Chromium measurement caught it.
+
+**No trails moved**: the release is stylesheet plus one client-local camera bound.
+`T65.D` drives the fixed band through `update()` and, because it moves the camera
+inside a sim tick, also asserts `G.cam` is in neither `hashState` nor the snapshot.
+
 ## v90.1 — the build-menu pass (not part of the roadmap)
 
 Three interface repairs the owner asked for. Two are display; the third needed a

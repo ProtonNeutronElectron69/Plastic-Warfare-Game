@@ -89,18 +89,33 @@ canvas{display:block}
 #menuBg{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
 /* ---------- HUD ---------- */
 #hud{position:absolute;inset:0;pointer-events:none;display:none;z-index:10}
-#topbar{position:absolute;top:0;left:0;right:0;height:42px;background:linear-gradient(180deg,rgba(20,30,14,.95),rgba(20,30,14,.82));display:flex;align-items:center;gap:18px;padding:0 14px;pointer-events:auto;border-bottom:2px solid rgba(255,255,255,.12);color:#fff;font-size:14px}
-#topbar .chip{display:flex;align-items:center;gap:6px;font-weight:bold}
-.dotS{width:14px;height:14px;border-radius:50%;box-shadow:inset -2px -3px 3px rgba(0,0,0,.4),inset 2px 2px 3px rgba(255,255,255,.5)}
+/* v90.2: the bar is twice as tall and everything in it is scaled to match. Its
+   height is a VARIABLE rather than a literal because four other boxes hang off
+   the bottom edge of it - the right rail, the help box, the survival banner and
+   (as of this release) the message toasts - and every one of them was a
+   hand-typed 50 or 52 that nothing tied back to the 42 it was derived from.
+   Doubling the bar meant finding all four by eye; the next person changes one
+   number. */
+:root{--topbarH:84px;
+      /* the survival banner sits directly under the bar and this is what it
+         stands: 26px headline + 15px subline + its margin, rounded up. The
+         toasts clear it, which is the whole reason this number is named. */
+      --bannerH:56px}
+#topbar{position:absolute;top:0;left:0;right:0;height:var(--topbarH);background:linear-gradient(180deg,rgba(20,30,14,.95),rgba(20,30,14,.82));display:flex;align-items:center;gap:22px;padding:0 18px;pointer-events:auto;border-bottom:2px solid rgba(255,255,255,.12);color:#fff;font-size:20px}
+#topbar .chip{display:flex;align-items:center;gap:9px;font-weight:bold}
+.dotS{width:20px;height:20px;border-radius:50%;box-shadow:inset -2px -3px 3px rgba(0,0,0,.4),inset 2px 2px 3px rgba(255,255,255,.5)}
 .res{font-weight:bold}
 .res.p{color:#ffb95e}.res.e{color:#7fe3ff}
 #modeinfo{color:#ffe9a8;font-weight:bold}
 #topbar .spacer{flex:1}
-.tbtn{pointer-events:auto;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-weight:bold;font-size:13px}
+/* v90.2: sized for the taller bar. The three .tbtn buttons that live OUTSIDE it -
+   #hqBtn, #mmSizeBtn and #hqPlaceBtn - each already override both font-size and
+   padding, so raising the base moves the bar and nothing else. */
+.tbtn{pointer-events:auto;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:bold;font-size:17px}
 .tbtn:hover{background:rgba(255,255,255,.25)}
 /* v50 testing mode: the army-switch chips that replace nothing and appear only in testing mode */
 #armySwitch{display:none;align-items:center;gap:5px}
-.aBtn{pointer-events:auto;background:rgba(255,255,255,.10);border:2px solid rgba(255,255,255,.3);color:#fff;border-radius:7px;padding:2px 9px;cursor:pointer;font-weight:bold;font-size:13px;line-height:18px}
+.aBtn{pointer-events:auto;background:rgba(255,255,255,.10);border:2px solid rgba(255,255,255,.3);color:#fff;border-radius:7px;padding:3px 11px;cursor:pointer;font-weight:bold;font-size:17px;line-height:24px}
 .aBtn.on{background:rgba(255,255,255,.30);box-shadow:0 0 0 2px rgba(255,227,77,.85) inset}
 /* v73: a COLUMN now, so the HQ button sits directly above the selection panel
    whatever height that panel happens to be. paddingRight is overwritten by
@@ -215,7 +230,7 @@ canvas{display:block}
    the radio panel positioned itself by measuring the army panel every refresh.
    One column holds them now; its `bottom` is written by applyMMSize so the
    stack always stops clear of the corner-pinned minimap. */
-#rightRail{position:absolute;right:8px;top:50px;bottom:8px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;overflow:hidden}
+#rightRail{position:absolute;right:8px;top:calc(var(--topbarH) + 8px);bottom:8px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;overflow:hidden}
 #rightRail > *{flex:0 1 auto;min-height:0}
 #radioPanel{flex:none}  /* it holds .bb buttons; the v58 squeeze trap applies */
 #armyPanel{width:150px;max-height:60vh;overflow:hidden;background:rgba(18,26,12,.85);border:2px solid rgba(255,255,255,.12);border-radius:12px;padding:6px 8px;pointer-events:none;display:none}
@@ -246,18 +261,28 @@ canvas{display:block}
 #mmHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
 #mmHead span{color:#cfe6b8;font-size:11px;letter-spacing:1px;text-transform:uppercase}
 #mmSizeBtn{font-size:11px;padding:2px 8px}
-#msgs{position:absolute;bottom:160px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
+/* v90.2: the toasts were 160px off the BOTTOM, which is squarely on top of the
+   selection panel - the Construct row, the Train row and the ability buttons all
+   sat under five seconds of text every time anything happened. They are at the
+   top now, under the bar and clear of the survival banner's own slot, which is
+   the only other thing that claims the top centre. Both offsets are derived from
+   the two variables rather than typed, so moving the bar moves the toasts.
+   `bottom:auto` is explicit: the rule it replaces set one, and a stylesheet that
+   states both pins the box to a height it never asked for. */
+#msgs{position:absolute;top:calc(var(--topbarH) + 10px + var(--bannerH));bottom:auto;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
 .msg{background:rgba(0,0,0,.62);color:#ffe9a8;padding:5px 16px;border-radius:20px;font-size:14px;font-weight:bold;animation:fadeout 5s forwards}
-@keyframes fadeout{0%{opacity:0;transform:translateY(8px)}8%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
+/* enters from ABOVE now: a toast anchored to the top that slides up out of the
+   page below it reads as leaving rather than arriving */
+@keyframes fadeout{0%{opacity:0;transform:translateY(-8px)}8%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
 #overlayCenter{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:20;pointer-events:auto}
 #endBox{background:linear-gradient(170deg,#2c4a1e,#16240f);border:4px solid rgba(255,255,255,.25);border-radius:18px;padding:34px 50px;text-align:center;color:#fff}
 #endBox h2{font-size:40px;margin-bottom:8px;text-shadow:0 3px 0 rgba(0,0,0,.5)}
 #endBox .stats{color:#cfe6b8;font-size:14px;margin-bottom:18px;line-height:1.7}
-#helpBox{position:absolute;top:52px;right:12px;width:330px;background:rgba(14,20,10,.95);border:2px solid rgba(255,255,255,.2);border-radius:12px;color:#ddd;padding:14px;font-size:12.5px;line-height:1.55;display:none;z-index:25;pointer-events:auto}
+#helpBox{position:absolute;top:calc(var(--topbarH) + 10px);right:12px;width:330px;background:rgba(14,20,10,.95);border:2px solid rgba(255,255,255,.2);border-radius:12px;color:#ddd;padding:14px;font-size:12.5px;line-height:1.55;display:none;z-index:25;pointer-events:auto}
 #helpBox h3{color:#ffe9a8;margin-bottom:6px}
 #helpBox b{color:#fff}
 #pausedTag{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:46px;font-weight:bold;text-shadow:0 4px 12px #000;display:none;z-index:15;letter-spacing:4px}
-#survBanner{position:absolute;top:52px;left:50%;transform:translateX(-50%);text-align:center;z-index:14;display:none;pointer-events:none;text-shadow:0 2px 8px #000}
+#survBanner{position:absolute;top:calc(var(--topbarH) + 10px);left:50%;transform:translateX(-50%);text-align:center;z-index:14;display:none;pointer-events:none;text-shadow:0 2px 8px #000}
 #survBanner .wbig{font-size:26px;font-weight:800;letter-spacing:2px;color:#ffe34d}
 #survBanner .wsub{font-size:15px;font-weight:600;color:#e6eef7;margin-top:2px}
 #netPanel{max-width:780px;margin:10px auto 0;text-align:left;background:#111b26;border:1px solid #24384d;border-radius:10px;padding:10px 14px}
@@ -3274,6 +3299,21 @@ for(const id of ['facRow','modeRow','mapRow']){const e=document.getElementById(i
 /* ---------------- GAME STATE ---------------- */
 let G=null;
 const view=document.getElementById('view'),vc=view.getContext('2d');
+/* v90.2 TOPBAR_H - where the bar's bottom edge lands, which is what the
+   EDGE-SCROLL band below has to start from. It is exactly the CSS --topbarH and
+   NOT that plus the 2px border: the sheet opens with a global
+   `*{box-sizing:border-box}`, so the declared height is the outer height and the
+   border is drawn inside it. Measured in Chromium to be sure rather than
+   reasoned about, because getting it wrong by the border is precisely the kind
+   of two-pixel error nothing would ever report.
+   It is a second copy of a number the stylesheet also states, which this project
+   does not normally allow - but CSS cannot be read from here. So it is handled
+   the way the Field Manual's figures are: one constant, and a test that scrapes
+   the stylesheet and asserts the two agree (T65.B), so the copy cannot drift the
+   way a comment would.
+   Same reasoning as applyMMSize below, which already hard-codes the minimap
+   wrap's own padding and border for the reserves it writes. */
+const TOPBAR_H=84;
 const mmCv=document.getElementById('minimap'),mm=mmCv.getContext('2d');
 /* v27: minimap size cycle (small / medium / large). Pure client-side view
    preference; persisted in localStorage, applied before the first render. */
@@ -11464,7 +11504,14 @@ function update(dt){
  if(KEY.ArrowUp||KEY.w)G.cam.y-=spd; if(KEY.ArrowDown||KEY.s2)G.cam.y+=spd;
  if(MOUSE.inside){
   if(MOUSE.x<14)G.cam.x-=spd; if(MOUSE.x>view.width-14)G.cam.x+=spd;
-  if(MOUSE.y<14&&MOUSE.y>44)G.cam.y-=spd; if(MOUSE.y>view.height-14)G.cam.y+=spd;
+  /* v90.2: this read `MOUSE.y<14&&MOUSE.y>44`, which no number satisfies - pushing
+     the TOP edge has never scrolled the camera, in any release, while the help
+     text has promised "push the screen edge" since v43. The intent is legible
+     from the dead constant: a 14px band starting where the bar ends, because the
+     first 44px of the window was chrome. Both halves are fixed here, and the
+     bound is TOPBAR_H rather than a literal because this release is what made 44
+     wrong twice over. Camera only - G.cam is neither hashed nor serialized. */
+  if(MOUSE.y>TOPBAR_H&&MOUSE.y<TOPBAR_H+14)G.cam.y-=spd; if(MOUSE.y>view.height-14)G.cam.y+=spd;
  }
  G.cam.x=clamp(G.cam.x,-200,G.terr.width-view.width/G.zoom+200);
  G.cam.y=clamp(G.cam.y,-150,G.terr.height-view.height/G.zoom+150);
