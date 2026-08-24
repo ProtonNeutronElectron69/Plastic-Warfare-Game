@@ -211,6 +211,51 @@ Two things worth carrying forward:
   faction quota never holds out**, because the floor already outranks both reserves
   and stacking a savings tilt on it is the stall `T42.D` exists to catch.
 
+## v90.1 — the build-menu pass (not part of the roadmap)
+
+Three interface repairs the owner asked for. Two are display; the third needed a
+table field and a rule.
+
+- **Both barricade tiles were blank in every Construct menu, and had been since
+  v88.** This is the SAME regression v88.1 fixed in the Field Manual, in the third
+  call site that release's own note said it did not reach. `tileURL` hard-coded the
+  stub's row as `'barricade'` and passed no `t`, so the Heavy Barricade drew the
+  wrong silhouette and the ordinary wall threw into a bare `catch{}` and drew
+  nothing. **When a painter starts reading a new field, grep for its callers and do
+  not stop at the first one you fix.**
+- **The build menu is one row now.** 1240px held twelve tiles and every army's menu
+  has been thirteen since v85. The panel's max-width went to 1340 AND the tile
+  narrows on three breakpoints, because what the panel is GIVEN is the window minus
+  the minimap reserve — at a 1440px window that is 1216 whatever the max-width says.
+- **The order is a declared `cat` field on the B row**: producers (Barracks, Garage,
+  Helipad, in tech order), then economy, then defence, then the rest, alphabetical
+  by the name on the tile inside each shelf. Declared rather than derived because
+  "is this economy" has no flag that answers it, and keyed on a flag rather than a
+  key because that is the v88 lesson. `T35.E`'s index-1 pin was REWRITTEN to the
+  claim it was making, not re-pinned to the new index.
+- **One HQ at a time, and a button over the minimap to rebuild it.** The limit is
+  `lim:1`, the Radio Tower's field, so `startPlacing`, `structTile` and `execCmd`'s
+  build case all honour it already. The button is `startPlacing('hq')` and grants no
+  new permission — `placeDeny` is untouched, so the enemy-HQ ring, the spacing rule
+  and the build-vision gate all still refuse it.
+
+**The bot's half is correct and, in a real deathmatch, unreachable — measured.**
+`aiTick` rebuilds its HQ as the first spend of any tick it holds none, and reserves
+the HQ's plastic against everything but trucks while it holds none. Over the
+standard 8-match batch: every losing army loses its HQ, spends 10–111 sim-seconds
+without one, and reaches a bank of **110–177 median, 308 max against a 500 price** —
+`aiFindSpot` was asked for an HQ spot **zero** times. The cause is not the reserve:
+the HQ is a `drop` building, so losing it kills the bot's income in the same stroke
+and the difficulty assist alone needs ~200 seconds to fund a replacement. **The
+lever, if anyone wants this to fire, is income while HQ-less — not the reserve, and
+not a discount on the HQ.** The full table is in the v90.1 section of
+`harness/README.md`.
+
+**No trails moved**, and the reason is stated rather than assumed this time: every
+line added to `aiTick` sits behind a plain scan of `p.blds` that touches no seeded
+number while an HQ stands, and no HQ dies inside a 900-tick trail. `tail_v90_1`
+T64.F asserts that guard functionally rather than in prose.
+
 ## Where the balance actually stands (64 matches, measured at v90)
 
 **Read this before acting on any faction claim elsewhere in this file or in the
@@ -270,7 +315,8 @@ Two things to know before the next release:
   army's Construct menu is now thirteen tiles — all four hold exactly two
   exclusive structures, so they are all the same width. A fifteenth tile would
   need a fifteenth letter and there is no unclaimed one left. See the v86 note in
-  `harness/README.md`.
+  `harness/README.md`. v90.1 SORTED that menu but did not resize it: the keys are
+  still handed out positionally, so a tile's letter now follows its shelf.
 
 ## The patterns worth copying
 

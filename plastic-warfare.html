@@ -109,13 +109,24 @@ canvas{display:block}
 #bottombar{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:8px;pointer-events:none}
 #bottombar > *{flex:none}  /* v58 squeeze rule: a column flex child that holds a button must never shrink */
 #hqBtn{display:none;font-size:12px;padding:3px 11px}
+/* v90.1: the way back into the game, parked over the minimap because that is the
+   one piece of chrome that is on screen whatever is selected - and with no HQ
+   standing there is nothing left to select that carries a Construct menu. Square
+   on purpose: it is one action, not a labelled row. */
+#hqPlaceBtn{display:none;flex:none;width:26px;height:26px;padding:0;font-size:14px;line-height:20px;text-align:center;border-color:rgba(255,210,77,.6)}
+#hqPlaceBtn.dis{opacity:.45;cursor:not-allowed}
+#hqPlaceBtn.dis:hover{background:rgba(255,255,255,.12)}
 #selPanel h4{color:#cfe6b8;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
 .bb{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;padding:5px 6px;cursor:pointer;font-size:11.5px;text-align:left;line-height:1.25}
 .bb:hover:not(.dis){background:rgba(255,255,255,.22)}
 .bb.dis{opacity:.42;cursor:not-allowed}
 .bb b{display:block;font-size:12px}
 .cp{color:#ffb95e;font-weight:bold}.ce{color:#7fe3ff;font-weight:bold}
-#selPanel{pointer-events:auto;background:rgba(18,26,12,.92);border:2px solid rgba(255,255,255,.15);border-radius:12px;padding:8px;width:100%;min-height:118px;max-width:1240px}
+/* v90.1: 1240 held TWELVE tiles, and every army's Construct menu is thirteen, so
+   the build menu had always wrapped onto a second row and stood twice as tall as
+   it needed to over the middle of the battlefield. 1340 is thirteen 96px tiles
+   plus their twelve 5px gaps plus this box's own padding and border. */
+#selPanel{pointer-events:auto;background:rgba(18,26,12,.92);border:2px solid rgba(255,255,255,.15);border-radius:12px;padding:8px;width:100%;min-height:118px;max-width:1340px}
 #selInfo{color:#fff;font-size:12.5px}
 /* v71: each group is a COLUMN inside one band. Stacking them wasted the width
    the retired Construct panel freed: six tiles in a 1240px row, then another
@@ -130,6 +141,15 @@ canvas{display:block}
 /* ---- the tile ---- */
 :root{--tw:96px;--th:80px;--short:#ff5a5a;--resfill:#ff8f2e;--resedge:#ffc27a;
       --teamc:#4caf50;--teamlt:#c8f5b8}
+/* v90.1: the width the panel is GIVEN is the window minus the minimap reserve, so
+   a wider max-width alone only buys the single Construct row back on a large
+   monitor. The tile narrows instead of the row wrapping, because a second row of
+   build tiles is what the player asked to stop losing the field to. Height is
+   untouched at every step: the well letterboxes, and the label was already
+   ellipsised at 96px for the longer structure names. */
+@media (max-width:1700px){:root{--tw:86px}}
+@media (max-width:1500px){:root{--tw:78px}}
+@media (max-width:1360px){:root{--tw:70px}}
 .tl{background:rgba(255,255,255,.10);border:2px solid rgba(255,255,255,.20);border-radius:8px;
  color:#fff;cursor:pointer;padding:0;overflow:hidden;position:relative;display:block;
  width:var(--tw);height:var(--th);font:inherit;text-align:left}
@@ -407,7 +427,7 @@ canvas{display:block}
     <button class="tbtn" id="hqBtn" title="Select your HQ and open Construct (Q)">🏛 HQ <span style="opacity:.6">Q</span></button>
     <div id="selPanel"><h4>Selection</h4><div id="selInfo">Nothing selected.</div><div id="prodBtns"></div><div id="queueRow"></div></div>
   </div>
-  <div id="minimapWrap"><div id="mmHead"><span>Map</span><button class="tbtn" id="mmSizeBtn" title="Cycle minimap size (S / M / L)">◱ M</button></div><canvas id="minimap" width="176" height="176"></canvas></div>
+  <div id="minimapWrap"><div id="mmHead"><button class="tbtn" id="hqPlaceBtn" title="Rebuild your HQ">🏛</button><span>Map</span><button class="tbtn" id="mmSizeBtn" title="Cycle minimap size (S / M / L)">◱ M</button></div><canvas id="minimap" width="176" height="176"></canvas></div>
   <div id="rightRail">
     <div id="armyPanel"><h4>Army</h4><div id="armyRows"></div></div>
     <div id="watchPanel"><h4><span>👁 Spectator</span><span style="opacity:.55">V hides</span></h4><div id="watchSpeed"></div><div id="watchRows"></div></div>
@@ -430,7 +450,7 @@ canvas{display:block}
   <b>Arrows / WASD or screen edge</b>: scroll &nbsp;•&nbsp; <b>Scroll wheel</b> or <b>+ / −</b>: zoom (<b>0</b> resets) &nbsp;•&nbsp; <b>F9</b>: pause &nbsp;•&nbsp; <b>Esc</b>: cancel &nbsp;•&nbsp; <b>B</b> / <b>Shift+B</b>: preview blast FX at cursor<br><br>
   <b>⬢ Plastic</b> is hauled by Dump Trucks from toy piles — stacked building bricks, soldier sprues, and spilled toy-bin scraps. Every plastic pile is marked with a pulsing amber ⬢ above it. A ⛏ over a truck means it's actively mining. <b>⚡ Electricity</b> is hauled from giant AA batteries, or trickled in by Generators.<br><br>
   <b>Trucks</b>: right-click a pile to harvest it; right-click your <b>HQ</b> to force them to unload right now. Destroyed units leave a salvageable <b>scrap wreck</b> worth <span data-tune="salvagePct"></span>% of their plastic cost — send a truck to pick it up.<br><br>
-  Build a <b>Barracks</b> for infantry, a <b>Garage</b> for vehicles, a <b>Helipad</b> for choppers. With a production building selected, right-click sets its rally point. Every building (barricades included) must be placed within <b><span data-tune="hqR"></span> tiles of one of your HQs</b> or <b><span data-tune="opR"></span> tiles of one of your Outposts</b> — only the HQ and Outpost themselves are exempt: they can go anywhere you can see (even far from base, but not into the fog of war). Nobody can build within <b><span data-tune="foeR"></span> tiles of an enemy HQ</b>, and every structure needs <b><span data-tune="gap"></span> clear <span data-tune="gapT"></span></b> between it and any other structure so your units can always drive out of your own base; barricades are exempt from each other, so walls still lay solid. Build an <b>Outpost</b> to push your borders out: it builds Dump Trucks, acts as a resource drop-off so trucks don't have to drive all the way home, and opens a <span data-tune="opR"></span>-tile build zone for a forward defensive line.<br><br>
+  Build a <b>Barracks</b> for infantry, a <b>Garage</b> for vehicles, a <b>Helipad</b> for choppers. With a production building selected, right-click sets its rally point. Every building (barricades included) must be placed within <b><span data-tune="hqR"></span> tiles of your HQ</b> or <b><span data-tune="opR"></span> tiles of one of your Outposts</b> — only the HQ and Outpost themselves are exempt: they can go anywhere you can see (even far from base, but not into the fog of war). Nobody can build within <b><span data-tune="foeR"></span> tiles of an enemy HQ</b>, and every structure needs <b><span data-tune="gap"></span> clear <span data-tune="gapT"></span></b> between it and any other structure so your units can always drive out of your own base; barricades are exempt from each other, so walls still lay solid. Build an <b>Outpost</b> to push your borders out: it builds Dump Trucks, acts as a resource drop-off so trucks don't have to drive all the way home, and opens a <span data-tune="opR"></span>-tile build zone for a forward defensive line. You hold <b>one HQ at a time</b>; if it is destroyed, the <b>🏛 button above the minimap</b> places a new one at the ordinary price, so losing your headquarters costs you the building and not the match.<br><br>
   <b>Machine Gunner</b> (Barracks): tough, heavy MG. Select him and hit <b>Entrench</b>, then click to aim — he digs in and fires <span data-tune="entrench"></span>× as fast inside a 100° cone (shown on the ground). Give him a move order to pack up.<br><br>
   <b>Radio Tower</b> (Lab unlock, 1 per army): a static uplink that opens the call-down panel on the right — <b><span data-tune="radioList"></span></b>. Every army gets the Artillery Barrage and the Paradrop; the rest belong to one army each, and you only ever see your own. <b>Napalm</b> is Tan's: it rains fire and a lingering burn across a <span data-tune="napBox"></span>×<span data-tune="napBox"></span> area; the <b>Artillery Barrage</b> walks <span data-tune="barrN"></span> off-map shells through a <span data-tune="barrBox"></span> box, <span data-tune="barrGap"></span>s apart, at <span data-tune="barrDmg"></span> damage inside a <span data-tune="barrR"></span>-tile blast (×<span data-tune="barrInf"></span> against infantry). Those <span data-tune="radioVis"></span> need vision. Paradrop puts <span data-tune="paraN"></span> elite Paratroopers anywhere, even in fog — SMGs shred infantry, AT grenades crack vehicles, slow HE charges level buildings. <b>Rapid Redeploy</b> is Blue's alone and is the only call-down that creates nobody: select up to <span data-tune="liftMax"></span> of your own infantry, click anywhere on the map even in fog, and they come down under canopies at the far end a moment later. <b>Supply Drop</b> is Green's alone: two crates on canopies, one carrying <span data-tune="dropP"></span> ⬢ and one carrying <span data-tune="dropE"></span> ⚡, which lie where they land with no expiry until one of <em>your</em> units walks over them — nobody else can pick them up, and nothing on the board can destroy them. <b>Smokescreen</b> is Gray's alone: a <span data-tune="scrBox"></span>&times;<span data-tune="scrBox"></span> cloud in which your units <em>and your structures</em> take <span data-tune="scrRed"></span>% less damage for <span data-tune="scrT"></span> seconds. It is deliberately heavier than the Mortar Squad's Smoke Rounds in every dimension — wider, longer, twice the reduction, and it covers buildings — because it costs a Radio Tower and the shared cooldown where the mortar's costs one loaded tube. Click an ability, then click the map (right-click cancels). One shared <span data-tune="radioCd"></span> cooldown.<br><br>
   <b>Green Army exclusives.</b> <b>Sarge</b> patches himself up at <span data-tune="sargeRegen"></span> HP/sec once he has been out of contact for <span data-tune="sargeCalm"></span> seconds, and his <b>On Me!</b> toggle gives allied infantry within <span data-tune="sargeR"></span> tiles +<span data-tune="sargeAura"></span>% damage while cutting his own by <span data-tune="sargeSelf"></span>%. <b>Mortar Squads</b> ramp +<span data-tune="wfStep"></span>% per consecutive shell on one target up to +<span data-tune="wfCap"></span>%, and their <b>Smoke Rounds</b> toggle shells your own men instead: no damage, but a <span data-tune="smokeR"></span>-tile cloud that cuts damage taken by <span data-tune="smokeRed"></span>% for <span data-tune="smokeT"></span> seconds. The <b>Radar Tent</b>'s <b>Target Uplink</b> gives your whole army +<span data-tune="upRg"></span> range and +<span data-tune="upVi"></span> sight for <span data-tune="upT"></span> seconds on a <span data-tune="upCd"></span>-second cooldown. The <b>Command Truck</b> carries no guns at all: its <b>Forward Command</b> is a build zone that travels, opening <span data-tune="cmdR"></span> tiles of buildable ground around it for three structures and no others — <span data-tune="cmdBlds"></span> — and its <b>Broadcast</b> toggle makes allies within <span data-tune="bcastR"></span> tiles reload <span data-tune="bcastRt"></span>% faster while pinning the truck exactly where it stands. The <b>Observation Balloon</b> has the best sight in the game at <span data-tune="ballVi"></span> tiles, drifts slowly, and is the one thing on the board that ordinary weapons cannot touch: only AA missiles can target it at all and they land for <span data-tune="ballAa"></span>% damage, while splash never reaches it. Its <b>High Ground</b> gives every ally inside that vision +<span data-tune="highRg"></span> range. It is a clock, though — the gas lasts <span data-tune="ballFuel"></span> seconds and then it falls, killing everyone aboard, so spend <b>Bail</b> before that to put <span data-tune="bailCrew"></span> on the ground beneath it and scuttle the balloon yourself. The <b>Command Post</b> makes your army learn faster within <span data-tune="cpostR"></span> tiles — promotions cost <span data-tune="cpostVet"></span>% fewer kills — and its <b>Regroup</b> hands every unit in that radius <span data-tune="regroupHp"></span>% of its own maximum health back at once, on a <span data-tune="regroupCd"></span>-second cooldown.<br><br>
@@ -2300,32 +2320,48 @@ const MEDIC_SETTLE_R=5;      // arrival scan radius (idle escorts count here, un
 const MEDIC_SETTLE_BAND=0.9; // do not re-park on arrival for less than this
 const DEPOT_SUP=15; // v83: 10 -> 15, so a base reaches the ceiling on SEVEN depots instead of ten and gives three footprints of buildable ground back. Named above the table on the same rule as BUNK_GAR below
 const BUNK_GAR=4; // the Bunker's garrison, named ABOVE the table on the same rule as U0AURA: the row cannot read its own literal while it is being written, so its info card would otherwise have to retype the figure the row sets
+/* v90.1 `cat` - which shelf of the Construct menu a structure sits on, DECLARED
+   on the row rather than guessed from its other flags. The four shelves are
+   MENU_CATS below: what builds units, what pays for them, what shoots back, and
+   everything else. It has to be a declared field: "is this economy" has no flag
+   that answers it (the Radar Tent carries no eco marker and the Outpost carries
+   three), and keying it on the KEY is the v88 mistake the Heavy Barricade cost
+   fourteen tests to unlearn. A new row without one lands on 'misc', which is
+   where an unclassified structure belongs anyway; T64.A pins that every roster
+   row declares one on purpose rather than falling through.
+
+   v90.1 `lim:1` on the HQ - one headquarters per army at a time. The limit is the
+   Radio Tower's, i.e. the field every door in the file already honours:
+   startPlacing refuses it, structTile greys the tile, and execCmd's build case
+   enforces it against a peer that sends anything else. The AI's own rebuild has
+   to be guarded separately because aiTick calls placeBuilding directly and never
+   goes through execCmd - the same surface v87's Napalm gate hid behind. */
 const B={
- hq:{n:'HQ',hp:1500,sz:3,cp:500,ce:100,bt:25,vi:8,prod:['truck'],drop:1,anywhere:1,sup:10,d:`Command centre and drop-off; anchors a ${BUILD_R_HQ}-tile build zone`},
- barracks:{n:'Barracks',hp:620,sz:2,cp:160,ce:0,bt:10,vi:5,prod:['grunt','grenadier','bazooka','gunner'],d:'Trains infantry'},
- lab:{n:'Research Lab',hp:640,sz:2,cp:260,ce:60,bt:14,vi:5,req:'barracks',lab:1,d:''},
- garage:{n:'Garage',hp:720,sz:3,cp:240,ce:20,bt:14,vi:5,req:'barracks',tech:'b_garage',prod:['jeep','tank','aatruck','medic','apc'],d:'Builds vehicles'},
- helipad:{n:'Helipad',hp:520,sz:3,cp:220,ce:60,bt:12,vi:5,req:'garage',tech:'b_helipad',prod:['heli','apache'],d:'Builds helicopters'},
- generator:{n:'Generator',hp:360,sz:2,cp:140,ce:0,bt:8,vi:4,tech:'b_generator',eps:1.6,d:'+1.6 ⚡/sec'},
- supply:{n:'Supply Depot',hp:420,sz:2,cp:120,ce:0,bt:9,vi:4,sup:DEPOT_SUP,d:`Supply yard: +${DEPOT_SUP} 🪖 supply. No research needed.`},
- guardtower:{n:'Guard Tower',hp:540,sz:1,cp:170,ce:30,bt:10,vi:9,req:'barracks',tech:'b_guardtower',dm:15,rg:7,rt:.6,tower:1,d:'Auto-cannon tower: long sight and reach, fires on its own'},
- radar:{n:'Radar Tent',hp:420,sz:2,cp:200,ce:50,bt:10,vi:13,req:'barracks',tech:'b_radar',uplink:1,d:`Huge sight, plus enemy blips on the minimap. Target Uplink: +${UPLINK_RG} range and +${UPLINK_VI} sight army-wide for ${UPLINK_T}s`},
- radiotower:{n:'Radio Tower',hp:588,sz:2,cp:60,ce:200,bt:12,vi:12,req:'barracks',tech:'b_radiotower',lim:1,radio:1,d:'Opens the call-down panel on the right, 1 max. Long sight'}, // v30: 293 HP effective; inverted cost (mostly ⚡)
- dump:{n:'Munitions Dump',hp:520,sz:2,cp:220,ce:40,bt:10,vi:5,req:'barracks',tech:'b_dump',scuttle:1,d:'+'+Math.round(DUMP_AURA*100)+'% damage to friends within '+DUMP_R+' tiles. Scuttle detonates it for '+SCUTTLE_DM+' over '+SCUTTLE_R+' tiles, '+Math.round(SCUTTLE_FF*100)+'% of it onto your own'},
+ hq:{cat:'misc',n:'HQ',hp:1500,sz:3,cp:500,ce:100,bt:25,vi:8,prod:['truck'],drop:1,anywhere:1,sup:10,lim:1,d:`Command centre and drop-off; anchors a ${BUILD_R_HQ}-tile build zone. One at a time — rebuild it from the 🏛 button over the minimap if it falls`},
+ barracks:{cat:'prod',n:'Barracks',hp:620,sz:2,cp:160,ce:0,bt:10,vi:5,prod:['grunt','grenadier','bazooka','gunner'],d:'Trains infantry'},
+ lab:{cat:'misc',n:'Research Lab',hp:640,sz:2,cp:260,ce:60,bt:14,vi:5,req:'barracks',lab:1,d:''},
+ garage:{cat:'prod',n:'Garage',hp:720,sz:3,cp:240,ce:20,bt:14,vi:5,req:'barracks',tech:'b_garage',prod:['jeep','tank','aatruck','medic','apc'],d:'Builds vehicles'},
+ helipad:{cat:'prod',n:'Helipad',hp:520,sz:3,cp:220,ce:60,bt:12,vi:5,req:'garage',tech:'b_helipad',prod:['heli','apache'],d:'Builds helicopters'},
+ generator:{cat:'eco',n:'Generator',hp:360,sz:2,cp:140,ce:0,bt:8,vi:4,tech:'b_generator',eps:1.6,d:'+1.6 ⚡/sec'},
+ supply:{cat:'eco',n:'Supply Depot',hp:420,sz:2,cp:120,ce:0,bt:9,vi:4,sup:DEPOT_SUP,d:`Supply yard: +${DEPOT_SUP} 🪖 supply. No research needed.`},
+ guardtower:{cat:'def',n:'Guard Tower',hp:540,sz:1,cp:170,ce:30,bt:10,vi:9,req:'barracks',tech:'b_guardtower',dm:15,rg:7,rt:.6,tower:1,d:'Auto-cannon tower: long sight and reach, fires on its own'},
+ radar:{cat:'misc',n:'Radar Tent',hp:420,sz:2,cp:200,ce:50,bt:10,vi:13,req:'barracks',tech:'b_radar',uplink:1,d:`Huge sight, plus enemy blips on the minimap. Target Uplink: +${UPLINK_RG} range and +${UPLINK_VI} sight army-wide for ${UPLINK_T}s`},
+ radiotower:{cat:'misc',n:'Radio Tower',hp:588,sz:2,cp:60,ce:200,bt:12,vi:12,req:'barracks',tech:'b_radiotower',lim:1,radio:1,d:'Opens the call-down panel on the right, 1 max. Long sight'}, // v30: 293 HP effective; inverted cost (mostly ⚡)
+ dump:{cat:'misc',n:'Munitions Dump',hp:520,sz:2,cp:220,ce:40,bt:10,vi:5,req:'barracks',tech:'b_dump',scuttle:1,d:'+'+Math.round(DUMP_AURA*100)+'% damage to friends within '+DUMP_R+' tiles. Scuttle detonates it for '+SCUTTLE_DM+' over '+SCUTTLE_R+' tiles, '+Math.round(SCUTTLE_FF*100)+'% of it onto your own'},
  /* mult (v85): a bot builds this exclusive in NUMBERS rather than as a single
     signature piece, so it leads the build wish list and gets second and third
     entries later on. It was a name check on 'bunker' and 'turbine' inside aiTick
     until ub became a list; as a table flag the row states its own habit. */
- bunker:{n:'Bunker',hp:820,sz:2,cp:200,ce:0,bt:10,vi:6,req:'barracks',tech:'b_bunker',gar:BUNK_GAR,lock:1,mult:1,d:`Garrisons ${BUNK_GAR} infantry, who fire out and are safe from splash. Lockdown silences them but cuts damage taken ${Math.round(LOCK_RED*100)}% for ${LOCK_T}s`},
- outpost:{n:'Outpost',hp:780,sz:2,cp:240,ce:20,bt:13,vi:7,req:'barracks',prod:['truck'],drop:1,anywhere:1,expand:1,sup:4,d:`Forward base: builds and refuels Dump Trucks anywhere, and opens a ${BUILD_R_OUTPOST}-tile build zone`},
- turbine:{n:'Wind Turbine',hp:260,sz:1,cp:110,ce:0,bt:6,vi:4,tech:'b_turbine',eps:2.2,over:1,mult:1,d:`+2.2 ⚡/sec, cheap. Overdrive runs it at ×${OVER_MUL} for ${OVER_T}s, then it makes nothing for ${OVER_OFF}s`},
+ bunker:{cat:'def',n:'Bunker',hp:820,sz:2,cp:200,ce:0,bt:10,vi:6,req:'barracks',tech:'b_bunker',gar:BUNK_GAR,lock:1,mult:1,d:`Garrisons ${BUNK_GAR} infantry, who fire out and are safe from splash. Lockdown silences them but cuts damage taken ${Math.round(LOCK_RED*100)}% for ${LOCK_T}s`},
+ outpost:{cat:'eco',n:'Outpost',hp:780,sz:2,cp:240,ce:20,bt:13,vi:7,req:'barracks',prod:['truck'],drop:1,anywhere:1,expand:1,sup:4,d:`Forward base: builds and refuels Dump Trucks anywhere, and opens a ${BUILD_R_OUTPOST}-tile build zone`},
+ turbine:{cat:'eco',n:'Wind Turbine',hp:260,sz:1,cp:110,ce:0,bt:6,vi:4,tech:'b_turbine',eps:2.2,over:1,mult:1,d:`+2.2 ⚡/sec, cheap. Overdrive runs it at ×${OVER_MUL} for ${OVER_T}s, then it makes nothing for ${OVER_OFF}s`},
  /* v85 BLUE, second structure. The passive is the point: NOTHING repaired aircraft
     before this - the Medic Truck heals ground units and buildings, and a damaged
     Huey stayed damaged until it died. So Blue's second building is the only field
     hospital in the game that an aircraft can use, which suits the fastest air force
     in the game. Scramble is the timed half, on the building's existing upT and
     abilityCool exactly as Overdrive and Lockdown already are. */
- fwdpad:{n:'Forward Pad',hp:480,sz:2,cp:230,ce:70,bt:12,vi:6,req:'garage',tech:'b_fwdpad',pad:1,scram:1,d:`Repairs friendly aircraft within ${PAD_R} tiles at ${PAD_REP} HP/s — nothing else in the game repairs them. Scramble: +${Math.round(SCRAM_SPD*100)}% speed to every aircraft you own for ${SCRAM_T}s`},
+ fwdpad:{cat:'misc',n:'Forward Pad',hp:480,sz:2,cp:230,ce:70,bt:12,vi:6,req:'garage',tech:'b_fwdpad',pad:1,scram:1,d:`Repairs friendly aircraft within ${PAD_R} tiles at ${PAD_REP} HP/s — nothing else in the game repairs them. Scramble: +${Math.round(SCRAM_SPD*100)}% speed to every aircraft you own for ${SCRAM_T}s`},
  /* v87 TAN, second structure. The passive is a PRODUCTION buff rather than an
     aura, which is what "produced while it stands" means: the hull is baked in at
     makeUnit and the vehicle keeps it if the Foundry burns down an hour later. It
@@ -2333,7 +2369,7 @@ const B={
     it - the upgrade is a Garage that builds better, the Foundry is an army that
     does. Pour is the timed half, on the abilityCool every other structure ability
     already uses, and it is instantaneous, so it writes no upT. */
- foundry:{n:'Foundry',hp:660,sz:2,cp:260,ce:50,bt:13,vi:5,req:'garage',tech:'b_foundry',foundry:1,pour:1,d:`Vehicles built while it stands keep +${Math.round(FOUNDRY_HP*100)}% hull for good. Pour finishes the front vehicle in every Garage at once, at +${Math.round(POUR_COST*100)}% plastic each. ${POUR_CD}s cooldown`},
+ foundry:{cat:'misc',n:'Foundry',hp:660,sz:2,cp:260,ce:50,bt:13,vi:5,req:'garage',tech:'b_foundry',foundry:1,pour:1,d:`Vehicles built while it stands keep +${Math.round(FOUNDRY_HP*100)}% hull for good. Pour finishes the front vehicle in every Garage at once, at +${Math.round(POUR_COST*100)}% plastic each. ${POUR_CD}s cooldown`},
  /* v86 GREEN, second structure. Both halves are the same radius and the same
     scan, which is why they share CPOST_R: a post is a place your army gets better
     at being, not two overlapping effects with different reaches. The passive is a
@@ -2343,7 +2379,7 @@ const B={
     a desync. Regroup is the timed half, on the same abilityCool every other
     structure ability already uses, and is instantaneous rather than a duration:
     there is nothing to run down, so it writes no upT. */
- cmdpost:{n:'Command Post',hp:640,sz:2,cp:250,ce:60,bt:13,vi:7,req:'barracks',tech:'b_cmdpost',cpost:1,regroup:1,d:`Promotions within ${CPOST_R} tiles cost ${Math.round((1-CPOST_VET)*100)}% fewer kills. Regroup returns ${Math.round(REGROUP_HP*100)}% of maximum HP to everything in that radius. ${REGROUP_CD}s cooldown`},
+ cmdpost:{cat:'misc',n:'Command Post',hp:640,sz:2,cp:250,ce:60,bt:13,vi:7,req:'barracks',tech:'b_cmdpost',cpost:1,regroup:1,d:`Promotions within ${CPOST_R} tiles cost ${Math.round((1-CPOST_VET)*100)}% fewer kills. Regroup returns ${Math.round(REGROUP_HP*100)}% of maximum HP to everything in that radius. ${REGROUP_CD}s cooldown`},
  /* v88 GRAY, second structure and the last of roadmap 2. It is a `barr` row, and
     that one flag hands it the ordinary wall's entire life at once: click-and-drag
     laying, the 1x1 footprint, the passability block, the lightweight teardown in
@@ -2355,8 +2391,8 @@ const B={
     Priced at three times the wall for three times the hull, which makes HP per
     plastic identical - what the extra 40 buys is the aura and the mine, not
     tougher plastic per coin. */
- hbarricade:{n:'Heavy Barricade',hp:HBARR_HP,sz:1,cp:HBARR_COST,ce:0,bt:2.2,vi:0,barr:1,hbarr:1,req:'lab',tech:'b_hbarricade',d:`Reinforced wall, ${HBARR_HP} HP. Everything of yours on the tiles around it — units, structures, other walls — takes ${Math.round(HBARR_RED*100)}% less damage, and overlapping walls STACK to ${Math.round(HBARR_CAP*100)}%. One in ${Math.round(1/HBARR_MINE_P)} buries a mine ${HBARR_MINE_D} tiles forward that only your army sees. Click-and-drag to lay a line.`},
- barricade:{n:'Barricade',hp:BARR_HP,sz:1,cp:BARR_COST,ce:0,bt:1.0,vi:0,barr:1,d:`Czech hedgehog: blocks ground movement, ${BARR_HP} HP, ${BARR_COST} ⬢ each. Click-and-drag to lay a line.`},
+ hbarricade:{cat:'def',n:'Heavy Barricade',hp:HBARR_HP,sz:1,cp:HBARR_COST,ce:0,bt:2.2,vi:0,barr:1,hbarr:1,req:'lab',tech:'b_hbarricade',d:`Reinforced wall, ${HBARR_HP} HP. Everything of yours on the tiles around it — units, structures, other walls — takes ${Math.round(HBARR_RED*100)}% less damage, and overlapping walls STACK to ${Math.round(HBARR_CAP*100)}%. One in ${Math.round(1/HBARR_MINE_P)} buries a mine ${HBARR_MINE_D} tiles forward that only your army sees. Click-and-drag to lay a line.`},
+ barricade:{cat:'def',n:'Barricade',hp:BARR_HP,sz:1,cp:BARR_COST,ce:0,bt:1.0,vi:0,barr:1,d:`Czech hedgehog: blocks ground movement, ${BARR_HP} HP, ${BARR_COST} ⬢ each. Click-and-drag to lay a line.`},
  nest:{n:'Wildlife Nest',hp:NEST_HP,sz:1,cp:0,ce:0,bt:1,vi:0,neutralNest:1,d:'A wild critter den. Smash it to stop the swarm from respawning.'}
 };
 // keep the guard tower in step with the trimmed unit damage (combat-pacing pass)
@@ -4811,7 +4847,33 @@ const CONSTRUCT_OUTPOST=['barricade','guardtower','hq'];
 function constructRoster(hostKey){
  return hostKey==='outpost'?CONSTRUCT_OUTPOST.slice():bldRoster(G.human);
 }
-function bldRoster(p){const r=['barracks','supply','lab','generator','garage','guardtower','helipad','outpost','radiotower',...FAC[p.fac].ub,'barricade','hq'];return r}
+/* v90.1 MENU ORDER. The roster used to be the order the structures SHIPPED in,
+   with each army's exclusives spliced in wherever `ub` happened to land - so the
+   Barracks sat beside the Supply Depot and the two walls sat at opposite ends of
+   the menu. It is sorted now: what builds units, what pays for them, what shoots
+   back, then everything else, alphabetical by the name the tile actually shows
+   inside each shelf.
+   The three producers are the one shelf that is NOT alphabetical, because their
+   order is a tech order and reads as one - Barracks, then Garage, then Helipad,
+   which is also the order they unlock in. MENU_PROD is that order; anything with
+   cat 'prod' and no entry there sorts after the three by name, so a fourth
+   producer is legal without editing this.
+   Client-side only: constructRoster is read by refreshSelPanel and by nothing
+   else, so the sort touches no seeded stream and nothing hashed. */
+const MENU_CATS=['prod','eco','def','misc'];
+const MENU_PROD=['barracks','garage','helipad'];
+function menuRank(k){const i=MENU_CATS.indexOf(B[k].cat||'misc');return i<0?MENU_CATS.length:i}
+function menuCmp(a,b){
+ const ra=menuRank(a),rb=menuRank(b);
+ if(ra!==rb)return ra-rb;
+ if((B[a].cat||'misc')==='prod'){
+  const ia=MENU_PROD.indexOf(a),ib=MENU_PROD.indexOf(b);
+  const pa=ia<0?MENU_PROD.length:ia,pb=ib<0?MENU_PROD.length:ib;
+  if(pa!==pb)return pa-pb;
+ }
+ return B[a].n<B[b].n?-1:B[a].n>B[b].n?1:0;
+}
+function bldRoster(p){const r=['barracks','supply','lab','generator','garage','guardtower','helipad','outpost','radiotower',...FAC[p.fac].ub,'barricade','hq'];r.sort(menuCmp);return r}
 /* v50: ucost / bcost / rcost are the ONLY three cost sources in the file - every
    deduction, refund, salvage share and UI affordability check reads one of them -
    so testing mode's "free" is three returns and nothing else. G may be null here
@@ -5030,6 +5092,7 @@ function updateTopbar(){
  else mi.textContent='💥 Deathmatch';
  refreshSurvBanner(); // v33
  refreshHqBtn();      /* v73: chrome, not a panel - deliberately NOT a sixth entry in the ten-tick pump */
+ refreshHqPlaceBtn(); // v90.1: the same, and it rides the same pump for the same reason
 }
 /* --- the HQ shortcut: the Construct menu from anywhere on the map ---
    The button lives at the left edge of the bottom bar and Q does the same
@@ -5061,6 +5124,40 @@ function refreshHqBtn(){
  el.style.display=n?'block':'none';
  if(n)el.title='Select your HQ and open Construct (Q). Press again to centre on it'
    +(n>1?(', again for the next of your '+n+' HQs.'):'.');
+}
+/* --- the rebuild button: the way back in when the headquarters falls ---
+   Added at v90.1. Losing the HQ used to be quietly unrecoverable. Every build anchor placeDeny
+   knows is a STRUCTURE - your own HQ, your own Outpost, a parked Command Truck -
+   so an army down to a Barracks and a Garage can place nothing at all, and the
+   two structures that ARE exempt from the anchor rule (the HQ and the Outpost)
+   were both offered only from a menu you needed a standing HQ or Outpost to
+   open. The Outpost's Construct list carried an HQ tile for exactly this case
+   and it is the one that survived, so the hole was only ever half covered.
+   This button is not a fourth anchor and grants no new permission: it is
+   startPlacing('hq'), the same call the tile makes, hung somewhere that does not
+   need a selection. Everything downstream is unchanged - the enemy-HQ ring, the
+   footprint and spacing rules and the build-vision gate all still refuse it.
+   It shows only while you hold NO headquarters, which is the whole of the new
+   lim:1 rule read back: with one standing there is nothing this could add.
+   Client-local throughout - it reads costs and building counts and writes only
+   G.placing, which is a UI mode and is neither hashed nor serialized. */
+function hqRebuildState(){
+ if(!G||G.over||G.watch||G.spectate||!G.human||!G.human.alive)return null;
+ if(bldCount(G.human,'hq')>0)return null; // the lim:1 count, read the way every other door reads it
+ const c=bcost(G.human,'hq');
+ return {c,afford:G.human.res.p>=c.p&&G.human.res.e>=c.e};
+}
+function refreshHqPlaceBtn(){
+ const el=document.getElementById('hqPlaceBtn');if(!el)return;
+ const st=hqRebuildState();
+ el.style.display=st?'block':'none';
+ if(!st)return;
+ /* className by assignment rather than classList.toggle: the headless shim keeps
+    the two surfaces separate and the fixtures read className. */
+ el.className='tbtn'+(st.afford?'':' dis');
+ el.title='Rebuild your HQ \u2014 '+st.c.p+' \u2B22'+(st.c.e?' + '+st.c.e+' \u26A1':'')
+  +(st.afford?'. Click, then place it anywhere you can see from a building you still hold.'
+             :'. Not enough resources yet.');
 }
 /* v72: the standing Construct panel's two builders are retired. v71 rehomed
    Construct onto the HQ and the Outpost (structTile / constructRoster) and hid
@@ -5598,10 +5695,21 @@ function tileURL(kind,key,fac){
     }
    }
   }else if(B[key].barr){
-   /* never baked: the barricades are live-painted, so borrow the manual's stub */
-   const real=G;G=INFO.stub;
-   try{c.save();c.translate(W/2,H/2+22);c.scale(2.1,2.1);
-       drawBarricade(c,{key:'barricade',p:{fac},prog:1},0,6);c.restore()}catch(err){}finally{G=real}
+   /* never baked: the barricades are live-painted, so borrow the manual's stub.
+      v90.1: the SAME two faults the Field Manual's stub carried until v88.1, in
+      the call site that release's note said it did not reach. Both walls were
+      blank in every Construct menu in the game for three releases:
+        - the row was hard-coded to 'barricade', so the Heavy Barricade drew the
+          ORDINARY hedgehog even when it drew anything at all;
+        - the stub had no `t`, and drawBarricade reads b.t.hbarr to choose its
+          silhouette, so it threw on the very first line and the outer catch
+          swallowed it into a blank data URL.
+      The lesson is the v88 one twice over: when a painter starts reading a new
+      field, grep for its CALLERS, not for the key its first caller happened to
+      pass. Centred on the landscape well rather than pushed 22px below its
+      middle, which is what put the beams through the floor of the tile. */
+   infoStub(()=>{c.save();c.translate(W/2,H/2-8);c.scale(2.6,2.6);
+    drawBarricade(c,{key,t:B[key],p:{fac},prog:1},0,6);c.restore()});
   }else{
    const cell=SPR.bld[key]&&SPR.bld[key][fac];
    if(cell&&cell.cv&&cell.cv.width){
@@ -9208,7 +9316,7 @@ function aiBarricades(p){
  if(have>=wallCap)return;
  if(!p.blds.some(b=>b.key==='barracks'&&b.prog>=1))return;   // not in the opening
  const cost=bcost(p,'barricade').p;
- if(p.res.p<cost+220+(p.ai&&p.ai.saveExp?170:0))return;                                  // keep army funded first
+ if(p.res.p<cost+220+(p.ai&&p.ai.saveExp?170:0)+(p.ai&&p.ai.saveHQ?bcost(p,'hq').p:0))return;  // keep army funded first, and the headquarters ahead of both (v90.1)
  if(ai.nextBarr==null)ai.nextBarr=20+Math.floor(srand()*40);
  if(ai.t<ai.nextBarr)return;
  ai.nextBarr=ai.t+40+Math.floor(srand()*60);            // bursts, not every tick
@@ -9732,6 +9840,37 @@ function aiTick(p){
  const maxOut=G.map.N>=64?3:2;
  const saveExp=ai.saveExp=ai.t>ai.nextExpand&&has('barracks')&&count('outpost')<maxOut;
 
+ /* ---- REBUILD THE HEADQUARTERS ----
+    Added at v90.1. A bot that loses its HQ is in the same hole the human was in before the
+    minimap button: every build anchor placeDeny knows is a structure, and the
+    two structures exempt from that rule were reachable only from a menu the bot
+    does not use. checkElim does not finish it off either - an army holding a
+    Barracks and a Guard Tower is still alive - so it stood on what was left
+    until it was ground down. It is the FIRST spend of the tick because nothing
+    else the bot can buy is worth more than being able to build again.
+    The guard is the point: `noHQ` is a plain scan of p.blds, and while it is
+    false nothing below it runs, so a bot that still has its HQ does not draw a
+    single number out of the seeded stream. That is the same discipline the
+    supply block above states - and it is why the pinned trails, which are thirty
+    seconds long and in which no HQ ever dies, are untouched by any of this.
+    placeBuilding is called directly here, as everywhere else in aiTick, so the
+    lim:1 rule execCmd enforces for the human has to be re-stated on this side:
+    the noHQ test IS that restatement. */
+ const noHQ=ai.saveHQ=!p.blds.some(b=>b.key==='hq');
+ /* The reserve, mirroring saveExp's: while it has no headquarters the bot holds
+    the HQ's plastic back from discretionary spending. Without it the feature is
+    dead on the bot's side and would look like it worked - v89 measured the median
+    bank at a production decision near 100 against a Huey's 200, and this is 500.
+    Trucks are deliberately NOT gated by it: they are how the bank reaches 500. */
+ const hqRsv=noHQ?bcost(p,'hq').p:0;
+ if(noHQ){
+  const hc=bcost(p,'hq');
+  if(p.res.p>=hc.p&&p.res.e>=hc.e){
+   const hspot=aiFindSpot(p,'hq',hq||p.blds[0]);
+   if(hspot)placeBuilding(p,'hq',hspot.x,hspot.y);
+  }
+ }
+
  // ---- TRUCKS / ECONOMY ----
  const trucks=p.units.filter(u=>u.key==='truck');
  // scale truck count with number of drop buildings (HQ + outposts)
@@ -9825,7 +9964,7 @@ function aiTick(p){
   if(B[k].eps&&!ubs.includes(k)&&!lowE&&p.res.e>120)continue; /* only build power when needed - except (v63) this faction's own signature structure, which is built for identity rather than for load. v85: "is this a power building" reads B[k].eps rather than naming the generator and the turbine, which is the same two rows and stays right if a third is ever added */
   if(k==='radiotower'&&p.res.e<260)continue; // v48: the uplink is priced in ⚡ - wait for a surplus, never stall the list on it
   const c=bcost(p,k);
-  if(p.res.p>=c.p+80+(saveExp?200:0)&&p.res.e>=c.e){const spot=aiFindSpot(p,k,hq);if(spot){placeBuilding(p,k,spot.x,spot.y);break}}
+  if(p.res.p>=c.p+80+(saveExp?200:0)+hqRsv&&p.res.e>=c.e){const spot=aiFindSpot(p,k,hq);if(spot){placeBuilding(p,k,spot.x,spot.y);break}}
   // v59: was an unconditional break. Nothing later in the list is more expensive
   // than something earlier, so falling through can only ever reach something
   // CHEAPER that the bot can actually afford this tick.
@@ -10001,7 +10140,7 @@ function aiTick(p){
    const bHold=bTilt>0&&!gFacShort&&p.res.p>=topP*AI_TILT_REACH;
    const opts=roster(p,b.key).filter(k=>!AI_SUPPORT[k]) /* v86: the same four keys, off the table rather than retyped */ .filter(k=>{
     const c=ucost(p,k),fx=gFacShort&&FAC[p.fac].uu.indexOf(k)>=0;
-    let rsv=fx?0:(saveExp?170:0),sup=0;
+    let rsv=(fx?0:(saveExp?170:0))+hqRsv,sup=0; // v90.1: the HQ reserve is NOT waived by the faction floor - a bot with no headquarters wants the headquarters
     if(!fx&&gRsv&&aiUnitClass(k)!==gRsv.cls){rsv+=gRsv.p;sup=gRsv.s;}
     if(!fx&&bHold&&topP>c.p)rsv+=bTilt*(topP-c.p); // ...and hold out for the better one
     if(bSup-supOf(k)<sup)return false; // leave the short class room to land
@@ -10041,7 +10180,7 @@ function aiTick(p){
   const b=p.blds.find(x=>x.key===bk&&x.prog>=1&&x.queue.length<3);
   if(!b)return false;
   const c=ucost(p,k);
-  if(p.res.p<c.p+(saveExp?170:0)||p.res.e<c.e)return false;
+  if(p.res.p<c.p+(saveExp?170:0)+hqRsv||p.res.e<c.e)return false;
   return trainUnit(b,k);
  };
  const infN=army.filter(u=>u.t.a==='inf').length;
@@ -10717,7 +10856,7 @@ function aiResearch(p){
   if(!b)continue; // no eligible building yet; skip to the next affordable option
   const c=rcost(p,key);
   // keep a plastic buffer so research doesn't starve unit/building production
-  if(p.res.p>=c.p+60+(p.ai&&p.ai.saveExp?170:0)&&p.res.e>=c.e){startResearch(b,key);break;} // one assignment per tick
+  if(p.res.p>=c.p+60+(p.ai&&p.ai.saveExp?170:0)+(p.ai&&p.ai.saveHQ?bcost(p,'hq').p:0)&&p.res.e>=c.e){startResearch(b,key);break;} // one assignment per tick. v90.1: research waits while the HQ is down
  }
 }
 function aiFindSpot(p,key,anchor){
@@ -15088,6 +15227,10 @@ document.getElementById('pauseBtn').onclick=togglePause;
 document.getElementById('muteBtn').onclick=function(){muted=!muted;this.textContent=muted?'🔇':'🔊';if(AC&&masterGain){try{masterGain.gain.setTargetAtTime(muted?0:0.9,AC.currentTime,0.05);}catch(e){}}if(muted&&typeof speechSynthesis!=='undefined'){try{speechSynthesis.cancel();}catch(e){}}};
 document.getElementById('helpBtn').onclick=()=>{const h=document.getElementById('helpBox');h.style.display=h.style.display==='block'?'none':'block'};
 document.getElementById('hqBtn').onclick=()=>{hqFocus()}; // v73
+/* v90.1: one line, and deliberately no second gate of its own - startPlacing runs
+   the cost and limit checks and says why when it refuses, exactly as it does for
+   the tile. refreshHqPlaceBtn only decides whether the button is offered. */
+document.getElementById('hqPlaceBtn').onclick=()=>{if(hqRebuildState()){startPlacing('hq');sClick()}};
 
 /* ---------------- RENDER ---------------- */
 function drawGhost(c,cx,cy){
