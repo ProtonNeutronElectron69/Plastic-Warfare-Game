@@ -308,8 +308,16 @@ function bot55(){return G.players.find(p=>p.ai)}
  ok('T35.E it needs no research and no prerequisite building',!B.supply.tech&&!B.supply.req);
  ok('T35.E it never entered the research catalog',
     !RESEARCH['b_supply']&&!Object.keys(RESEARCH).some(k=>RESEARCH[k].bkey==='supply'));
- ok('T35.E it sits second in the build roster, ahead of the Lab',
-    bldRoster({fac:'green'})[1]==='supply');
+ /* v90.1: the roster is SORTED now - producers, economy, defence, then the rest,
+    alphabetical inside each shelf - so "second in the roster" is no longer a
+    position anybody chose. What v35 was actually claiming is that the depot is
+    an early, cheap, ungated pick that outranks the Lab, and that survives the
+    sort: they are on different shelves and economy comes first. Deliberately
+    rewritten rather than re-pinned to the new index, which would only pin the
+    sort to itself. */
+ ok('T35.E it sits on the economy shelf, ahead of the Lab',
+    B.supply.cat==='eco'&&B.lab.cat!=='eco'&&
+    bldRoster({fac:'green'}).indexOf('supply')<bldRoster({fac:'green'}).indexOf('lab'));
  ok('T35.E it is offered to every faction',
     ['green','tan','gray','blue'].every(f=>bldRoster({fac:f}).includes('supply')));
  ok('T35.E it has a bake box',Array.isArray(BLD_BOX.supply)&&BLD_BOX.supply.length===4);

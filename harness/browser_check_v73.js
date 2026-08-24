@@ -109,7 +109,8 @@ const overlap = (a, b) => !(a.right <= b.left || b.right <= a.left ||
 
       // --- the panel still stretches, it just stops short of the map ---
       ok(`G5 ${tag} the selection panel still fills the width it is given`,
-         m.sel.w > Math.min(1240, m.vw - m.mms - 56) - 4,
+         // v90.1: 1240 held twelve tiles and every Construct menu is thirteen
+         m.sel.w > Math.min(1340, m.vw - m.mms - 56) - 4,
          'sel.w=' + m.sel.w.toFixed(1));
       ok(`G5 ${tag} the panel is tall enough to hold a Construct row`, m.sel.h >= 118);
     }

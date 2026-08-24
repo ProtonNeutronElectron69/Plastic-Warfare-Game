@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v88.1)
+# Plastic Warfare headless test harness (updated at v90.1)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -463,6 +463,121 @@ error a reader would see as anything but an odd blank report. `sim_report.js` no
 compiles the page's script block with `new Function` before writing (compiles, does
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
+
+## v90.1: three interface repairs, and one of them reaches the simulation
+
+The owner asked for three things: the two barricade tiles were blank in every
+army's Construct menu, the menu itself stood two rows tall over the middle of the
+battlefield, and losing your HQ locked you out of building anything at all. The
+first two are pure display. The third turned out to need a table field, a sim
+door and a bot rule, and it is the only part of the release worth arguing about.
+
+**The wall thumbnails were the v88.1 regression, in the call site v88.1's own note
+said it did not reach.** `tail_v88_1` fixed `infoPortraitCv`, the Field Manual's
+painter, and its comment says in as many words: *"T30.C's sweep was fixed to pass a
+real row at v88; this call site is the one it does not reach."* There was a THIRD
+call site — `tileURL`, which paints the Construct and Train tiles — carrying both of
+the same two faults:
+
+- the stub was hard-coded to `{key:'barricade'}`, so the Heavy Barricade drew the
+  ordinary hedgehog's silhouette on the occasions it drew anything at all;
+- it passed no `t`, and `drawBarricade` reads `b.t.hbarr` on its fifth line, so the
+  ORDINARY wall threw immediately — into a bare `catch(err){}` that turned the
+  exception into a blank data URL.
+
+Two tiles, four armies, three releases, and nothing said so. The lesson is v88's
+own, stated one level up: **when a painter starts reading a new field, grep for its
+CALLERS, and do not stop at the first one you fix.** `tail_v90_1` T64.C covers the
+tile path directly — it spies on `drawBarricade` and asserts both the key it was
+handed and that `b.t === B[b.key]`, because the shim has no `toDataURL` and the
+returned URL is `null` whether the paint worked or not.
+
+**The menu was two rows because 1240px holds twelve tiles and every army's menu is
+thirteen.** That has been true since v85, when Blue's second exclusive took the
+roster to thirteen — the same release the fourteenth hotkey was added for. Widening
+`max-width` to 1340 is only half of it: what the panel is GIVEN is the window minus
+`applyMMSize`'s minimap reserve, so at a 1440px window it is handed 1216 whatever
+its max-width says. The tile narrows on three breakpoints (96 → 86 → 78 → 70px)
+rather than the row wrapping. T64.B derives the requirement from the stylesheet's
+own numbers — tile width, gap, padding, border, roster length — so a later resize
+cannot leave the check agreeing with a menu that has started wrapping again.
+
+**The order is a declared `cat` field on the B row, not a guess off its flags.**
+Producers, economy, defence, then the rest; alphabetical by the name the tile shows
+inside each shelf; the three producers keep tech order (Barracks, Garage, Helipad)
+because that is what they read as. It has to be declared: "is this economy" has no
+flag that answers it — the Radar Tent carries no eco marker and the Outpost carries
+three — and keying it on the key is the mistake the Heavy Barricade cost fourteen
+tests to unlearn at v88. `T35.E` was the one pin that moved: it asserted the Supply
+Depot sat at index 1, which after a sort is a position nobody chose. It was
+REWRITTEN to the claim it was actually making (the depot outranks the Lab) rather
+than re-pinned to the new index, which would only have pinned the sort to itself.
+
+**One HQ at a time is `lim:1`, i.e. the Radio Tower's field**, which means every
+door in the file already honours it: `startPlacing` refuses it, `structTile` greys
+the tile, and `execCmd`'s build case enforces it against a peer sending anything
+else. The bot is the surface that hides — `aiTick` calls `placeBuilding` directly
+and never goes through `execCmd`, which is v87's Napalm lesson restated for a
+structure — so its limit is a separate scan of `p.blds`.
+
+**The rebuild button grants no new permission.** It is `startPlacing('hq')` hung on
+the minimap header, which is the one piece of chrome on screen whatever is
+selected; with no HQ standing there is nothing left to select that carries a
+Construct menu. `placeDeny` is untouched: the enemy-HQ exclusion ring, the
+footprint and spacing rules and the build-vision gate all still refuse it. T64.E
+asserts that by name.
+
+### v90.1 measurement: the bot's rebuild is CORRECT and, in a real deathmatch, unreachable
+
+This is the part worth carrying forward, and it is the v89 shape again: the
+mechanism is not the thing to measure.
+
+`aiTick` now rebuilds the HQ as the first spend of any tick in which the bot holds
+none, and holds the HQ's plastic back from buildings, units, research and walls
+while it holds none — the `saveExp` reserve pointed at a structure. Without that
+reserve the feature would be dead and would still LOOK built: v89 measured the
+median bank at a production decision near 100, and an HQ is 500.
+
+Instrumented over the standard 8-match batch (`SEED0=101`, the four DM maps),
+counting only bots and sampling once a sim-second:
+
+| what | measured |
+|---|---|
+| bots that lost an HQ | 3 per match — every army that loses does |
+| sim-seconds a bot spends with no HQ | 10 to 111 each, 55–143 per match in total |
+| bank while HQ-less | **median 110–177, max 308**, against a 500 price |
+| times `aiFindSpot` was asked for an HQ spot | **0** |
+| rebuilds | **0** |
+
+The reserve is working — the median bank while HQ-less sits well above v89's ~100
+baseline — and it is still not enough, for a reason that has nothing to do with
+the reserve. **A bot that loses its HQ has lost its economy in the same stroke.**
+The HQ is a `drop` building, so its trucks have nowhere to deliver; `wantTrucks`
+falls to 2 and `truckBld` is undefined, so nothing is even queued. The only income
+left is the difficulty assist, `1.5 × eco` per aiTick at one aiTick every 18 game
+ticks — about 2.5 plastic a second, so **200 seconds to a 500 HQ**. The bots
+survive 10 to 111.
+
+Two bots got within 200 of the price (banks of 282 and 308), so it is marginal
+rather than absurd, and a bot that loses its HQ to a raid while its army and its
+outposts are intact WILL rebuild. It just never happens in a game that is already
+being lost, which is when a headquarters usually falls.
+
+**The lever, if anyone wants the bot rebuild to actually fire, is income while
+HQ-less, not the reserve.** Do not reach for a discount on the HQ: the owner asked
+for it at normal cost, and the human's button is the deliverable this release was
+actually for. Measure with the probe shape above — count `aiFindSpot` asks by key
+and sample the bank, exactly as `probe_v89.sh` buckets production decisions —
+before changing anything, because the class of "it looks built and does nothing" is
+what both v89 and v90 were about.
+
+**No trails moved and no repin was due, and this time the reason is stated rather
+than assumed** (v89's was wrong and v90 corrected it). Every line this release adds
+to `aiTick` is behind `noHQ`, a plain scan of `p.blds` that draws nothing from the
+seeded stream while it is false. The trails are 900 ticks — thirty seconds — and no
+HQ dies inside them. T64.F asserts that guard functionally by counting
+`aiFindSpot` calls by key rather than leaving it as prose here, with a mutation arm
+that kills the HQ and shows the same probe firing on the very next tick.
 
 ## v90 BALANCE BASELINE: 64 matches, and it supersedes the 24-match brief
 
@@ -2655,6 +2770,17 @@ now runs each table from its own cfg and asserts both the equality that should h
 (the two tan tables) and the inequality that must (tan vs green).
 
 ## Contents
+
+v90.1 adds tail_v90_1.js (T64), riding segment 3 and listed last in tails.txt. It
+is the first release tail since tail_v88_1.js — v89 and v90 deliberately had none
+and put their checks in the tails that own the subsystems, which was right for two
+pure AI passes and is not right for a release that adds a table field, a sim door
+and two pieces of chrome. Sections A-F: the Construct menu's declared shelves and
+the sort over them, the panel width derived from the stylesheet's own numbers, the
+wall thumbnails in the TILE painter (the call site v88.1 could not reach), the HQ's
+lim:1 at all three doors with a mutation arm that lifts the limit, the rebuild
+button and the permissions it does NOT grant, and the bot's rebuild plus the guard
+the untouched trails rest on.
 
 v87 adds tail_v87.js (T60). recut_v87.js and repin_v87.py are this release's
 one-shot recut pair, carried forward from the v86 pair and replacing it, per the
