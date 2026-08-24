@@ -109,8 +109,16 @@ section('T50.A the minimap reserve tracks the size cycle');
          html.indexOf('#' + id + '{position:absolute') < 0);
     ok('T50.A the radio panel is pinned flex:none - it holds .bb buttons',
        html.indexOf('#radioPanel{flex:none}') > 0);
+    /* v90.2: this transcribed the whole prefix, including a top:50px that was
+       incidental to it - 50 was the old 42px bar plus 8, and the bar doubled.
+       What T50 is claiming here is that the RAIL carries the bottom bound (that
+       is what lets applyMMSize raise it clear of the minimap), so it asks that
+       and nothing else. The top is derived from --topbarH now and T65.B owns
+       that claim. Rewritten deliberately rather than re-pinned to the new
+       string, which would only pin the transcription to itself. */
+    const railRule = html.slice(html.indexOf('#rightRail{'), html.indexOf('}', html.indexOf('#rightRail{')));
     ok('T50.A the rail is the thing that is bottom-bounded',
-       html.indexOf('#rightRail{position:absolute;right:8px;top:50px;bottom:8px') > 0);
+       /position:absolute/.test(railRule) && /right:8px/.test(railRule) && /bottom:8px/.test(railRule));
   }
 }
 {

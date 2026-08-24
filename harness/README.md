@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v90.1)
+# Plastic Warfare headless test harness (updated at v90.2)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -463,6 +463,81 @@ error a reader would see as anything but an odd blank report. `sim_report.js` no
 compiles the page's script block with `new Function` before writing (compiles, does
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
+
+## v90.2: the HUD legibility pass, and a top edge that never scrolled
+
+Two things the owner asked for. The second one uncovered a bug that has been in
+the file since edge scrolling was written.
+
+**The message toasts were 160px off the BOTTOM, which is inside the selection
+panel.** The panel is 118px at its minimum and stands 8px off the bottom edge, and
+with a Construct row open it measures 332 — so five seconds of toast landed on the
+build menu every time anything happened, which is exactly when the player is
+reading it. They are at the top centre now. The only other thing that claims that
+space is the survival banner, and the toasts clear it BY CONSTRUCTION rather than
+by luck: the offset is `calc(var(--topbarH) + 10px + var(--bannerH))`, so it names
+the banner's own slot. Measured in Chromium at 6px clearance with the banner up.
+
+**The bar is twice as tall (42 → 84) and everything in it scaled with it** — text
+14 → 20, buttons 13 → 17, the army dot 14 → 20. Raising the `.tbtn` base is the
+only part with a blast radius: three `.tbtn` buttons live OUTSIDE the bar
+(`#hqBtn`, `#mmSizeBtn`, `#hqPlaceBtn`) and stay put only because each overrides
+both font-size and padding. `T65.C` asserts all six overrides rather than trusting
+them, because dropping either one would silently inflate a button in a corner.
+
+**The height is a variable now, and that is the real change.** Four boxes hang off
+the bar's bottom edge — the right rail, the help box, the survival banner and now
+the toasts — and every one of them was a hand-typed `50` or `52` that nothing tied
+back to the `42` they came from. Doubling the bar meant finding all four by eye.
+They derive from `--topbarH` now, and `T65.B` asserts that none of them states a
+literal top. `T50.A` transcribed `#rightRail{...top:50px;bottom:8px` in full and
+was REWRITTEN to the claim it was making (the rail is the box that carries the
+bottom bound), not re-pinned to the new string.
+
+### v90.2 finding: the top screen edge has never scrolled, in any release
+
+The edge-scroll test read:
+
+```js
+if(MOUSE.y<14&&MOUSE.y>44)G.cam.y-=spd;
+```
+
+**No number is both below 14 and above 44.** The branch is unreachable, and has
+been since it was written, while the Field Manual has promised "push the screen
+edge" since v43. Nobody reported it because a dead scroll direction feels like a
+game that simply does not scroll that way — there is no error, no visual tell, and
+the other three edges work.
+
+The intent is legible from the dead constant: `44` is the OLD bar's height (42 plus
+its 2px border, back when the sheet was not border-box about it), so the rule
+wanted "a 14px band starting where the chrome ends". Both halves are fixed, and the
+bound is `TOPBAR_H` rather than a literal because this release is what made 44
+wrong twice over.
+
+Three things worth carrying forward:
+
+- **`TOPBAR_H` is a deliberate second copy of a number the stylesheet also states,
+  and it is only allowed because a test enforces the agreement.** CSS cannot be
+  read from the script, and the edge band has to know where the bar ends. `T65.B`
+  scrapes `--topbarH` out of `pw.html` and asserts the constant equals it — the
+  same contract `data-tune` / `HELP_TUNE` has held for the Field Manual since v43.
+- **It is the height, NOT the height plus the border.** The sheet opens with a
+  global `*{box-sizing:border-box}`, so the declared height IS the outer height.
+  The first cut of `TOPBAR_H` was 86 and it took a real Chromium measurement to
+  catch — a two-pixel error in a scroll band is not something any test or any
+  player would ever report, which is why the constant was measured rather than
+  reasoned about.
+- **A dead branch is worth asserting as arithmetic, not as prose.** `T65.D`
+  reproduces the old condition over every screen row and shows it is satisfied by
+  none, then drives the real one through `update()` at six mouse positions. The
+  functional half also has to state what it is NOT touching: it moves the camera
+  inside a sim tick, which would be a lockstep divergence if the camera were sim
+  state, so the section asserts `G.cam` is in neither `hashState` nor the
+  snapshot rather than relying on a comment three files away that says so.
+
+No trails moved: the whole release is stylesheet plus one client-local camera
+bound. `sim.sh` was not re-run and did not need to be — nothing here is reachable
+from `aiTick`.
 
 ## v90.1: three interface repairs, and one of them reaches the simulation
 
@@ -2770,6 +2845,13 @@ now runs each table from its own cfg and asserts both the equality that should h
 (the two tan tables) and the inequality that must (tan vs green).
 
 ## Contents
+
+v90.2 adds tail_v90_2.js (T65), riding segment 3 and listed last in tails.txt.
+Sections A-D: the toasts at the top centre and clear of the survival banner by
+construction, the bar's height stated once with four boxes derived from it, the
+doubled bar and the six overrides that keep the raise from leaking outside it, and
+the top edge-scroll band - dead in every release before this one - driven through
+update() with a mutation arm that reproduces the impossible condition.
 
 v90.1 adds tail_v90_1.js (T64), riding segment 3 and listed last in tails.txt. It
 is the first release tail since tail_v88_1.js — v89 and v90 deliberately had none
