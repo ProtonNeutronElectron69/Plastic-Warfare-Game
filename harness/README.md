@@ -464,6 +464,96 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v90 BALANCE BASELINE: 64 matches, and it supersedes the 24-match brief
+
+Every faction conclusion in this repo before this section came from a **24-match**
+read taken at v88.1. This is **64 matches** on v90 as merged (`fc60077`), four seed
+sets of sixteen (`SEED0` 5000 / 7000 / 9000 / 11000), 64 distinct seeds verified, no
+match counted twice. Where the two disagree, this one wins on sample size alone.
+
+Reproduce with `./sim.sh 16` at each of those four seeds and combine the
+`sim_out/game_N.json` records into one directory before running the reporter -
+`sim.sh` wipes `sim_out` on every run, so copy each batch out before the next.
+
+### Doctrine
+
+| doctrine | drawn | wins | win% | kills/match |
+|---|---|---|---|---|
+| harasser | 45 | 17 | **37.8%** | 238 |
+| aggressive | 54 | 17 | 31.5% | 230 |
+| balanced | 54 | 15 | 27.8% | 227 |
+| defensive | 48 | 7 | 14.6% | 153 |
+| turtle | 55 | 8 | 14.5% | 159 |
+
+**`defensive` recovered and `turtle` did not.** At v88.1 they sat at 4.8% and 9.1%
+and this file called both near-dead. v90's `firstPush` pass lifted defensive to
+14.6%; turtle is statistically where it was. Whatever is wrong with turtle is not
+its opening, because the opening is the thing that moved for the other one.
+
+**`harasser` is now the best doctrine, up from 21%.** It is the profile that asks
+for the most air (38%), so this is the clearest single confirmation that v89's
+delivery fix works - the doctrine whose plan depended on aircraft could not execute
+it before and now can. Note what that means for future comparisons: the doctrine
+spread did not flatten, it REORDERED.
+
+### Army, draw-adjusted
+
+Ranking armies on raw wins is wrong here for the same reason it was at v88.1: the
+doctrine deal is uneven and dominates. *Expected* is what an average army takes from
+that exact hand, so it only reallocates wins that actually happened.
+
+| army | wins | expected | delta | K/L | line units built | hand (agg/bal/har/def/tur) |
+|---|---|---|---|---|---|---|
+| green | 26 | 15.30 | **+10.70** | 1.19 | 11,128 | 15/12/8/15/14 |
+| gray | 17 | 16.32 | +0.68 | 1.06 | 9,795 | 14/14/12/10/14 |
+| tan | 11 | 15.62 | −4.62 | 1.02 | 9,437 | 10/12/13/15/14 |
+| blue | 10 | 16.76 | **−6.76** | 0.63 | 12,639 | 15/16/12/8/13 |
+
+**Green has overshot, and it is probably v89/v90's own doing.** At v88.1 Green was
+average (+0.42 on 24 matches) and this file explicitly said "Green is fine, do not
+fix it". It is now the strongest army by a wide margin, on the second-weakest hand.
+
+The hypothesis, stated as one because it is not yet measured: **every reserve added
+at v89 and v90 is denominated in plastic, and Green pays 8% less for everything.**
+`gRsv` holds the price of the cheapest short-class unit; `buyTilt` holds a share of
+the gap up to a producer's top price. Both thresholds are prices, so Green clears
+each of them sooner than anyone else, on every producer, for the whole match. No
+other faction modifier interacts with a spending threshold at all.
+
+**Check the mechanism before re-pricing anything.** `probe_v89.sh` reports the
+reserve's target class and the tilt's hold rate per bot; the question to ask it is
+whether Green's producers spend a smaller share of their ticks blocked by either
+reserve than the other three armies' do. If they do, the fix belongs in how the
+thresholds are computed - scaling them by `FAC[p.fac].mods.cost` would make the
+reserve mean the same thing to every army - and NOT in Green's cost modifier, which
+is a design identity that predates all of this.
+
+**Blue is untouched by two passes and is still last.** K/L 0.63 against 0.65 at
+v88.1, and it builds the MOST units of any army (12,639) while getting the least out
+of them. The air work did nothing for it. This was the first lead in the v88.1 brief
+and it is still open, still unexamined, and now the single clearest defect.
+
+### What held, across all four seed sets
+
+Air **8.4%** of line production and AA **2.7%**, against 3.6% / 1.2% at v88.1 - the
+same figures the 16-match tuning batches gave (8.6/2.8 and 8.4/2.7), so this is not
+seed-specific. Infantry **69.2%**, down from 76.0%. Mean match length **13:40**,
+up from about 13:20 at v88.1 and well under the 20:00 cap; five of 64 hit the cap.
+
+### Where v89 and v90's checks live
+
+Neither release has a `tail_vNN.js` of its own - the first two since v83 without
+one. Their checks went into the tails that already own the subsystems they touch,
+which keeps each claim next to the code it is about but costs the usual "what does
+this release assert?" grep:
+
+- `tail_v59.js` - T39.B and T39.I, the transcribed `mixWant` pins and the mutation
+  arm proving the air targets drive air production
+- `tail_v60.js` - T31.F, extended at v90 to pin the `towers` spread, the `buyTilt`
+  ordering, the `firstPush` values and the deleted rolled `aggro`
+- `tail_v63.js` - T42.D, the anti-stall guard that bounds `buyTilt`, and T42.F, the
+  defensive-stacking ladder
+
 ## v90 finding: the hash trails cover the AI's OPENING, not the AI
 
 v89's section below, and `CLAUDE.md` with it, claimed the pinned trails never fire
@@ -656,7 +746,9 @@ a reproducible result in the tree.
 
 ## harness note: triage's layout gate could report clean on a short walk
 
-`recut_v88_1.js` walks 42 layout pins and refuses to cut a single trail unless
+The recut one-shot (`recut_v90.js` at the time of writing; the file is carried
+forward and renamed each release, so read whichever single `recut_vNN.js` ships)
+walks 42 layout pins and refuses to cut a single trail unless
 `checked === 42`. `triage.js` walks the fast subset of 30 - the same two tables,
 minus tail_v28's third - and until now counted nothing. The printed verdict was a
 string literal: `all 30 pins hold`, whatever the loop had actually done.
