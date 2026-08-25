@@ -20,9 +20,23 @@
 # Deriving both from one file in one step makes that drift impossible.
 #
 # Run this first, then ./run.sh or ./seg.sh.
+#
+# v91 (roadmap 3, phase 1): the game file is GENERATED now - assembled from
+# ../source/ by ../build.sh - so this script runs that first. That keeps the one
+# instruction everybody already knows ("cd harness && ./build.sh") correct after
+# the split: edit a file in source/js/, run this, and the tests see the edit.
+# Without the chain the suite would happily test a stale plastic-warfare.html
+# against fresh sources, which is exactly the drift the v82 note below describes,
+# one level further up. Skipped when the root build is absent (a bundle taking an
+# explicit SRC argument, or a checkout from before v91).
 set -e
 
 SRC="${1:-../plastic-warfare.html}"
+
+if [ $# -eq 0 ] && [ -x ../build.sh ] && [ -d ../source ]; then
+  ../build.sh > /dev/null
+fi
+
 [ -f "$SRC" ] || { echo "no such game file: $SRC" >&2; exit 2; }
 
 n=$(grep -c '<script>' "$SRC")

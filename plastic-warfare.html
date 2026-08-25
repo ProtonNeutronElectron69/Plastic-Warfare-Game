@@ -527,6 +527,7 @@ canvas{display:block}
      DIFFICULTY .................................................. eco / army / dmg handicaps
      KING OF THE HILL ............................................ KOTH_R, KOTH_TARGET
      VICTORY & PLACEMENT TUNABLES ................................ CTF_TARGET, build radii, BUILD_GAP, salvage/sell
+     ASSET MANIFEST & LOADER ..................................... v91: assetsLoad / imgAsset / sndAsset - EMPTY manifest, assets override
      AUDIO ....................................................... buses / primitives / 8 gun & 6 launch voices / explosions / selection
      DATA TABLES ................................................. FAC, U (units), B (buildings), MAPS
      SUPPLY ...................................................... supCap / supUsed / supFree, derived not stored
@@ -1265,6 +1266,85 @@ function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);
    is either a fillStyle/strokeStyle (identical either way) or an hx2rgb input. */
 function shade(hex,f){const n=parseInt(hex.slice(1),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;r=clamp(Math.round(r*f),0,255);g=clamp(Math.round(g*f),0,255);b=clamp(Math.round(b*f),0,255);return'#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1)}
 
+/* ---------------- ASSET MANIFEST & LOADER ----------------
+   Added at v91, roadmap 3 phase 1. EMPTY ON PURPOSE: this release ships the
+   plumbing and no assets at all, so that the plumbing can be landed, reviewed
+   and proved inert on its own. Phases 2 and 4 fill the manifest.
+
+   THE RULE THIS FILE EXISTS TO ENFORCE: assets OVERRIDE, they never REPLACE.
+   Every procedural painter and every synthesised voice stays exactly where it
+   is. A caller asks imgAsset()/sndAsset() for a texture, and paints or
+   synthesises the old way when the answer is null. Three things fall out of
+   that, and all three are the point:
+     - a missing or failed file degrades to the v90.2 game rather than to a hole;
+     - art can be replaced ONE unit at a time, so phase 4 is 25 small steps;
+     - the headless suite keeps testing the procedural path, which it must,
+       because the shim has no image decoder and no WebGL context.
+
+   WHY NOTHING HERE IS ON THE newGame() PATH. Loading is asynchronous and
+   newGame() is not: it is called synchronously by hundreds of fixtures across
+   the tails, and by the lobby the moment a match is agreed. So the load is
+   kicked off ONCE when the page opens and simply raced against the player
+   reaching the Start button - by which time it has long finished. newGame()
+   never waits, never yields and never learns that assets exist. T66.C pins
+   that, because the day it stops being true is the day the whole test suite
+   turns asynchronous.
+
+   NOTHING HERE IS SIM STATE. No manifest entry, load flag or decoded buffer is
+   hashed or serialized, and none may ever be: two clients in a lockstep match
+   can legitimately hold different assets - one of them may have failed a
+   download - and the match must still agree tick for tick. An asset may decide
+   what a player SEES or HEARS and must never decide what happens. */
+const ASSET_MANIFEST={
+ /* name -> url, relative to the page. Filled from phase 2 onward, e.g.
+      img:{ 'unit_grunt_green':'assets/img/grunt_green.png' },
+      snd:{ 'gun_rifle':'assets/snd/rifle.ogg' }                          */
+ img:{},
+ snd:{}
+};
+const ASSETS={img:{},snd:{}};
+let ASSETS_STATE='idle';        // idle -> loading -> ready. Client-local; never hashed.
+let ASSETS_FAILED=[];           // urls that did not arrive, for the console and for a test
+let _assetsP=null;
+/* Resolves when every manifest entry has either arrived or failed - it does NOT
+   reject, because a missing texture is a fallback, not an error the game should
+   die of. Idempotent: called twice, the second caller gets the first promise. */
+function assetsLoad(){
+ if(_assetsP)return _assetsP;
+ ASSETS_STATE='loading';ASSETS_FAILED=[];
+ const jobs=[];
+ for(const k in ASSET_MANIFEST.img)jobs.push(_assetImg(k,ASSET_MANIFEST.img[k]));
+ for(const k in ASSET_MANIFEST.snd)jobs.push(_assetSnd(k,ASSET_MANIFEST.snd[k]));
+ _assetsP=Promise.all(jobs).then(()=>{
+  ASSETS_STATE='ready';
+  if(ASSETS_FAILED.length)console.warn('assets: '+ASSETS_FAILED.length+' missing, painting procedurally: '+ASSETS_FAILED.join(', '));
+  return ASSETS;
+ });
+ return _assetsP;
+}
+function _assetImg(key,url){
+ return new Promise(res=>{
+  if(typeof Image!=='function'){ASSETS_FAILED.push(url);return res()} // headless: no decoder, and none is wanted
+  const im=new Image();
+  im.onload=()=>{ASSETS.img[key]=im;res()};
+  im.onerror=()=>{ASSETS_FAILED.push(url);res()};
+  im.src=url;
+ });
+}
+/* Stored as raw bytes rather than a decoded AudioBuffer on purpose: decoding
+   needs an AudioContext, and this project creates one only after the first user
+   gesture (browsers refuse it before). Phase 2 decodes on demand and caches. */
+function _assetSnd(key,url){
+ if(typeof fetch!=='function'){ASSETS_FAILED.push(url);return Promise.resolve()}
+ return fetch(url).then(r=>r.ok?r.arrayBuffer():Promise.reject(r.status))
+  .then(buf=>{ASSETS.snd[key]={bytes:buf,buf:null}})
+  .catch(()=>{ASSETS_FAILED.push(url)});
+}
+/* The two lookups every future caller uses. Null means "paint/synthesise it the
+   way v90.2 did", which is always a legal answer. */
+function imgAsset(key){return ASSETS.img[key]||null}
+function sndAsset(key){return ASSETS.snd[key]||null}
+function assetsReady(){return ASSETS_STATE==='ready'}
 /* ---------------- AUDIO ---------------- */
 /* v64 SYNTHESIS REWRITE. The v63 engine had exactly two primitives, pnoise (one
    noise buffer, one biquad, one exponential AD envelope) and ptone (one
@@ -2706,7 +2786,15 @@ function refreshTeamRow(){
 document.querySelectorAll('[data-tslot]').forEach(b=>b.onclick=()=>{const i=+b.dataset.tslot;SETUP.teams[i]=SETUP.teams[i]%4+1;refreshTeamRow();sClick()});
 document.querySelectorAll('[data-opp]').forEach(b=>b.addEventListener('click',refreshTeamRow));
 refreshTeamRow();
-document.getElementById('startBtn').onclick=()=>{ac();newGame(SETUP)};
+/* v91: the load is kicked off when the page opens (below) and merely AWAITED
+   here, so it has normally finished long before anybody picks an army. Only the
+   Start button waits, and only this one call site changed: newGame() itself is
+   untouched and stays synchronous for the lobby and for every fixture. With the
+   v91 manifest empty this resolves on the same turn of the event loop, so the
+   button behaves exactly as it did. `ac()` stays FIRST and stays synchronous -
+   it is the audio unlock, and browsers only grant it inside the gesture that
+   triggered it, which an await would have thrown away. */
+document.getElementById('startBtn').onclick=()=>{ac();assetsLoad().then(()=>newGame(SETUP))};
 /* ---------------- ONLINE LOBBY ----------------
    Manual-signaling lobby with a live shared roster. Hosting: pick army/mode/map
    as usual, set each of the three other slots to CPU (with its own difficulty),
@@ -16465,6 +16553,12 @@ function menubgInit(){
 }
 menubgInit();
 applyHelpTune(); // v43: fill the help panel's tuning slots from the constants
+/* v91: start fetching assets the moment the page is up, and do not wait for it.
+   The player still has to choose an army, a map and a mode, which is many
+   seconds; the Start button awaits this same promise and normally finds it
+   already settled. Deliberately fire-and-forget - assetsLoad never rejects, and
+   a missing file falls back to the procedural painter it always used. */
+assetsLoad();
 requestAnimationFrame(frame);
 </script>
 </body>

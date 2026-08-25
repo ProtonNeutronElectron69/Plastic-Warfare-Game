@@ -4,13 +4,29 @@ Read this first. It is the orientation; `harness/README.md` is the detail.
 
 ## The shape of the project
 
-The whole game is **one file**: `plastic-warfare.html` (~920KB). Everything —
-simulation, rendering, audio, UI, netcode — lives in the single `<script>` block
-inside it. There is no build step for the game itself and no dependencies.
+The game is **assembled from `source/`** into one file, `plastic-warfare.html`
+(~1MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
+audio, UI, netcode — is still one `<script>` block in the shipped file; it is now
+written as ~30 files listed in `source/order.txt`. There are no dependencies.
 
-Every graphic is drawn procedurally on a canvas and every sound is synthesised at
-runtime. **There are no third-party assets in this repository**, and it must stay
-that way.
+**That order is load-bearing.** Read the header of `source/order.txt` before
+touching it: hundreds of top-level `const`s, some derived from others, plus a
+mutation that runs after the table it edits. Reorder and you can change the
+simulation while the diff looks like a file move.
+
+**This changed at v91** (roadmap 3, phase 1). Before it the game WAS a single
+hand-edited file. Two rules that governed the whole project until then are now
+retired on purpose:
+
+- ~~one file, no build step~~ — one BUILT file, from `source/`.
+- ~~no third-party assets~~ — `ASSET_MANIFEST` exists and is empty; phases 2 and
+  4 fill it. **Assets OVERRIDE, they never REPLACE**: every procedural painter
+  and synthesised voice stays as the fallback, which is what keeps a missing file
+  degrading to the old game and keeps the headless suite able to test drawing at
+  all.
+
+**The last single-file release is commit `b292773` (v90.2).** Check that out to
+run the game the original way — one file, no build, opens straight in a browser.
 
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
@@ -19,13 +35,24 @@ lead with implementation detail unless asked.
 
 ```sh
 cd harness
-./build.sh          # regenerates game.js AND pw.html from the HTML. ALWAYS run first.
+./build.sh          # ALWAYS run first. Since v91 this runs ../build.sh too, so
+                    # it picks up source/ edits, then regenerates game.js and pw.html.
 ```
 
-`game.js` and `pw.html` are generated and git-ignored, so the game's code exists
-in exactly one place. **A stale `pw.html` once made nine source-text tests check
-the previous release for three versions running** — that is why `build.sh` writes
-both, and why you run it before every test pass.
+The instruction has not changed and does not need to: `harness/build.sh` chains
+to the root build, so editing `source/js/foo.js` and running it is enough for the
+tests to see the edit. `plastic-warfare.html`, `game.js` and `pw.html` are all
+GENERATED now — edit `source/`, never them.
+
+`game.js` and `pw.html` are git-ignored; `plastic-warfare.html` is committed,
+because it is what a player opens. `./build.sh --check` at the root asserts the
+committed file matches a rebuild of the sources, and `T66.A` runs the same
+comparison inside the suite, so the two can never silently drift apart.
+
+**A stale `pw.html` once made nine source-text tests check the previous release
+for three versions running** — that is why `build.sh` writes both, and why you
+run it before every test pass. The chain to the root build exists so the same
+class of drift cannot open one level further up.
 
 ## Testing
 
@@ -210,6 +237,97 @@ Two things worth carrying forward:
   anti-stall guard is not a bank threshold at all: it is that a bot **under its
   faction quota never holds out**, because the floor already outranks both reserves
   and stacking a savings tilt on it is the stall `T42.D` exists to catch.
+
+## ROADMAP 3 — real art and real sound (DECIDED, not started)
+
+**Read this before proposing any renderer or audio work.** The owner has decided
+the direction; what follows is the plan, the evidence it rests on, and the traps
+that will bite whoever starts it.
+
+**The target.** Textured sprites with per-pixel lighting, and recorded audio
+instead of synthesis. Explicitly NOT 3D: the isometric look, the maps, the camera
+and the simulation all stay. This is a RENDERER and ASSET change, not a new game.
+
+**Two rules the whole project has lived by are being retired on purpose**, and
+both should be struck from the orientation above when phase 1 lands:
+
+- *"There are no third-party assets in this repository, and it must stay that
+  way."* There will be. That is the point.
+- *"The whole game is one file."* It becomes one BUILT file, assembled from a
+  `source/` folder plus an `assets/` folder.
+
+**What is NOT changing, and must not:** the deterministic core, `srand()`, the
+lockstep hash trails, `hashState` / `loadState`, and the rule that a rendering
+path never draws from the seeded stream. Roadmap 3 touches nothing the trails
+can see. If a phase moves a trail, that phase has a bug.
+
+### Why this is affordable, measured before the decision
+
+- **The simulation never draws.** `update()` runs the game and `frame()` draws
+  it; the seam is deliberate and already load-bearing (v23 moved truck
+  auto-harvest OUT of `frame()` into `update()` precisely because lockstep
+  demanded it). The renderer can be replaced without the sim noticing.
+- **Only 124 of 3,694 assertions in the tails mention drawing at all** — about
+  3%. The other 97% of the safety net is renderer-agnostic and survives intact.
+- **`bakeSprites()` is already an atlas pipeline.** Every unit and building is
+  rendered once per faction into an offscreen canvas via `bakeCell`, and every
+  draw site blits `cell.cv`. Swapping "generated at launch" for "loaded from a
+  file" changes where the cell comes from and leaves the draw sites alone.
+- **All audio is 13 `sfx*` functions behind one gate.** Each is called from 2-10
+  places and every one asks `audAt(x,y)` for `{gain,pan,d}` first. Recorded sound
+  changes the insides of 13 functions and no call site.
+- **A full-screen post pass already exists** (tilt-shift, bloom, grade,
+  vignette): the world renders to an offscreen buffer and is composited. That is
+  the shape a shader pipeline needs, already in place.
+
+### The phases, in order, and why the order is the order
+
+**Phase 1 — `source/` + a build step + an asset-loading phase. LANDED AT v91.**
+Done. 30 source files, `source/order.txt`, a root `build.sh` that reassembles
+them, and `harness/build.sh` chained to it. `ASSET_MANIFEST` is in and empty;
+`assetsLoad()` runs at page open and only the Start button awaits it, so
+`newGame()` is still synchronous and the whole fixture suite is untouched.
+**Verified inert three ways:** the rebuild is byte-identical to the v90.2 file,
+all 42 layout pins and every hash trail reproduce, and the suite is 5,202/5,202.
+`tail_v91` (T66) carries the checks, including that a stale build fails loudly.
+
+**Phase 2 — recorded audio. NEXT, and it goes on a branch off `main`.** Cheapest
+real win. 13 `sfx*` functions, one `audAt` gate, and `sndAsset()` already waiting
+for them. Everything phase 2 needs from phase 1 is in: put filenames in
+`ASSET_MANIFEST.snd`, decode on demand (the loader stores raw bytes on purpose,
+because an AudioContext only exists after the first gesture), and fall back to
+the existing synthesis whenever `sndAsset()` returns null.
+
+**Phase 3 — WebGL, still drawing the EXISTING procedurally-baked sprites.** A 2D
+WebGL renderer (PixiJS is the pick) rather than a game engine: an engine brings
+its own loop and state model and would fight `update()`/`frame()`. No new art in
+this phase. The point is to prove the renderer swap with the visuals unchanged,
+so a regression has exactly one possible cause.
+
+**Phase 4 — real textures, one unit at a time.** The bake is per-key-per-faction,
+so the Grunt can be a real texture while the other 24 stay procedural.
+
+**Phase 5 — normal maps and lighting.** Nearly free once 3 and 4 are done.
+
+### Traps, named in advance
+
+- ~~Phase 1 must land on `main` before the renderer branch forks.~~ Done at v91.
+  The branch can fork now, and `main` → branch merges stay clean because both
+  sides share the `source/` layout.
+- **Evaluation order is load-bearing.** 321 top-level `const`s, some derived from
+  others, and at least one post-table mutation (`B.guardtower.dm=`). A
+  concatenation order that differs from today's file order can change the
+  simulation while looking like a pure file move. `triage.sh` is the check.
+- **Keep every procedural painter.** They become the fallback when an asset is
+  missing AND they are what the headless suite keeps testing — the shim has no
+  image decoder and no WebGL. Assets are an OVERRIDE layer, never a replacement.
+  Deleting the painters is how the 5,167-check safety net gets thrown away at
+  exactly the wrong moment.
+- **Async is the only genuinely structural change.** `bakeSprites()` is
+  synchronous and `newGame()` is called synchronously by hundreds of fixtures.
+  Loading is not. Phase 1 has to give the tails a path that does not wait.
+- **Scale honestly:** months of evenings, not a weekend. But it is additive — the
+  game is playable at the end of every phase, and phases 1 and 2 are small.
 
 ## v90.2 — the HUD legibility pass (not part of the roadmap)
 

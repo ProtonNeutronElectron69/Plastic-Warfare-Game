@@ -1,0 +1,81 @@
+/* ---------------- GAME STATE ---------------- */
+let G=null;
+const view=document.getElementById('view'),vc=view.getContext('2d');
+/* v90.2 TOPBAR_H - where the bar's bottom edge lands, which is what the
+   EDGE-SCROLL band below has to start from. It is exactly the CSS --topbarH and
+   NOT that plus the 2px border: the sheet opens with a global
+   `*{box-sizing:border-box}`, so the declared height is the outer height and the
+   border is drawn inside it. Measured in Chromium to be sure rather than
+   reasoned about, because getting it wrong by the border is precisely the kind
+   of two-pixel error nothing would ever report.
+   It is a second copy of a number the stylesheet also states, which this project
+   does not normally allow - but CSS cannot be read from here. So it is handled
+   the way the Field Manual's figures are: one constant, and a test that scrapes
+   the stylesheet and asserts the two agree (T65.B), so the copy cannot drift the
+   way a comment would.
+   Same reasoning as applyMMSize below, which already hard-codes the minimap
+   wrap's own padding and border for the reserves it writes. */
+const TOPBAR_H=84;
+const mmCv=document.getElementById('minimap'),mm=mmCv.getContext('2d');
+/* v27: minimap size cycle (small / medium / large). Pure client-side view
+   preference; persisted in localStorage, applied before the first render. */
+const MM_SIZES={small:132,medium:176,large:240};
+let mmSizeKey=(function(){try{const v=localStorage.getItem('pw_mmsize');return MM_SIZES[v]?v:'medium'}catch(e){return 'medium'}})();
+let MM_S=MM_SIZES[mmSizeKey];
+function applyMMSize(){
+ MM_S=MM_SIZES[mmSizeKey];mmCv.width=MM_S;mmCv.height=MM_S;
+ const bt=document.getElementById('mmSizeBtn');if(bt)bt.textContent='\u25f1 '+mmSizeKey[0].toUpperCase();
+ /* v73: the map is pinned to the corner, so everything that shares an edge with
+    it has to know how big it currently is. Wrap width = MM_S + 6px padding and
+    2px border each side = MM_S + 16; wrap height adds the ~18px header, so
+    MM_S + 34. Both reserves add the 8px inset and an 8px gap on top of that.
+    Written as plain style properties on purpose: setProperty does not exist on
+    the headless shim's style object, so a CSS custom property would throw. */
+ const bb=document.getElementById('bottombar');
+ if(bb)bb.style.paddingRight=(MM_S+40)+'px';
+ const rr=document.getElementById('rightRail');
+ if(rr)rr.style.bottom=(MM_S+50)+'px';
+ try{localStorage.setItem('pw_mmsize',mmSizeKey)}catch(e){}
+}
+(function(){const bt=document.getElementById('mmSizeBtn');if(bt)bt.onclick=()=>{mmSizeKey=mmSizeKey==='small'?'medium':mmSizeKey==='medium'?'large':'small';applyMMSize();sClick()};applyMMSize();})();
+
+function resize(){view.width=innerWidth;view.height=innerHeight}
+addEventListener('resize',resize);resize();
+
+function isoX(x,y){return (x-y)*HW+G.orgX}
+function isoY(x,y){return (x+y)*HH}
+function unIso(sx,sy){sx-=G.orgX;return {x:(sx/HW+sy/HH)/2,y:(sy/HH-sx/HW)/2}}
+
+/* v74 PROP COLLISION RADII.
+   Measured, not guessed: each prop type was baked on a real canvas and its art
+   radius read off the sprite alpha as halfWidth / (sqrt(2) * HW). Entries are
+   0.85x that, rounded to 0.05, quoted at sc === 1 and multiplied by the prop's
+   own sc at the call site. A type absent from this table keeps its call-site r.
+
+   0 means DECOR: the art is smaller than a unit's own radius, so units walk
+   over it rather than routing around a footprint nobody can see. The prop still
+   spawns exactly where it did, because the call-site r continues to drive both
+   the nearExpo placement rejection and (for rock and mushroom) the art scale.
+
+   Line props are listed here too; lineProps feeds the value to blockLine as a
+   capsule radius, matched to the drawn limb's half-thickness. Watch the .5 cliff
+   there: blockLine tests ox*ox+oy*oy against (r+.5)^2, so any radius over .5
+   picks up the four neighbours and the line jumps from one tile wide to three.
+   The Desk pencil carries sc 1.5, which is why its base is .32 and not .35. */
+const PROP_BLK={
+ /* decor: art radius below a unit's own, so nothing blocks */
+ mushroom:0, salt:0, gnome:0, sugar:0, blocks:0, shellp:0, can:0, marble:0,
+ lamp:0, eraser:0,
+ /* small ground clutter */
+ remote:.40, plate:.45, soccer:.45, chips:.30, star:.50, beachball:.50,
+ wall:.50, tower:.50, books:.50, dino:.55, slipper:.55, mug:.55, toaster:.55,
+ keyboard:.60,
+ /* mid */
+ rock:.70, hose:.70, traincar:.70, shelf:.70, dumptruck:.75, wcan:.80,
+ chair:.80, keep:.85, table:.95, pot:1.00, console:1.20, bowl:1.35, couch:1.50,
+ /* line props: blockLine capsule radius */
+ stick:.35, pencil:.32, fork:.15, rake:.40, shovel:.45, rack:1.10
+};
+/* collision radius for one placed prop: the table when it has an opinion, the
+   call-site radius otherwise, scaled the same way the art is */
+function propBlkR(t,r,sc){const b=PROP_BLK[t];return (b==null?r:b)*(sc||1)}

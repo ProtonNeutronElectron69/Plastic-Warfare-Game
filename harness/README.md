@@ -6,6 +6,134 @@ actually cost, and the traps learned. If you are new to the project, read
 
 ## THE FACTION ABILITY ROADMAP (read this first if you are picking up mid-project)
 
+### Roadmap 3 (not started): real art and real sound. DECIDED.
+
+The owner has decided to take the game to **textured sprites with per-pixel
+lighting and recorded audio**. The short version and the phase list are in
+`../CLAUDE.md`; this section is the evidence, the alternatives that were weighed,
+and the detail a phase-1 session needs.
+
+**Scope, stated as a boundary rather than a wish.** Isometric 2D stays. The
+camera, the maps, the fog, the UI, the simulation and the AI stay. What changes
+is where sprites come from, what draws them, and where sounds come from.
+
+**The alternative that was rejected, and why.** Actual 3D models with real lights
+was considered and turned down: it rewrites how everything is positioned and
+drawn, discards the toy-soldier art direction, and puts the deterministic sim -
+the genuinely hard, genuinely tested part of this project - at risk for a visual
+outcome that normal-mapped 2D also reaches. Full game engines (Phaser, Unity,
+Godot) were rejected for the same reason at a larger scale: they bring their own
+game loop and state model, and this project's value is a lockstep simulation with
+5,167 pinned checks around it. A 2D WebGL RENDERER (PixiJS) replaces `frame()`
+and leaves `update()` alone; an ENGINE would want to own both.
+
+**The four measurements the decision rests on.** Taken at v90.2, reproducible:
+
+| what | measured | why it matters |
+|---|---|---|
+| does the sim draw? | `update()` never calls a painter | the renderer is replaceable in isolation |
+| assertions touching drawing | **124 of 3,694** (~3%) | 97% of the safety net is renderer-agnostic |
+| sprite pipeline | `bakeSprites()` → `bakeCell` → blit `cell.cv` | an atlas pipeline already, just generated not loaded |
+| audio surface | 13 `sfx*` fns, each called 2-10x, all behind `audAt(x,y)` | recorded sound changes 13 bodies and no call site |
+
+Reproduce the second one with:
+
+```sh
+cd harness
+grep -h '^ *ok(' tail_*.js | wc -l
+grep -h '^ *ok(' tail_*.js | grep -c 'SPR\.\|Portrait\|draw\|paint\|bake\|render'
+```
+
+**A fifth thing already in place:** the post-processing pass renders the world to
+an offscreen buffer and composites it with tilt-shift, bloom, a grade and a
+vignette. The "render to a target, then process the target" shape a shader
+pipeline needs is not new work.
+
+#### Phase 1 LANDED at v91. What a phase-2 session needs to know
+
+The split is done: 30 files under `source/js/`, an explicit `source/order.txt`,
+a root `./build.sh` that concatenates them into `plastic-warfare.html`, and
+`harness/build.sh` chained to it so `cd harness && ./build.sh` still does the
+right thing. `ASSET_MANIFEST` exists and is empty.
+
+**It was proved inert three ways, and the first is the one to copy.** The split
+was cut at LINE BOUNDARIES out of the v90.2 file rather than retyped, so
+reassembling the sources reproduces that file **byte for byte** - the commit that
+introduced `source/` changes `plastic-warfare.html` by zero bytes. `./build.sh
+--check` asserts it from the shell and `T66.A` asserts it inside the suite, so
+the sources and the shipped file cannot drift. On top of that: all 42 layout pins
+and every hash trail reproduce, and the suite went 5,167 → 5,202 with no failures.
+
+Verify a stale build really is caught before trusting it, the way this release
+did: append a comment to any file in `source/js/`, do NOT rebuild, and run
+`./build.sh --check` — it exits 1 and names the byte difference, and `T66.A`
+fails twice.
+
+**Two seams phase 2 inherits, both already in place:**
+
+- `sndAsset(key)` returns `{bytes,buf}` or **null**, and null means "synthesise
+  it the way v90.2 did". The loader stores RAW BYTES rather than a decoded
+  `AudioBuffer` on purpose: decoding needs an `AudioContext`, and this project
+  creates one only inside the first user gesture because browsers refuse it
+  before. Phase 2 decodes on demand and caches into the `buf` slot.
+- All 13 `sfx*` functions already ask `audAt(x,y)` for `{gain,pan,d}` before they
+  make any noise. Recorded sound replaces what happens after that call and
+  nothing before it, so positional audio, distance falloff and the fog gate keep
+  working with no edit.
+
+**The seam phase 2 must not break** is the one `T66.C` pins: `newGame()` is
+synchronous and hundreds of fixtures call it that way. The load is kicked off at
+page open (`assetsLoad();` at the end of the boot) and only the Start button
+awaits it. If phase 2 ever makes `newGame` wait, the entire suite has to become
+asynchronous — so don't.
+
+`ASSETS`, `ASSET_MANIFEST` and `ASSETS_STATE` are client-local and must stay
+that way. `T66.C` writes an asset in and asserts neither `hashState` nor
+`saveState` moves. The reason is not tidiness: two clients in a lockstep match
+can legitimately hold different assets — one of them may have failed a download —
+and the match still has to agree tick for tick. **An asset may decide what a
+player sees or hears and must never decide what happens.**
+
+#### What phase 1 looked like before it landed, kept for the reasoning
+
+#### Phase 1 is the only phase with a structural risk, and it lands on `main`
+
+Phase 1 is `source/*.js` + a concatenating build + an async asset-load step,
+shipped with an EMPTY manifest and no visual change. Three things about it:
+
+- **It belongs on `main`, not on the renderer branch.** If the branch forks
+  first, `main` keeps editing `plastic-warfare.html` while the branch holds
+  `source/*.js`, and every subsequent gameplay fix becomes a hand-merge across a
+  file split. Land the split, then fork.
+- **Its acceptance test is `triage.sh`.** A file reorganisation is supposed to be
+  bit-identical. If any of the 42 layout pins or any hash trail moves, the
+  concatenation order does not match the current file order and the sim has
+  silently changed. 321 top-level `const`s, some derived from others, and at
+  least one post-table mutation (`B.guardtower.dm=` runs AFTER the `B` literal)
+  make this a real hazard rather than a theoretical one.
+- **The async problem is the actual new work.** `bakeSprites()` is synchronous
+  and `newGame()` is called synchronously by hundreds of fixtures across the
+  tails. Asset loading is not synchronous. Phase 1 has to introduce a load phase
+  that the headless suite can skip or resolve instantly, without that skip
+  becoming a second code path the tests then fail to cover.
+
+#### The rule that protects the suite: assets OVERRIDE, they never REPLACE
+
+Every procedural painter stays. `bakeSprites` prefers a loaded texture and falls
+back to `trooperBody` / `vehBody` / `bldBody` when one is absent. Three payoffs:
+the game still runs with a missing file, art can be replaced one unit at a time
+(phase 4 is 25 independent steps, not one), and the ~124 drawing assertions keep
+testing a path that still exists. The headless shim has no image decoder and no
+WebGL context; deleting the painters deletes those checks with them.
+
+#### What phase 3 must not do
+
+Swap the renderer while the ART IS UNCHANGED. Phase 3 draws the same
+procedurally-baked cells through WebGL, so any visual difference is the
+renderer's doing and nothing else. This is the same discipline the v89 and v90
+notes keep arriving at from the other direction: change one thing, measure the
+mechanism, and do not let two changes share one verification.
+
 ### Roadmap 1 (v79-v82): every existing exclusive gets a passive and a toggle. LANDED.
 
 v79 is phase 1 of 4. Every faction-exclusive unit and structure gets ONE passive
