@@ -212,32 +212,39 @@ function audFor(x,y,tx,ty){return tx!=null?audAt2(x,y,tx,ty):audAt(x,y)}
    carry two so a burst is not one sample on repeat - the ±4% rate jitter and
    the ±12% gain jitter below do the rest). T67 asserts n and the manifest
    agree in both directions. */
+/* v92.1: every send here was CUT after the owner's first listen - small arms
+   roughly halved, launches and explosions by about a third. The v92 values
+   doubled the space: the takes already carried a rendered room slapback (also
+   removed) and the live convolvers were layered on top, which is the "hollow
+   reverb effect" the feedback named. T68.D pins the new ceilings so the wash
+   cannot quietly creep back. gun_sniper's gain is deliberately the largest of
+   the guns - "louder, crack tone" was the ask - and T68.C pins THAT. */
 const SNDV={
- gun_rifle:  {g:.44,rev:.16,far:.30,n:2,bus:'arms'},
- gun_smg:    {g:.34,rev:.12,far:.20,n:2,bus:'arms'},
- gun_carbine:{g:.50,rev:.20,far:.35,n:1,bus:'arms'},
- gun_hmg:    {g:.52,rev:.22,far:.40,n:2,bus:'arms'},
- gun_vmg:    {g:.38,rev:.14,far:.22,n:2,bus:'arms'},
- gun_amg:    {g:.34,rev:.20,far:.45,n:2,bus:'arms'},
- gun_sniper: {g:.62,rev:.30,far:.60,n:1,bus:'arms'},
- gun_tower:  {g:.46,rev:.25,far:.45,n:2,bus:'arms'},
- flame:      {g:.42,rev:.12,far:.15,n:1,bus:'arms'},
- throw:      {g:.14,rev:.06,far:0,  n:1,bus:'arms'},
- launch_cannon:    {g:.78,rev:.25,far:.45,n:1},
- launch_cannon_hvy:{g:.88,rev:.25,far:.55,n:1},
- launch_mortar:    {g:.48,rev:.25,far:.20,n:1},
- launch_aa:        {g:.40,rev:.15,far:.20,n:1},
- launch_artyrocket:{g:.75,rev:.35,far:.60,n:1},
- launch_rocket:    {g:.58,rev:.25,far:.40,n:1},
- boom_small: {g:.58,rev:.25,far:.30,n:2,rjit:.06},
- boom_med:   {g:.82,rev:.35,far:.55,n:1,rjit:.05},
- boom_big:   {g:.98,rev:.40,far:.75,n:1,rjit:.04},
- boom_huge:  {g:1.12,rev:.45,far:.90,n:1,rjit:.03},
- bld_destroy:{g:1.15,rev:.40,far:.90,n:1,rjit:.03},
- pop:        {g:.26,rev:.06,far:0,  n:2,rjit:.08,bus:'arms'},
- nest_break: {g:.40,rev:.15,far:.15,n:1,rjit:.05},
- struct_break:{g:.36,rev:.15,far:.15,n:1,rjit:.05},
- whoosh:     {g:.52,rev:.30,far:.55,n:1}
+ gun_rifle:  {g:.44,rev:.08,far:.15,n:2,bus:'arms'},
+ gun_smg:    {g:.34,rev:.06,far:.10,n:2,bus:'arms'},
+ gun_carbine:{g:.50,rev:.10,far:.18,n:1,bus:'arms'},
+ gun_hmg:    {g:.52,rev:.11,far:.20,n:2,bus:'arms'},
+ gun_vmg:    {g:.38,rev:.07,far:.11,n:2,bus:'arms'},
+ gun_amg:    {g:.34,rev:.10,far:.22,n:2,bus:'arms'},
+ gun_sniper: {g:.80,rev:.15,far:.30,n:1,bus:'arms'},
+ gun_tower:  {g:.46,rev:.12,far:.22,n:2,bus:'arms'},
+ flame:      {g:.42,rev:.08,far:.10,n:1,bus:'arms'},
+ throw:      {g:.14,rev:.04,far:0,  n:1,bus:'arms'},
+ launch_cannon:    {g:.78,rev:.18,far:.30,n:1},
+ launch_cannon_hvy:{g:.88,rev:.18,far:.38,n:1},
+ launch_mortar:    {g:.48,rev:.15,far:.12,n:1},
+ launch_aa:        {g:.40,rev:.10,far:.12,n:1},
+ launch_artyrocket:{g:.75,rev:.25,far:.40,n:1},
+ launch_rocket:    {g:.58,rev:.18,far:.28,n:1},
+ boom_small: {g:.58,rev:.18,far:.20,n:2,rjit:.06},
+ boom_med:   {g:.82,rev:.25,far:.35,n:1,rjit:.05},
+ boom_big:   {g:.98,rev:.28,far:.50,n:1,rjit:.04},
+ boom_huge:  {g:1.12,rev:.32,far:.60,n:1,rjit:.03},
+ bld_destroy:{g:1.15,rev:.28,far:.60,n:1,rjit:.03},
+ pop:        {g:.26,rev:.04,far:0,  n:2,rjit:.08,bus:'arms'},
+ rico:       {g:.28,rev:.05,far:.08,n:3,rjit:.10,bus:'arms'},
+ struct_break:{g:.55,rev:.20,far:.25,n:1,rjit:.05},
+ whoosh:     {g:.52,rev:.25,far:.40,n:1}
 };
 /* Decode on demand, cache into the buf slot the loader left null. The copy is
    not optional: decodeAudioData DETACHES the ArrayBuffer it is handed, and the
@@ -697,27 +704,45 @@ function sfxPop(x,y){
  ptone(Object.assign({ft:'triangle',f0:420,f1:180,sweep:.04,dur:.06,gain:.05},E));
  pgrain(Object.assign({n:3,freq:1200,q:7,span:.16,gain:.05,gdur:.04,delay:.05,spread:.25},E));
 }
-/* a wildlife den caving in: woody splintering rather than a plastic crack */
-function sfxNestBreak(x,y){
+/* v92.1: SILENT, by the owner's decision - smashing a wildlife den makes no
+   sound at all. The function stays (kill() still calls it, and T43.J's
+   enumeration of audio entry points still drives it) so the decision lives
+   HERE, visible, rather than as a deleted call site someone later "fixes" by
+   wiring a voice back in. T68.A asserts it builds nothing. */
+function sfxNestBreak(x,y){}
+/* v92.1: small arms striking armor - the metallic ricochet the owner asked
+   for. Gated the same way as every positional voice, then thinned twice: a
+   probability draw (most hits spark silently) and a rolling window, because
+   applyDmg fires far more often than any weapon report. Both draws are
+   Math.random - this is called from SIM code, and one draw from the seeded
+   rng here would desync a live match (the v87.1 sell-teardown lesson). */
+let RICOW=[];
+function sfxRico(x,y){
+ if(Math.random()>=.35)return;
  const a=audAt(x,y);if(!a)return;
- const lvl=a.gain,pan=a.pan,d=a.d,E={lvl,pan,d};
- if(sndPlay('nest_break',{lvl,pan,d}))return;
- pimp(Object.assign({freq:900,gain:.20,drive:1.6},E));
- pnoise(Object.assign({freq:700,q:.6,ft:'lowpass',gain:.22,dur:.12,atk:.002,pink:1},E));
- pnoise(Object.assign({freq:260,q:3,gain:.14,dur:.20,rev:.25},E));
- pgrain(Object.assign({n:10,freq:1500,q:5,span:.45,gain:.08,gdur:.05,spread:.4},E));
- ptone(Object.assign({ft:'sine',f0:110,f1:48,sweep:.12,dur:.20,gain:.16,rev:.20},E));
+ if(!aBudget(RICOW,6,0.3))return;
+ const lvl=a.gain,pan=a.pan,d=a.d,E={lvl,pan,d,bus:'arms'};
+ if(sndPlay('rico',{lvl,pan,d}))return;
+ /* fallback ping: tiny clang, falling whistle, thin zing - no long rings */
+ pimp(Object.assign({freq:3200,gain:.14,drive:2.2},E));
+ ptone(Object.assign({ft:'sine',f0:2400,f1:700,sweep:.16,dur:.20,gain:.07},E));
+ pnoise(Object.assign({freq:4200,q:9,gain:.06,dur:.05},E));
 }
-/* a barricade pulled apart, and the same voice for a structure sold: wire and
-   sheet metal rattling down, no detonation anywhere in it */
+/* a barricade destroyed in combat. v92.1 REDESIGN: this used to be wire and
+   sheet metal rattling down with "no detonation anywhere in it" - the v64
+   brief, written when the same voice also played on a SOLD structure. Selling
+   has used the full building teardown since v87.1, so the only thing left
+   calling this is a wall dying under fire, and the owner heard the rattle as
+   a chime. It is a small blast with masonry crunch now, recorded take and
+   synth fallback alike. */
 function sfxStructBreak(x,y){
  const a=audAt(x,y);if(!a)return;
  const lvl=a.gain,pan=a.pan,d=a.d,E={lvl,pan,d};
  if(sndPlay('struct_break',{lvl,pan,d}))return;
- pnoise(Object.assign({freq:2200,q:7,gain:.10,dur:.04},E));
- pgrain(Object.assign({n:8,freq:1900,q:8,span:.38,gain:.09,gdur:.05,spread:.35},E));
- ptone(Object.assign({ft:'sine',f0:180,f1:70,sweep:.10,dur:.16,gain:.12},E));
- pnoise(Object.assign({freq:400,q:.5,ft:'lowpass',gain:.12,dur:.30,atk:.02,delay:.02,rev:.30},E));
+ pimp(Object.assign({freq:1600,gain:.22,drive:2.0},E));
+ psweep(Object.assign({f0:2800,f1:180,sweep:.12,dur:.22,gain:.30,atk:.002,rev:.18},E));
+ ptone(Object.assign({ft:'sine',f0:80,f1:38,sweep:.12,dur:.18,gain:.22},E));
+ pgrain(Object.assign({n:9,freq:1500,q:4,span:.34,gain:.10,gdur:.05,spread:.35},E));
 }
 function sfxWhoosh(x,y){
  const a=audAt(x,y);if(!a)return;
@@ -745,17 +770,23 @@ function sAtkAlert(){
 /* --- selection voices. v63 answered twenty unit keys with four branches and
    sixteen buildings with three tone variants, which is why selecting anything
    sounded like selecting anything else. --- */
+/* v92.1: selecting an aircraft answers with a BRIEF rotor and nothing else -
+   the turbine and gearbox whine layers are gone and the windows are roughly
+   half their v64 length, by the owner's decision. What still tells the three
+   apart is the rotor itself: chop and blade rates, the filter, and the
+   Chinook's tandem beat. T43.L pins all of that, so the differentiation is a
+   checked claim rather than a hope. */
 const ROTORV={
- heli:{chop:11,blade:22,lp:320,dur:.80,g:.26,turb:[120,140,.05],whine:[560,640,.018]},
- apache:{chop:14,blade:28,lp:280,dur:.85,g:.24,turb:[150,190,.055],whine:[2400,2900,.030]},
- chinook:{chop:8.5,blade:9.3,lp:240,dur:.95,g:.30,turb:[95,112,.070],whine:[430,505,.022]}
+ heli:{chop:11,blade:22,lp:320,dur:.45,g:.26},
+ apache:{chop:14,blade:28,lp:280,dur:.48,g:.24},
+ chinook:{chop:8.5,blade:9.3,lp:240,dur:.60,g:.30}
 };
 function sRotor(kind){
  if(muted||!ac()||!voxOk())return;const buf=noiseBuf();if(!buf)return;
  const R=ROTORV[kind]||ROTORV.heli,t=AC.currentTime,dur=R.dur;
  const src=AC.createBufferSource();src.buffer=buf;src.loop=true;
  const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=R.lp;
- const g=AC.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(R.g,t+.1);g.gain.setValueAtTime(R.g,t+dur-.18);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+ const g=AC.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(R.g,t+.08);g.gain.setValueAtTime(R.g,t+dur-.14);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
  /* blade chop: two stacked LFOs. On the Chinook the two rates are close enough
     to beat against each other, which is what a tandem rotor actually does. */
  const lfo=AC.createOscillator();lfo.type='sine';lfo.frequency.value=R.chop;const lfoG=AC.createGain();lfoG.gain.value=.55;
@@ -764,72 +795,41 @@ function sRotor(kind){
  lfo.connect(lfoG).connect(dc.gain);lfo2.connect(lfoG2).connect(dc.gain);lfo.start(t);lfo2.start(t);lfo.stop(t+dur+.05);lfo2.stop(t+dur+.05);
  src.connect(lp).connect(dc).connect(g);aout(g,0);src.start(t,Math.random());src.stop(t+dur+.05);
  voxAdd(t+dur+.05);
- ptone({ft:'sawtooth',f0:R.turb[0],f1:R.turb[1],sweep:.4,dur,gain:R.turb[2]});
- ptone({ft:'sawtooth',f0:R.whine[0],f1:R.whine[1],sweep:.5,dur,gain:R.whine[2],atk:.12});
 }
+/* v92.1: selecting any ground vehicle answers with a BRIEF diesel idle - one
+   voice family, differentiated by engine size rather than by eight bespoke
+   layer stacks, by the owner's decision. Each row is (chug rate, fundamental,
+   window, level); the fundamentals sit on a geometric ladder ~20% apart so
+   every pair stays past the 13% distinctness band T43.L tests with, the Bull
+   idles lowest and slowest, the Scout Bike highest and fastest, and T43.L
+   pins the ordering. The Observation Balloon keeps its burner: it is the one
+   answer here with no engine at all (v86), and a gas bag idling like a lorry
+   would be exactly the wrong thing. */
+const DIESELV={
+ hvytank:{rate:6,  f:70, dur:.55,g:.26},
+ tank:   {rate:7.5,f:85, dur:.50,g:.24},
+ diesel: {rate:8.5,f:102,dur:.50,g:.24},
+ apc:    {rate:10, f:122,dur:.45,g:.20},
+ arty:   {rate:9,  f:147,dur:.45,g:.20},
+ aa:     {rate:11, f:176,dur:.42,g:.19},
+ jeep:   {rate:12.5,f:211,dur:.40,g:.18},
+ bike:   {rate:14, f:253,dur:.35,g:.18}
+};
 function sEngine(kind){
  if(muted||!ac())return;
- if(kind==='hvytank'){
-  /* the Bull: a bigger, slower, heavier version of the same idea as the tank */
-  pgrain({n:4,freq:2000,q:8,span:.12,gain:.12,gdur:.04,spread:.25});
-  ptone({ft:'sawtooth',f0:46,f1:104,sweep:.38,dur:.70,gain:.30,atk:.02,rev:.12});
-  ptone({ft:'sawtooth',f0:92,f1:190,sweep:.38,dur:.64,gain:.15});
-  ptone({ft:'square',f0:30,f1:42,dur:.70,gain:.12});
-  pnoise({freq:320,q:.5,ft:'lowpass',gain:.12,dur:.60,atk:.06,pink:1});
- }
- else if(kind==='tank'){
-  pgrain({n:3,freq:2400,q:8,span:.10,gain:.12,gdur:.035,spread:.2});
-  ptone({ft:'sawtooth',f0:70,f1:150,sweep:.30,dur:.55,gain:.28,atk:.02,rev:.10});
-  ptone({ft:'sawtooth',f0:150,f1:250,sweep:.30,dur:.50,gain:.14,atk:.03});
-  ptone({ft:'square',f0:46,f1:62,dur:.55,gain:.10});
-  pnoise({freq:420,q:.5,ft:'lowpass',gain:.10,dur:.45,atk:.05});
- }
- else if(kind==='apc'){
-  chug(.50,11,120,.18,0);
-  ptone({ft:'sawtooth',f0:110,f1:210,sweep:.26,dur:.48,gain:.16,atk:.02});
-  ptone({ft:'sine',f0:900,f1:1500,sweep:.34,dur:.42,gain:.035,atk:.08});
-  pnoise({freq:1800,q:2,gain:.06,dur:.40,atk:.05});
- }
- else if(kind==='arty'){
-  ptone({ft:'sawtooth',f0:90,f1:160,sweep:.24,dur:.44,gain:.18,atk:.02});
-  ptone({ft:'sine',f0:320,f1:680,sweep:.30,dur:.34,gain:.05,atk:.05});
-  pnoise({freq:2600,q:6,gain:.07,dur:.06,delay:.04});
-  pnoise({freq:500,q:.5,ft:'lowpass',gain:.09,dur:.35,atk:.04});
- }
- else if(kind==='aa'){
-  ptone({ft:'sine',f0:1800,f1:1200,sweep:.06,dur:.08,gain:.05});
-  ptone({ft:'sine',f0:1800,f1:1200,sweep:.06,dur:.08,gain:.05,delay:.12});
-  ptone({ft:'sawtooth',f0:100,f1:180,sweep:.22,dur:.40,gain:.16,atk:.02});
-  pnoise({freq:1400,q:2,gain:.05,dur:.30,atk:.04});
- }
- else if(kind==='bike'){
-  ptone({ft:'sawtooth',f0:210,f1:560,sweep:.16,dur:.30,gain:.20,atk:.008});
-  ptone({ft:'square',f0:420,f1:1120,sweep:.16,dur:.28,gain:.07});
-  ptone({ft:'sawtooth',f0:105,f1:280,sweep:.16,dur:.30,gain:.10});
-  pnoise({freq:3200,q:3,gain:.05,dur:.04});
- }
- else if(kind==='diesel'){
-  chug(.55,9,150,.24,0);chug(.55,9,90,.12,0);
-  pnoise({freq:1600,q:1.5,gain:.06,dur:.50,atk:.05});
-  pgrain({n:3,freq:2600,q:7,span:.30,gain:.04,gdur:.03});
- }
- /* v86: the Observation Balloon. The one entry in this table that is not an
-    engine at all - a burner roar over rope creak, with no chug, no sawtooth
-    growl and no top end, so it cannot be mistaken for anything else in the
-    roster. It is here rather than in ROTORV because a balloon has no blade to
-    chop, and answering with a rotor is exactly the wrong thing. */
- else if(kind==='balloon'){
+ /* v86: the Observation Balloon - a burner roar over rope creak, unchanged at
+    v92.1 on purpose: a balloon has no engine to idle. */
+ if(kind==='balloon'){
   pnoise({freq:520,q:.6,ft:'lowpass',gain:.20,dur:.70,atk:.14,pink:1});
   pnoise({freq:180,q:.5,ft:'lowpass',gain:.11,dur:.55,atk:.20});
   ptone({ft:'sine',f0:64,f1:52,sweep:.5,dur:.60,gain:.08,atk:.18});
   pgrain({n:2,freq:900,q:5,span:.34,gain:.03,gdur:.05,spread:.3});
+  return;
  }
- else{
-  ptone({ft:'sawtooth',f0:130,f1:280,sweep:.20,dur:.36,gain:.22,atk:.01});
-  ptone({ft:'sawtooth',f0:200,f1:430,sweep:.20,dur:.34,gain:.11,atk:.01});
-  ptone({ft:'square',f0:95,f1:150,dur:.34,gain:.07});
-  pnoise({freq:2200,q:2,gain:.06,dur:.05});
- }
+ const D=DIESELV[kind]||DIESELV.diesel;
+ chug(D.dur,D.rate,D.f,D.g,0);
+ /* one breath of intake noise so the idle is not a bare buzz */
+ pnoise({freq:Math.min(2200,D.f*9),q:1.2,gain:.05,dur:D.dur*.8,atk:.05});
 }
 /* which of the eleven building voices a structure answers with */
 function bldVoice(e){
@@ -903,7 +903,7 @@ let SPV=[],lastBark=-1e9;
 function loadVoices(){try{SPV=speechSynthesis.getVoices()||[];}catch(e){SPV=[];}}
 if(typeof speechSynthesis!=='undefined'){loadVoices();try{speechSynthesis.onvoiceschanged=loadVoices;}catch(e){}}
 function pickVoice(){if(!SPV.length)return null;return SPV.find(v=>/^en/i.test(v.lang)&&/(male|david|daniel|fred|alex|guy|james|george|mark|tom)/i.test(v.name))||SPV.find(v=>/^en/i.test(v.lang))||SPV[0];}
-const BARKS_INF=['Yes sir!','Ready!','Standing by.','Awaiting orders.','Reporting in.','Sir!'];
+const BARKS_INF=['Yes sir!','Ready!','Standing by.','Awaiting orders.','Reporting in.','Sir!','Ready to move.','Ready to fight.']; // v92.1: last two added by the owner
 const BARKS_SARGE=['Sarge here!','Let\u2019s move!','Lock and load.','Ready for action.'];
 function sVoiceBark(e){
  if(muted)return;

@@ -252,7 +252,16 @@ function applyDmg(tgt,amt,type,attacker,wc){
  // neutral creatures are handled by their own updater; just register the hit
  if(tgt.kind==='creature'){if(tgt.hp<=0){tgt.hp=0;if(attacker&&attacker.kind==='unit'&&attacker.hp>0)vetRankUp(attacker);} // v29: creature kills earn veterancy (they bypass kill())
   else if(!tgt.target&&attacker&&attacker.kind&&attacker.kind!=='mine')tgt.target=attacker;return dealt80;} // v27.1: wildlife ignores mine ghosts too
- if(G.tick-(tgt.lastShrap||0)>3){tgt.lastShrap=G.tick;spawnShrapnel(tgt.x,tgt.y,FAC[tgt.p.fac].color,3+Math.random()*3|0,tgt.kind==='bld'?1.4:1)}
+ if(G.tick-(tgt.lastShrap||0)>3){tgt.lastShrap=G.tick;spawnShrapnel(tgt.x,tgt.y,FAC[tgt.p.fac].color,3+Math.random()*3|0,tgt.kind==='bld'?1.4:1);
+  /* v92.1: small arms on hard plate ricochet (owner feedback). Class 'b' only -
+     rockets and shells land their own explosions - and only against targets a
+     bullet audibly cannot bite: medium/heavy armor and structures, minus the
+     nest (a den is wood, and nest destruction is silent by the same decision).
+     Rides inside the lastShrap throttle so it can never outpace the sparks the
+     player sees; sfxRico thins itself further with Math.random, never srand. */
+  const wr92=wc||wcOf(attacker),ar92=armorOf(tgt);
+  if(wr92==='b'&&(ar92==='medium'||ar92==='heavy'||(ar92==='bldg'&&tgt.key!=='nest')))sfxRico(tgt.x,tgt.y);
+ }
  if(tgt.p.ai)tgt.p.ai.lastHurt=G.tick;
  // ---- LOCAL CALL FOR HELP (v22): nearby idle / attack-moving friendlies converge
  // on the attacker when a unit or building is hit (human's units included). Explicit

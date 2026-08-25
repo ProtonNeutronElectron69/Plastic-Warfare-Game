@@ -115,7 +115,7 @@ function audioReset() {
   REC = { nodes: [], edges: [] };
   AC = null; masterGain = null; NOISE = null; PINK = null; IMP = null;
   roomBus = null; farBus = null; armsBus = null;
-  VOXQ.length = 0; GUNW.length = 0; BOOMW.length = 0;
+  VOXQ.length = 0; GUNW.length = 0; BOOMW.length = 0; RICOW.length = 0;
   muted = false;
   global.AudioContext = MockAC;
   window.AudioContext = MockAC;
@@ -517,22 +517,25 @@ section('T43.F the building collapse and the three death voices');
   /* the v63 fundamental fell to 14 Hz, which is headroom nobody hears */
   ok('T43.F the collapse fundamental stops at 28 Hz or above', lowestOsc(col) >= 27.9);
 
-  /* three death voices where v63 had one generic tick */
+  /* three death voices where v63 had one generic tick - two since v92.1: the
+     owner decided a wildlife den breaks SILENTLY, so sfxNestBreak now builds
+     nothing on purpose. T68.A carries that claim; here the survivors. */
   audioReset(); const pop = cap(() => { sfxPop(hq.x, hq.y); }); advance(1);
-  audioReset(); const nst = cap(() => { sfxNestBreak(hq.x, hq.y); }); advance(1);
   audioReset(); const stb = cap(() => { sfxStructBreak(hq.x, hq.y); }); advance(1);
   ok('T43.F sfxPop builds a voice', pop.length >= 5);
-  ok('T43.F sfxNestBreak builds a voice', nst.length >= 5);
   ok('T43.F sfxStructBreak builds a voice', stb.length >= 5);
-  ok('T43.F the three death voices are three different sounds',
-     distinct([fvec(pop), fvec(nst), fvec(stb)]) === 3);
+  ok('T43.F the two death voices are two different sounds',
+     distinct([fvec(pop), fvec(stb)]) === 2);
   /* the plastic snap: a high-Q resonance is the whole character of it */
   ok('T43.F the plastic pop is built on high-Q resonances',
      ofKind(pop, 'biquad').filter(n => n.Q.value >= 8).length >= 2);
-  ok('T43.F the nest caving in reaches lower than a plastic figure does',
-     lowestOsc(nst) < lowestOsc(pop));
-  ok('T43.F a dismantled structure carries no detonation transient',
-     ofKind(stb, 'shaper').length === 0);
+  /* v92.1: the nest-reaches-lower comparison went with the nest voice, and
+     the no-detonation pin was REVERSED on purpose: a wall dying under fire is
+     a small blast now (the owner heard the old rattle as a chime), and the
+     only caller left is combat - selling has used the full teardown since
+     v87.1. The transient the old pin forbade is now required. */
+  ok('T43.F a wall dying under fire opens on a detonation transient now',
+     ofKind(stb, 'shaper').length >= 1 && lowestOsc(stb) < 100);
   ok('T43.F the v63 generic tick is gone from the build', typeof sfxBreak === 'undefined');
 }
 
@@ -707,6 +710,7 @@ section('T43.J no audio path touches the sim rng');
   for (const z of ['small', 'med', 'big', 'huge']) sfxBoom(hq.x, hq.y, z);
   sfxBuildingDestroy(hq.x, hq.y); sfxPop(hq.x, hq.y); sfxNestBreak(hq.x, hq.y); sfxStructBreak(hq.x, hq.y);
   sfxFlame(hq.x, hq.y, hq.x + 1, hq.y); sfxThrow(hq.x, hq.y, hq.x + 1, hq.y);
+  for (let i = 0; i < 8; i++) sfxRico(hq.x, hq.y); // v92.1: prob-gated, so several draws exercise both branches
   /* v77: sfxLaser went with the Magnifying Glass. This list is an enumeration of
      every audio entry point in the game, so a removed cue leaves it, and T52.B
      asserts the function is gone rather than merely unused. */
@@ -748,7 +752,7 @@ section('T43.K the bus rework, the duck, and the fog gate');
   REC = { nodes: [], edges: [] };
   AC = null; masterGain = null; NOISE = null; PINK = null; IMP = null;
   roomBus = null; farBus = null; armsBus = null;
-  VOXQ.length = 0; GUNW.length = 0; BOOMW.length = 0; muted = false;
+  VOXQ.length = 0; GUNW.length = 0; BOOMW.length = 0; RICOW.length = 0; muted = false;
   global.AudioContext = MockAC; window.AudioContext = MockAC;
   const busNodes = cap(() => { ac(); });
   ok('T43.K two convolvers are built, not one', ofKind(busNodes, 'convolver').length === 2);
@@ -938,7 +942,8 @@ section('T43.M the headline, with the v63 mutation arm');
   }
   audioReset(); ALL['collapse'] = fp(cap(() => sfxBuildingDestroy(hq.x, hq.y)));
   audioReset(); ALL['pop'] = fp(cap(() => sfxPop(hq.x, hq.y)));
-  audioReset(); ALL['nest'] = fp(cap(() => sfxNestBreak(hq.x, hq.y)));
+  /* v92.1: 'nest' left this table - the voice is deliberately silent now,
+     and a fingerprint of nothing has no place in a distinctness claim */
   audioReset(); ALL['struct'] = fp(cap(() => sfxStructBreak(hq.x, hq.y)));
   audioReset(); ALL['flame'] = fp(cap(() => sfxFlame(hq.x, hq.y, hq.x + 1, hq.y)));
   audioReset(); ALL['throw'] = fp(cap(() => sfxThrow(hq.x, hq.y, hq.x + 1, hq.y)));
@@ -951,7 +956,7 @@ section('T43.M the headline, with the v63 mutation arm');
   const nvoices = distinct(keys.map(k => ALL[k]));
   ok('T43.M every combat sound in the game is distinct [' + nvoices + '/' + keys.length + ']' +
      (dupes.length ? ' [collisions: ' + dupes.slice(0, 4).join(', ') + ']' : ''), dupes.length === 0);
-  ok('T43.M that is 24 combat voices where v63 had 12', keys.length === 24);
+  ok('T43.M that is 23 combat voices where v63 had 12 (24 until v92.1 silenced the nest)', keys.length === 23);
 
   /* MUTATION ARM. Rebuild the v63 recipes verbatim through this same recorder.
      v63 answered six weapons with 'mg' and four explosion sizes with one recipe
@@ -1016,7 +1021,7 @@ section('T43.M the headline, with the v63 mutation arm');
   muted = false;
   AC = null; masterGain = null; NOISE = null; PINK = null; IMP = null;
   roomBus = null; farBus = null; armsBus = null;
-  VOXQ.length = 0; GUNW.length = 0; BOOMW.length = 0;
+  VOXQ.length = 0; GUNW.length = 0; BOOMW.length = 0; RICOW.length = 0;
   try { delete global.AudioContext; } catch (e) { global.AudioContext = undefined; }
   try { delete window.AudioContext; } catch (e) { window.AudioContext = undefined; }
   ok('T43.M the tail leaves AudioContext undefined for later tails', typeof global.AudioContext === 'undefined');

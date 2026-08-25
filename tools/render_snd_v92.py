@@ -123,14 +123,6 @@ def osc(kind, f0, f1, dur, sweep=None):
 def drive(x, k):
     return np.tanh(x * k) / np.tanh(k)
 
-def comb(x, freq, fb, mix=1.0):
-    """Feedback comb - the cheap modal resonance for metal/plastic rings."""
-    d = max(2, int(OSR / freq))
-    y = np.copy(x)
-    for i in range(d, len(x)):
-        y[i] += fb * y[i - d]
-    return x * (1 - mix) + y * mix
-
 def modal(rng, dur, modes, decays, gains):
     """A struck body: exponentially decaying sine partials with random phase."""
     n = nsamp(dur)
@@ -228,20 +220,58 @@ def r_gun(rng, kind, dur):
         z0, z1, zsw, zd, zg = V['zip']
         zz = sweep_lp(white(rng, zd), z0, z1, zsw) * env_ahd(nsamp(zd), .004, 0, zd) * zg * 2.2
         mix_at(x, zz, .02)
-    # a short dry room burst: what a wall gives back inside 60 ms. kept small -
-    # the live reverbs add the real tail.
-    room = lp(white(rng, .09), 1400, 2) * env_ahd(nsamp(.09), .004, 0, .07) * gi * .35
-    mix_at(x, room, .014)
-    # mechanism: bolt/link clatter as a struck metal mode, not a filtered tick
+    # v92.1: the "room burst" slapback and the sine-partial casing/bolt rings
+    # that used to live here are GONE. The owner's first listen named them
+    # exactly: the 14 ms early reflection read as a hollow box on every shot,
+    # and 30-50 ms sine rings on every trigger pull read as glass, not steel.
+    # The mechanism is now a dull damped tick - filtered noise only, no
+    # ringing partials - and the tails come solely from the game's live
+    # reverbs, which the player can hear in proportion to distance.
     if V.get('act'):
         fa2, qa2, ga2, da2, dl = V['act']
-        mech = modal(rng, da2 * 2, [fa2, fa2 * 1.6, fa2 * 2.3], [.012, .009, .006], [1, .5, .3]) * ga2 * 1.5
-        mix_at(mech, bp(white(rng, da2), fa2, qa2) * env_ahd(nsamp(da2), .001, 0, da2) * ga2, 0)
+        mech = lp(white(rng, da2), min(fa2, 2400), 2) * env_ahd(nsamp(da2), .001, 0, da2 * .6) * ga2 * 1.2
         mix_at(x, mech, dl * (1 + rng.uniform(-.1, .1)))
-    # shell casing ring on the slower weapons
-    if kind in ('carbine', 'sniper', 'tower'):
-        ring = modal(rng, .18, [3100 * (1 + rng.uniform(-.08, .08)), 5200], [.03, .02], [1, .4]) * .045
-        mix_at(x, ring, .11 + rng.uniform(0, .04))
+    return x
+
+def r_sniper(rng, dur):
+    """v92.1: the owner asked for the sniper to stand apart from the other
+    small arms - a LOUDER, crack-forward report. Twin supersonic crack (the
+    N-wave's two shocks ~4 ms apart), a broad 3-7 kHz whip band, the bullet
+    zip, and only a modest low thump: the crack IS the voice."""
+    x = canvas(dur)
+    for i, at in enumerate((0.0, .004)):
+        tr = white(rng, .007)
+        tr[0] = 3.4 - i
+        tr *= np.exp(-np.arange(len(tr)) / (OSR * .0011))
+        mix_at(x, drive(hp(tr, 2800, 2), 3.4) * (1.15 - i * .35), at)
+    whip = hp(bp(white(rng, .09), 4600, .7), 2800, 2) * env_ahd(nsamp(.09), .001, 0, .07) * .85
+    mix_at(x, whip, .001)
+    body = bp(white(rng, .14), 1100, .6) * env_ahd(nsamp(.14), .002, 0, .11) * .55
+    mix_at(x, body, .002)
+    th = drive(osc('sine', 150, 46, .16, .12), 1.5) * env_ahd(nsamp(.16), .003, 0, .14) * .5
+    mix_at(x, th, .002)
+    zz = sweep_lp(white(rng, .12), 9000, 1200, .10) * env_ahd(nsamp(.12), .004, 0, .11) * .30
+    mix_at(x, zz, .02)
+    mech = lp(white(rng, .06), 2200, 2) * env_ahd(nsamp(.06), .001, 0, .04) * .10
+    mix_at(x, mech, .16 + rng.uniform(0, .04))
+    return x
+
+def r_rico(rng, dur):
+    """v92.1: small arms striking armor - the metallic ricochet ping the owner
+    asked for. A hard tiny clang, a fast falling whistle (the classic
+    'ping-eeow'), and a sub-40 ms metal ring: short enough to read as steel."""
+    x = canvas(dur)
+    tr = white(rng, .005)
+    tr[0] = 2.6
+    tr *= np.exp(-np.arange(len(tr)) / (OSR * .0009))
+    mix_at(x, drive(hp(tr, 3200, 2), 2.6) * .8, 0)
+    f0 = 2400 * (1 + rng.uniform(-.15, .15))
+    whis = osc('sine', f0, f0 * .28, dur * .8, dur * .55) * env_ahd(nsamp(dur * .8), .003, 0, dur * .6) * .5
+    mix_at(x, whis, .006)
+    zing = bp(white(rng, .06), 4200 * (1 + rng.uniform(-.1, .1)), 9) * env_ahd(nsamp(.06), .001, 0, .05) * .5
+    mix_at(x, zing, 0)
+    ring = modal(rng, .04, [1900 * (1 + rng.uniform(-.1, .1)), 3300], [.012, .008], [1, .5]) * .35
+    mix_at(x, ring, .002)
     return x
 
 def r_flame(rng, dur):
@@ -286,7 +316,8 @@ def r_launch(rng, kind, dur):
     elif kind == 'mortar':
         # the hollow tube: one strong resonance IS the sound
         mix_at(x, drive(hp(white(rng, .006), 700, 2), 1.8) * .35, 0)
-        tube = bp(white(rng, .30), 380, 5) * env_ahd(nsamp(.30), .004, 0, .24) * 1.3
+        # v92.1: q 5 -> 3.5 - at 5 the tube read as hollow rather than deep
+        tube = bp(white(rng, .30), 380, 3.5) * env_ahd(nsamp(.30), .004, 0, .24) * 1.3
         mix_at(x, tube, .001)
         thp = osc('sine', 230, 80, .18, .10) * env_ahd(nsamp(.18), .004, 0, .16) * 1.0
         mix_at(x, thp, 0)
@@ -388,12 +419,14 @@ def r_destroy(rng, dur):
     mix_at(x, sub, .002)
     mix_at(x, osc('triangle', 88, 52, .65, .40) * env_ahd(nsamp(.65), .003, 0, .60) * .8, .002)
     mix_at(x, drive(osc('sine', 64, 32, .3, .18), 1.4) * env_ahd(nsamp(.3), .008, 0, .28) * .7, .075)
-    # 2 structural groan: three detuned saws sagging through a falling low-pass
-    for f0, f1, g, dl in ((142, 58, .30, .15), (151, 62, .27, .17), (97, 41, .23, .16)):
-        saw = osc('sawtooth', f0 * (1 + rng.uniform(-.02, .02)), f1, 1.0, .85)
-        saw = sweep_lp(saw, 900, 180, .9) * env_ahd(nsamp(1.0), .10, .1, .95) * g
-        mix_at(x, saw, dl)
-    mix_at(x, bp(white(rng, .8), 300, 12) * env_ahd(nsamp(.8), .14, 0, .70) * .5, .18)
+    # 2 structural groan. v92.1: the first cut used three detuned SAWS here
+    # (ported from the live recipe) and the owner heard a chime riding the
+    # blast. Rendered offline the saws' partials are too clean; the groan is
+    # now torn noise ground through a falling low-pass - pitchless, so there
+    # is nothing to ring - and the high-Q 300 Hz resonance went with it.
+    for g, dl in ((.42, .15), (.30, .17)):
+        gr = sweep_lp(pink(rng, 1.0), 700, 120, .9) * env_ahd(nsamp(1.0), .10, .1, .95) * g
+        mix_at(x, gr, dl)
     # 3 collapse rumble
     rum = lp(pink(rng, dur - .4), 130, 2) * env_ahd(nsamp((dur - .4)), .10, .4, dur - .55) * 1.1
     mix_at(x, rum, .35)
@@ -419,34 +452,25 @@ def r_pop(rng, dur):
     grains(rng, x, 5, 1200, 7, .10, .22, gdur=.035, delay=.05, bias=1.2)
     return x
 
-def r_nest(rng, dur):
-    x = canvas(dur)
-    mix_at(x, drive(hp(white(rng, .006), 900, 2), 1.8) * .5, 0)
-    mix_at(x, lp(pink(rng, .16), 700, 2) * env_ahd(nsamp(.16), .002, 0, .12) * .8, 0)
-    # woody splintering: low modal knocks, irregular
-    for i in range(6):
-        at = .01 + (rng.random() ** 1.3) * (dur * .6)
-        f = 260 * (0.8 + rng.random() * 1.1)
-        mix_at(x, modal(rng, .12, [f, f * 2.7, f * 4.1], [.05, .02, .012], [1, .4, .2]) * .30, at)
-    grains(rng, x, 18, 1500, 5, dur * .8, .10, gdur=.05)
-    th = osc('sine', 110, 48, .20, .12) * env_ahd(nsamp(.20), .006, 0, .18) * .5
-    mix_at(x, th, .01)
-    return x
-
 def r_struct(rng, dur):
+    """v92.1 REDESIGN. The first cut was wire rattle through a comb resonator
+    plus metallic ring-downs, straight from the v64 'pulled apart, no
+    detonation' brief - and the owner heard a CHIME when a Heavy Barricade
+    died in combat. This voice now plays only on walls destroyed by fire
+    (selling uses the full building teardown since v87.1), so it is a small
+    blast with masonry crunch: transient, collapsing body, low thump, dense
+    debris - and not one ringing partial anywhere in it."""
     x = canvas(dur)
-    mix_at(x, bp(white(rng, .05), 2200, 7) * env_ahd(nsamp(.05), .001, 0, .04) * .5, 0)
-    # wire + sheet metal: comb-resonated rattle and a real metallic ring-down
-    rat = comb(bp(white(rng, dur * .8), 1900, 3), 330, .82, .8) * env_ahd(nsamp(dur * .8), .004, 0, dur * .55) * .30
-    mix_at(x, rat, .01)
-    for i in range(4):
-        at = .02 + (rng.random() ** 1.2) * (dur * .5)
-        f = 2400 * (0.7 + rng.random() * 1.4)
-        mix_at(x, modal(rng, .16, [f, f * 1.5], [.04, .025], [1, .5]) * .16, at)
-    th = osc('sine', 180, 70, .16, .10) * env_ahd(nsamp(.16), .003, 0, .14) * .55
-    mix_at(x, th, .005)
-    body = lp(white(rng, .4), 400, 2) * env_ahd(nsamp(.4), .02, 0, .32) * .5
-    mix_at(x, body, .02)
+    tr = white(rng, .008)
+    tr[0] = 2.8
+    tr *= np.exp(-np.arange(len(tr)) / (OSR * .0013))
+    mix_at(x, drive(hp(tr, 1600, 2), 2.2) * .75, 0)
+    bd = sweep_lp(white(rng, .28), 2800, 180, .12) * env_ahd(nsamp(.28), .002, 0, .22) * .95
+    mix_at(x, bd, 0)
+    th = drive(osc('sine', 80, 38, .20, .12), 1.6) * env_ahd(nsamp(.20), .004, 0, .18) * .8
+    mix_at(x, th, .002)
+    grains(rng, x, 22, 1500, 4, dur * .75, .13, gdur=.05, delay=.02)
+    grains(rng, x, 8, 550, 3, dur * .6, .11, gdur=.09, delay=.05, pinkish=True)
     return x
 
 def r_whoosh(rng, dur):
@@ -471,7 +495,7 @@ ROSTER = [
  ('gun_hmg',     2, .46, lambda r: r_gun(r, 'hmg', .46)),
  ('gun_vmg',     2, .34, lambda r: r_gun(r, 'vmg', .34)),
  ('gun_amg',     2, .32, lambda r: r_gun(r, 'amg', .32)),
- ('gun_sniper',  1, .88, lambda r: r_gun(r, 'sniper', .88)),
+ ('gun_sniper',  1, .88, lambda r: r_sniper(r, .88)),
  ('gun_tower',   2, .50, lambda r: r_gun(r, 'tower', .50)),
  ('flame',       1, 1.10, lambda r: r_flame(r, 1.10)),
  ('throw',       1, .40, lambda r: r_throw(r, .40)),
@@ -487,7 +511,9 @@ ROSTER = [
  ('boom_huge',   1, 2.10, lambda r: r_boom(r, 'huge', 2.10)),
  ('bld_destroy', 1, 2.80, lambda r: r_destroy(r, 2.80)),
  ('pop',         2, .22, lambda r: r_pop(r, .22)),
- ('nest_break',  1, .55, lambda r: r_nest(r, .55)),
+ # v92.1: nest_break is GONE - the owner decided smashing a wildlife den
+ # makes no sound at all. sfxNestBreak is a deliberate no-op in 03-audio.js.
+ ('rico',        3, .30, lambda r: r_rico(r, .30)),
  ('struct_break',1, .55, lambda r: r_struct(r, .55)),
  ('whoosh',      1, .85, lambda r: r_whoosh(r, .85)),
 ]
