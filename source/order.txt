@@ -1,0 +1,43 @@
+# Plastic Warfare source order - READ THIS BEFORE REORDERING ANYTHING.
+#
+# build.sh concatenates head.html, then every file listed here IN THIS ORDER,
+# then tail.html. This list is not a convenience and it is not alphabetical: it
+# is the file's ORIGINAL top-to-bottom order, and that order is load-bearing.
+#
+# The file holds 321 top-level `const`s, some derived from others, and at least
+# one mutation that runs AFTER the table it edits (`B.guardtower.dm=` follows the
+# B literal). Move a file up or down this list and you can change the simulation
+# while the diff looks like a pure file move. triage.sh is the check: a pure
+# reorganisation must leave all 42 layout pins and every hash trail untouched.
+#
+# Blank lines and lines starting with # are ignored.
+00-file-map.js
+01-constants.js
+02-tunables.js
+02b-assets.js
+03-audio.js
+04-tables.js
+05-setup-lobby.js
+06-state.js
+07-map-terrain.js
+08-pathfinding.js
+09-entities.js
+10-newgame.js
+11-ui.js
+12-selection-panel.js
+13-orders.js
+14-damage-fx.js
+15-unit-update.js
+16-building-projectiles.js
+17-ai.js
+18-world.js
+19-sim-tick.js
+20-render-library.js
+21-painters.js
+22-flags-commands.js
+23-net-input.js
+24-render.js
+25-post-processing.js
+26-frame.js
+27-field-manual.js
+28-menu-backdrop.js

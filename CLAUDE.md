@@ -4,13 +4,29 @@ Read this first. It is the orientation; `harness/README.md` is the detail.
 
 ## The shape of the project
 
-The whole game is **one file**: `plastic-warfare.html` (~920KB). Everything —
-simulation, rendering, audio, UI, netcode — lives in the single `<script>` block
-inside it. There is no build step for the game itself and no dependencies.
+The game is **assembled from `source/`** into one file, `plastic-warfare.html`
+(~1MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
+audio, UI, netcode — is still one `<script>` block in the shipped file; it is now
+written as ~30 files listed in `source/order.txt`. There are no dependencies.
 
-Every graphic is drawn procedurally on a canvas and every sound is synthesised at
-runtime. **There are no third-party assets in this repository**, and it must stay
-that way.
+**That order is load-bearing.** Read the header of `source/order.txt` before
+touching it: hundreds of top-level `const`s, some derived from others, plus a
+mutation that runs after the table it edits. Reorder and you can change the
+simulation while the diff looks like a file move.
+
+**This changed at v91** (roadmap 3, phase 1). Before it the game WAS a single
+hand-edited file. Two rules that governed the whole project until then are now
+retired on purpose:
+
+- ~~one file, no build step~~ — one BUILT file, from `source/`.
+- ~~no third-party assets~~ — `ASSET_MANIFEST` exists and is empty; phases 2 and
+  4 fill it. **Assets OVERRIDE, they never REPLACE**: every procedural painter
+  and synthesised voice stays as the fallback, which is what keeps a missing file
+  degrading to the old game and keeps the headless suite able to test drawing at
+  all.
+
+**The last single-file release is commit `b292773` (v90.2).** Check that out to
+run the game the original way — one file, no build, opens straight in a browser.
 
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
@@ -19,13 +35,24 @@ lead with implementation detail unless asked.
 
 ```sh
 cd harness
-./build.sh          # regenerates game.js AND pw.html from the HTML. ALWAYS run first.
+./build.sh          # ALWAYS run first. Since v91 this runs ../build.sh too, so
+                    # it picks up source/ edits, then regenerates game.js and pw.html.
 ```
 
-`game.js` and `pw.html` are generated and git-ignored, so the game's code exists
-in exactly one place. **A stale `pw.html` once made nine source-text tests check
-the previous release for three versions running** — that is why `build.sh` writes
-both, and why you run it before every test pass.
+The instruction has not changed and does not need to: `harness/build.sh` chains
+to the root build, so editing `source/js/foo.js` and running it is enough for the
+tests to see the edit. `plastic-warfare.html`, `game.js` and `pw.html` are all
+GENERATED now — edit `source/`, never them.
+
+`game.js` and `pw.html` are git-ignored; `plastic-warfare.html` is committed,
+because it is what a player opens. `./build.sh --check` at the root asserts the
+committed file matches a rebuild of the sources, and `T66.A` runs the same
+comparison inside the suite, so the two can never silently drift apart.
+
+**A stale `pw.html` once made nine source-text tests check the previous release
+for three versions running** — that is why `build.sh` writes both, and why you
+run it before every test pass. The chain to the root build exists so the same
+class of drift cannot open one level further up.
 
 ## Testing
 
@@ -255,14 +282,21 @@ can see. If a phase moves a trail, that phase has a bug.
 
 ### The phases, in order, and why the order is the order
 
-**Phase 1 — `source/` + a build step + an asset-loading phase. LANDS ON `main`.**
-Author in `source/*.js`; the build concatenates to the shipped HTML. This is the
-inversion of what `build.sh` already does (HTML → `game.js`), so half the
-machinery exists. Add an async load phase with an empty manifest. Ship it with
-ZERO assets and zero visual change. **This phase is behaviour-preserving and the
-trails must not move — that is its whole acceptance test.**
+**Phase 1 — `source/` + a build step + an asset-loading phase. LANDED AT v91.**
+Done. 30 source files, `source/order.txt`, a root `build.sh` that reassembles
+them, and `harness/build.sh` chained to it. `ASSET_MANIFEST` is in and empty;
+`assetsLoad()` runs at page open and only the Start button awaits it, so
+`newGame()` is still synchronous and the whole fixture suite is untouched.
+**Verified inert three ways:** the rebuild is byte-identical to the v90.2 file,
+all 42 layout pins and every hash trail reproduce, and the suite is 5,202/5,202.
+`tail_v91` (T66) carries the checks, including that a stale build fails loudly.
 
-**Phase 2 — recorded audio.** Cheapest real win. 13 functions, one gate.
+**Phase 2 — recorded audio. NEXT, and it goes on a branch off `main`.** Cheapest
+real win. 13 `sfx*` functions, one `audAt` gate, and `sndAsset()` already waiting
+for them. Everything phase 2 needs from phase 1 is in: put filenames in
+`ASSET_MANIFEST.snd`, decode on demand (the loader stores raw bytes on purpose,
+because an AudioContext only exists after the first gesture), and fall back to
+the existing synthesis whenever `sndAsset()` returns null.
 
 **Phase 3 — WebGL, still drawing the EXISTING procedurally-baked sprites.** A 2D
 WebGL renderer (PixiJS is the pick) rather than a game engine: an engine brings
@@ -277,9 +311,9 @@ so the Grunt can be a real texture while the other 24 stay procedural.
 
 ### Traps, named in advance
 
-- **Phase 1 must land on `main` BEFORE the renderer branch forks.** Otherwise
-  `main` edits `plastic-warfare.html` while the branch has `source/*.js`, and
-  every gameplay fix becomes a hand-merge. Split first, branch second.
+- ~~Phase 1 must land on `main` before the renderer branch forks.~~ Done at v91.
+  The branch can fork now, and `main` → branch merges stay clean because both
+  sides share the `source/` layout.
 - **Evaluation order is load-bearing.** 321 top-level `const`s, some derived from
   others, and at least one post-table mutation (`B.guardtower.dm=`). A
   concatenation order that differs from today's file order can change the

@@ -49,6 +49,53 @@ an offscreen buffer and composites it with tilt-shift, bloom, a grade and a
 vignette. The "render to a target, then process the target" shape a shader
 pipeline needs is not new work.
 
+#### Phase 1 LANDED at v91. What a phase-2 session needs to know
+
+The split is done: 30 files under `source/js/`, an explicit `source/order.txt`,
+a root `./build.sh` that concatenates them into `plastic-warfare.html`, and
+`harness/build.sh` chained to it so `cd harness && ./build.sh` still does the
+right thing. `ASSET_MANIFEST` exists and is empty.
+
+**It was proved inert three ways, and the first is the one to copy.** The split
+was cut at LINE BOUNDARIES out of the v90.2 file rather than retyped, so
+reassembling the sources reproduces that file **byte for byte** - the commit that
+introduced `source/` changes `plastic-warfare.html` by zero bytes. `./build.sh
+--check` asserts it from the shell and `T66.A` asserts it inside the suite, so
+the sources and the shipped file cannot drift. On top of that: all 42 layout pins
+and every hash trail reproduce, and the suite went 5,167 → 5,202 with no failures.
+
+Verify a stale build really is caught before trusting it, the way this release
+did: append a comment to any file in `source/js/`, do NOT rebuild, and run
+`./build.sh --check` — it exits 1 and names the byte difference, and `T66.A`
+fails twice.
+
+**Two seams phase 2 inherits, both already in place:**
+
+- `sndAsset(key)` returns `{bytes,buf}` or **null**, and null means "synthesise
+  it the way v90.2 did". The loader stores RAW BYTES rather than a decoded
+  `AudioBuffer` on purpose: decoding needs an `AudioContext`, and this project
+  creates one only inside the first user gesture because browsers refuse it
+  before. Phase 2 decodes on demand and caches into the `buf` slot.
+- All 13 `sfx*` functions already ask `audAt(x,y)` for `{gain,pan,d}` before they
+  make any noise. Recorded sound replaces what happens after that call and
+  nothing before it, so positional audio, distance falloff and the fog gate keep
+  working with no edit.
+
+**The seam phase 2 must not break** is the one `T66.C` pins: `newGame()` is
+synchronous and hundreds of fixtures call it that way. The load is kicked off at
+page open (`assetsLoad();` at the end of the boot) and only the Start button
+awaits it. If phase 2 ever makes `newGame` wait, the entire suite has to become
+asynchronous — so don't.
+
+`ASSETS`, `ASSET_MANIFEST` and `ASSETS_STATE` are client-local and must stay
+that way. `T66.C` writes an asset in and asserts neither `hashState` nor
+`saveState` moves. The reason is not tidiness: two clients in a lockstep match
+can legitimately hold different assets — one of them may have failed a download —
+and the match still has to agree tick for tick. **An asset may decide what a
+player sees or hears and must never decide what happens.**
+
+#### What phase 1 looked like before it landed, kept for the reasoning
+
 #### Phase 1 is the only phase with a structural risk, and it lands on `main`
 
 Phase 1 is `source/*.js` + a concatenating build + an async asset-load step,

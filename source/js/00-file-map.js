@@ -1,0 +1,100 @@
+
+"use strict";
+/* ============================================================
+   PLASTIC WARFARE — isometric toy-soldier RTS
+   ------------------------------------------------------------
+   FILE MAP - every entry is a banner comment, listed in true file order.
+   (v62: regenerated; the v43 map had drifted to 49 of the file's 87 sections
+    and out of file order besides. T41.F now reads the banners out of the live
+    source and fails if this list ever falls behind again, so it should not
+    need doing by hand a fourth time.)
+
+     CONSTANTS & MATH HELPERS .................................... TW/clamp/shuffle/mulberry/blobRadius/rr/shade
+     DETERMINISTIC CORE .......................................... dsin/dcos/datan2/dhyp/srand (bit-exact math)
+       combat pacing (longer engagements) ........................ RESCALE, HP_SCALE, DMG_SCALE
+       map-update tunables (mines / barricades / economy) ........ MINES_PER_MAP, MINE_KEEPOUT, HAZ_SC, BARR_COST, CARGO_CAP
+     AI BEHAVIOR PROFILES ........................................ per-bot personalities (jittered per match)
+     DIFFICULTY .................................................. eco / army / dmg handicaps
+     KING OF THE HILL ............................................ KOTH_R, KOTH_TARGET
+     VICTORY & PLACEMENT TUNABLES ................................ CTF_TARGET, build radii, BUILD_GAP, salvage/sell
+     ASSET MANIFEST & LOADER ..................................... v91: assetsLoad / imgAsset / sndAsset - EMPTY manifest, assets override
+     AUDIO ....................................................... buses / primitives / 8 gun & 6 launch voices / explosions / selection
+     DATA TABLES ................................................. FAC, U (units), B (buildings), MAPS
+     SUPPLY ...................................................... supCap / supUsed / supFree, derived not stored
+     RESEARCH CATALOG ............................................ tech tree, costs, prerequisites
+     RESEARCH LOCATION ........................................... which building researches what
+     SETUP SCREEN ................................................ army/map/mode pickers -> newGame
+     ONLINE LOBBY ................................................ host / join over manual WebRTC signalling
+       shared state model ........................................ LOBBY, seats, the wire messages
+       chat ...................................................... backlog + delivery
+       the roster every human sees ............................... live roster rendering
+       the one lobby code, and the one box that takes replies .... PW2 codec, paste-driven auto-reply
+       host ...................................................... lobHostPanel and the host side of the flow
+       join ...................................................... lobJoinPanel and the joiner side
+     GAME STATE .................................................. G, iso<->screen transforms
+     MAP / TERRAIN ............................................... makeMap, paintIsoTile, renderTerrain, decorations
+     PATHFINDING ................................................. A* (findPath), LOS smoothing, clearance grid, depenetration
+     ENTITIES .................................................... makeUnit / makeBuilding, cost helpers
+     NEW GAME .................................................... makeAIBrain(), newGame()
+     MESSAGES / UI ............................................... toasts, topbar, HQ shortcut, placement
+     RADIO TOWER CALL-DOWN PANEL ................................. ability arming UI
+     TESTING MODE ................................................ G.test sandbox: all armies, free/instant, no fog
+     UNIT PORTRAITS + ARMY READOUT ............................... portrait tiles, army strip
+     SPECTATE MODE ............................................... G.watch: read-only board, per-army report box
+     SELECTION PANEL ............................................. selection readout, production + researchBtn, menu hotkeys
+     ORDERS ...................................................... move / attack / harvest / rally
+     TEAM / ORDER QUEUE / PATROL / HOLD / VETERANCY / SELL HELPERS  shared order plumbing
+     PARATROOPER MUNITIONS + APC HELPERS ......................... para loadout swap, transport helpers
+     DAMAGE / DEATH / FX + COUNTER MATRIX ........................ armorOf/wcOf/targetDmgMul/applyDmg/kill, particles, decals
+     END-OF-MATCH CHART .......................................... stat history graphs
+     FOG HELPERS ................................................. fogAt / vision queries
+     FLAGS (CTF) ................................................. flag carry/return logic
+     KING OF THE HILL ............................................ KOTH_R, KOTH_TARGET
+     EVENT PINGS ................................................. minimap alerts, J-to-jump
+     UNIT UPDATE ................................................. nearestEnemy, fireAt, updateUnit
+       TURRETED HULLS ............................................ which hulls carry an independent turret
+       AIR-ONLY WEAPONS .......................................... weapons that may only engage air
+       SECONDARY WEAPON .......................................... second weapon plumbing
+       THE SECONDARY'S CLASSES ................................... how a secondary splits the target list
+     RADIO TOWER CALL-DOWNS ...................................... napalm / barrage / paradrop strikes
+       MEDIC STATION KEEPING ..................................... medic follow / heal doctrine
+     BUILDING UPDATE ............................................. production, research, economy
+     PROJECTILES ................................................. updateProjs
+     AI .......................................................... aiTick, doctrine, build order, call-downs
+       AI TACTICAL HELPERS ....................................... influence map, threat triage, spot picking
+       COUNTER-AWARE PRODUCTION .................................. composition targets, weapon mix, air caps
+     GHOST STORE ................................................. last-seen enemy memory
+     FOG ......................................................... vision raster
+     NEUTRAL WILDLIFE ............................................ creatures & nests
+     WAVE SURVIVAL ............................................... SURV_WAVES table, spawner, banner
+     TERRAIN HAZARD DAMAGE ....................................... code-2 burn hazards
+     MAIN UPDATE ................................................. update(dt)
+     DRAWING - PLASTIC RENDER LIBRARY ............................ the toy-styrene shader kit
+       core primitive: a molded plastic SPHERE / dome / bead ..... plSphere
+       core primitive: a molded plastic rounded PANEL / box face . plBox
+     SPRITE BAKE PIPELINE ........................................ bakeSprites / bakeCell / SPR
+       VEHICLE HULL PAINTER ...................................... vehBody
+       TANK TURRET ............................................... turret cells
+       AA MISSILE RACK ........................................... AA truck rack cells
+       BUILDING HULL PAINTER ..................................... bldBody
+       TROOPERS .................................................. infantry cells
+       UNITS ..................................................... per-key unit painters
+       BUILDINGS ................................................. per-key building painters
+       face-fitted detailing ..................................... decals fitted to a drawn face
+       CAST SHADOWS .............................................. baked contact shadows
+       PROPS ..................................................... map clutter painters
+       WILDLIFE NESTS & CREATURES ................................ nest + bug painters
+       RESOURCE NODES ............................................ plastic / battery pile painters
+       FLAGS ..................................................... CTF flag painters
+     COMMANDS .................................................... execCmd, submitCmd (lockstep)
+     STATE HASH + SNAPSHOT ....................................... hashState, saveState, loadState
+     NETWORK CORE ................................................ chunked snapshot transfer, resync
+     COMPACT SDP CODEC ........................................... PW2 binary signalling codec
+     WEBRTC GLUE (browser only) .................................. peer connection wiring
+     INPUT ....................................................... mouse + keyboard
+     RENDER ...................................................... render()
+       POST-PROCESSING ........................................... grade, vignette, bloom
+     MAIN LOOP ................................................... frame()
+     FIELD MANUAL (setup-screen info panel) ...................... infoGround, infoFake, the showcase stage
+     MENU BACKDROP (MENUBG) ...................................... the animated setup-screen backdrop
+   ============================================================ */

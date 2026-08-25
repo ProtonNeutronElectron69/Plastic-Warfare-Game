@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Plastic Warfare</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#1c2417;font-family:'Trebuchet MS',Verdana,sans-serif}
+canvas{display:block}
+#view{position:absolute;inset:0;cursor:default}
+/* ---------- SETUP SCREEN ---------- */
+#setup{position:absolute;inset:0;background:linear-gradient(160deg,#2c4a1e,#1a2c12 60%,#10210c);overflow:auto;z-index:30;display:flex;flex-direction:column;align-items:center;padding:24px 12px 40px}
+#setup h1{color:#fff;font-size:44px;letter-spacing:2px;text-shadow:0 4px 0 #0a4d12,0 6px 14px rgba(0,0,0,.6);margin-bottom:2px}
+#setup .sub{color:#bfe3a6;margin-bottom:22px;font-size:14px}
+.srow{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:18px;max-width:980px}
+.slabel{width:100%;text-align:center;color:#e7ffd8;font-weight:bold;font-size:15px;letter-spacing:1px;margin-bottom:2px;text-transform:uppercase}
+.card{background:rgba(255,255,255,.08);border:3px solid rgba(255,255,255,.18);border-radius:14px;padding:12px 14px;width:215px;cursor:pointer;color:#eee;transition:transform .12s, border-color .12s;position:relative}
+.card:hover{transform:translateY(-3px)}
+.card.sel{border-color:#ffe34d;background:rgba(255,255,255,.16);box-shadow:0 0 18px rgba(255,227,77,.35)}
+.card .cname{font-weight:bold;font-size:17px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.card .dot{width:18px;height:18px;border-radius:50%;box-shadow:inset -3px -4px 4px rgba(0,0,0,.35), inset 3px 3px 4px rgba(255,255,255,.5)}
+.card .cdesc{font-size:12px;line-height:1.45;color:#d8e8cc}
+.card .uq{margin-top:6px;font-size:11.5px;color:#ffe9a8}
+.mcard{width:190px}
+.opt{background:rgba(255,255,255,.08);border:3px solid rgba(255,255,255,.18);border-radius:12px;color:#eee;padding:10px 22px;cursor:pointer;font-size:15px;font-weight:bold}
+.opt.sel{border-color:#ffe34d;background:rgba(255,255,255,.16)}
+#startBtn{margin-top:8px;font-size:22px;font-weight:bold;padding:14px 60px;border:none;border-radius:14px;cursor:pointer;color:#1a3009;background:linear-gradient(180deg,#ffe96b,#f4b41a);box-shadow:0 5px 0 #a86e00,0 8px 16px rgba(0,0,0,.5);letter-spacing:1px}
+#startBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #a86e00}
+/* ---------- v58 MENU: moulded chrome over the parade ground ----------
+   Everything below is scoped to #setup on purpose. `.opt` is also worn by the
+   Field Manual header tabs, #infoClose, #againBtn and the end-screen chart
+   tabs/toggles; those keep the v57 look. #chartToggles .ctog in particular
+   signals its off state with opacity:.45, which reads as mud over a gradient
+   face. `.card` is setup-only, but is scoped here too so the rule set reads
+   as one unit. */
+/* v65: the scrim was 93% opaque at centre and the marching ranks behind it were
+   effectively invisible. Ellipse tightened onto the control column, every stop
+   lightened, rim taken to fully transparent. The contrast the cards used to
+   borrow from this layer is now carried by the cards themselves (below). */
+#setup{background:radial-gradient(ellipse 560px 760px at 50% 36%,
+  rgba(8,14,5,.78) 0%, rgba(8,14,5,.62) 40%, rgba(8,14,5,.26) 68%, rgba(8,14,5,0) 100%);
+  cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><path d='M4 2 L4 23.5 L9.6 18 L13.2 26.4 L17.6 24.5 L14 16.6 L21.4 16.3 Z' fill='%2364b243' stroke='%231b3a11' stroke-width='2.2' stroke-linejoin='round'/><path d='M6.4 5.4 L6.4 15.6' stroke='rgba(255,255,255,.6)' stroke-width='1.7' stroke-linecap='round'/></svg>") 3 2, default}
+#setup button,#setup .card{cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'><path d='M4 2 L4 23.5 L9.6 18 L13.2 26.4 L17.6 24.5 L14 16.6 L21.4 16.3 Z' fill='%23ffe34d' stroke='%23533c00' stroke-width='2.2' stroke-linejoin='round'/><path d='M6.4 5.4 L6.4 15.6' stroke='rgba(255,255,255,.75)' stroke-width='1.7' stroke-linecap='round'/></svg>") 3 2, pointer}
+/* #setup is a column flex box and the menu is taller than the window, so every
+   DIRECT child is shrinkable. Controls inside .srow are grandchildren and safe;
+   #startBtn and #infoBtn sit directly in the column and are not. min-height:auto
+   would normally protect them, but that automatic minimum only applies while
+   overflow is visible - which is why the seam pseudo-elements below are clipped
+   with their own border-radius and never with an overflow clip. That is what
+   squeezed START to 32px and the Field Manual button to 22px during mockup. */
+#setup > *{flex:none}
+#setup h1{font-size:56px;letter-spacing:5px;color:#f3fbe9;margin-top:14px;
+  text-shadow:0 1px 0 #c6e2ac,0 3px 0 #4d8034,0 5px 0 #2f5620,0 7px 0 #1e3a14,0 13px 22px rgba(0,0,0,.72)}
+#setup .sub{color:#cfe6b0;font-size:13px;letter-spacing:.3px;margin-bottom:6px}
+#setup .sub::after{content:'MOULDED IN ONE PIECE \00a0\00b7\00a0 SERIES 58 \00a0\00b7\00a0 CONTENTS: 4 ARMIES';
+  display:block;margin:10px 0 14px;font:11px/1 'Courier New',monospace;letter-spacing:2.6px;color:#7f9c69}
+#setup .slabel{font:bold 11px/1 'Courier New',monospace;letter-spacing:3.4px;color:#9dbb84;margin-bottom:6px}
+#setup .slabel::before{content:'\25b8 ';color:#ffe34d}
+/* moulded plastic tab: hard extrusion, inset bevel, and the seam every real
+   figure carries down the middle of the mould */
+#setup .opt{border:0;border-radius:11px;padding:11px 24px;color:#f4fbec;
+  background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.07) 46%,rgba(0,0,0,.26));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.34),0 4px 0 #16290e,0 8px 14px rgba(0,0,0,.45);
+  position:relative;transition:transform .09s ease,box-shadow .09s ease,background .14s ease}
+#setup .opt::after{content:'';position:absolute;inset:0;pointer-events:none;border-radius:11px;
+  background:linear-gradient(90deg,transparent 49.5%,rgba(255,255,255,.17) 50%,transparent 50.5%)}
+#setup .opt:hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 6px 0 #16290e,0 11px 18px rgba(0,0,0,.5)}
+#setup .opt:active{transform:translateY(4px);box-shadow:inset 0 2px 4px rgba(0,0,0,.4),0 0 0 #16290e}
+#setup .opt.sel{color:#2b2200;background:linear-gradient(180deg,#fff3a0,#f7c631 52%,#dfa211);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8),inset 0 -2px 0 rgba(0,0,0,.2),0 4px 0 #8a6000,0 9px 18px rgba(0,0,0,.5),0 0 26px rgba(255,214,64,.32)}
+#setup .opt.sel::after{background:linear-gradient(90deg,transparent 49.5%,rgba(255,255,255,.5) 50%,transparent 50.5%)}
+#setup .card{border:0;border-radius:14px;
+  background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(0,0,0,.30));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 5px 0 #16290e,0 10px 20px rgba(0,0,0,.5);
+  transition:transform .12s ease,box-shadow .12s ease}
+#setup .card:hover{transform:translateY(-4px);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 8px 0 #16290e,0 15px 26px rgba(0,0,0,.55)}
+#setup .card.sel{background:linear-gradient(180deg,rgba(255,240,160,.24),rgba(0,0,0,.22));
+  box-shadow:inset 0 0 0 3px #ffe34d,inset 0 1px 0 rgba(255,255,255,.45),0 5px 0 #8a6000,0 12px 24px rgba(0,0,0,.55),0 0 30px rgba(255,214,64,.3)}
+#setup .card .uq{color:#ffdf8e}
+#startBtn{margin-top:16px;font-size:24px;letter-spacing:2px;padding:16px 68px;border-radius:16px;
+  color:#2b2200;background:linear-gradient(180deg,#fff6a8,#ffd447 48%,#eda813);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.85),inset 0 -3px 0 rgba(0,0,0,.22),0 7px 0 #8a5f00,0 14px 26px rgba(0,0,0,.55),0 0 44px rgba(255,205,60,.3);
+  position:relative}
+#startBtn::after{content:'';position:absolute;inset:0;border-radius:16px;pointer-events:none;
+  background:linear-gradient(90deg,transparent 49.6%,rgba(255,255,255,.55) 50%,transparent 50.4%)}
+#startBtn:hover{transform:translateY(-2px);box-shadow:inset 0 2px 0 rgba(255,255,255,.85),0 9px 0 #8a5f00,0 18px 30px rgba(0,0,0,.55),0 0 54px rgba(255,205,60,.4)}
+#startBtn:active{transform:translateY(5px);box-shadow:inset 0 3px 6px rgba(0,0,0,.3),0 2px 0 #8a5f00}
+#infoBtn{margin-top:18px}
+#menuBg{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+/* ---------- HUD ---------- */
+#hud{position:absolute;inset:0;pointer-events:none;display:none;z-index:10}
+/* v90.2: the bar is twice as tall and everything in it is scaled to match. Its
+   height is a VARIABLE rather than a literal because four other boxes hang off
+   the bottom edge of it - the right rail, the help box, the survival banner and
+   (as of this release) the message toasts - and every one of them was a
+   hand-typed 50 or 52 that nothing tied back to the 42 it was derived from.
+   Doubling the bar meant finding all four by eye; the next person changes one
+   number. */
+:root{--topbarH:84px;
+      /* the survival banner sits directly under the bar and this is what it
+         stands: 26px headline + 15px subline + its margin, rounded up. The
+         toasts clear it, which is the whole reason this number is named. */
+      --bannerH:56px}
+#topbar{position:absolute;top:0;left:0;right:0;height:var(--topbarH);background:linear-gradient(180deg,rgba(20,30,14,.95),rgba(20,30,14,.82));display:flex;align-items:center;gap:22px;padding:0 18px;pointer-events:auto;border-bottom:2px solid rgba(255,255,255,.12);color:#fff;font-size:20px}
+#topbar .chip{display:flex;align-items:center;gap:9px;font-weight:bold}
+.dotS{width:20px;height:20px;border-radius:50%;box-shadow:inset -2px -3px 3px rgba(0,0,0,.4),inset 2px 2px 3px rgba(255,255,255,.5)}
+.res{font-weight:bold}
+.res.p{color:#ffb95e}.res.e{color:#7fe3ff}
+#modeinfo{color:#ffe9a8;font-weight:bold}
+#topbar .spacer{flex:1}
+/* v90.2: sized for the taller bar. The three .tbtn buttons that live OUTSIDE it -
+   #hqBtn, #mmSizeBtn and #hqPlaceBtn - each already override both font-size and
+   padding, so raising the base moves the bar and nothing else. */
+.tbtn{pointer-events:auto;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:bold;font-size:17px}
+.tbtn:hover{background:rgba(255,255,255,.25)}
+/* v50 testing mode: the army-switch chips that replace nothing and appear only in testing mode */
+#armySwitch{display:none;align-items:center;gap:5px}
+.aBtn{pointer-events:auto;background:rgba(255,255,255,.10);border:2px solid rgba(255,255,255,.3);color:#fff;border-radius:7px;padding:3px 11px;cursor:pointer;font-weight:bold;font-size:17px;line-height:24px}
+.aBtn.on{background:rgba(255,255,255,.30);box-shadow:0 0 0 2px rgba(255,227,77,.85) inset}
+/* v73: a COLUMN now, so the HQ button sits directly above the selection panel
+   whatever height that panel happens to be. paddingRight is overwritten by
+   applyMMSize with the live minimap reserve - the map is pinned to the corner
+   and this is what stops the panel sliding under it on a narrow window. */
+#bottombar{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:8px;pointer-events:none}
+#bottombar > *{flex:none}  /* v58 squeeze rule: a column flex child that holds a button must never shrink */
+#hqBtn{display:none;font-size:12px;padding:3px 11px}
+/* v90.1: the way back into the game, parked over the minimap because that is the
+   one piece of chrome that is on screen whatever is selected - and with no HQ
+   standing there is nothing left to select that carries a Construct menu. Square
+   on purpose: it is one action, not a labelled row. */
+#hqPlaceBtn{display:none;flex:none;width:26px;height:26px;padding:0;font-size:14px;line-height:20px;text-align:center;border-color:rgba(255,210,77,.6)}
+#hqPlaceBtn.dis{opacity:.45;cursor:not-allowed}
+#hqPlaceBtn.dis:hover{background:rgba(255,255,255,.12)}
+#selPanel h4{color:#cfe6b8;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.bb{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;padding:5px 6px;cursor:pointer;font-size:11.5px;text-align:left;line-height:1.25}
+.bb:hover:not(.dis){background:rgba(255,255,255,.22)}
+.bb.dis{opacity:.42;cursor:not-allowed}
+.bb b{display:block;font-size:12px}
+.cp{color:#ffb95e;font-weight:bold}.ce{color:#7fe3ff;font-weight:bold}
+/* v90.1: 1240 held TWELVE tiles, and every army's Construct menu is thirteen, so
+   the build menu had always wrapped onto a second row and stood twice as tall as
+   it needed to over the middle of the battlefield. 1340 is thirteen 96px tiles
+   plus their twelve 5px gaps plus this box's own padding and border. */
+#selPanel{pointer-events:auto;background:rgba(18,26,12,.92);border:2px solid rgba(255,255,255,.15);border-radius:12px;padding:8px;width:100%;min-height:118px;max-width:1340px}
+#selInfo{color:#fff;font-size:12.5px}
+/* v71: each group is a COLUMN inside one band. Stacking them wasted the width
+   the retired Construct panel freed: six tiles in a 1240px row, then another
+   heading row underneath it. Only Construct claims a full line of its own. */
+#prodBtns{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:flex-start;margin-top:6px}
+.grp{display:flex;flex-direction:column;min-width:0}
+.grp.full{flex-basis:100%}
+.gitems{display:flex;flex-wrap:wrap;gap:5px;align-items:flex-start}
+.gsub{color:#93a884;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;margin:6px 0 4px;
+ display:flex;align-items:center;gap:7px;width:100%}
+.gsub:after{content:"";flex:1;height:1px;background:rgba(255,255,255,.09)}
+/* ---- the tile ---- */
+:root{--tw:96px;--th:80px;--short:#ff5a5a;--resfill:#ff8f2e;--resedge:#ffc27a;
+      --teamc:#4caf50;--teamlt:#c8f5b8}
+/* v90.1: the width the panel is GIVEN is the window minus the minimap reserve, so
+   a wider max-width alone only buys the single Construct row back on a large
+   monitor. The tile narrows instead of the row wrapping, because a second row of
+   build tiles is what the player asked to stop losing the field to. Height is
+   untouched at every step: the well letterboxes, and the label was already
+   ellipsised at 96px for the longer structure names. */
+@media (max-width:1700px){:root{--tw:86px}}
+@media (max-width:1500px){:root{--tw:78px}}
+@media (max-width:1360px){:root{--tw:70px}}
+.tl{background:rgba(255,255,255,.10);border:2px solid rgba(255,255,255,.20);border-radius:8px;
+ color:#fff;cursor:pointer;padding:0;overflow:hidden;position:relative;display:block;
+ width:var(--tw);height:var(--th);font:inherit;text-align:left}
+.tl:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.44)}
+.tl .w{background:linear-gradient(160deg,#33402a,#141b0e);height:100%;display:flex;
+ align-items:center;justify-content:center;position:relative;overflow:hidden;padding:16px 5px 17px}
+.tl .w img{max-width:100%;max-height:100%;object-fit:contain;display:block;
+ filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.tl .t{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;gap:4px;
+ padding:2px 5px;font-size:10px;font-weight:bold;white-space:nowrap;
+ background:linear-gradient(180deg,rgba(6,9,4,.82),rgba(6,9,4,0))}
+.tl .b{position:absolute;bottom:0;left:0;right:0;padding:2px 5px 3px;
+ background:linear-gradient(0deg,rgba(6,9,4,.9),rgba(6,9,4,.2))}
+.tl .b span{font-size:10.5px;font-weight:bold;line-height:1.14;display:block;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl .cz{opacity:.3}
+.tl .mk{position:absolute;right:3px;bottom:19px;font-size:15px;line-height:1;
+ text-shadow:0 1px 3px #000,0 0 6px #000;pointer-events:none;opacity:.95}
+.tl .chev{position:absolute;top:16px;right:4px;font-size:11px;color:#ffd24d;text-shadow:0 1px 2px #000}
+/* v73: the tile's hotkey, mirroring .chev across the well */
+.tl .hk{position:absolute;top:16px;left:4px;min-width:15px;padding:0 3px;border-radius:4px;
+ background:rgba(6,9,4,.8);border:1px solid rgba(255,210,77,.5);color:#ffd24d;
+ font-size:10px;line-height:13px;font-weight:bold;text-align:center;pointer-events:none}
+.tl.up .w{box-shadow:inset 0 0 0 2px rgba(255,210,77,.5)}
+.tl.locked .w img{filter:grayscale(.8) brightness(.92) drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.tl.locked{border-color:rgba(255,255,255,.13)}
+/* locked already greys the sprite; stacking the unaffordable dim on top of it
+   drove the art to near-black and defeated the point of showing a sprite */
+.tl.locked.dis .w img{opacity:.8;filter:grayscale(.85) brightness(.72) drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.tl.dis{cursor:not-allowed}
+.tl.dis .w img{opacity:.34;filter:grayscale(.7) brightness(.6) drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.tl.dis .b{opacity:.45}
+.tl.dis .t span{opacity:.4}
+.tl.dis:hover{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.20)}
+/* the blocking resource stays lit and red while everything around it dims */
+.tl .short{color:var(--short)!important;opacity:1!important;text-shadow:0 0 6px rgba(255,90,90,.45)}
+.tl .wash{position:absolute;left:0;right:0;bottom:0;background:var(--resfill);opacity:.42;pointer-events:none}
+.tl .edge{position:absolute;left:0;right:0;height:2px;background:var(--resedge);pointer-events:none;
+ box-shadow:0 0 5px 1px rgba(255,255,255,.35)}
+/* ---- queue chip ---- */
+.qc{width:58px;position:relative;border-radius:7px;overflow:hidden;border:2px solid rgba(255,255,255,.22);
+ background:linear-gradient(160deg,#33402a,#141b0e);cursor:pointer;flex:none;padding:0}
+.qc .qa{height:50px;display:flex;align-items:center;justify-content:center;padding:4px;position:relative}
+.qc img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.qc .ql{font-size:9.5px;text-align:center;background:rgba(0,0,0,.48);color:#e9f3dc;padding:1px 2px;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:bold}
+.qc.pend{opacity:.5}
+.qc .wash{position:absolute;left:0;right:0;bottom:0;background:var(--teamc);opacity:.5;pointer-events:none}
+.qc .edge{position:absolute;left:0;right:0;height:2px;background:var(--teamlt);pointer-events:none;
+ box-shadow:0 0 5px 1px rgba(255,255,255,.4)}
+#queueRow{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;align-items:flex-start}
+.qItem{background:rgba(255,255,255,.15);border-radius:6px;color:#ffe9a8;font-size:11px;padding:3px 7px}
+/* v73: pinned to the corner rather than trailing the selection panel */
+#minimapWrap{position:absolute;right:8px;bottom:8px;pointer-events:auto;background:rgba(18,26,12,.92);border:2px solid rgba(255,255,255,.15);border-radius:12px;padding:6px}
+#minimap{border-radius:8px;cursor:crosshair}
+/* ---------- v27: portraits, army readout, minimap header ---------- */
+#portGrid{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;max-height:96px;overflow-y:auto;padding-right:2px}
+.port{width:26px;cursor:pointer}
+.port .pfall{width:26px;height:26px;border-radius:4px;background:linear-gradient(160deg,#2a3421,#161d10);color:#dfe9d2;font-size:9px;font-weight:bold;text-align:center;line-height:22px;box-sizing:border-box}
+.port .pbar{height:3px;border-radius:2px;background:rgba(255,255,255,.12);margin-top:2px;overflow:hidden}
+.port .pbar i{display:block;height:100%}
+/* v73: the three right-hand panels were three independent absolute boxes, and
+   the radio panel positioned itself by measuring the army panel every refresh.
+   One column holds them now; its `bottom` is written by applyMMSize so the
+   stack always stops clear of the corner-pinned minimap. */
+#rightRail{position:absolute;right:8px;top:calc(var(--topbarH) + 8px);bottom:8px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;overflow:hidden}
+#rightRail > *{flex:0 1 auto;min-height:0}
+#radioPanel{flex:none}  /* it holds .bb buttons; the v58 squeeze trap applies */
+#armyPanel{width:150px;max-height:60vh;overflow:hidden;background:rgba(18,26,12,.85);border:2px solid rgba(255,255,255,.12);border-radius:12px;padding:6px 8px;pointer-events:none;display:none}
+#armyPanel h4{color:#cfe6b8;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+/* ---------- v55: spectator box ---------- */
+#watchPanel{width:252px;max-height:76vh;overflow-y:auto;background:rgba(18,26,12,.88);border:2px solid rgba(255,255,255,.14);border-radius:12px;padding:6px 8px;pointer-events:auto;display:none}
+#watchPanel h4{color:#cfe6b8;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:flex;justify-content:space-between}
+.wcard{background:rgba(255,255,255,.05);border-left:3px solid #888;border-radius:8px;padding:4px 6px 5px;margin-bottom:5px;cursor:pointer}
+.wcard.on{background:rgba(255,255,255,.13)}
+.wtop{display:flex;align-items:center;gap:5px;font-size:12px;color:#fff;font-weight:bold}
+.wtop .dotS{width:9px;height:9px;border-radius:50%;flex:none}
+.wtop .wteam{margin-left:auto;color:#cfe6b8;font-weight:normal;font-size:10px}
+.wprof{color:#ffd98a;font-size:10px;letter-spacing:.4px;text-transform:uppercase;margin:2px 0 3px}
+.wline{font-size:11px;color:#e8f2dc;margin:1px 0}
+.wq{font-size:10.5px;color:#d8e6c8;margin-top:2px;line-height:1.35}
+.wq i{color:#9fbf88;font-style:normal}
+#watchSpeed{display:flex;gap:3px;margin-bottom:6px}
+.wspd{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#cfe6b8;font-family:inherit;font-size:10.5px;padding:3px 0;border-radius:6px;cursor:pointer}
+.wspd:hover{background:rgba(255,255,255,.13)}
+.wspd.on{background:#6f8f4a;color:#fff;border-color:#8fb46a;font-weight:bold}
+#radioPanel{width:150px;background:rgba(18,26,12,.9);border:2px solid rgba(255,255,255,.15);border-radius:12px;padding:6px 8px;pointer-events:auto;display:none}
+#radioPanel h4{color:#cfe6b8;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+#radioPanel .bb{width:100%;margin:0 0 4px 0}
+.arow{display:flex;align-items:center;gap:6px;color:#e8f2dc;font-size:12px;margin:2px 0}
+.arow img{width:18px;height:18px;border-radius:3px;display:block}
+.arow .an{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arow .ac{font-weight:bold;color:#ffe9a8}
+#mmHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+#mmHead span{color:#cfe6b8;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+#mmSizeBtn{font-size:11px;padding:2px 8px}
+/* v90.2: the toasts were 160px off the BOTTOM, which is squarely on top of the
+   selection panel - the Construct row, the Train row and the ability buttons all
+   sat under five seconds of text every time anything happened. They are at the
+   top now, under the bar and clear of the survival banner's own slot, which is
+   the only other thing that claims the top centre. Both offsets are derived from
+   the two variables rather than typed, so moving the bar moves the toasts.
+   `bottom:auto` is explicit: the rule it replaces set one, and a stylesheet that
+   states both pins the box to a height it never asked for. */
+#msgs{position:absolute;top:calc(var(--topbarH) + 10px + var(--bannerH));bottom:auto;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
+.msg{background:rgba(0,0,0,.62);color:#ffe9a8;padding:5px 16px;border-radius:20px;font-size:14px;font-weight:bold;animation:fadeout 5s forwards}
+/* enters from ABOVE now: a toast anchored to the top that slides up out of the
+   page below it reads as leaving rather than arriving */
+@keyframes fadeout{0%{opacity:0;transform:translateY(-8px)}8%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
+#overlayCenter{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:20;pointer-events:auto}
+#endBox{background:linear-gradient(170deg,#2c4a1e,#16240f);border:4px solid rgba(255,255,255,.25);border-radius:18px;padding:34px 50px;text-align:center;color:#fff}
+#endBox h2{font-size:40px;margin-bottom:8px;text-shadow:0 3px 0 rgba(0,0,0,.5)}
+#endBox .stats{color:#cfe6b8;font-size:14px;margin-bottom:18px;line-height:1.7}
+#helpBox{position:absolute;top:calc(var(--topbarH) + 10px);right:12px;width:330px;background:rgba(14,20,10,.95);border:2px solid rgba(255,255,255,.2);border-radius:12px;color:#ddd;padding:14px;font-size:12.5px;line-height:1.55;display:none;z-index:25;pointer-events:auto}
+#helpBox h3{color:#ffe9a8;margin-bottom:6px}
+#helpBox b{color:#fff}
+#pausedTag{position:absolute;top:46%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:46px;font-weight:bold;text-shadow:0 4px 12px #000;display:none;z-index:15;letter-spacing:4px}
+#survBanner{position:absolute;top:calc(var(--topbarH) + 10px);left:50%;transform:translateX(-50%);text-align:center;z-index:14;display:none;pointer-events:none;text-shadow:0 2px 8px #000}
+#survBanner .wbig{font-size:26px;font-weight:800;letter-spacing:2px;color:#ffe34d}
+#survBanner .wsub{font-size:15px;font-weight:600;color:#e6eef7;margin-top:2px}
+#netPanel{max-width:780px;margin:10px auto 0;text-align:left;background:#111b26;border:1px solid #24384d;border-radius:10px;padding:10px 14px}
+.nhead{margin-bottom:8px;font-size:14px}
+.nrow{display:flex;gap:8px;align-items:center;margin:7px 0;flex-wrap:wrap}
+.nslot{border-top:1px solid #1d2f42;padding-top:7px}
+.nlab{font-size:12px;color:#8fb3d9;min-width:86px}
+.nstat{font-size:12px;color:#ffd23f;margin-top:6px}
+.ncode{flex:1;min-width:220px;height:40px;background:#0d1520;color:#9fd6ff;border:1px solid #2b4a66;border-radius:6px;font:11px monospace;padding:4px;resize:vertical}
+.nwide{min-width:100%;height:58px}
+.nnote{font-size:11px;color:#7f9ab8;margin:1px 0 6px}
+.nseaton{outline:2px solid #7ab6ff}
+.nname{background:#0d1520;color:#e8f1ff;border:1px solid #2b4a66;border-radius:6px;padding:5px 8px;font-size:13px}
+.nsub{margin:11px 0 5px;font-size:13px;color:#cfe3ff;border-top:1px solid #1d2f42;padding-top:9px}
+.nset{font-size:12px;color:#9fd6ff;background:#0d1520;border:1px solid #24384d;border-radius:6px;padding:6px 9px;margin:7px 0}
+.nros{display:flex;flex-direction:column;gap:4px}
+.nrp{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#0d1520;border:1px solid #1d2f42;border-radius:6px;padding:5px 9px;font-size:12px}
+.nrp.nrpme{border-color:#2f5f88;background:#101c28}
+.nrdot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
+.nrname{color:#e8f1ff;font-weight:600;min-width:96px}
+.nrbadge{color:#8fb3d9}
+.nrfac{color:#9fd6ff}
+.nrwas{color:#7f97ad;font-style:italic}
+.nryou{color:#4caf50;font-size:11px}
+.nrrdy{margin-left:auto;color:#ffd23f}
+.nchlog{height:96px;overflow-y:auto;background:#0d1520;border:1px solid #24384d;border-radius:6px;padding:5px 8px;font-size:12px;display:flex;flex-direction:column;gap:2px}
+.nchl{color:#cfe3ff;word-break:break-word}
+.nchn{color:#ffd23f;margin-right:5px}
+.nchatin{flex:1;min-width:180px;background:#0d1520;color:#e8f1ff;border:1px solid #2b4a66;border-radius:6px;padding:5px 8px;font-size:13px}
+#endChart{background:#0d1520;border:1px solid #24384d;border-radius:8px;margin:8px auto 6px;display:block;max-width:100%}
+#chartTabs{margin-top:12px}
+#chartTabs .ctab{font-size:12px;padding:5px 12px;margin:0 3px}
+#chartToggles{margin-bottom:10px}
+#chartToggles .ctog{font-size:12px;padding:4px 10px;margin:0 3px;opacity:.45}
+#chartToggles .ctog.sel{opacity:1}
+/* ---------- v31: field manual (info panel) ---------- */
+#infoPanel{position:absolute;inset:0;z-index:40;display:none;flex-direction:column;background:linear-gradient(160deg,#26411a,#152510 60%,#0d1c09);color:#eee}
+#infoPanel.open{display:flex}
+#infoHead{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:2px solid rgba(255,255,255,.14);flex-wrap:wrap}
+#infoHead h2{color:#ffe9a8;font-size:20px;letter-spacing:1px;margin-right:10px;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.itab,#infoClose{font-size:14px;padding:8px 18px}
+#infoClose{margin-left:auto}
+#infoGrid{flex:1 1 0;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;padding:12px;align-content:start}
+.icell{background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.14);border-radius:10px;padding:6px 4px 5px;cursor:pointer;text-align:center;transition:transform .1s,border-color .1s}
+.icell:hover{background:rgba(255,255,255,.15);transform:translateY(-2px)}
+.icell.sel{border-color:#ffe34d;background:rgba(255,255,255,.16);box-shadow:0 0 12px rgba(255,227,77,.3)}
+.icell canvas{width:56px;height:56px;border-radius:6px;display:block;margin:0 auto 4px}
+.icell .inm{font-size:11.5px;font-weight:bold;color:#e8f2dc;line-height:1.2}
+#infoDetail{flex:1 1 0;min-height:0;border-top:2px solid rgba(255,255,255,.14);display:flex}
+#infoStage{flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:8px 10px}
+#infoCv{background:rgba(0,0,0,.25);border:2px solid rgba(255,255,255,.12);border-radius:12px;height:calc(50vh - 68px);max-height:340px;width:auto}
+#infoStats{flex:1;min-width:0;overflow-y:auto;padding:10px 18px;font-size:13px;line-height:1.5}
+#infoStats h3{color:#ffe9a8;font-size:19px;margin-bottom:2px}
+#infoStats .isub{color:#bfe3a6;font-size:12px;margin-bottom:8px;line-height:1.45}
+.istat{display:flex;gap:10px;margin:3px 0}
+.istat b{flex:0 0 92px;color:#cfe6b8;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;padding-top:2px}
+.istat span{flex:1}
+.ifoot{margin-top:10px;font-size:11px;color:#9db98a;line-height:1.45}
+#infoControls{flex:1 1 0;min-height:0;overflow-y:auto;padding:10px 24px 24px;font-size:13.5px;line-height:1.75;display:none;border-top:2px solid rgba(255,255,255,.14)}
+#infoControls h3{color:#ffe9a8;margin:14px 0 4px}
+#infoControls b{color:#fff}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<div id="setup">
+  <h1>PLASTIC WARFARE</h1>
+  <div class="sub">A toy-soldier real-time strategy battle &mdash; molded, melted, and mobilized.</div>
+  <div class="srow"><div class="slabel">Choose Your Army</div></div>
+  <div class="srow" id="facRow"></div>
+  <div class="srow" id="modeRow"><div class="slabel">Game Mode</div>
+    <button class="opt sel" data-mode="dm">💥 Deathmatch</button>
+    <button class="opt" data-mode="ctf">🚩 Capture the Flag</button>
+    <button class="opt" data-mode="koth">👑 King of the Hill</button>
+    <button class="opt" data-mode="surv">🛡️ Wave Survival</button>
+  </div>
+  <div class="srow" id="mapRowWrap"><div class="slabel">Battlefield</div><span id="mapRow" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"></span></div>
+  <div class="srow" id="oppRow"><div class="slabel">Enemy Armies</div>
+    <button class="opt" data-opp="0" style="display:none">Solo</button>
+    <button class="opt sel" data-opp="1">1 Opponent</button>
+    <button class="opt" data-opp="2">2 Opponents</button>
+    <button class="opt" data-opp="3">3 Opponents</button>
+  </div>
+  <div class="srow" id="teamRow"><div class="slabel">Teams</div>
+    <button class="opt" data-tslot="0">You &mdash; Team 1</button>
+    <button class="opt" data-tslot="1">CPU 1 &mdash; Team 2</button>
+    <button class="opt" data-tslot="2">CPU 2 &mdash; Team 3</button>
+    <button class="opt" data-tslot="3">CPU 3 &mdash; Team 4</button>
+  </div>
+  <div class="srow" id="diffRow"><div class="slabel">Difficulty</div>
+    <button class="opt" data-diff="easy">🙂 Easy</button>
+    <button class="opt sel" data-diff="normal">😐 Normal</button>
+    <button class="opt" data-diff="hard">😠 Hard</button>
+  </div>
+  <div class="srow"><div class="slabel">Testing Mode</div>
+    <button class="opt sel" data-test="0">Off</button>
+    <button class="opt" data-test="1">🧪 On &mdash; command every army</button>
+    <div style="width:100%;text-align:center;color:#bcd4a8;font-size:13px;margin-top:4px">Free &amp; instant everything, all research unlocked, build anywhere, no fog, no call-down cooldown. Local skirmish only.</div>
+  </div>
+  <div class="srow"><div class="slabel">Spectate Mode</div>
+    <button class="opt sel" data-watch="0">Off</button>
+    <button class="opt" data-watch="1">👁 On &mdash; watch 4 CPU armies</button>
+    <div style="width:100%;text-align:center;color:#bcd4a8;font-size:13px;margin-top:4px">Four bots fight it out on any map, mode, difficulty and team layout. You watch with full vision and issue no orders; the spectator box reads each army's AI profile, economy, mining rate and build queues. Local only, and not combinable with Testing Mode.</div>
+  </div>
+  <div class="srow"><div class="slabel">Play Online</div>
+    <button class="opt" id="hostOnlineBtn">🌐 Host Online</button>
+    <button class="opt" id="joinOnlineBtn">🔌 Join Online</button>
+  </div>
+  <div id="netPanel" style="display:none"></div>
+  <button id="startBtn">⚔ START BATTLE</button>
+  <button id="infoBtn" class="opt">📘 Field Manual — Units, Structures &amp; Controls</button>
+</div>
+
+<div id="infoPanel">
+  <div id="infoHead">
+    <h2>📘 FIELD MANUAL</h2>
+    <button class="opt itab sel" data-itab="units">Units</button>
+    <button class="opt itab" data-itab="blds">Structures</button>
+    <button class="opt itab" data-itab="controls">Controls</button>
+    <button class="opt" id="infoClose">✕ Back</button>
+  </div>
+  <div id="infoGrid"></div>
+  <div id="infoDetail">
+    <div id="infoStage"><canvas id="infoCv" width="480" height="340"></canvas></div>
+    <div id="infoStats"></div>
+  </div>
+  <div id="infoControls">
+    <h3>Mouse &amp; Selection</h3>
+    <b>Left-click</b>: select &nbsp;•&nbsp; <b>Left-drag</b>: box-select &nbsp;•&nbsp; <b>Double-click</b>: select every unit of that type on screen<br>
+    <b>Right-click</b>: context order — move, attack, harvest a pile, garrison a Bunker, load an APC or Chinook; with a production building selected it sets the rally point<br>
+    <b>Shift + right-click</b>: queue orders (waypoints)<br>
+    <b>F</b> then click: attack-move &nbsp;•&nbsp; <b>P</b>: patrol — then click the two waypoints &nbsp;•&nbsp; <b>H</b>: hold position &nbsp;•&nbsp; <b>X</b>: stop<br>
+    <b>U</b>: unload the selected APC / Chinook &nbsp;•&nbsp; <b>Esc</b>: cancel targeting / placement / attack-move, otherwise clear the selection
+    <h3>Groups &amp; Army</h3>
+    <b>Ctrl + 1–9</b>: save the selection as a control group &nbsp;•&nbsp; <b>1–9</b>: recall it<br>
+    <b>Space</b>: select your whole army (Dump Trucks stay put)
+    <h3>Camera</h3>
+    <b>Arrow keys / WASD</b> or push the <b>screen edge</b>: scroll<br>
+    <b>Mouse wheel</b> or <b>+ / −</b>: zoom &nbsp;•&nbsp; <b>0</b>: reset zoom &nbsp;•&nbsp; <b>J</b>: jump the camera to the last alert<br>
+    <b>Minimap</b>: left-click or drag to look around &nbsp;•&nbsp; <b>right-click</b> to order the selection there &nbsp;•&nbsp; <b>◱</b> cycles its size
+    <h3>Game</h3>
+    <b>F9</b> or the <b>⏸ button</b>: pause &nbsp;•&nbsp; <b>🔊</b>: mute &nbsp;•&nbsp; <b>📘 Manual</b>: the full Field Manual — <b>? Help</b>: quick reference &nbsp;•&nbsp; <b>↩ Quit</b>: back to this menu<br>
+    Click a <b>queued unit</b> in the production panel to cancel it (full refund)<br>
+    <b>💰 Sell</b> (selection panel): sell any completed structure except the HQ for 50% of its plastic cost<br>
+    <b>Barricade tool</b>: pick it, then click-and-drag to lay a whole line at once<br>
+    <b>B / Shift+B</b>: preview blast effects at the cursor (harmless fireworks)
+  </div>
+</div>
+
+<div id="hud">
+  <div id="topbar">
+    <div class="chip"><div class="dotS" id="facDot"></div><span id="facName"></span></div>
+    <span id="armySwitch"></span>
+    <div class="res p">⬢ <span id="resP">0</span></div>
+    <div class="res e">⚡ <span id="resE">0</span></div>
+    <div class="res" style="color:#cfe6b8">🪖 <span id="popN">0</span>/<span id="popC">10</span></div>
+    <div id="modeinfo"></div>
+    <div class="spacer"></div>
+    <button class="tbtn" id="muteBtn">🔊</button>
+    <button class="tbtn" id="pauseBtn">⏸ Pause</button>
+    <button class="tbtn" id="helpBtn">? Help</button>
+    <button class="tbtn" id="manualBtn">📘 Manual</button>
+    <button class="tbtn" id="quitBtn">↩ Quit</button>
+  </div>
+  <div id="bottombar">
+    <button class="tbtn" id="hqBtn" title="Select your HQ and open Construct (Q)">🏛 HQ <span style="opacity:.6">Q</span></button>
+    <div id="selPanel"><h4>Selection</h4><div id="selInfo">Nothing selected.</div><div id="prodBtns"></div><div id="queueRow"></div></div>
+  </div>
+  <div id="minimapWrap"><div id="mmHead"><button class="tbtn" id="hqPlaceBtn" title="Rebuild your HQ">🏛</button><span>Map</span><button class="tbtn" id="mmSizeBtn" title="Cycle minimap size (S / M / L)">◱ M</button></div><canvas id="minimap" width="176" height="176"></canvas></div>
+  <div id="rightRail">
+    <div id="armyPanel"><h4>Army</h4><div id="armyRows"></div></div>
+    <div id="watchPanel"><h4><span>👁 Spectator</span><span style="opacity:.55">V hides</span></h4><div id="watchSpeed"></div><div id="watchRows"></div></div>
+    <div id="radioPanel"><h4>Radio Tower</h4><div id="radioBtns"></div></div>
+  </div>
+  <div id="msgs"></div>
+  <div id="survBanner"></div>
+</div>
+<div id="pausedTag">PAUSED</div>
+<div id="helpBox">
+  <h3>How to Play</h3>
+  <b>Left-drag</b>: select units &nbsp;•&nbsp; <b>Double-click</b>: select all of that type on screen &nbsp;•&nbsp; <b>Right-click</b>: move / attack / harvest<br>
+  <b>F + click</b>: attack-move &nbsp;•&nbsp; <b>Shift+right-click</b>: queue orders (waypoints) &nbsp;•&nbsp; <b>P</b>: patrol between two clicked points &nbsp;•&nbsp; <b>H</b>: hold position &nbsp;•&nbsp; <b>X</b>: stop<br>
+  <b>Ctrl+1-9</b>: set group, <b>1-9</b>: recall &nbsp;•&nbsp; <b>Space</b>: select your whole army &nbsp;•&nbsp; <b>J</b>: jump to last alert<br>
+  <b>Q</b> (or the <b>🏛 HQ</b> button above the panel): select your HQ and open the build menu from anywhere on the map — press again to centre the camera on it, again for your next HQ<br>
+  <b>Build menu hotkeys</b>: every Construct, Train and Research tile carries a letter in its top-left corner. They're per-building, so the same key means something different depending on what you have selected<br>
+  <b>Minimap</b>: left-click/drag to look, <b>right-click</b> to order units there &nbsp;•&nbsp; <b>◱</b> cycles its size &nbsp;•&nbsp; a queued unit can be <b>clicked to cancel</b> (full refund)<br>
+  <b>🧪 Testing Mode</b> (set up before the battle): you command every army in the match. Click an <b>army chip</b> in the top bar or press <b>Tab</b> to switch sides. Everything is free and finishes instantly, all research starts unlocked, you can build anywhere, there is no fog of war, and the Radio Tower call-downs have no cooldown.<br>
+  <b>👁 Spectate Mode</b> (set up before the battle): four CPU armies fight it out and you just watch — full vision, no orders. The <b>spectator box</b> on the right lists every army's <b>AI profile</b>, resources, supply, live <b>mining rate</b>, its unit / structure / research queues and its army composition. Click a card or press <b>Tab</b> to follow an army; <b>V</b> hides the box. The speed chips (or <b>[</b> and <b>]</b>) run the match at 0.75x to 2x — this changes the pace only, never the outcome.<br>
+  <b>Arrows / WASD or screen edge</b>: scroll &nbsp;•&nbsp; <b>Scroll wheel</b> or <b>+ / −</b>: zoom (<b>0</b> resets) &nbsp;•&nbsp; <b>F9</b>: pause &nbsp;•&nbsp; <b>Esc</b>: cancel &nbsp;•&nbsp; <b>B</b> / <b>Shift+B</b>: preview blast FX at cursor<br><br>
+  <b>⬢ Plastic</b> is hauled by Dump Trucks from toy piles — stacked building bricks, soldier sprues, and spilled toy-bin scraps. Every plastic pile is marked with a pulsing amber ⬢ above it. A ⛏ over a truck means it's actively mining. <b>⚡ Electricity</b> is hauled from giant AA batteries, or trickled in by Generators.<br><br>
+  <b>Trucks</b>: right-click a pile to harvest it; right-click your <b>HQ</b> to force them to unload right now. Destroyed units leave a salvageable <b>scrap wreck</b> worth <span data-tune="salvagePct"></span>% of their plastic cost — send a truck to pick it up.<br><br>
+  Build a <b>Barracks</b> for infantry, a <b>Garage</b> for vehicles, a <b>Helipad</b> for choppers. With a production building selected, right-click sets its rally point. Every building (barricades included) must be placed within <b><span data-tune="hqR"></span> tiles of your HQ</b> or <b><span data-tune="opR"></span> tiles of one of your Outposts</b> — only the HQ and Outpost themselves are exempt: they can go anywhere you can see (even far from base, but not into the fog of war). Nobody can build within <b><span data-tune="foeR"></span> tiles of an enemy HQ</b>, and every structure needs <b><span data-tune="gap"></span> clear <span data-tune="gapT"></span></b> between it and any other structure so your units can always drive out of your own base; barricades are exempt from each other, so walls still lay solid. Build an <b>Outpost</b> to push your borders out: it builds Dump Trucks, acts as a resource drop-off so trucks don't have to drive all the way home, and opens a <span data-tune="opR"></span>-tile build zone for a forward defensive line. You hold <b>one HQ at a time</b>; if it is destroyed, the <b>🏛 button above the minimap</b> places a new one at the ordinary price, so losing your headquarters costs you the building and not the match.<br><br>
+  <b>Machine Gunner</b> (Barracks): tough, heavy MG. Select him and hit <b>Entrench</b>, then click to aim — he digs in and fires <span data-tune="entrench"></span>× as fast inside a 100° cone (shown on the ground). Give him a move order to pack up.<br><br>
+  <b>Radio Tower</b> (Lab unlock, 1 per army): a static uplink that opens the call-down panel on the right — <b><span data-tune="radioList"></span></b>. Every army gets the Artillery Barrage and the Paradrop; the rest belong to one army each, and you only ever see your own. <b>Napalm</b> is Tan's: it rains fire and a lingering burn across a <span data-tune="napBox"></span>×<span data-tune="napBox"></span> area; the <b>Artillery Barrage</b> walks <span data-tune="barrN"></span> off-map shells through a <span data-tune="barrBox"></span> box, <span data-tune="barrGap"></span>s apart, at <span data-tune="barrDmg"></span> damage inside a <span data-tune="barrR"></span>-tile blast (×<span data-tune="barrInf"></span> against infantry). Those <span data-tune="radioVis"></span> need vision. Paradrop puts <span data-tune="paraN"></span> elite Paratroopers anywhere, even in fog — SMGs shred infantry, AT grenades crack vehicles, slow HE charges level buildings. <b>Rapid Redeploy</b> is Blue's alone and is the only call-down that creates nobody: select up to <span data-tune="liftMax"></span> of your own infantry, click anywhere on the map even in fog, and they come down under canopies at the far end a moment later. <b>Supply Drop</b> is Green's alone: two crates on canopies, one carrying <span data-tune="dropP"></span> ⬢ and one carrying <span data-tune="dropE"></span> ⚡, which lie where they land with no expiry until one of <em>your</em> units walks over them — nobody else can pick them up, and nothing on the board can destroy them. <b>Smokescreen</b> is Gray's alone: a <span data-tune="scrBox"></span>&times;<span data-tune="scrBox"></span> cloud in which your units <em>and your structures</em> take <span data-tune="scrRed"></span>% less damage for <span data-tune="scrT"></span> seconds. It is deliberately heavier than the Mortar Squad's Smoke Rounds in every dimension — wider, longer, twice the reduction, and it covers buildings — because it costs a Radio Tower and the shared cooldown where the mortar's costs one loaded tube. Click an ability, then click the map (right-click cancels). One shared <span data-tune="radioCd"></span> cooldown.<br><br>
+  <b>Green Army exclusives.</b> <b>Sarge</b> patches himself up at <span data-tune="sargeRegen"></span> HP/sec once he has been out of contact for <span data-tune="sargeCalm"></span> seconds, and his <b>On Me!</b> toggle gives allied infantry within <span data-tune="sargeR"></span> tiles +<span data-tune="sargeAura"></span>% damage while cutting his own by <span data-tune="sargeSelf"></span>%. <b>Mortar Squads</b> ramp +<span data-tune="wfStep"></span>% per consecutive shell on one target up to +<span data-tune="wfCap"></span>%, and their <b>Smoke Rounds</b> toggle shells your own men instead: no damage, but a <span data-tune="smokeR"></span>-tile cloud that cuts damage taken by <span data-tune="smokeRed"></span>% for <span data-tune="smokeT"></span> seconds. The <b>Radar Tent</b>'s <b>Target Uplink</b> gives your whole army +<span data-tune="upRg"></span> range and +<span data-tune="upVi"></span> sight for <span data-tune="upT"></span> seconds on a <span data-tune="upCd"></span>-second cooldown. The <b>Command Truck</b> carries no guns at all: its <b>Forward Command</b> is a build zone that travels, opening <span data-tune="cmdR"></span> tiles of buildable ground around it for three structures and no others — <span data-tune="cmdBlds"></span> — and its <b>Broadcast</b> toggle makes allies within <span data-tune="bcastR"></span> tiles reload <span data-tune="bcastRt"></span>% faster while pinning the truck exactly where it stands. The <b>Observation Balloon</b> has the best sight in the game at <span data-tune="ballVi"></span> tiles, drifts slowly, and is the one thing on the board that ordinary weapons cannot touch: only AA missiles can target it at all and they land for <span data-tune="ballAa"></span>% damage, while splash never reaches it. Its <b>High Ground</b> gives every ally inside that vision +<span data-tune="highRg"></span> range. It is a clock, though — the gas lasts <span data-tune="ballFuel"></span> seconds and then it falls, killing everyone aboard, so spend <b>Bail</b> before that to put <span data-tune="bailCrew"></span> on the ground beneath it and scuttle the balloon yourself. The <b>Command Post</b> makes your army learn faster within <span data-tune="cpostR"></span> tiles — promotions cost <span data-tune="cpostVet"></span>% fewer kills — and its <b>Regroup</b> hands every unit in that radius <span data-tune="regroupHp"></span>% of its own maximum health back at once, on a <span data-tune="regroupCd"></span>-second cooldown.<br><br>
+  <b>Tan Army exclusives.</b> The <b>Flamethrower</b>'s <b>Cook-Off</b> leaves everything he touches burning for <span data-tune="cookDps"></span> damage/sec, and his <b>Pressure Valve</b> toggle adds <span data-tune="valveDmg"></span>% damage and +<span data-tune="valveRg"></span> range at the price of <span data-tune="valveBack"></span>% of the damage he deals being taken by the man holding the hose. The <b>&quot;Bull&quot; Heavy Tank</b>'s ablative plate ignores small-arms fire completely, which is to say <span data-tune="plateRow"></span> cannot hurt it at all, and its <b>Full Throttle</b> toggle adds <span data-tune="thrSpd"></span>% speed and crushes enemy infantry and barricades it drives over, but silences both its weapons while it rolls. The <b>Munitions Dump</b>'s <b>Scuttle</b> blows the building itself for <span data-tune="scDm"></span> damage across <span data-tune="scR"></span> tiles, and your own units and structures take <span data-tune="scFf"></span>% of it. The <b>Firebomb Heli</b> sows fire rather than shooting at things: <b>Scorched Earth</b> leaves the ground burning for <span data-tune="scorchT"></span> seconds at <span data-tune="scorchDps"></span> damage/sec under everything it hits, so a target that holds its position keeps burning and one that walks away does not. Its <b>Napalm Blast</b> empties the racks — <span data-tune="fbN"></span> firebombs on random tiles within <span data-tune="fbR"></span> of the helicopter, <span data-tune="fbDm"></span> damage each, every one leaving <span data-tune="fbBurn"></span> seconds of fire at <span data-tune="groundDps"></span>/sec that burns <em>your</em> men and buildings exactly as readily as theirs — on a <span data-tune="fbCd"></span>-second cooldown, the first cooldown ability any unit in the game has carried. The fire is on the ground, so it cannot reach an aircraft: the helicopter that dropped it is safe above it, and so is everything else with rotors. The <b>Foundry</b> gives every vehicle built while it stands +<span data-tune="foundryHp"></span>% hull permanently, and its <b>Pour</b> finishes the vehicle at the front of <em>every</em> Garage queue at once for <span data-tune="pourCost"></span>% of each one's plastic on top, on a <span data-tune="pourCd"></span>-second cooldown.<br><br>
+  <b>Gray Army exclusives.</b> The <b>Sniper</b> cannot be picked as a target at all until he fires, and drops back out of sight <span data-tune="camoT"></span> seconds after his last shot — an approach tool above all, since it covers him on the way in rather than through a firefight — and his <b>Called Shot</b> toggle adds <span data-tune="csDmg"></span>% damage but restricts him to enemy infantry for as long as it runs. <b>Rocket Artillery</b> shell-shocks whoever lives through the blast, adding <span data-tune="shockSet"></span> <span data-tune="shockSetT"></span> to a survivor's reload on top of whatever it already reads, and its <b>Ripple Fire</b> toggle trades the single shell for a salvo of <span data-tune="ripN"></span> rockets at <span data-tune="ripDm"></span>% damage each, bursting wider and scattered across the target, paid for with <span data-tune="ripRt"></span>% more reload. The <b>Bunker</b> garrisons <span data-tune="bunkGar"></span> infantry who fire from cover and cannot be caught by splash, and its <b>Lockdown</b> buttons them up: the garrison stops firing entirely, but the bunker takes <span data-tune="lockRed"></span>% less damage for <span data-tune="lockT"></span> seconds, on a <span data-tune="lockCd"></span>-second cooldown. The <b>Choktaw Heli</b> carries two weapons at once and fires both: rocket pods that take armour, aircraft and structures, and a door gun that takes infantry and wildlife, so it never has to choose. It is also the eye of the army — <b>Forward Observer</b> gives every friendly arcing weapon, which is to say the Mortar Squad and the Rocket Artillery, +<span data-tune="fobRg"></span> tiles of reach against anything the Choktaw itself can see, and nothing at all against a target it cannot. Its <b>Paint</b> marks a <span data-tune="paintBox"></span>&times;<span data-tune="paintBox"></span> area you choose: every enemy unit inside takes +<span data-tune="paintDmg"></span>% damage from <em>every</em> source for <span data-tune="paintT"></span> seconds, on a <span data-tune="paintCd"></span>-second cooldown. The mark rides the men rather than the ground, so it follows them out of the box, and painting a unit that is already lit restarts its clock instead of stacking a second mark. The <b>Heavy Barricade</b> is the ordinary wall at <span data-tune="hbarrHp"></span> HP, and everything of yours on the tiles around it — units, structures and other walls alike — takes <span data-tune="hbarrRed"></span>% less damage. That aura <em>stacks</em>: overlapping walls add up, to a ceiling of <span data-tune="hbarrCap"></span>%, so four of them reach the cap and a fifth is wasted plastic. One in <span data-tune="hbarrMineP"></span> of them buries a mine <span data-tune="hbarrMineD"></span> tiles toward the nearest enemy HQ as it finishes — a mine only your army can see, and one that lets your own men walk over it.<br><br>
+  <b>Blue Army exclusives.</b> The <b>Scout Bike</b> is evasive, taking <span data-tune="evadeRed"></span>% less damage in any moment he is genuinely moving — which is worth nothing while he sits still trading shots, and that is where most of his damage is taken — and his <b>Flat Out</b> toggle adds <span data-tune="flatSpd"></span>% speed and +<span data-tune="flatVi"></span> sight, but holds his fire completely and refuses attack orders while it runs. The <b>Chinook</b> lifts <span data-tune="chinCap"></span> infantry and makes friendly infantry near it hit <span data-tune="chinAura"></span>% harder, and its <b>Air Assault</b> toggle opens the hold so the squad fires out at whatever it can reach — they can be shot back at while they do it, and the aircraft cannot move at all until you close it again. The <b>Wind Turbine</b>'s <b>Overdrive</b> runs it at ×<span data-tune="overMul"></span> output for <span data-tune="overT"></span> seconds and then produces nothing whatsoever for <span data-tune="overOff"></span> seconds, on a <span data-tune="overCd"></span>-second cooldown; across the full cycle that is less electricity than leaving it alone, so it buys the power earlier rather than cheaper. The <b>Signal Runner</b> is weaker and worse-armed than a Grunt on purpose — what you are buying is his radio. <b>Radio Net</b> passively gives friendly infantry within <span data-tune="rnetR"></span> tiles +<span data-tune="rnetVi"></span> sight, and his <b>Sprint</b> toggle gives every friendly infantryman within <span data-tune="sprintR"></span> tiles, himself included, +<span data-tune="sprintSpd"></span>% movement speed — but nobody inside the radius will fire, take an attack order, or so much as acquire a target while it runs. The <b>Forward Pad</b> repairs friendly aircraft within <span data-tune="padR"></span> tiles at <span data-tune="padRep"></span> HP/sec, which is the only aircraft repair in the game, and its <b>Scramble</b> gives every aircraft you own — anywhere on the map, not just the ones on the pad — +<span data-tune="scramSpd"></span>% speed for <span data-tune="scramT"></span> seconds on a <span data-tune="scramCd"></span>-second cooldown.<br><br>
+  <b>APC</b> (Garage): unarmed transport carrying 10 infantry — right-click it with infantry selected to load, press <b>U</b> (or the panel button) to unload. It shields itself and nearby allied infantry (−25% damage); if destroyed, the squad bails out losing only 15% health.<br><br>
+  <b>Chinook</b> (Blue only, Helipad): the fastest chopper in the game and the biggest transport — <span data-tune="chinCap"></span> infantry, loaded and unloaded exactly like an APC, flown straight over water, walls and minefields. It carries no weapons at all, but allied infantry within <b>3 tiles</b> of it hit <b>15% harder</b> (one Chinook only; a second does not stack, though a Munitions Dump does). Over open water it will refuse to unload.<br><br>
+  <b>⚔ Counters</b>: what a weapon is firing matters as much as how hard it hits. Every unit has an <b>armor class</b> (infantry, light vehicle, medium armor, heavy armor, aircraft, structure) and every weapon hits each class differently — pick the tool for the job and the same army does two or three times the work. Every build button, research button and selection panel now prints the exact numbers.<br>
+  <b>Small arms</b> (<span data-tune="wcB"></span>): fine against men and aircraft, they glance off heavy armor (×0.60) and chew slowly through walls.<br>
+  <b>Grenades</b> (<span data-tune="wcG"></span>): shred infantry (×1.20); can barely reach aircraft.<br>
+  <b>Rockets</b> (<span data-tune="wcR"></span>): the answer to armor — ×<span data-tune="rockMed"></span> medium, ×<span data-tune="rockHeavy"></span> heavy (×<span data-tune="bazHeavy"></span> for the Bazooka), ×1.30 vs aircraft — but poor against infantry (×0.70), so they need an escort.<br>
+  <b>Cannon</b> (<span data-tune="wcS"></span>): the siege line — ×1.40 against any structure, strong against vehicles, mediocre against scattered infantry.<br>
+  <b>Arcing shells</b> (<span data-tune="wcM"></span>): the heaviest siege in the game (×1.45 vs structures) and good against infantry clumps, but nearly useless against aircraft (×0.40).<br>
+  <b>Flame</b> (<span data-tune="wcF"></span>): melts infantry (×1.35) and does almost nothing to heavy armor (×0.45).<br>
+  <b>AA missiles</b> (<span data-tune="wcA"></span>): aircraft only, at ×<span data-tune="aaAir"></span> — the zeros against every ground class are the rule, not a rounding: it cannot fire down at all.<br>
+  <b>Artillery barrage</b> (<span data-tune="wcQ"></span>): the Radio Tower call-down. Full value against armor and structures alike, ×<span data-tune="barrInf"></span> against infantry.<br>
+  The <b>Paratrooper</b> swaps between all three of its munitions automatically: SMG against infantry, AT grenades against vehicles &amp; aircraft, slow HE charges against structures. Open the <b>📘 Field Manual</b> (setup screen or the top bar) for any unit's exact armor class and its full strong/weak list.<br><br>
+  <b>Deathmatch</b>: destroy every enemy structure. If nobody has after <b><span data-tune="dmMin"></span> minutes</b>, the match is called for whoever has the most base value still standing (completed structures, barricades excluded); ties go to the most kills.<br>
+  <b>CTF</b>: carry the enemy flag to your stand (your flag must be home). First to <span data-tune="ctf"></span> captures. Flying units can't carry flags.<br>
+  <b>👑 King of the Hill</b>: hold the central hill zone with your units. Control it <b>alone</b> (no enemy units inside) to fill your meter; first to <b><span data-tune="koth"></span>s</b> of control wins. You can also still win by wiping out every enemy.<br><br>
+  <b>🛡️ Wave Survival</b>: you and any CPU allies start clustered in the middle around a white flag. Survive <b><span data-tune="waves"></span> waves</b> of ants, bees, fire ants, wasps, roaches and mouse mini-bosses that pour in from the map edges. You get <b>1 minute</b> to build, then a wave lands every <b>60 seconds</b>. A starter cluster sits by the flag: two plastic piles and two batteries on most maps, while The Desk rings the flag with one plastic-and-battery pair per army plus a spare. Either way you'll need to send trucks out to the map's other nodes to keep building. You lose only if <b>every allied HQ</b> is destroyed.<br><br>
+  <b>Research</b> is split across your buildings. Each production building <b>unlocks its own units and its upgrade</b>: train + research at the <b>Barracks</b> (infantry), <b>Garage</b> (vehicles), and <b>Helipad</b> (choppers) — research there runs <b>in parallel</b> with production, one project per building. The <b>🔬 Research Lab</b> (needs a Barracks) unlocks the other <b>structures</b> (<span data-tune="labBlds"></span>, and your faction building) and their <b>army-wide upgrades</b>: tougher buildings, harder-hitting Guard Towers, more power from Generators/Turbines, a doubled Munitions aura, bigger Bunker garrison, and a faster Lab. Upgraded Barracks/Garage/Helipad turn out units with +20% HP &amp; damage. Build several labs to research structures in parallel. Upgraded buildings show a gold ⬆ badge.<br><br>
+  <b>Difficulty</b> (setup screen) only changes how strong the bots are — their economy, army size and damage — never how they play. <b>Profiles</b> (assigned at random) decide each bot's personality: how aggressively it pushes, whether it scouts, harasses or turtles.<br><br>
+  Gray's <b>Bunker</b>: right-click it with infantry to garrison (4 max, 6 when upgraded).<br><br>
+  <b>⬢ Barricades</b> (build menu): cheap Czech-hedgehog walls, <span data-tune="barrCost"></span> ⬢ each, that block movement. Pick the tool, then <b>click-and-drag</b> to lay a whole line at once (the ghost shows how many you can afford; you can only build where you have vision). Enemies will smash through walls they run up against, so use them to funnel attacks, not to seal yourself in. Scattered dark-gray hedgehogs are neutral and just sit in the way.<br><br>
+  <b>⭐ Veterancy</b>: kills promote a unit one rank at a time (gold chevrons) — <span data-tune="vetInf"></span> for infantry, <span data-tune="vetVeh"></span> for vehicles, aircraft and everything else. Each rank grants +10% damage and +10% max HP. <b>💰 Sell</b>: any completed structure except the HQ can be sold back for <span data-tune="sellPct"></span>% of its plastic cost (queued units are refunded in full). <b>🤝 Teams</b>: armies sharing a team number share vision, never harm each other, and win together.<br><br>
+  <b>💥 Landmines</b>: every map is seeded with ~<span data-tune="mines"></span> hidden mines. They're invisible until a ground unit steps on one. A direct hit destroys a tank; a jeep dies one tile away and a grunt about two tiles out. Aircraft fly over them safely. Scout carefully, or push expendable units first.
+</div>
+<div id="overlayCenter"><div id="endBox"><h2 id="endTitle"></h2><div class="stats" id="endStats"></div><div id="chartTabs"></div><canvas id="endChart" width="560" height="230"></canvas><div id="chartToggles"></div><button id="againBtn" class="opt sel" style="font-size:18px">Play Again</button></div></div>
+
+<script>
