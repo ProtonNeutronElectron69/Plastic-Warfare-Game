@@ -39,6 +39,7 @@
 23-net-input.js
 24-render.js
 25-post-processing.js
+25b-webgl.js
 26-frame.js
 27-field-manual.js
 28-menu-backdrop.js

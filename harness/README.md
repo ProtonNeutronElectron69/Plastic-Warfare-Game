@@ -246,6 +246,49 @@ layout pins reproduce - the ricochet call sits in `applyDmg`, but
 both of its random draws are Math.random and T43.J drives the whole audio
 surface, `sfxRico` included, across a hash comparison.
 
+#### Phase 3, first cut, LANDED at v93: the WebGL stage - and the measurement that re-planned the phase
+
+**What shipped.** A dependency-free WebGL present+post stage
+(`source/js/25b-webgl.js`, ~250 lines): the world still renders through the
+UNTOUCHED 2d code into `worldCv`, and `glComposite()` uploads that frame and
+runs the whole post pass as real shaders - bright-pass + separable gaussian
+bloom, the tilt-shift bands, the overlay/soft-light grade and the vignette -
+on a WebGL canvas that sits UNDER `#view` in the DOM, so input and the
+screen-space overlays never move. The phase 1-2 rule applied to renderers:
+**GL overrides, it never replaces.** `compositePost()` is the permanent
+fallback (headless, old browsers, a lost context, `#nogl` in the URL), and
+both compositors read their tuning from one new `POSTV` table so the two
+looks cannot drift - T69.B pins both consumers, and T69.D pins that the file
+is still one self-contained script with no external anything.
+
+**Measured in Chromium, from a double-clicked file:** the GL stage comes
+alive, and the same tick of the same seed screenshotted through GL and
+through `#nogl` differs by a **mean 2.02/255 per channel (p95 = 4/255)**,
+concentrated in the tilt bands where the blur algorithms legitimately differ
+- visually the same game. The sim hash at that tick is **identical under
+both renderers**, and T69.C drives a render pass across a hash comparison
+headless. Suite 5,286/5,286 (5,266 at v92.1), all trails and layout pins reproduce.
+
+**The measurement that re-planned the phase, recorded because it contradicts
+the plan above.** The phase-3 sketch imagined swapping the renderer wholesale
+("PixiJS is the pick... draw sites blit cell.cv"). Read on the ground at v93,
+the cell blit is a MINORITY of the world pass: `renderCore` plus the entity
+painters contain hundreds of immediate-mode vector and gradient draws that
+are not sprites at all - twelve airborne particle types built from radial
+gradients and additive blending, per-projectile vector art, per-entity effect
+glows (heal aura, paint brackets, rally pulse) interleaved INSIDE the
+depth-sorted pass, independent turret sub-transforms, strike and targeting
+overlays. No sprite batcher replaces that cheaply, and a scene-graph library
+would fight the immediate-mode shape of all of it while adding ~450 kB that
+must ride inside the single file. So phase 3 became incremental: **first the
+pipeline (this cut), then the sprite band inside it.** The second cut - the
+depth-sorted item pass drawn by GL between a 2d underlay and a 2d overlay,
+which is the part phases 4 and 5 actually need on the GPU - has a concrete
+seam now: `glComposite` owns the frame, and the band migrates into it without
+the vector FX ever needing to leave canvas. Phase 4 (real textures) does NOT
+wait on that: the bake pipeline is renderer-agnostic, and a loaded texture
+blits through the 2d path exactly as a procedural cell does.
+
 #### What phase 1 looked like before it landed, kept for the reasoning
 
 #### Phase 1 is the only phase with a structural risk, and it lands on `main`

@@ -4,11 +4,23 @@
    bloom, a warm-key / cool-shadow grade, and a vignette. If ctx.filter is
    unsupported the blur-based passes degrade gracefully to grade + vignette. */
 let worldCv=null,wctx=null,tsCv=null,tsctx=null,blCv=null,blctx=null,bandCv=null,bandctx=null,maskT=null,maskB=null,FILT=-1;
+/* v93: THE POST-PASS TUNING TABLE, extracted so the 2d compositor below and the
+   WebGL shader stage (next file) read the SAME numbers. These are the v64-v90
+   values verbatim, just named: change one here and both renderers move
+   together, which is what keeps "the GL path looks like the 2d path" a
+   structural property instead of a hope. T69.B asserts both consumers. */
+const POSTV={
+ sat:1.10,con:1.04,                                    // base grade (FILT=1 path)
+ bloomBr:.58,bloomCon:2.3,bloomSat:1.3,bloomBlur:2.2,bloomAdd:.30, // bright-pass + add
+ tsBlur:2,tsTopH:.24,tsTopA:.9,tsBotH:.30,tsBotA:.95,  // tilt-shift bands
+ g1c:'#ffb45e',g1a:.10,g2c:'#2f4d80',g2a:.15,          // warm overlay / cool soft-light
+ vinCX:.5,vinCY0:.46,vinR0:.44,vinCY1:.55,vinR1:.60,vinC:'8,12,6',vinA:.28 // vignette
+};
 function mkMask(w,h,top){
  const m=document.createElement('canvas');m.width=w;m.height=h;const mc=m.getContext('2d');
  const g=mc.createLinearGradient(0,0,0,h);
- if(top){g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,0)');}
- else{g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,.95)');}
+ if(top){g.addColorStop(0,'rgba(255,255,255,'+POSTV.tsTopA+')');g.addColorStop(1,'rgba(255,255,255,0)');}
+ else{g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,'+POSTV.tsBotA+')');}
  mc.fillStyle=g;mc.fillRect(0,0,w,h);return m;
 }
 function ensurePost(){
@@ -20,7 +32,7 @@ function ensurePost(){
   if(FILT<0){try{wctx.filter='blur(1px)';FILT=(wctx.filter&&wctx.filter!=='none')?1:0;wctx.filter='none';}catch(e){FILT=0;}}
   tsCv=document.createElement('canvas');tsCv.width=Math.max(2,Math.round(W/3));tsCv.height=Math.max(2,Math.round(H/3));tsctx=tsCv.getContext('2d');
   blCv=document.createElement('canvas');blCv.width=Math.max(2,Math.round(W/4));blCv.height=Math.max(2,Math.round(H/4));blctx=blCv.getContext('2d');
-  const th=Math.max(2,Math.round(H*.24)),bh=Math.max(2,Math.round(H*.30));
+  const th=Math.max(2,Math.round(H*POSTV.tsTopH)),bh=Math.max(2,Math.round(H*POSTV.tsBotH));
   maskT=mkMask(W,th,true);maskB=mkMask(W,bh,false);
   bandCv=document.createElement('canvas');bandCv.width=W;bandCv.height=Math.max(th,bh);bandctx=bandCv.getContext('2d');
  }catch(e){worldCv=null;wctx=null;}
@@ -37,25 +49,25 @@ function tsBand(mask,y){
 function compositePost(){
  const W=view.width,H=view.height;
  vc.setTransform(1,0,0,1,0,0);vc.imageSmoothingEnabled=true;
- if(FILT===1){vc.filter='saturate(1.10) contrast(1.04)';vc.drawImage(worldCv,0,0);vc.filter='none';}
+ if(FILT===1){vc.filter='saturate('+POSTV.sat+') contrast('+POSTV.con+')';vc.drawImage(worldCv,0,0);vc.filter='none';}
  else vc.drawImage(worldCv,0,0);
  if(FILT===1){
   // bloom: bright-pass approximation on a quarter-res copy, added back softly
   blctx.setTransform(1,0,0,1,0,0);blctx.clearRect(0,0,blCv.width,blCv.height);
-  blctx.filter='brightness(.58) contrast(2.3) saturate(1.3) blur(2.2px)';
+  blctx.filter='brightness('+POSTV.bloomBr+') contrast('+POSTV.bloomCon+') saturate('+POSTV.bloomSat+') blur('+POSTV.bloomBlur+'px)';
   blctx.drawImage(worldCv,0,0,blCv.width,blCv.height);blctx.filter='none';
-  vc.save();vc.globalCompositeOperation='lighter';vc.globalAlpha=.30;vc.drawImage(blCv,0,0,W,H);vc.restore();
+  vc.save();vc.globalCompositeOperation='lighter';vc.globalAlpha=POSTV.bloomAdd;vc.drawImage(blCv,0,0,W,H);vc.restore();
   // tilt-shift: blurred third-res copy masked into the top & bottom bands
   tsctx.setTransform(1,0,0,1,0,0);tsctx.clearRect(0,0,tsCv.width,tsCv.height);
-  tsctx.filter='blur(2px)';tsctx.drawImage(worldCv,0,0,tsCv.width,tsCv.height);tsctx.filter='none';
+  tsctx.filter='blur('+POSTV.tsBlur+'px)';tsctx.drawImage(worldCv,0,0,tsCv.width,tsCv.height);tsctx.filter='none';
   tsBand(maskT,0);tsBand(maskB,H-maskB.height);
  }
  // warm-key / cool-shadow grade
- vc.save();vc.globalCompositeOperation='overlay';vc.globalAlpha=.10;vc.fillStyle='#ffb45e';vc.fillRect(0,0,W,H);
- vc.globalCompositeOperation='soft-light';vc.globalAlpha=.15;vc.fillStyle='#2f4d80';vc.fillRect(0,0,W,H);vc.restore();
+ vc.save();vc.globalCompositeOperation='overlay';vc.globalAlpha=POSTV.g1a;vc.fillStyle=POSTV.g1c;vc.fillRect(0,0,W,H);
+ vc.globalCompositeOperation='soft-light';vc.globalAlpha=POSTV.g2a;vc.fillStyle=POSTV.g2c;vc.fillRect(0,0,W,H);vc.restore();
  // vignette
- const vg=vc.createRadialGradient(W*.5,H*.46,Math.min(W,H)*.44,W*.5,H*.55,Math.hypot(W,H)*.60);
- vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(8,12,6,.28)');
+ const vg=vc.createRadialGradient(W*POSTV.vinCX,H*POSTV.vinCY0,Math.min(W,H)*POSTV.vinR0,W*POSTV.vinCX,H*POSTV.vinCY1,Math.hypot(W,H)*POSTV.vinR1);
+ vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba('+POSTV.vinC+','+POSTV.vinA+')');
  vc.fillStyle=vg;vc.fillRect(0,0,W,H);
 }
 /* v27.1: a draw error must never kill the frame or blank the screen.
@@ -122,7 +134,12 @@ function renderCore(){
  ensurePost();
  const c=(worldCv?wctx:vc);
  c.setTransform(1,0,0,1,0,0);c.fillStyle='#141d0e';c.fillRect(0,0,view.width,view.height);
- if(!G){if(worldCv)compositePost();return;}
+ /* v93: glComposite (next file) presents the world through the WebGL post
+    pipeline and answers true; false means "no usable GL here" - headless, an
+    old browser, a lost context, or #nogl - and the 2d compositor below is the
+    unchanged fallback. The world CONTENT is drawn by the same 2d code either
+    way; only the present+post stage differs. */
+ if(!G){if(worldCv&&!glComposite())compositePost();return;}
  const z=G.zoom;
  const shx=(Math.random()-.5)*G.shake,shy=(Math.random()-.5)*G.shake,cx=G.cam.x+shx,cy=G.cam.y+shy;
  // everything in the world is drawn in a single scaled+translated space
@@ -381,7 +398,7 @@ function renderCore(){
  c.restore();
  c.setTransform(HW*z,HH*z,-HW*z,HH*z,(G.orgX-cx)*z,-cy*z);c.imageSmoothingEnabled=true;c.drawImage(G.fogCv,0,0);
  c.setTransform(1,0,0,1,0,0);
- if(worldCv)compositePost();
+ if(worldCv&&!glComposite())compositePost();
  v71Fills();
  if(G.placing)drawGhost(vc,G.cam.x,G.cam.y);
  if(MOUSE.down&&MOUSE.drag){const dbc=dragBoxCol();vc.strokeStyle=rgba(dbc.r,dbc.g,dbc.b,.9);vc.lineWidth=1.5;vc.strokeRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);vc.fillStyle=rgba(dbc.r,dbc.g,dbc.b,.1);vc.fillRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);}

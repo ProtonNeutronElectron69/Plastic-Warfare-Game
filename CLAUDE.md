@@ -308,11 +308,21 @@ sounds ride INSIDE the file as `data:` URLs — and the takes are offline-RENDER
 from the tuned v64 recipes, not field recordings, each swappable one file at a
 time via `assets/snd/` + `tools/embed_snd.py`.
 
-**Phase 3 — WebGL, still drawing the EXISTING procedurally-baked sprites.** A 2D
-WebGL renderer (PixiJS is the pick) rather than a game engine: an engine brings
-its own loop and state model and would fight `update()`/`frame()`. No new art in
-this phase. The point is to prove the renderer swap with the visuals unchanged,
-so a regression has exactly one possible cause.
+**Phase 3 — WebGL. FIRST CUT LANDED AT v93; re-planned on a measurement.** The
+sketch here used to say "PixiJS is the pick, swap the renderer wholesale" — read
+on the ground, the cell blit is a minority of the world pass (twelve gradient
+particle types, per-projectile vector art, per-entity glows interleaved inside
+the depth sort), so a one-shot swap died and the phase became incremental. v93
+shipped the pipeline: a dependency-free ~250-line WebGL stage (`25b-webgl.js`)
+that presents the 2d-drawn world through real shaders — gaussian bloom,
+tilt-shift, grade, vignette — with `compositePost()` as the permanent fallback
+and one `POSTV` table feeding both looks. Measured: GL frame vs 2d frame of the
+same tick differ by mean 2.02/255; the sim hash is identical under both.
+**Second cut, still open:** the depth-sorted sprite band migrates INSIDE
+`glComposite` (2d underlay → GL sprites → 2d overlay), which is what phase 5
+needs. Phase 4 does not wait on it — a loaded texture blits through the 2d path
+exactly as a procedural cell does. Full reasoning in the v93 section of
+`harness/README.md`.
 
 **Phase 4 — real textures, one unit at a time.** The bake is per-key-per-faction,
 so the Grunt can be a real texture while the other 24 stay procedural.

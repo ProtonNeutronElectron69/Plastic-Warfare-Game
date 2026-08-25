@@ -94,7 +94,8 @@
      WEBRTC GLUE (browser only) .................................. peer connection wiring
      INPUT ....................................................... mouse + keyboard
      RENDER ...................................................... render()
-       POST-PROCESSING ........................................... grade, vignette, bloom
+       POST-PROCESSING ........................................... grade, vignette, bloom (POSTV, the 2d compositor - the permanent fallback)
+     WEBGL PRESENT & POST ........................................ v93: glComposite - the same post pass as real shaders, 2d when GL is absent
      MAIN LOOP ................................................... frame()
      FIELD MANUAL (setup-screen info panel) ...................... infoGround, infoFake, the showcase stage
      MENU BACKDROP (MENUBG) ...................................... the animated setup-screen backdrop
