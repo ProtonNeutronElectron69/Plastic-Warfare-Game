@@ -339,6 +339,23 @@ so the Grunt can be a real texture while the other 24 stay procedural.
 - **Scale honestly:** months of evenings, not a weekend. But it is additive — the
   game is playable at the end of every phase, and phases 1 and 2 are small.
 
+## v92.1 — the audio feedback pass (roadmap 3, phase 2 follow-up)
+
+**The owner played v92 and sent back eight findings; every one is now a change
+and a check** (`tail_v92_1.js`, T68 — full reasoning in the v92.1 section of
+`harness/README.md`). The ones that changed decisions this file records:
+small arms now RICOCHET off armor and structures (`sfxRico`, the game's first
+per-hit sound, fed from `applyDmg`, Math.random only); nest destruction is
+SILENT by decision (`sfxNestBreak` is deliberately empty — do not "fix" it);
+a wall dying under fire is a small blast now, reversing v64's "no detonation"
+brief (selling kept the full teardown it has had since v87.1); selection
+answers are brief — bare rotors for aircraft, one `DIESELV` diesel family for
+ground vehicles, the Balloon's burner deliberately excepted; the sniper is
+pinned the loudest gun in the set; and the reverb sends have pinned ceilings
+after the baked room slapback was removed from every take. **Per-voice
+loudness lives in `SNDV` and nowhere else** — the takes are peak-normalised,
+so that table is the only mixing desk.
+
 ## v90.2 — the HUD legibility pass (not part of the roadmap)
 
 Two interface changes the owner asked for, and a bug the second one uncovered.

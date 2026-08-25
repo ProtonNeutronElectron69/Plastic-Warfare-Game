@@ -176,6 +176,76 @@ decision), mp3 frame-sync and size bounds, recorded-branch-before-synthesis
 asserted per function off the live source, the not-sim-state probe, and the
 folder/table byte-equality. The suite grew 5,202 → 5,234, all green at v92.
 
+#### v92.1: the owner's first listen, and what it changed
+
+v92's own record said it plainly: "the owner's first listen is the real
+acceptance test." It happened, and it returned eight findings. Every one
+became a change and a check (`tail_v92_1.js`, T68), and three of them
+corrected decisions this harness had PINNED the other way - those pins were
+rewritten to the new claims, not loosened. What the feedback taught, finding
+by finding:
+
+- **"Small arms on armor sound glassy, should be a metallic ping."** Two
+  faults hiding under one report. First, the v92 gun takes carried baked
+  sine-partial "shell casing" and "bolt" rings (3-5 kHz, 30-50 ms) - long
+  clean partials read as GLASS, and firing at armor exposes them because no
+  infantry pops mask the shot. Removed; the gun mechanism is damped filtered
+  noise now. Second, the game had NO impact sound at all - only death sounds -
+  so the ping the owner expected had nowhere to come from. v92.1 adds one:
+  `sfxRico` (three takes + synth fallback), fed from `applyDmg` inside the
+  existing per-target `lastShrap` throttle, gated to weapon class 'b' against
+  medium/heavy/bldg targets (nests excluded by name), then thinned by a 35%
+  Math.random draw and a 6-per-0.3 s budget window. Measured through the real
+  feed in Chromium: 30 bullet hits on a Tank produced 6 pings. Both gates are
+  DRIVEN in T68.B - bullets on a Grunt and rockets on a Tank must ring zero
+  times - because the v90.1 lesson is that a guard asserted in prose is a
+  guard unverified.
+- **"Armored buildings dying chime instead of exploding."** The Heavy
+  Barricade dies through `sfxStructBreak`, whose v64 brief was "pulled apart,
+  no detonation" - written when the same voice also played on a SOLD
+  structure. Selling has used the full teardown since v87.1, so combat was
+  the only caller left, and its comb resonator + modal ring-downs are a
+  chime by construction. Redesigned as a small blast with masonry crunch,
+  recorded take and synth fallback alike, and T43.F's "no detonation
+  transient" pin was REVERSED on purpose. The full building collapse also
+  contributed: its three detuned-saw groan, ported verbatim from the live
+  recipe, renders too clean offline and rings - the groan is torn pink noise
+  through a falling low-pass now, pitchless, with nothing to ring.
+- **"Hollow reverb on small arms and some explosions."** The v92 takes baked
+  a 14 ms room slapback into every gunshot AND the live convolvers were
+  layered on top - space applied twice. The baked room layer is gone and
+  every send was cut (small arms roughly halved, explosions by about a
+  third); T68.D pins the new ceilings so the wash cannot creep back.
+- **"Nests should be silent."** `sfxNestBreak` is an empty function now, the
+  take and its `SNDV` row are deleted, and the decision is pinned from both
+  sides: T68.A asserts the body is empty AND that the kill() call site
+  survives, so the silence lives in exactly one place. T43.F/T43.M dropped
+  the nest from their distinctness claims (23 combat voices, was 24).
+- **"Helicopter selection: just a brief rotor." / "Vehicle selection: just a
+  brief diesel."** The rotor answers lost their turbine and gearbox whine
+  layers and halved their windows; what differentiates the three is the
+  rotor itself (chop/blade rates, the Chinook's tandem beat - all still
+  pinned by T43.L). The eight ground-vehicle answers collapsed from bespoke
+  layer stacks to ONE diesel family (`DIESELV`): chug rate, fundamental,
+  window and level per kind, with the fundamentals on a geometric ladder
+  ~20% apart so every pair clears T43.L's 13% distinctness band without
+  leaning on jitter. The Bull still idles lowest and slowest, the Scout Bike
+  highest and fastest, and T68.E asserts every answer ends inside 0.7-0.75 s.
+  The one deliberate exception: the Observation Balloon keeps its v86 burner,
+  because it is the one "vehicle" with no engine to idle.
+- **"Add 'Ready to move' / 'Ready to fight'."** In `BARKS_INF`, additively -
+  T68.F checks the six v64 lines all survive.
+- **"Sniper should be a louder crack."** Its take is redesigned around a twin
+  supersonic crack (the N-wave's two shocks 4 ms apart) with a broad 3-7 kHz
+  whip band and only a modest thump, and its `SNDV` gain is now deliberately
+  the largest of the guns (.80 against the rifle's .44) - T68.C pins
+  "loudest gun in the set" as an inequality over the whole table.
+
+Suite at v92.1: 5,266 checks, all green (5,238 at v92), trails and all 42
+layout pins reproduce - the ricochet call sits in `applyDmg`, but
+both of its random draws are Math.random and T43.J drives the whole audio
+surface, `sfxRico` included, across a hash comparison.
+
 #### What phase 1 looked like before it landed, kept for the reasoning
 
 #### Phase 1 is the only phase with a structural risk, and it lands on `main`

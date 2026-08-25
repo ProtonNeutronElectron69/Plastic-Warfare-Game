@@ -23,7 +23,10 @@ section('T67 v92: recorded audio, and the synthesis it falls back to');
 
 const fs67 = require('fs');
 const LAUNCH67 = ['cannon', 'cannon_hvy', 'mortar', 'aa', 'artyrocket', 'rocket'];
-const SOLO67 = ['flame', 'throw', 'bld_destroy', 'pop', 'nest_break', 'struct_break', 'whoosh'];
+/* v92.1: nest_break left the roster (nest destruction is silent now, by the
+   owner's decision - T68.A) and rico joined it (small arms pinging off armor).
+   Still seven solos, still 25 bases. */
+const SOLO67 = ['flame', 'throw', 'bld_destroy', 'pop', 'rico', 'struct_break', 'whoosh'];
 const bases67 = Object.keys(GUNV).map(k => 'gun_' + k)
   .concat(LAUNCH67.map(k => 'launch_' + k))
   .concat(Object.keys(EXPLV).map(k => 'boom_' + k))
@@ -109,7 +112,7 @@ const bases67 = Object.keys(GUNV).map(k => 'gun_' + k)
     [sfxGun, "sndPlay('gun_'+"], [sfxFlame, "sndPlay('flame'"], [sfxThrow, "sndPlay('throw'"],
     [sfxLaunch, "sndPlay('launch_'+"], [sfxBoom, "sndPlay('boom_'+"],
     [sfxBuildingDestroy, "sndPlay('bld_destroy'"], [sfxPop, "sndPlay('pop'"],
-    [sfxNestBreak, "sndPlay('nest_break'"], [sfxStructBreak, "sndPlay('struct_break'"],
+    [sfxRico, "sndPlay('rico'"], [sfxStructBreak, "sndPlay('struct_break'"],
     [sfxWhoosh, "sndPlay('whoosh'"]
   ];
   for (const [fn, call] of pairs) {
