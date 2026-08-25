@@ -5,9 +5,11 @@ Read this first. It is the orientation; `harness/README.md` is the detail.
 ## The shape of the project
 
 The game is **assembled from `source/`** into one file, `plastic-warfare.html`
-(~1MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
+(~1.6MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
 audio, UI, netcode — is still one `<script>` block in the shipped file; it is now
 written as ~30 files listed in `source/order.txt`. There are no dependencies.
+Since v92 about a third of the file is the recorded sound set, riding inside the
+script as base64 so the double-clicked file stays self-contained.
 
 **That order is load-bearing.** Read the header of `source/order.txt` before
 touching it: hundreds of top-level `const`s, some derived from others, plus a
@@ -19,8 +21,9 @@ hand-edited file. Two rules that governed the whole project until then are now
 retired on purpose:
 
 - ~~one file, no build step~~ — one BUILT file, from `source/`.
-- ~~no third-party assets~~ — `ASSET_MANIFEST` exists and is empty; phases 2 and
-  4 fill it. **Assets OVERRIDE, they never REPLACE**: every procedural painter
+- ~~no third-party assets~~ — `ASSET_MANIFEST` exists; v92 filled its `snd` half
+  (33 mp3 takes in `assets/snd/`, embedded by `tools/embed_snd.py`) and phase 4
+  fills `img`. **Assets OVERRIDE, they never REPLACE**: every procedural painter
   and synthesised voice stays as the fallback, which is what keeps a missing file
   degrading to the old game and keeps the headless suite able to test drawing at
   all.
@@ -291,12 +294,19 @@ them, and `harness/build.sh` chained to it. `ASSET_MANIFEST` is in and empty;
 all 42 layout pins and every hash trail reproduce, and the suite is 5,202/5,202.
 `tail_v91` (T66) carries the checks, including that a stale build fails loudly.
 
-**Phase 2 — recorded audio. NEXT, and it goes on a branch off `main`.** Cheapest
-real win. 13 `sfx*` functions, one `audAt` gate, and `sndAsset()` already waiting
-for them. Everything phase 2 needs from phase 1 is in: put filenames in
-`ASSET_MANIFEST.snd`, decode on demand (the loader stores raw bytes on purpose,
-because an AudioContext only exists after the first gesture), and fall back to
-the existing synthesis whenever `sndAsset()` returns null.
+**Phase 2 — recorded audio. LANDED AT v92, on the roadmap3 branch.** The shape
+held exactly as phase 1 promised: `ASSET_MANIFEST.snd` filled, decode on demand
+into the `buf` slot at the first gesture, and synthesis is the fallback wherever
+`sndAsset()` answers null — which is what the whole headless suite permanently
+exercises, since the shim has no `fetch`. Ten positional one-shot voices take a
+recording first (the "13 `sfx*` functions" in the table above was miscounted;
+the measured surface is 10 — the ambience loops, engine/rotor selection voices
+and UI tones stay synthesised on purpose). Two findings a later phase needs,
+detailed in the v92 section of `harness/README.md`: the shipped file is opened
+from `file://`, where every browser refuses `fetch()` of a relative URL, so the
+sounds ride INSIDE the file as `data:` URLs — and the takes are offline-RENDERED
+from the tuned v64 recipes, not field recordings, each swappable one file at a
+time via `assets/snd/` + `tools/embed_snd.py`.
 
 **Phase 3 — WebGL, still drawing the EXISTING procedurally-baked sprites.** A 2D
 WebGL renderer (PixiJS is the pick) rather than a game engine: an engine brings

@@ -1,7 +1,6 @@
 /* ---------------- ASSET MANIFEST & LOADER ----------------
-   Added at v91, roadmap 3 phase 1. EMPTY ON PURPOSE: this release ships the
-   plumbing and no assets at all, so that the plumbing can be landed, reviewed
-   and proved inert on its own. Phases 2 and 4 fill the manifest.
+   Added at v91, roadmap 3 phase 1, empty; v92 (phase 2) filled the snd half
+   from SND_B64 in the next file. img stays empty until phase 4.
 
    THE RULE THIS FILE EXISTS TO ENFORCE: assets OVERRIDE, they never REPLACE.
    Every procedural painter and every synthesised voice stays exactly where it
@@ -28,15 +27,16 @@
    download - and the match must still agree tick for tick. An asset may decide
    what a player SEES or HEARS and must never decide what happens. */
 const ASSET_MANIFEST={
- /* name -> url, relative to the page. Filled from phase 2 onward, e.g.
-      img:{ 'unit_grunt_green':'assets/img/grunt_green.png' },
-      snd:{ 'gun_rifle':'assets/snd/rifle.ogg' }                          */
+ /* name -> url. snd is filled by 02c-snd-data.js with data: URLs (the game is
+    opened from file://, where fetch() refuses relative urls - see that file's
+    header); img is filled at phase 4, e.g.
+      img:{ 'unit_grunt_green':'assets/img/grunt_green.png' }             */
  img:{},
  snd:{}
 };
 const ASSETS={img:{},snd:{}};
 let ASSETS_STATE='idle';        // idle -> loading -> ready. Client-local; never hashed.
-let ASSETS_FAILED=[];           // urls that did not arrive, for the console and for a test
+let ASSETS_FAILED=[];           // KEYS that did not arrive (keys, not urls: a data: url is half a megabyte)
 let _assetsP=null;
 /* Resolves when every manifest entry has either arrived or failed - it does NOT
    reject, because a missing texture is a fallback, not an error the game should
@@ -49,28 +49,32 @@ function assetsLoad(){
  for(const k in ASSET_MANIFEST.snd)jobs.push(_assetSnd(k,ASSET_MANIFEST.snd[k]));
  _assetsP=Promise.all(jobs).then(()=>{
   ASSETS_STATE='ready';
-  if(ASSETS_FAILED.length)console.warn('assets: '+ASSETS_FAILED.length+' missing, painting procedurally: '+ASSETS_FAILED.join(', '));
+  /* headless has no fetch, so with a filled manifest EVERY entry lands in
+     ASSETS_FAILED by design - that is the suite exercising the fallback, not a
+     player missing files. Only an environment that could have loaded them warns. */
+  if(ASSETS_FAILED.length&&typeof fetch==='function')console.warn('assets: '+ASSETS_FAILED.length+' missing, using the built-in fallback: '+ASSETS_FAILED.join(', '));
   return ASSETS;
  });
  return _assetsP;
 }
 function _assetImg(key,url){
  return new Promise(res=>{
-  if(typeof Image!=='function'){ASSETS_FAILED.push(url);return res()} // headless: no decoder, and none is wanted
+  if(typeof Image!=='function'){ASSETS_FAILED.push(key);return res()} // headless: no decoder, and none is wanted
   const im=new Image();
   im.onload=()=>{ASSETS.img[key]=im;res()};
-  im.onerror=()=>{ASSETS_FAILED.push(url);res()};
+  im.onerror=()=>{ASSETS_FAILED.push(key);res()};
   im.src=url;
  });
 }
 /* Stored as raw bytes rather than a decoded AudioBuffer on purpose: decoding
    needs an AudioContext, and this project creates one only after the first user
-   gesture (browsers refuse it before). Phase 2 decodes on demand and caches. */
+   gesture (browsers refuse it before). sndBuf() decodes on demand and caches
+   into the buf slot (v92). */
 function _assetSnd(key,url){
- if(typeof fetch!=='function'){ASSETS_FAILED.push(url);return Promise.resolve()}
+ if(typeof fetch!=='function'){ASSETS_FAILED.push(key);return Promise.resolve()}
  return fetch(url).then(r=>r.ok?r.arrayBuffer():Promise.reject(r.status))
   .then(buf=>{ASSETS.snd[key]={bytes:buf,buf:null}})
-  .catch(()=>{ASSETS_FAILED.push(url)});
+  .catch(()=>{ASSETS_FAILED.push(key)});
 }
 /* The two lookups every future caller uses. Null means "paint/synthesise it the
    way v90.2 did", which is always a legal answer. */

@@ -72,6 +72,10 @@ function ac(){
    farBus.buffer=makeIR(1.4,2.8,0.16,null);
    const fg=AC.createGain();fg.gain.value=0.7;farBus.connect(fg).connect(masterGain);
   }catch(e){masterGain=null;roomBus=null;farBus=null;armsBus=null;}
+  /* v92: the context exists, so the recorded takes can finally decode - kick
+     them all now, once, off the critical path. By the first battle sound they
+     are long ready; until then sndPlay answers false and synthesis covers. */
+  if(AC)sndWarm();
  }
  if(AC&&AC.state==='suspended'){try{AC.resume();}catch(e){}}
  return AC;
@@ -191,6 +195,97 @@ function audAt2(x1,y1,x2,y2){
 /* v28: shared gate for target-aware weapon sfx: the louder tracer end when a
    target position is given, else the muzzle alone. */
 function audFor(x,y,tx,ty){return tx!=null?audAt2(x,y,tx,ty):audAt(x,y)}
+/* v92, roadmap 3 phase 2: recorded one-shots. sndPlay() answers true only
+   when a decoded recording is in hand; every positional sfx* voice below asks
+   it FIRST and synthesises the v90.2 way when the answer is false - the
+   assets-override rule applied to sound. Three things are deliberate here:
+     - the recording plays DRY through the same aout()/rsend() chain as the
+       synthesis, so the fog gate, distance absorption, panning, ducking and
+       both reverbs treat a recording and a synthesised voice identically;
+     - every random draw is Math.random, exactly as in the synthesis (rule 2:
+       nothing below may ever touch srand, and T43.J asserts it at runtime);
+     - nothing decoded is sim state. A client that failed a decode falls back
+       to synthesis and the lockstep match must not care. */
+/* Per-voice playback parameters. The files are peak-normalised, so RELATIVE
+   LOUDNESS lives here, not in the takes; rev/far mirror each recipe's own
+   sends; n is how many alternate takes assets/snd/ holds (rapid-fire weapons
+   carry two so a burst is not one sample on repeat - the ±4% rate jitter and
+   the ±12% gain jitter below do the rest). T67 asserts n and the manifest
+   agree in both directions. */
+const SNDV={
+ gun_rifle:  {g:.44,rev:.16,far:.30,n:2,bus:'arms'},
+ gun_smg:    {g:.34,rev:.12,far:.20,n:2,bus:'arms'},
+ gun_carbine:{g:.50,rev:.20,far:.35,n:1,bus:'arms'},
+ gun_hmg:    {g:.52,rev:.22,far:.40,n:2,bus:'arms'},
+ gun_vmg:    {g:.38,rev:.14,far:.22,n:2,bus:'arms'},
+ gun_amg:    {g:.34,rev:.20,far:.45,n:2,bus:'arms'},
+ gun_sniper: {g:.62,rev:.30,far:.60,n:1,bus:'arms'},
+ gun_tower:  {g:.46,rev:.25,far:.45,n:2,bus:'arms'},
+ flame:      {g:.42,rev:.12,far:.15,n:1,bus:'arms'},
+ throw:      {g:.14,rev:.06,far:0,  n:1,bus:'arms'},
+ launch_cannon:    {g:.78,rev:.25,far:.45,n:1},
+ launch_cannon_hvy:{g:.88,rev:.25,far:.55,n:1},
+ launch_mortar:    {g:.48,rev:.25,far:.20,n:1},
+ launch_aa:        {g:.40,rev:.15,far:.20,n:1},
+ launch_artyrocket:{g:.75,rev:.35,far:.60,n:1},
+ launch_rocket:    {g:.58,rev:.25,far:.40,n:1},
+ boom_small: {g:.58,rev:.25,far:.30,n:2,rjit:.06},
+ boom_med:   {g:.82,rev:.35,far:.55,n:1,rjit:.05},
+ boom_big:   {g:.98,rev:.40,far:.75,n:1,rjit:.04},
+ boom_huge:  {g:1.12,rev:.45,far:.90,n:1,rjit:.03},
+ bld_destroy:{g:1.15,rev:.40,far:.90,n:1,rjit:.03},
+ pop:        {g:.26,rev:.06,far:0,  n:2,rjit:.08,bus:'arms'},
+ nest_break: {g:.40,rev:.15,far:.15,n:1,rjit:.05},
+ struct_break:{g:.36,rev:.15,far:.15,n:1,rjit:.05},
+ whoosh:     {g:.52,rev:.30,far:.55,n:1}
+};
+/* Decode on demand, cache into the buf slot the loader left null. The copy is
+   not optional: decodeAudioData DETACHES the ArrayBuffer it is handed, and the
+   raw bytes must stay whole. Decode failure is remembered and final for the
+   session - the voice simply stays synthesised, which is the designed answer
+   for a browser that cannot read the codec. */
+function sndBuf(key){
+ const a=sndAsset(key);if(!a)return null;
+ if(a.buf)return a.buf;
+ if(!a.pend&&!a.err&&AC){
+  a.pend=1;
+  try{AC.decodeAudioData(a.bytes.slice(0),b=>{b.pwOff=sndLead(b);a.buf=b;},()=>{a.err=1;});}
+  catch(e){a.err=1;}
+ }
+ return a.buf||null;
+}
+/* mp3 decoders return the encoder's padding as real leading silence, and how
+   much of it survives DIFFERS PER BROWSER (measured ~15-20 ms in Chromium at
+   v92) - so measure it off the decoded samples instead of assuming, and start
+   playback at the first audible one. A weapon whose report lands 20 ms after
+   its tracer reads as broken; this is the line that prevents it. */
+function sndLead(b){
+ try{
+  const ch=b.getChannelData(0),n=ch.length;
+  for(let i=0;i<n;i++)if(ch[i]>.003||ch[i]<-.003)return i/b.sampleRate;
+ }catch(e){}
+ return 0;
+}
+/* kick every decode at the first user gesture (ac() calls this once, when the
+   context is born) so the takes are ready before the first battle sound asks */
+function sndWarm(){for(const k in ASSETS.snd)sndBuf(k)}
+function sndPlay(key,o){
+ const V=SNDV[key];if(!V)return false;
+ if(muted||!ac()||!voxOk())return false;
+ const n=V.n||1;
+ const buf=sndBuf(n>1?key+'_'+((Math.random()*n)|0):key+'_0');if(!buf)return false;
+ const t=AC.currentTime,dl=(o&&o.delay)||0;
+ const src=AC.createBufferSource();src.buffer=buf;
+ const rate=1+(Math.random()*2-1)*(V.rjit==null?.04:V.rjit);
+ try{src.playbackRate.value=rate;}catch(e){}
+ const g=AC.createGain();
+ g.gain.value=Math.max(.0001,ajit((V.g||.4)*(o&&o.lvl!=null?o.lvl:1),JIT_G));
+ src.connect(g);aout(g,o&&o.pan,o&&o.d,V.bus);rsend(g,V.rev,V.far,o&&o.d);
+ const off=buf.pwOff||0,dur=(buf.duration-off)/rate;
+ src.start(t+dl,off);src.stop(t+dl+dur+.05);
+ voxAdd(t+dl+dur+.05);
+ return true;
+}
 /* --- low-level synth primitives. Callers pass lvl (0..1 from audAt), pan, d
    (absorption), rev/far (the two reverb sends) and bus ('arms' or master). --- */
 /* v72: the exponential AHD envelope all three primitives open with - silence,
@@ -416,6 +511,10 @@ function sfxGun(x,y,kind,tx,ty){
  if(AC)COMBAT_DUCK_T=AC.currentTime+1.2;
  const V=GUNV[kind]||GUNV.rifle;
  const full=aBudget(GUNW,14,0.12);
+ /* v92: a decoded take wins; the layers below are the fallback voice. The
+    budget window above is fed either way, so sustained-fire accounting does
+    not depend on which path a shot took. */
+ if(sndPlay('gun_'+(GUNV[kind]?kind:'rifle'),{lvl,pan,d}))return;
  const E={lvl,pan,d,bus:'arms'};
  pimp(Object.assign({},V.imp,E));
  pnoise(Object.assign({},V.body,E));
@@ -432,6 +531,7 @@ function sfxGun(x,y,kind,tx,ty){
 function sfxFlame(x,y,tx,ty){
  const a=audFor(x,y,tx,ty);if(!a)return;
  const lvl=a.gain,pan=a.pan,d=a.d,E={lvl,pan,d,bus:'arms'};
+ if(sndPlay('flame',{lvl,pan,d}))return;
  /* ignition whoosh: the cutoff falling is what makes it read as a gout of fuel
     catching rather than as a band of static */
  psweep(Object.assign({f0:3000,f1:300,sweep:.12,dur:.34,gain:.26,atk:.015,rev:.16},E));
@@ -442,6 +542,7 @@ function sfxFlame(x,y,tx,ty){
 function sfxThrow(x,y,tx,ty){
  const a=audFor(x,y,tx,ty);if(!a)return;
  const lvl=a.gain,pan=a.pan,d=a.d,E={lvl,pan,d,bus:'arms'};
+ if(sndPlay('throw',{lvl,pan,d}))return;
  pnoise(Object.assign({freq:1400,q:1.2,gain:.07,dur:.07},E));
  pnoise(Object.assign({freq:3600,q:6,gain:.04,dur:.04,delay:.03},E));
  ptone(Object.assign({ft:'sine',f0:900,f1:640,sweep:.12,dur:.14,gain:.03,delay:.05,atk:.03},E));
@@ -453,6 +554,7 @@ function sfxLaunch(x,y,kind,tx,ty){
  const a=audFor(x,y,tx,ty);if(!a)return;
  const lvl=a.gain,pan=a.pan,d=a.d,E={lvl,pan,d};
  if(AC){COMBAT_DUCK_T=AC.currentTime+1.2;duckArms(kind==='mortar'?.12:.28,.22);}
+ if(sndPlay('launch_'+kind,{lvl,pan,d}))return;
  if(kind==='cannon'||kind==='cannon_hvy'){
   const hv=kind==='cannon_hvy';
   pimp(Object.assign({freq:hv?1000:1200,gain:hv?.62:.55,drive:2.2},E));
@@ -521,6 +623,7 @@ function sfxBoom(x,y,size){
  const sz=EXPLV[size]?size:'med',S=EXPLV[sz];
  if(AC){COMBAT_DUCK_T=AC.currentTime+1.2;duckArms(S.duck,sz==='huge'?.45:.28);}
  const full=aBudget(BOOMW,5,0.20);
+ if(sndPlay('boom_'+sz,{lvl,pan,d}))return;
  /* 1 transient: the leading edge, under 2 ms */
  pimp(Object.assign({freq:S.impF,gain:S.impG,drive:S.impDr},E));
  /* 2 crack: the sharp high-frequency shell of the blast */
@@ -560,6 +663,7 @@ function sfxBuildingDestroy(x,y){
  const a=audAt(x,y);if(!a)return;
  const lvl=a.gain,pan=a.pan,d=a.d,E={lvl,pan,d};
  if(AC){COMBAT_DUCK_T=AC.currentTime+1.6;duckArms(.50,.60);}
+ if(sndPlay('bld_destroy',{lvl,pan,d}))return;
  /* 1 the detonation */
  pimp(Object.assign({freq:1300,gain:.70,drive:1.8},E));
  pnoise(Object.assign({freq:1900,q:.6,ft:'highpass',gain:.52,dur:.12,atk:.001,rev:.20},E));
@@ -586,6 +690,7 @@ function sfxBuildingDestroy(x,y){
 function sfxPop(x,y){
  const a=audAt(x,y);if(!a)return;
  const lvl=a.gain,pan=a.pan,d=a.d,E={lvl,pan,d,bus:'arms'};
+ if(sndPlay('pop',{lvl,pan,d}))return;
  pimp(Object.assign({freq:4200,gain:.16,drive:1.6},E));
  pnoise(Object.assign({freq:3400,q:12,gain:.13,dur:.035},E));
  pnoise(Object.assign({freq:1800,q:8,gain:.08,dur:.05,delay:.02},E));
@@ -596,6 +701,7 @@ function sfxPop(x,y){
 function sfxNestBreak(x,y){
  const a=audAt(x,y);if(!a)return;
  const lvl=a.gain,pan=a.pan,d=a.d,E={lvl,pan,d};
+ if(sndPlay('nest_break',{lvl,pan,d}))return;
  pimp(Object.assign({freq:900,gain:.20,drive:1.6},E));
  pnoise(Object.assign({freq:700,q:.6,ft:'lowpass',gain:.22,dur:.12,atk:.002,pink:1},E));
  pnoise(Object.assign({freq:260,q:3,gain:.14,dur:.20,rev:.25},E));
@@ -607,6 +713,7 @@ function sfxNestBreak(x,y){
 function sfxStructBreak(x,y){
  const a=audAt(x,y);if(!a)return;
  const lvl=a.gain,pan=a.pan,d=a.d,E={lvl,pan,d};
+ if(sndPlay('struct_break',{lvl,pan,d}))return;
  pnoise(Object.assign({freq:2200,q:7,gain:.10,dur:.04},E));
  pgrain(Object.assign({n:8,freq:1900,q:8,span:.38,gain:.09,gdur:.05,spread:.35},E));
  ptone(Object.assign({ft:'sine',f0:180,f1:70,sweep:.10,dur:.16,gain:.12},E));
@@ -615,6 +722,7 @@ function sfxStructBreak(x,y){
 function sfxWhoosh(x,y){
  const a=audAt(x,y);if(!a)return;
  const lvl=a.gain,pan=a.pan,d=a.d,E={lvl,pan,d};
+ if(sndPlay('whoosh',{lvl,pan,d}))return;
  psweep(Object.assign({f0:6000,f1:200,sweep:.42,dur:.55,gain:.28,atk:.06,rev:.35,far:.7},E));
  pnoise(Object.assign({freq:700,q:.4,ft:'lowpass',gain:.20,dur:.50,atk:.06,rev:.30,pink:1},E));
  ptone(Object.assign({ft:'sine',f0:90,f1:50,sweep:.40,dur:.50,gain:.18,atk:.05,rev:.20,far:.5},E));

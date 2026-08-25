@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v90.2)
+# Plastic Warfare headless test harness (updated at v92)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -6,7 +6,7 @@ actually cost, and the traps learned. If you are new to the project, read
 
 ## THE FACTION ABILITY ROADMAP (read this first if you are picking up mid-project)
 
-### Roadmap 3 (not started): real art and real sound. DECIDED.
+### Roadmap 3 (in flight, phases 1-2 landed): real art and real sound.
 
 The owner has decided to take the game to **textured sprites with per-pixel
 lighting and recorded audio**. The short version and the phase list are in
@@ -93,6 +93,88 @@ that way. `T66.C` writes an asset in and asserts neither `hashState` nor
 can legitimately hold different assets — one of them may have failed a download —
 and the match still has to agree tick for tick. **An asset may decide what a
 player sees or hears and must never decide what happens.**
+
+#### Phase 2 LANDED at v92: recorded audio. What it shipped, and what was measured
+
+The seams phase 1 left were exactly right and none of them moved: the loader,
+`sndAsset()`, the raw-bytes-until-gesture rule and the `audAt` gate are all
+untouched. What v92 added: `assets/snd/` with 33 mp3 takes across 25 voices
+(362 kB), `tools/render_snd_v92.py` (the renderer that made them),
+`tools/embed_snd.py` (packs them into `source/js/02c-snd-data.js` as base64),
+and in `03-audio.js` a `SNDV` per-voice parameter table plus three functions —
+`sndBuf` (decode on demand, cached into the `buf` slot), `sndLead` (see below)
+and `sndPlay` (plays a take through the same `aout()`/`rsend()` chain as the
+synthesis). Ten positional one-shot voices ask `sndPlay` first and synthesise
+when it answers false: `sfxGun`, `sfxFlame`, `sfxThrow`, `sfxLaunch`,
+`sfxBoom`, `sfxBuildingDestroy`, `sfxPop`, `sfxNestBreak`, `sfxStructBreak`,
+`sfxWhoosh`. The trails and all 42 layout pins reproduce over the diff, which
+was the acceptance test: audio may decide what a player hears, never what
+happens. That claim was also driven end-to-end rather than argued: the shipped
+file opened from `file://` in a real Chromium, a deathmatch booted, the real
+call sites fired recorded takes (`gun_rifle:true` ... `bld_destroy:true`, and
+an off-map shot correctly silenced by the `audAt` gate before `sndPlay` was
+ever consulted), and the browser match hashed **2521820048** at tick 30 —
+bit-identical to the same seed run headless with no audio in existence.
+
+**The count in the decision table was wrong, and is corrected rather than kept:
+there are 10 `sfx*` functions, not 13.** The claim "recorded sound changes N
+bodies and no call site" survives at 10. The continuous voices — the two mining
+ambience loops, the engine/rotor/building selection answers, the speech barks
+and the UI tones — stay synthesised on purpose: they are loops, models and
+speech, not one-shots, and nothing about the override architecture is waiting
+on them.
+
+**Finding 1: the double-click instruction is load-bearing, and it forced the
+data: URL design.** The README's first line to a player is "download
+`plastic-warfare.html` and double-click it" — a `file://` page, and every
+modern browser refuses `fetch()` of a RELATIVE url there. So a manifest of
+`'assets/snd/rifle.mp3'` entries would have meant NOBODY who plays the game the
+documented way ever hears the recorded audio, silently, with the fallback
+masking it. `fetch()` of a `data:` url works everywhere (verified in the real
+Chromium this session, from an actual `file://` page), so the takes ride inside
+the shipped file as `data:audio/mpeg;base64,` entries, generated into an
+ordinary source file so the build stays pure concatenation and T66.A's
+byte-for-byte pin holds. The price is honest and measured: the shipped file
+went 1,079,645 → 1,582,424 bytes (+47%), all of it the sound set. mp3 rather
+than wav is why it is only that: the same takes as 22 kHz wav were 1,010 kB
+against 362 kB. T67.B pins the `data:` scheme so a future phase cannot retire
+it without also consciously retiring the double-click claim.
+
+**Finding 2: mp3 encoder padding is real, browser-dependent, and handled at
+runtime, not at encode time.** A LAME-encoded one-shot decodes with its
+encoder delay returned as leading silence — measured 13–20 ms across the set
+in Chromium — and how much survives differs per decoder. A gunshot that lands
+20 ms after its tracer reads as broken. `sndLead()` therefore scans each
+decoded buffer once for the first sample above 0.003 and playback starts
+there (`buf.pwOff`), which is robust in every browser because it measures the
+decode actually in hand. A browser that cannot decode mp3 at all fails into
+`a.err` and that voice stays synthesised for the session — the fallback is the
+error handler.
+
+**What these takes are, stated plainly: rendered, not recorded.** This
+session's network reached package registries and nothing else, so no
+rights-clean field recordings were obtainable — and shipping audio nobody has
+rights to is not on the table. The takes are offline renders
+(`tools/render_snd_v92.py`, numpy/scipy, deterministic per-key seeds) of the
+SAME layer recipes the live engine plays — the part tuned by ear across
+v64–v88 — with processing the realtime graph cannot afford: 4th-order swept
+filters, modal resonators for the plastic crack and shell-casing rings, debris
+fields at 2-4x the grain density, and a per-file mastering chain. Rapid-fire
+weapons carry two takes each (plus ±4% rate and ±12% gain jitter per shot) so
+a burst is not one sample on repeat. **Nobody in this session could LISTEN to
+them** — QA was decode metrics and spectral sanity, not ears — so the owner's
+first listen is the real acceptance test. The two knobs if something sounds
+wrong: per-voice loudness lives ONLY in `SNDV` (the files are peak-normalised),
+and any single take can be replaced or deleted (drop/remove the file in
+`assets/snd/`, run `tools/embed_snd.py`, then `./build.sh`) — a deleted take
+falls back to synthesis for that voice alone, take counts permitting, and
+T67.E refuses a repo where the folder and the embedded table disagree.
+
+`tail_v92.js` (T67) carries the checks: coverage derived off `GUNV`/`EXPLV`
+both directions (a ninth gun voice fails until it gets takes or a conscious
+decision), mp3 frame-sync and size bounds, recorded-branch-before-synthesis
+asserted per function off the live source, the not-sim-state probe, and the
+folder/table byte-equality. The suite grew 5,202 → 5,234, all green at v92.
 
 #### What phase 1 looked like before it landed, kept for the reasoning
 
