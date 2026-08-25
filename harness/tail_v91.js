@@ -99,10 +99,14 @@ const read66 = p => { try { return fs66.readFileSync('../' + p, 'utf8') } catch 
 {
   section('T66.C the asset loader ships empty and off the simulation path');
 
-  ok('T66.C the manifest exists and is EMPTY at phase 1',
-    ASSET_MANIFEST && Object.keys(ASSET_MANIFEST.img).length === 0 && Object.keys(ASSET_MANIFEST.snd).length === 0);
+  /* REWRITTEN AT v92, deliberately: phase 1 pinned the manifest EMPTY so the
+     plumbing landed provably inert; phase 2 exists to fill the snd half, so
+     the claim is now "snd is populated, img still waits for phase 4". The
+     sound keys themselves are asserted in detail by T67 (tail_v92). */
+  ok('T66.C the manifest holds phase 2 sounds and, until phase 4, no images',
+    ASSET_MANIFEST && Object.keys(ASSET_MANIFEST.img).length === 0 && Object.keys(ASSET_MANIFEST.snd).length > 0);
   ok('T66.C nothing is loaded, so every lookup answers null',
-    imgAsset('unit_grunt_green') === null && sndAsset('gun_rifle') === null && imgAsset('anything') === null);
+    imgAsset('unit_grunt_green') === null && sndAsset('gun_rifle_0') === null && imgAsset('anything') === null);
 
   /* THE CHECK THIS SECTION EXISTS FOR. newGame() is called synchronously by
      hundreds of fixtures and by the lobby. The day it awaits an asset load is the

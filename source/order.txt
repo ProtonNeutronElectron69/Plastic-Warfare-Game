@@ -15,6 +15,7 @@
 01-constants.js
 02-tunables.js
 02b-assets.js
+02c-snd-data.js
 03-audio.js
 04-tables.js
 05-setup-lobby.js
