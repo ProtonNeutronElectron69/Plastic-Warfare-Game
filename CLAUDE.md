@@ -391,6 +391,22 @@ v96 section of `harness/README.md`.
 - **Scale honestly:** months of evenings, not a weekend. But it is additive — the
   game is playable at the end of every phase, and phases 1 and 2 are small.
 
+## v96.1 — the graphics feedback pass (roadmap 3 follow-up)
+
+**The owner played v96 and sent back three findings; every one is a change
+and a check** (`tail_v96_1.js`, T73 — full reasoning in the v96.1 section of
+`harness/README.md`). The walls joined the texture pass — a cell per colour
+including the map's NEUTRAL gray, blitted by `drawBarricade` with the
+hedgehog painter as the fallback (deliberately no baked cell behind a wall);
+`BARR_BOX` holds their measured boxes and T71.A's derived roster grew the
+wall rule in the same edit as the generator. Flame casts real light now:
+`LIGHTV.fire` raised, and a new `LIGHTV.flame` source lights a flame weapon
+at its stream's midpoint (the muzzle-flash source correctly skips class 'f'
+for the star sprite — that skip had silently meant "no light at all").
+Infantry normal maps were regenerated from a gentler per-kind recipe
+(`KIND_NRM` in `normal_v96.py`) because the old dome washed out half the
+figure — the wash was data, not shader.
+
 ## v92.1 — the audio feedback pass (roadmap 3, phase 2 follow-up)
 
 **The owner played v92 and sent back eight findings; every one is now a change

@@ -206,7 +206,8 @@ const LIGHTV={
  z:.70,amb:.60,kd:.62,ks:.55,shin:26,
  max:10,ptZ:36,
  ex:{r:170,c:[1.0,.62,.28],i:1.05},   // explosion core flash, by remaining life
- fire:{r:64,c:[1.0,.55,.20],i:.34},   // one burning ground cell (clusters sum)
+ fire:{r:90,c:[1.0,.55,.20],i:.75},   // one burning ground cell (clusters sum). v96.1: owner heard it right - .34/64 read as nothing
+ flame:{r:120,c:[1.0,.52,.18],i:.85}, // v96.1: a flame WEAPON mid-stream - flamethrower, firebomb heli - lit at the stream's midpoint
  flash:{r:80,c:[1.0,.78,.42],i:.5}    // a muzzle flash, by remaining flash time
 };
 const GLSL_BAND='precision mediump float;varying vec2 uv;'+
@@ -342,6 +343,14 @@ function bandLightsCollect(cx,cy,zz){
  for(const u of G.units){
   if(!(u.flash>0)||u.garrisoned)continue;
   if(u.p!==G.human&&!visibleToHuman(u))continue;
+  /* v96.1: a flame weapon mid-stream is a fire, not a muzzle pop - bigger,
+     warmer, and lit at the stream's midpoint so the glow sits on what is
+     being burned rather than on the nozzle */
+  if(u.t.w==='f'){
+   const t=u.target&&u.target.x!=null?u.target:u;
+   put((u.x+t.x)/2,(u.y+t.y)/2,LIGHTV.flame.r,LIGHTV.flame.c,LIGHTV.flame.i*Math.min(1,u.flash/.1));
+   continue;
+  }
   put(u.x,u.y,LIGHTV.flash.r,LIGHTV.flash.c,LIGHTV.flash.i*Math.min(1,u.flash/.1));
  }
 }

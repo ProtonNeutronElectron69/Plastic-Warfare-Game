@@ -87,6 +87,12 @@ def normals(base_png, out_path, sid, seam, P, lossless=True, q=95):
         outim.save(out_path, 'WEBP', quality=q, method=6, exact=True)
 
 DEFAULTS = dict(dome_r=7.0, w_dome=1.0, w_lum=1.0, w_det=0.35, nz=2.4)
+# v96.1, owner feedback: at the shared defaults an infantryman's tiny
+# silhouette makes the molding dome steep everywhere, so the lit half of the
+# figure ran near the shader's maximum and read washed out. Flatter normals
+# for the little men: higher nz damps every tilt, the dome and painted-shape
+# weights come down with it.
+KIND_NRM = {'inf': dict(nz=3.6, w_dome=0.55, w_lum=0.65)}
 
 if __name__ == '__main__':
     root = os.path.join(_here, '..')
@@ -99,6 +105,7 @@ if __name__ == '__main__':
     for sid in ids:
         kind = sid.split('_', 1)[0]
         P = dict(DEFAULTS)
+        P.update(KIND_NRM.get(kind, {}))
         P['grain'] = m95.KIND_CFG.get(kind, {}).get('grain', m95.DEFAULTS['grain'])
         P['emboss'] = m95.DEFAULTS['emboss']; P['seam'] = m95.DEFAULTS['seam']
         seed_id = '_'.join(sid.split('_')[:2])
