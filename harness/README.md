@@ -6,12 +6,12 @@ actually cost, and the traps learned. If you are new to the project, read
 
 ## THE FACTION ABILITY ROADMAP (read this first if you are picking up mid-project)
 
-### Roadmap 3 (COMPLETE at v96): real art and real sound.
+### Roadmap 3 (COMPLETE: v91–v96, follow-ups v92.1 / v96.1 / v97): real art and real sound.
 
-The owner has decided to take the game to **textured sprites with per-pixel
-lighting and recorded audio**. The short version and the phase list are in
-`../CLAUDE.md`; this section is the evidence, the alternatives that were weighed,
-and the detail a phase-1 session needs.
+The game went to **textured sprites with per-pixel lighting and recorded
+audio**, one phase per release. The short version and the landed-state map are
+in `../CLAUDE.md`; this section is the evidence the decision rested on, the
+alternatives that were weighed, and the per-phase records.
 
 **Scope, stated as a boundary rather than a wish.** Isometric 2D stays. The
 camera, the maps, the fog, the UI, the simulation and the AI stay. What changes
