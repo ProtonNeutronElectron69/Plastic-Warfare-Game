@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v92)
+# Plastic Warfare headless test harness (updated at v95)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -6,7 +6,7 @@ actually cost, and the traps learned. If you are new to the project, read
 
 ## THE FACTION ABILITY ROADMAP (read this first if you are picking up mid-project)
 
-### Roadmap 3 (in flight, phases 1-2 landed): real art and real sound.
+### Roadmap 3 (in flight, phases 1-3 landed, phase 4 begun): real art and real sound.
 
 The owner has decided to take the game to **textured sprites with per-pixel
 lighting and recorded audio**. The short version and the phase list are in
@@ -339,6 +339,68 @@ the point of this file:**
 
 Suite 5,303/5,303; every trail and all 42 layout pins reproduce; the sim
 hash is identical across v93-2d, v94-2d, v94-GL of the same tick.
+
+#### Phase 4, first cut, LANDED at v95: real textures for eight sprites, and the pipeline that makes the other seventeen cheap
+
+**What shipped.** Each army's exclusive unit and one exclusive structure now
+draw from a real PNG texture instead of the runtime vector painter: Blue's
+Signal Runner (all five walk frames) and Forward Pad, Green's Command Truck
+and Command Post, Tan's Firebomb Heli and Foundry, Gray's Choktaw Heli and
+Bunker. Twelve PNGs, 404 kB, committed twice on purpose exactly like the
+sounds: as auditable files in `assets/img/` and as base64 data: URLs in the
+generated `source/js/02d-img-data.js` (`tools/embed_img.py`), because the
+double-clicked file:// page can decode a data: URL and nothing else. T71.B
+holds the two byte-identical.
+
+**The seam is three lines in `bakeSprites()`.** Each bake site asks
+`imgAsset('inf_<key>_<fac>_<frame>' / 'veh_<key>_<fac>' / 'bld_<key>_<fac>')`
+first; a hit becomes a cell through `cellFromImg()`, which returns exactly
+the `{cv,sil,ax,ay,w,h}` shape `bakeCell()` returns, so the draw sites, the
+shadow pass and the portraits cannot tell the two apart - measured in
+Chromium: the baked cell is pixel-identical to the PNG (mean diff 0), and
+`hashState()` is unchanged across a textured frame. A miss falls back to the
+painter, which is what the whole headless suite permanently exercises (the
+shim has no `Image`).
+
+**Where the textures come from, honestly.** No rights-clean art is
+obtainable from this container (registry-only network), and no generic pack
+would match the molded-army-men look or survive per-faction tinting - so the
+textures are OFFLINE-RENDERED: the game's own painters drawn at 6x
+supersample in headless Chromium, then a Python material pass
+(`scratchpad`-side, deterministic per sprite) that adds what a vector
+painter cannot - bump-lit plastic grain in patches, a mold seam down the
+infantryman, sparse scratches, worn edges on painted detail lines,
+micro-occlusion, a molded-color swirl - and finishes with the exact
+`enrichCell` numbers so a textured cell sits beside procedural neighbours
+without a style seam. The first cut of that pass relit the whole sprite from
+a distance-field dome and looked WORSE than the painter (washed out, forms
+pillowed); the shipped recipe keeps the painter's own shading as the light
+and adds only high-frequency material. Same lesson as v92's audio: generate
+from the tuned recipes, ship as swappable files, let the owner's eye be the
+acceptance test.
+
+**Three rails, all driven by T71:**
+
+- **A bake that ran early re-bakes once.** The field manual can bake from
+  the main menu before the page-open `assetsLoad()` resolves; the `.then`
+  now calls `rebakeIfAssetsLate()`, which rebuilds `SPR` exactly once if the
+  bake preceded the assets. Client-local by design: two players may re-bake
+  at different wall times, or never.
+- **The missing-asset warn gates on `Image`, not `fetch`** - because Node 22
+  HAS a global fetch, so the v92 comment "headless has no fetch" was wrong
+  in a way that only started to matter when img entries (which need `Image`,
+  absent under the shim) began landing in `ASSETS_FAILED` on every harness
+  run.
+- **The Choktaw's tail was clipped off every sprite since v88** - it never
+  had a `VEH_BOX` entry, so it baked in the 48-wide default while its
+  painter reaches x=-31.3. Found because the texture had to be authored in
+  the sprite's true box; fixed with `choktaw:[-33,-16,18,16]`, which also
+  widens its portrait. Display-only.
+
+Suite green with three pins consciously rewritten (T66.C boot line, T66.D
+"no texture in the bake" - the claim phase 4 exists to overturn - and
+T67.E's order.txt run growing one line); trails and all 42 layout pins
+reproduce untouched.
 
 #### What phase 1 looked like before it landed, kept for the reasoning
 

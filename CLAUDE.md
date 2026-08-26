@@ -8,8 +8,9 @@ The game is **assembled from `source/`** into one file, `plastic-warfare.html`
 (~1.6MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
 audio, UI, netcode — is still one `<script>` block in the shipped file; it is now
 written as ~30 files listed in `source/order.txt`. There are no dependencies.
-Since v92 about a third of the file is the recorded sound set, riding inside the
-script as base64 so the double-clicked file stays self-contained.
+Since v92 about a third of the file is the recorded sound set, and since v95 the
+first textures ride beside it — both as base64 so the double-clicked file stays
+self-contained.
 
 **That order is load-bearing.** Read the header of `source/order.txt` before
 touching it: hundreds of top-level `const`s, some derived from others, plus a
@@ -22,8 +23,9 @@ retired on purpose:
 
 - ~~one file, no build step~~ — one BUILT file, from `source/`.
 - ~~no third-party assets~~ — `ASSET_MANIFEST` exists; v92 filled its `snd` half
-  (33 mp3 takes in `assets/snd/`, embedded by `tools/embed_snd.py`) and phase 4
-  fills `img`. **Assets OVERRIDE, they never REPLACE**: every procedural painter
+  (33 mp3 takes in `assets/snd/`, embedded by `tools/embed_snd.py`) and v95
+  began filling `img` (12 PNGs in `assets/img/`, embedded by
+  `tools/embed_img.py`). **Assets OVERRIDE, they never REPLACE**: every procedural painter
   and synthesised voice stays as the fallback, which is what keeps a missing file
   degrading to the old game and keeps the headless suite able to test drawing at
   all.
@@ -330,8 +332,22 @@ GL frame measured ~2x the whole 2d path. Phase 4 does not wait on any of this �
 a loaded texture blits through the 2d path exactly as a procedural cell does.
 Full reasoning in the v93 and v94 sections of `harness/README.md`.
 
-**Phase 4 — real textures, one unit at a time.** The bake is per-key-per-faction,
-so the Grunt can be a real texture while the other 24 stay procedural.
+**Phase 4 — real textures, one unit at a time. FIRST CUT LANDED AT v95.** Each
+army's exclusive unit and one exclusive structure (8 sprites, 12 PNGs counting
+the Runner's five walk frames) now draw from real textures riding the manifest
+as data: URLs — `assets/img/` + `tools/embed_img.py`, exactly the sound set's
+shape. The seam is three `imgAsset()` asks in `bakeSprites()`: a hit becomes a
+cell via `cellFromImg()` (same `{cv,sil,ax,ay,w,h}` shape as `bakeCell`, so
+draw sites, shadows and portraits cannot tell), a miss falls back to the
+painter the suite permanently tests. The textures are offline-rendered from
+the game's own painters plus a per-pixel material pass
+(`tools/dump_base_v95.js` + `tools/material_v95.py`) — the relight-everything
+first cut looked WORSE than the painter; the shipped recipe keeps the
+painter's shading and adds only high-frequency material. Riding along: the
+Choktaw's tail had been clipped off every sprite since v88 (no `VEH_BOX`
+entry) — found because the texture needed the true box. The remaining ~17
+units/structures are each "render, drop a PNG in assets/img/, re-run two
+tools". Full record in the v95 section of `harness/README.md`.
 
 **Phase 5 — normal maps and lighting.** Nearly free once 3 and 4 are done.
 

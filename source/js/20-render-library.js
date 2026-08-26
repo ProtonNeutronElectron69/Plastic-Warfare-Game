@@ -192,7 +192,8 @@ const SPR={inf:{},veh:{},bld:{},done:false};
 const VEH_BOX={truck:[-18,-14,18,14],medic:[-18,-14,18,14],jeep:[-15,-13,15,13],bike:[-12,-9,12,9],
  tank:[-16,-13,16,13],bulltank:[-22,-17,22,17],aatruck:[-18,-13,18,13],arty:[-16,-13,17,13],heli:[-28,-11,16,11],chinook:[-38,-16,24,16],apache:[-32,-13,18,13],apc:[-20,-14,20,14],
  cmdtruck:[-20,-30,20,15],balloon:[-26,-52,26,20],
- firebomb:[-34,-15,20,15]}; // v87: wider than the Huey's box - the belly racks hang outside the hull // v86: both boxes are TALL - the Command Truck's aerials stand well above the cab and the balloon is mostly envelope
+ firebomb:[-34,-15,20,15], // v87: wider than the Huey's box - the belly racks hang outside the hull // v86: both boxes are TALL - the Command Truck's aerials stand well above the cab and the balloon is mostly envelope
+ choktaw:[-33,-16,18,16]}; // v95: it had NO entry, so it baked in the 48-wide default and its tail boom (painted to x=-31.3) was clipped off every sprite since v88
 const BLD_BOX={hq:[-102,-80,102,86],barracks:[-70,-52,70,62],lab:[-70,-48,70,62],garage:[-102,-64,102,86],
  supply:[-68,-54,68,62],
  helipad:[-102,-30,102,86],generator:[-70,-34,70,62],turbine:[-38,-54,38,36],guardtower:[-38,-66,38,36],
@@ -234,6 +235,26 @@ function silOf(cv,w,h){
  c.globalCompositeOperation='source-in';c.fillStyle='#0b140a';c.fillRect(0,0,s.width,s.height);
  return s;
 }
+/* v95: a loaded texture becomes a cell of exactly the shape bakeCell returns,
+   so every consumer downstream - the draw sites, the shadow pass, the
+   portraits - cannot tell the two apart. No enrichCell: the offline material
+   pass bakes the same finish (same rim/shadow offsets, same sat/contrast
+   numbers) into the file. The png must be the box at SS supersample. */
+function cellFromImg(im,x0,y0,x1,y1){
+ const w=x1-x0,h=y1-y0;
+ const cv=document.createElement('canvas');cv.width=Math.ceil(w*SS);cv.height=Math.ceil(h*SS);
+ cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+ return {cv,sil:silOf(cv,w,h),ax:-x0,ay:-y0,w,h};
+}
+/* v95: the field manual can bake from the main menu before the page-open
+   asset load resolves; if that happened, re-bake once the textures are in.
+   Client-local, render-only - two players may legitimately re-bake at
+   different wall times, or never. */
+function rebakeIfAssetsLate(){
+ if(SPR.done&&!SPR.assets&&Object.keys(ASSETS.img).length){
+  SPR.done=false;SPR.inf={};SPR.veh={};SPR.bld={};bakeSprites();
+ }
+}
 function blitVeh(c,key,fac){
  const cell=SPR.done&&SPR.veh[key]&&SPR.veh[key][fac];
  if(!cell)return false;
@@ -247,10 +268,14 @@ function bakeSprites(){
    SPR.inf[key]={};
    for(const f of facs){const col=FAC[f].color;SPR.inf[key][f]=[];
     for(let i=0;i<5;i++){const bob=i*.5-1;
-     SPR.inf[key][f].push(bakeCell(-22,-31,22,10,cc=>trooperBody(cc,key,col,bob)));}}
+     const im=imgAsset('inf_'+key+'_'+f+'_'+i); // v95: texture overrides, painter falls back
+     SPR.inf[key][f].push(im?cellFromImg(im,-22,-31,22,10):bakeCell(-22,-31,22,10,cc=>trooperBody(cc,key,col,bob)));}}
   } else {
    const bx=VEH_BOX[key]||[-24,-16,24,16];SPR.veh[key]={};
-   for(const f of facs)SPR.veh[key][f]=bakeCell(bx[0],bx[1],bx[2],bx[3],cc=>vehBody(cc,key,FAC[f].color));
+   for(const f of facs){
+    const im=imgAsset('veh_'+key+'_'+f);
+    SPR.veh[key][f]=im?cellFromImg(im,bx[0],bx[1],bx[2],bx[3]):bakeCell(bx[0],bx[1],bx[2],bx[3],cc=>vehBody(cc,key,FAC[f].color));
+   }
   }
  }
  for(const k in B){
@@ -258,8 +283,12 @@ function bakeSprites(){
   const sz=B[k].sz,S=sz*HW,HD=sz*HH;
   const box=BLD_BOX[k]||[-S-10,-Math.max(70,S*1.2),S+10,HD*1.58+8];
   SPR.bld[k]={};
-  for(const f of facs)SPR.bld[k][f]=bakeCell(box[0],box[1],box[2],box[3],cc=>bldBody(cc,k,FAC[f].color,sz));
+  for(const f of facs){
+   const im=imgAsset('bld_'+k+'_'+f);
+   SPR.bld[k][f]=im?cellFromImg(im,box[0],box[1],box[2],box[3]):bakeCell(box[0],box[1],box[2],box[3],cc=>bldBody(cc,k,FAC[f].color,sz));
+  }
  }
+ SPR.assets=assetsReady(); // v95: lets rebakeIfAssetsLate spot a bake that ran too early
  SPR.done=true;
 }
 /* bake box per prop type (local coords); rotated long props get a square box */

@@ -196,6 +196,8 @@ applyHelpTune(); // v43: fill the help panel's tuning slots from the constants
    The player still has to choose an army, a map and a mode, which is many
    seconds; the Start button awaits this same promise and normally finds it
    already settled. Deliberately fire-and-forget - assetsLoad never rejects, and
-   a missing file falls back to the procedural painter it always used. */
-assetsLoad();
+   a missing file falls back to the procedural painter it always used.
+   v95: one thing does wait on it - if the sprite bake ran before the textures
+   arrived (the field manual can bake from this very menu), re-bake once. */
+assetsLoad().then(rebakeIfAssetsLate);
 requestAnimationFrame(frame);
