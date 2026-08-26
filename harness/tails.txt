@@ -73,3 +73,4 @@ tail_v92.js
 tail_v92_1.js
 tail_v93.js
 tail_v94.js
+tail_v95.js

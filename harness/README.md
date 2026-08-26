@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v92)
+# Plastic Warfare headless test harness (updated at v95)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -6,7 +6,7 @@ actually cost, and the traps learned. If you are new to the project, read
 
 ## THE FACTION ABILITY ROADMAP (read this first if you are picking up mid-project)
 
-### Roadmap 3 (in flight, phases 1-2 landed): real art and real sound.
+### Roadmap 3 (in flight, phases 1-3 landed, phase 4 begun): real art and real sound.
 
 The owner has decided to take the game to **textured sprites with per-pixel
 lighting and recorded audio**. The short version and the phase list are in
@@ -339,6 +339,90 @@ the point of this file:**
 
 Suite 5,303/5,303; every trail and all 42 layout pins reproduce; the sim
 hash is identical across v93-2d, v94-2d, v94-GL of the same tick.
+
+#### Phase 4 LANDED at v95: real textures for the whole roster
+
+**What shipped.** Every baked sprite in the game now draws from a real
+texture instead of the runtime vector painter: all ten infantry rows at
+five walk frames each, all sixteen vehicle hulls, and all seventeen baked
+buildings - in all four army colours for a shared row, in the owner's
+colour alone for a faction exclusive (the bake creates cells in the other
+colours too, but no army can ever field them, so the painter keeps those).
+The wildlife nest is the one baked-table exception: it belongs to the bug
+faction, which the sprite bake itself excludes, so its cells are never
+blitted and a texture for it would be dead weight. 212 files, committed
+twice on purpose exactly like the sounds: as auditable images in
+`assets/img/` and as base64 data: URLs in the generated
+`source/js/02d-img-data.js` (`tools/embed_img.py`), because the
+double-clicked file:// page can decode a data: URL and nothing else. T71.B
+holds the two byte-identical; T71.A derives the full roster from `U`/`B`/
+`FAC` in both directions, so adding a unit now FAILS the suite until the
+texture pipeline is re-run - the conscious step a textured game demands.
+
+**WebP, on a measurement.** The full roster as PNG is ~5.8 MB before
+base64 grows it 4/3 inside the shipped file. Lossy WebP at quality 95 is
+4-6x smaller at a mean error under 0.7/255 on covered pixels - invisible
+at game zoom - and the override architecture already handles the
+hypothetical browser that cannot decode one: a failed decode lands in
+`ASSETS_FAILED` and that sprite paints procedurally, exactly like a
+missing file. `embed_img.py` carries per-entry mime (`IMG_MIME`), so webp
+and png can coexist and a future hand-made texture can be dropped in as
+either.
+
+**The seam is three lines in `bakeSprites()`.** Each bake site asks
+`imgAsset('inf_<key>_<fac>_<frame>' / 'veh_<key>_<fac>' / 'bld_<key>_<fac>')`
+first; a hit becomes a cell through `cellFromImg()`, which returns exactly
+the `{cv,sil,ax,ay,w,h}` shape `bakeCell()` returns, so the draw sites, the
+shadow pass and the portraits cannot tell the two apart - measured in
+Chromium: the baked cell is pixel-identical to the PNG (mean diff 0), and
+`hashState()` is unchanged across a textured frame. A miss falls back to the
+painter, which is what the whole headless suite permanently exercises (the
+shim has no `Image`).
+
+**Where the textures come from, honestly.** No rights-clean art is
+obtainable from this container (registry-only network), and no generic pack
+would match the molded-army-men look or survive per-faction tinting - so the
+textures are OFFLINE-RENDERED by two committed tools: the game's own
+painters drawn at 6x supersample in headless Chromium
+(`tools/dump_base_v95.js`, which DERIVES the 212-sprite roster from
+`U`/`B`/`FAC` so a new row is picked up automatically), then a deterministic
+Python material pass (`tools/material_v95.py`) that adds what a vector
+painter cannot - bump-lit plastic grain in patches, a mold seam down
+infantry and vehicles, sparse scratches, worn edges on painted detail
+lines, micro-occlusion, a molded-color swirl - and finishes with the exact
+`enrichCell` numbers so a textured cell sits beside procedural neighbours
+without a style seam. Every random draw is seeded from kind_key alone: an
+army-man of every colour comes off the same mold, and a walk cycle must not
+boil between frames. The first cut of that pass relit the whole sprite from
+a distance-field dome and looked WORSE than the painter (washed out, forms
+pillowed); the shipped recipe keeps the painter's own shading as the light
+and adds only high-frequency material. Same lesson as v92's audio: generate
+from the tuned recipes, ship as swappable files, let the owner's eye be the
+acceptance test - the owner reviewed the eight-sprite first cut and asked
+for the whole roster on its look.
+
+**Three rails, all driven by T71:**
+
+- **A bake that ran early re-bakes once.** The field manual can bake from
+  the main menu before the page-open `assetsLoad()` resolves; the `.then`
+  now calls `rebakeIfAssetsLate()`, which rebuilds `SPR` exactly once if the
+  bake preceded the assets. Client-local by design: two players may re-bake
+  at different wall times, or never.
+- **The missing-asset warn gates on `Image`, not `fetch`** - because Node 22
+  HAS a global fetch, so the v92 comment "headless has no fetch" was wrong
+  in a way that only started to matter when img entries (which need `Image`,
+  absent under the shim) began landing in `ASSETS_FAILED` on every harness
+  run.
+- **The Choktaw's tail was clipped off every sprite since v88** - it never
+  had a `VEH_BOX` entry, so it baked in the 48-wide default while its
+  painter reaches x=-31.3. Found because the texture had to be authored in
+  the sprite's true box; fixed with `choktaw:[-33,-16,18,16]`, which also
+  widens its portrait. Display-only.
+
+Suite green with three pins consciously rewritten (T66.C boot line, T66.D
+"no texture in the bake" - the claim phase 4 exists to overturn - and
+T67.E's order.txt run growing one line); trails and all 42 layout pins
+reproduce untouched.
 
 #### What phase 1 looked like before it landed, kept for the reasoning
 

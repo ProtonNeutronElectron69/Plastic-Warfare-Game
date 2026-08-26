@@ -99,14 +99,15 @@ const read66 = p => { try { return fs66.readFileSync('../' + p, 'utf8') } catch 
 {
   section('T66.C the asset loader ships empty and off the simulation path');
 
-  /* REWRITTEN AT v92, deliberately: phase 1 pinned the manifest EMPTY so the
-     plumbing landed provably inert; phase 2 exists to fill the snd half, so
-     the claim is now "snd is populated, img still waits for phase 4". The
-     sound keys themselves are asserted in detail by T67 (tail_v92). */
-  ok('T66.C the manifest holds phase 2 sounds and, until phase 4, no images',
-    ASSET_MANIFEST && Object.keys(ASSET_MANIFEST.img).length === 0 && Object.keys(ASSET_MANIFEST.snd).length > 0);
-  ok('T66.C nothing is loaded, so every lookup answers null',
-    imgAsset('unit_grunt_green') === null && sndAsset('gun_rifle_0') === null && imgAsset('anything') === null);
+  /* REWRITTEN AT v92 and again at v95, deliberately: phase 1 pinned the
+     manifest EMPTY so the plumbing landed provably inert; phase 2 filled the
+     snd half, and phase 4 began filling img - so the claim is now "both
+     halves are populated". The sound keys are asserted in detail by T67
+     (tail_v92), the image keys by T71 (tail_v95). */
+  ok('T66.C the manifest holds phase 2 sounds and phase 4 textures',
+    ASSET_MANIFEST && Object.keys(ASSET_MANIFEST.img).length > 0 && Object.keys(ASSET_MANIFEST.snd).length > 0);
+  ok('T66.C nothing is loaded headless, so every lookup answers null',
+    imgAsset('inf_runner_blue_2') === null && sndAsset('gun_rifle_0') === null && imgAsset('anything') === null);
 
   /* THE CHECK THIS SECTION EXISTS FOR. newGame() is called synchronously by
      hundreds of fixtures and by the lobby. The day it awaits an asset load is the
@@ -147,8 +148,11 @@ const read66 = p => { try { return fs66.readFileSync('../' + p, 'utf8') } catch 
       hashState.toString().indexOf('ASSET') < 0 && saveState.toString().indexOf('ASSET') < 0);
     ok('T66.C the probe put the loader back', imgAsset('probe') === null && assetsReady() === false);
   }
+  /* REWRITTEN AT v95: the page-open call gained one .then - the late-bake
+     guard - and nothing else. Still fire-and-forget: nothing awaits it, and
+     the callback re-bakes sprites, which is a render concern. */
   ok('T66.C the boot kicks the load off without waiting for it',
-    /^assetsLoad\(\);$/m.test(fs66.readFileSync('game.js', 'utf8')));
+    /^assetsLoad\(\)\.then\(rebakeIfAssetsLate\);$/m.test(fs66.readFileSync('game.js', 'utf8')));
 }
 
 /* ---------- D: assets override, they never replace ---------- */
@@ -162,8 +166,12 @@ const read66 = p => { try { return fs66.readFileSync('../' + p, 'utf8') } catch 
   for (const fn of ['trooperBody', 'vehBody', 'bldBody', 'drawBarricade', 'bakeSprites', 'bakeCell'])
     ok('T66.D ' + fn + ' survives the split', typeof eval(fn) === 'function');
 
-  ok('T66.D the bake still paints procedurally - phase 1 wires no texture in',
-    bakeSprites.toString().indexOf('imgAsset') < 0);
+  /* REWRITTEN AT v95, deliberately: phase 4 exists to wire the texture in,
+     so the phase-1 claim "no imgAsset in the bake" flips to "imgAsset is
+     asked, and the painter stands behind it". T71.C pins the three sites. */
+  ok('T66.D the bake asks for a texture now, with every painter still behind it',
+    bakeSprites.toString().indexOf('imgAsset') >= 0 &&
+    bakeSprites.toString().indexOf('trooperBody') >= 0);
   {
     /* and it still produces cells for the whole roster, in every army's colours */
     bakeSprites();
