@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v95)
+# Plastic Warfare headless test harness (updated at v96)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -6,7 +6,7 @@ actually cost, and the traps learned. If you are new to the project, read
 
 ## THE FACTION ABILITY ROADMAP (read this first if you are picking up mid-project)
 
-### Roadmap 3 (in flight, phases 1-3 landed, phase 4 begun): real art and real sound.
+### Roadmap 3 (COMPLETE at v96): real art and real sound.
 
 The owner has decided to take the game to **textured sprites with per-pixel
 lighting and recorded audio**. The short version and the phase list are in
@@ -423,6 +423,60 @@ Suite green with three pins consciously rewritten (T66.C boot line, T66.D
 "no texture in the bake" - the claim phase 4 exists to overturn - and
 T67.E's order.txt run growing one line); trails and all 42 layout pins
 reproduce untouched.
+
+#### Phase 5 LANDED at v96: per-pixel lighting, and the roadmap is complete
+
+**What shipped.** Every v95 texture gained a normal-map companion - a
+second image recording which way each pixel's surface faces - rendered by
+`tools/normal_v96.py` from the same base renders and, critically, WITH THE
+SAME RNG RECIPE as the material pass, so the grain a pixel shows in color
+is the grain it shows in relief. 212 maps, lossy WebP q92 (745 kB; on
+smooth direction fields the encode error is ~1% of tilt, invisible in
+shading), committed in `assets/nrm/` and embedded as `NRM_B64` by the same
+`tools/embed_img.py` run that packs the textures.
+
+**The frame's shape, filled in exactly where v94 said it would be.** The
+band pass now keeps a second canvas in register with the color band: the
+three cell-blit sites mirror each sprite's normal map through `NCTX`,
+reading the exact transform off the color context - which is also how a
+rotating vehicle picks a pre-rotated variant of its map (`nrmRot`,
+16 headings, vectors rotated in the values, cached lazily per cell),
+because canvas rotation turns pixel POSITIONS but not the directions
+stored in them. `bandPresent()`'s v94 passthrough became the lighting
+shader: constant lamp (the painters' own LIGHT, given altitude), a plastic
+specular, and up to `LIGHTV.max` point lights, all fed from the one
+`LIGHTV` table.
+
+**The claim the phase rests on: lighting is a MODULATION, not a new look.**
+The shader normalizes its lamp so a flat pixel - no normal map, a
+procedural fallback cell, live-drawn gear, a failed decode - comes out
+exactly as it went in. The fallback ladder never changes appearance class:
+no GL is v95 pixels directly, GL without maps is v95 pixels through the
+shader, GL with maps is v95 plus relief. Measured in Chromium: the
+lighting-only A/B (same page, same GL post, maps on/off) moves a mean
+0.69/255 over the frame with every changed pixel inside a sprite
+silhouette, and the marginal frame cost of the lit path against the flat
+GL path is zero within noise.
+
+**The showpiece: the battlefield casts light.** `bandLightsCollect()`
+gathers, fresh each frame, the explosion core flashes (`G.parts` t:'ex',
+by remaining life), the burning ground (`G.strikes[].burn`, clustered by
+4x4 tile buckets so a napalm field is a few steady lights rather than a
+lottery over the cap, flickering on `G.tick`), and muzzle flashes
+(`u.flash`). EVERY source is vision-gated - an explosion or a shot you
+cannot see lights nothing, because light through fog would be a wallhack.
+Client-local throughout: no srand, nothing hashed, nothing serialized;
+two clients may disagree about every light and still agree tick for tick.
+
+**One edge found by its own A/B:** a frame where lighting turns off while
+the GL hop still runs must not inherit the previous frame's normal band
+and lights - the stale-state clear in renderCore (T72.C) exists because
+the first A/B screenshot pair showed exactly that haunting.
+
+Suite green with T70's passthrough pins consciously rewritten (the claim
+v94 existed to set up, not a loosening) and T71/T67-style scoping edits;
+T72 carries the new pins. Trails and all 42 layout pins reproduce
+untouched.
 
 #### What phase 1 looked like before it landed, kept for the reasoning
 

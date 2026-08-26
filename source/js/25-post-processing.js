@@ -5,6 +5,12 @@
    unsupported the blur-based passes degrade gracefully to grade + vignette. */
 let worldCv=null,wctx=null,tsCv=null,tsctx=null,blCv=null,blctx=null,bandCv=null,bandctx=null,maskT=null,maskB=null,FILT=-1;
 let sprCv=null,spctx=null; // v94: the depth-sorted sprite band's own transparent canvas (phase 3, second cut)
+/* v96: the band's NORMAL companion, and the switch the blit sites read.
+   NCTX is non-null only for the stretch of a frame where the band is being
+   drawn AND the GL lighting stage is alive - so on every fallback path
+   (headless, #nogl, no usable GL) not one extra canvas op happens and the
+   band pass is byte-identical to v95. Client-local, never hashed. */
+let nrmCv=null,nctx=null,NCTX=null;
 /* v93: THE POST-PASS TUNING TABLE, extracted so the 2d compositor below and the
    WebGL shader stage (next file) read the SAME numbers. These are the v64-v90
    values verbatim, just named: change one here and both renderers move
@@ -34,13 +40,14 @@ function ensurePost(){
      one blit - straight, or through the GL band stage. That seam is what
      phase 5's per-pixel lighting slots into. */
   sprCv=document.createElement('canvas');sprCv.width=W;sprCv.height=H;spctx=sprCv.getContext('2d');
+  nrmCv=document.createElement('canvas');nrmCv.width=W;nrmCv.height=H;nctx=nrmCv.getContext('2d'); // v96: the band's normal companion
   if(FILT<0){try{wctx.filter='blur(1px)';FILT=(wctx.filter&&wctx.filter!=='none')?1:0;wctx.filter='none';}catch(e){FILT=0;}}
   tsCv=document.createElement('canvas');tsCv.width=Math.max(2,Math.round(W/3));tsCv.height=Math.max(2,Math.round(H/3));tsctx=tsCv.getContext('2d');
   blCv=document.createElement('canvas');blCv.width=Math.max(2,Math.round(W/4));blCv.height=Math.max(2,Math.round(H/4));blctx=blCv.getContext('2d');
   const th=Math.max(2,Math.round(H*POSTV.tsTopH)),bh=Math.max(2,Math.round(H*POSTV.tsBotH));
   maskT=mkMask(W,th,true);maskB=mkMask(W,bh,false);
   bandCv=document.createElement('canvas');bandCv.width=W;bandCv.height=Math.max(th,bh);bandctx=bandCv.getContext('2d');
- }catch(e){worldCv=null;wctx=null;sprCv=null;spctx=null;}
+ }catch(e){worldCv=null;wctx=null;sprCv=null;spctx=null;nrmCv=null;nctx=null;NCTX=null;}
 }
 function tsBand(mask,y){
  const W=view.width,H=view.height;
@@ -236,10 +243,27 @@ function renderCore(){
  if(spctx){
   spctx.setTransform(1,0,0,1,0,0);spctx.clearRect(0,0,view.width,view.height);
   spctx.setTransform(z,0,0,z,-cx*z,-cy*z);spctx.imageSmoothingEnabled=true;
+  /* v96: with a live GL lighting stage, the blit sites also write each
+     sprite's normal map onto nrmCv (via NCTX; they read the exact transform
+     off the color context, so the two canvases stay in register), and the
+     frame's light sources are collected for the shader. On every fallback
+     path NCTX stays null and the band pass is exactly v95's. */
+  NCTX=null;
+  if(nctx&&bandLit()){
+   nctx.setTransform(1,0,0,1,0,0);nctx.clearRect(0,0,view.width,view.height);
+   nctx.imageSmoothingEnabled=true;
+   NCTX=nctx;nrmCv._dirty=true;
+   bandLightsCollect(cx,cy,z);
+  }else if(GLB&&GLB.gl&&!GLB.dead){
+   /* lighting is off this frame but the GL hop still runs: last frame's
+      normals and lights must not haunt it - flat band, no point lights */
+   GLB.lights=[];
+   if(nctx&&nrmCv._dirty){nctx.setTransform(1,0,0,1,0,0);nctx.clearRect(0,0,view.width,view.height);nrmCv._dirty=false;}
+  }
  }
  for(const it of items)drawItemShadow(bc,it);
  for(const it of items){if(it[3]==='prop')drawProp(bc,it[2]);else if(it[3]==='nest')drawNest(bc,it[2]);else if(it[3]==='node')drawNode(bc,it[2]);else if(it[3]==='crate')drawCrate(bc,it[2]);else if(it[3]==='bld')drawBld(bc,it[2]);else if(it[3]==='unit')drawUnit(bc,it[2]);else if(it[3]==='bug')drawBug(bc,it[2]);else drawLooseFlag(bc,it[2]);}
- if(spctx){c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(bandPresent(),0,0);c.restore();}
+ if(spctx){NCTX=null;c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(bandPresent(),0,0);c.restore();}
  for(const p of G.projs){
   if(fogAt(p.x,p.y)!==2)continue; // v26: no live munitions visible through fog
   const sx=isoX(p.x,p.y),sy=isoY(p.x,p.y),hy=sy-p.z;

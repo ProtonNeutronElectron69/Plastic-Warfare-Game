@@ -276,6 +276,7 @@ function drawUnit(c,u){
   if(set){
    const fr=set[Math.max(0,Math.min(4,Math.round((bob+1)*2)))];
    c.drawImage(fr.cv,-fr.ax,-fr.ay,fr.w,fr.h);
+   if(NCTX&&fr.nrm){NCTX.setTransform(c.getTransform());NCTX.drawImage(fr.nrm,-fr.ax,-fr.ay,fr.w,fr.h);} // v96: infantry never rotate, so the map blits as-is
    const gs=u.key==='sarge'?1.18:(u.key==='gunner'?1.16:1);
    c.save();if(gs!==1)c.scale(gs,gs);c.translate(0,bob*.9);trooperGear(c,u,col,ang);c.restore();
   } else drawTrooper(c,u,col,dk,lt,md,ang,bob);
@@ -563,7 +564,10 @@ function drawBld(c,b){
  const k=b.key;
  {
   const cell=SPR.done&&SPR.bld[k]&&SPR.bld[k][b.p.fac];
-  if(cell)c.drawImage(cell.cv,-cell.ax,-cell.ay,cell.w,cell.h);
+  if(cell){
+   c.drawImage(cell.cv,-cell.ax,-cell.ay,cell.w,cell.h);
+   if(NCTX&&cell.nrm){NCTX.setTransform(c.getTransform());NCTX.drawImage(cell.nrm,-cell.ax,-cell.ay,cell.w,cell.h);} // v96: buildings never rotate either
+  }
   else bldBody(c,k,col,b.sz);
   bldLive(c,b,col);
  }
