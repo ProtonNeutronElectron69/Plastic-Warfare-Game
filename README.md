@@ -115,7 +115,14 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 96**.
+The game is at **version 97**.
+
+**v97 — the detail & resolution pass.** The game renders at your display's
+real pixel density now (high-DPI screens used to get an upscaled, soft
+frame), sprites bake at a third more resolution, and every building,
+vehicle, soldier, wall and creature gained molded detail — panel seams,
+bolts, roof equipment, yard clutter, kit on the troopers, litter round the
+nests — drawn into the painters and re-rendered into the whole texture set.
 
 **Roadmap 3 (v91–v96) — complete.** The whole game moved to real art and real
 sound while playing exactly the same: the code split into readable source
