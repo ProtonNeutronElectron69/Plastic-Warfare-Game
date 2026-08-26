@@ -5,9 +5,12 @@ Read this first. It is the orientation; `harness/README.md` is the detail.
 ## The shape of the project
 
 The game is **assembled from `source/`** into one file, `plastic-warfare.html`
-(~1MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
+(~3.8MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
 audio, UI, netcode — is still one `<script>` block in the shipped file; it is now
 written as ~30 files listed in `source/order.txt`. There are no dependencies.
+Since v92 the recorded sound set rides inside the script as base64, and since
+v95 the full sprite texture set (212 WebP files) rides beside it — the
+double-clicked file stays self-contained.
 
 **That order is load-bearing.** Read the header of `source/order.txt` before
 touching it: hundreds of top-level `const`s, some derived from others, plus a
@@ -19,8 +22,10 @@ hand-edited file. Two rules that governed the whole project until then are now
 retired on purpose:
 
 - ~~one file, no build step~~ — one BUILT file, from `source/`.
-- ~~no third-party assets~~ — `ASSET_MANIFEST` exists and is empty; phases 2 and
-  4 fill it. **Assets OVERRIDE, they never REPLACE**: every procedural painter
+- ~~no third-party assets~~ — `ASSET_MANIFEST` exists; v92 filled its `snd` half
+  (33 mp3 takes in `assets/snd/`, embedded by `tools/embed_snd.py`) and v95
+  filled `img` completely (212 WebP textures in `assets/img/`, embedded by
+  `tools/embed_img.py`). **Assets OVERRIDE, they never REPLACE**: every procedural painter
   and synthesised voice stays as the fallback, which is what keeps a missing file
   degrading to the old game and keeps the headless suite able to test drawing at
   all.
@@ -291,23 +296,80 @@ them, and `harness/build.sh` chained to it. `ASSET_MANIFEST` is in and empty;
 all 42 layout pins and every hash trail reproduce, and the suite is 5,202/5,202.
 `tail_v91` (T66) carries the checks, including that a stale build fails loudly.
 
-**Phase 2 — recorded audio. NEXT, and it goes on a branch off `main`.** Cheapest
-real win. 13 `sfx*` functions, one `audAt` gate, and `sndAsset()` already waiting
-for them. Everything phase 2 needs from phase 1 is in: put filenames in
-`ASSET_MANIFEST.snd`, decode on demand (the loader stores raw bytes on purpose,
-because an AudioContext only exists after the first gesture), and fall back to
-the existing synthesis whenever `sndAsset()` returns null.
+**Phase 2 — recorded audio. LANDED AT v92, on the roadmap3 branch.** The shape
+held exactly as phase 1 promised: `ASSET_MANIFEST.snd` filled, decode on demand
+into the `buf` slot at the first gesture, and synthesis is the fallback wherever
+`sndAsset()` answers null — which is what the whole headless suite permanently
+exercises, since the shim has no `fetch`. Ten positional one-shot voices take a
+recording first (the "13 `sfx*` functions" in the table above was miscounted;
+the measured surface is 10 — the ambience loops, engine/rotor selection voices
+and UI tones stay synthesised on purpose). Two findings a later phase needs,
+detailed in the v92 section of `harness/README.md`: the shipped file is opened
+from `file://`, where every browser refuses `fetch()` of a relative URL, so the
+sounds ride INSIDE the file as `data:` URLs — and the takes are offline-RENDERED
+from the tuned v64 recipes, not field recordings, each swappable one file at a
+time via `assets/snd/` + `tools/embed_snd.py`.
 
-**Phase 3 — WebGL, still drawing the EXISTING procedurally-baked sprites.** A 2D
-WebGL renderer (PixiJS is the pick) rather than a game engine: an engine brings
-its own loop and state model and would fight `update()`/`frame()`. No new art in
-this phase. The point is to prove the renderer swap with the visuals unchanged,
-so a regression has exactly one possible cause.
+**Phase 3 — WebGL. FIRST CUT LANDED AT v93; re-planned on a measurement.** The
+sketch here used to say "PixiJS is the pick, swap the renderer wholesale" — read
+on the ground, the cell blit is a minority of the world pass (twelve gradient
+particle types, per-projectile vector art, per-entity glows interleaved inside
+the depth sort), so a one-shot swap died and the phase became incremental. v93
+shipped the pipeline: a dependency-free ~250-line WebGL stage (`25b-webgl.js`)
+that presents the 2d-drawn world through real shaders — gaussian bloom,
+tilt-shift, grade, vignette — with `compositePost()` as the permanent fallback
+and one `POSTV` table feeding both looks. Measured: GL frame vs 2d frame of the
+same tick differ by mean 2.02/255; the sim hash is identical under both.
+**Second cut LANDED AT v94:** the depth-sorted sprite band draws on its own
+canvas and merges through `bandPresent()` — a GL passthrough today, phase 5's
+lighting shader tomorrow, the band canvas itself wherever GL is not real. The
+"2d overlay as its own GL texture" half of the old sketch was dropped on a
+measurement: the combat FX above the band blend ADDITIVELY against the scene
+and do not survive being rasterized separately, so they still draw directly on
+the composed frame. The band split itself cost a measured mean 0.048/255.
+Software GL is refused (`failIfMajorPerformanceCaveat`) because a CPU-emulated
+GL frame measured ~2x the whole 2d path. Phase 4 does not wait on any of this —
+a loaded texture blits through the 2d path exactly as a procedural cell does.
+Full reasoning in the v93 and v94 sections of `harness/README.md`.
 
-**Phase 4 — real textures, one unit at a time.** The bake is per-key-per-faction,
-so the Grunt can be a real texture while the other 24 stay procedural.
+**Phase 4 — real textures. LANDED AT v95, whole roster.** Every baked sprite —
+all ten infantry rows at five walk frames, all sixteen vehicle hulls, all
+seventeen baked buildings, shared rows in four colours and exclusives in their
+owner's — now draws from a real texture riding the manifest as data: URLs:
+212 files in `assets/img/` + `tools/embed_img.py`, exactly the sound set's
+shape. The owner reviewed an eight-sprite first cut and asked for the whole
+roster on its look. The seam is three `imgAsset()` asks in `bakeSprites()`: a
+hit becomes a cell via `cellFromImg()` (same `{cv,sil,ax,ay,w,h}` shape as
+`bakeCell`, so draw sites, shadows and portraits cannot tell), a miss falls
+back to the painter the suite permanently tests. The textures are
+offline-rendered from the game's own painters plus a per-pixel material pass
+(`tools/dump_base_v95.js`, which DERIVES the roster from the tables, +
+`tools/material_v95.py`) — the relight-everything first cut looked WORSE than
+the painter; the shipped recipe keeps the painter's shading and adds only
+high-frequency material. They ship as lossy WebP q95 (4-6x smaller than PNG,
+error invisible at game zoom; a failed decode = painter, like any missing
+file), which holds the shipped file at ~3.8 MB. **T71.A now derives the full
+roster from `U`/`B`/`FAC`, so adding a unit FAILS the suite until the texture
+pipeline is re-run** — the conscious step a textured game demands. Riding
+along: the Choktaw's tail had been clipped off every sprite since v88 (no
+`VEH_BOX` entry) — found because the texture needed the true box. Full record
+in the v95 section of `harness/README.md`.
 
-**Phase 5 — normal maps and lighting.** Nearly free once 3 and 4 are done.
+**Phase 5 — normal maps and lighting. LANDED AT v96 — the roadmap is
+COMPLETE.** Every texture gained a normal map (`tools/normal_v96.py`, same
+rng recipe as the material pass so color grain and relief grain agree;
+`assets/nrm/`, 745 kB embedded), the band pass mirrors them onto a second
+canvas in register with the color band (`NCTX`; rotating vehicles pick a
+heading-quantized variant with the VECTORS rotated, not just the pixels),
+and v94's passthrough shader became the real thing: constant lamp, plastic
+specular, and up to ten point lights collected per frame from explosions,
+burning ground and muzzle flashes — every source vision-gated, because
+light through fog would be a wallhack. **The lighting is a normalized
+MODULATION: a flat pixel comes out exactly as it went in**, so every
+fallback rung still shows v95's pixels, and the lit path costs zero extra
+frame time within noise. `LIGHTV` is the one tuning table. T72 carries the
+pins; T70's passthrough pins were consciously rewritten. Full record in the
+v96 section of `harness/README.md`.
 
 ### Traps, named in advance
 
@@ -328,6 +390,23 @@ so the Grunt can be a real texture while the other 24 stay procedural.
   Loading is not. Phase 1 has to give the tails a path that does not wait.
 - **Scale honestly:** months of evenings, not a weekend. But it is additive — the
   game is playable at the end of every phase, and phases 1 and 2 are small.
+
+## v92.1 — the audio feedback pass (roadmap 3, phase 2 follow-up)
+
+**The owner played v92 and sent back eight findings; every one is now a change
+and a check** (`tail_v92_1.js`, T68 — full reasoning in the v92.1 section of
+`harness/README.md`). The ones that changed decisions this file records:
+small arms now RICOCHET off armor and structures (`sfxRico`, the game's first
+per-hit sound, fed from `applyDmg`, Math.random only); nest destruction is
+SILENT by decision (`sfxNestBreak` is deliberately empty — do not "fix" it);
+a wall dying under fire is a small blast now, reversing v64's "no detonation"
+brief (selling kept the full teardown it has had since v87.1); selection
+answers are brief — bare rotors for aircraft, one `DIESELV` diesel family for
+ground vehicles, the Balloon's burner deliberately excepted; the sniper is
+pinned the loudest gun in the set; and the reverb sends have pinned ceilings
+after the baked room slapback was removed from every take. **Per-voice
+loudness lives in `SNDV` and nowhere else** — the takes are peak-normalised,
+so that table is the only mixing desk.
 
 ## v90.2 — the HUD legibility pass (not part of the roadmap)
 

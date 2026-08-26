@@ -4,11 +4,30 @@
    bloom, a warm-key / cool-shadow grade, and a vignette. If ctx.filter is
    unsupported the blur-based passes degrade gracefully to grade + vignette. */
 let worldCv=null,wctx=null,tsCv=null,tsctx=null,blCv=null,blctx=null,bandCv=null,bandctx=null,maskT=null,maskB=null,FILT=-1;
+let sprCv=null,spctx=null; // v94: the depth-sorted sprite band's own transparent canvas (phase 3, second cut)
+/* v96: the band's NORMAL companion, and the switch the blit sites read.
+   NCTX is non-null only for the stretch of a frame where the band is being
+   drawn AND the GL lighting stage is alive - so on every fallback path
+   (headless, #nogl, no usable GL) not one extra canvas op happens and the
+   band pass is byte-identical to v95. Client-local, never hashed. */
+let nrmCv=null,nctx=null,NCTX=null;
+/* v93: THE POST-PASS TUNING TABLE, extracted so the 2d compositor below and the
+   WebGL shader stage (next file) read the SAME numbers. These are the v64-v90
+   values verbatim, just named: change one here and both renderers move
+   together, which is what keeps "the GL path looks like the 2d path" a
+   structural property instead of a hope. T69.B asserts both consumers. */
+const POSTV={
+ sat:1.10,con:1.04,                                    // base grade (FILT=1 path)
+ bloomBr:.58,bloomCon:2.3,bloomSat:1.3,bloomBlur:2.2,bloomAdd:.30, // bright-pass + add
+ tsBlur:2,tsTopH:.24,tsTopA:.9,tsBotH:.30,tsBotA:.95,  // tilt-shift bands
+ g1c:'#ffb45e',g1a:.10,g2c:'#2f4d80',g2a:.15,          // warm overlay / cool soft-light
+ vinCX:.5,vinCY0:.46,vinR0:.44,vinCY1:.55,vinR1:.60,vinC:'8,12,6',vinA:.28 // vignette
+};
 function mkMask(w,h,top){
  const m=document.createElement('canvas');m.width=w;m.height=h;const mc=m.getContext('2d');
  const g=mc.createLinearGradient(0,0,0,h);
- if(top){g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,0)');}
- else{g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,.95)');}
+ if(top){g.addColorStop(0,'rgba(255,255,255,'+POSTV.tsTopA+')');g.addColorStop(1,'rgba(255,255,255,0)');}
+ else{g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,'+POSTV.tsBotA+')');}
  mc.fillStyle=g;mc.fillRect(0,0,w,h);return m;
 }
 function ensurePost(){
@@ -17,13 +36,18 @@ function ensurePost(){
  if(worldCv&&worldCv.width===W&&worldCv.height===H)return;
  try{
   worldCv=document.createElement('canvas');worldCv.width=W;worldCv.height=H;wctx=worldCv.getContext('2d');
+  /* v94: the sprite band renders here, alone, and is merged onto the scene in
+     one blit - straight, or through the GL band stage. That seam is what
+     phase 5's per-pixel lighting slots into. */
+  sprCv=document.createElement('canvas');sprCv.width=W;sprCv.height=H;spctx=sprCv.getContext('2d');
+  nrmCv=document.createElement('canvas');nrmCv.width=W;nrmCv.height=H;nctx=nrmCv.getContext('2d'); // v96: the band's normal companion
   if(FILT<0){try{wctx.filter='blur(1px)';FILT=(wctx.filter&&wctx.filter!=='none')?1:0;wctx.filter='none';}catch(e){FILT=0;}}
   tsCv=document.createElement('canvas');tsCv.width=Math.max(2,Math.round(W/3));tsCv.height=Math.max(2,Math.round(H/3));tsctx=tsCv.getContext('2d');
   blCv=document.createElement('canvas');blCv.width=Math.max(2,Math.round(W/4));blCv.height=Math.max(2,Math.round(H/4));blctx=blCv.getContext('2d');
-  const th=Math.max(2,Math.round(H*.24)),bh=Math.max(2,Math.round(H*.30));
+  const th=Math.max(2,Math.round(H*POSTV.tsTopH)),bh=Math.max(2,Math.round(H*POSTV.tsBotH));
   maskT=mkMask(W,th,true);maskB=mkMask(W,bh,false);
   bandCv=document.createElement('canvas');bandCv.width=W;bandCv.height=Math.max(th,bh);bandctx=bandCv.getContext('2d');
- }catch(e){worldCv=null;wctx=null;}
+ }catch(e){worldCv=null;wctx=null;sprCv=null;spctx=null;nrmCv=null;nctx=null;NCTX=null;}
 }
 function tsBand(mask,y){
  const W=view.width,H=view.height;
@@ -37,25 +61,25 @@ function tsBand(mask,y){
 function compositePost(){
  const W=view.width,H=view.height;
  vc.setTransform(1,0,0,1,0,0);vc.imageSmoothingEnabled=true;
- if(FILT===1){vc.filter='saturate(1.10) contrast(1.04)';vc.drawImage(worldCv,0,0);vc.filter='none';}
+ if(FILT===1){vc.filter='saturate('+POSTV.sat+') contrast('+POSTV.con+')';vc.drawImage(worldCv,0,0);vc.filter='none';}
  else vc.drawImage(worldCv,0,0);
  if(FILT===1){
   // bloom: bright-pass approximation on a quarter-res copy, added back softly
   blctx.setTransform(1,0,0,1,0,0);blctx.clearRect(0,0,blCv.width,blCv.height);
-  blctx.filter='brightness(.58) contrast(2.3) saturate(1.3) blur(2.2px)';
+  blctx.filter='brightness('+POSTV.bloomBr+') contrast('+POSTV.bloomCon+') saturate('+POSTV.bloomSat+') blur('+POSTV.bloomBlur+'px)';
   blctx.drawImage(worldCv,0,0,blCv.width,blCv.height);blctx.filter='none';
-  vc.save();vc.globalCompositeOperation='lighter';vc.globalAlpha=.30;vc.drawImage(blCv,0,0,W,H);vc.restore();
+  vc.save();vc.globalCompositeOperation='lighter';vc.globalAlpha=POSTV.bloomAdd;vc.drawImage(blCv,0,0,W,H);vc.restore();
   // tilt-shift: blurred third-res copy masked into the top & bottom bands
   tsctx.setTransform(1,0,0,1,0,0);tsctx.clearRect(0,0,tsCv.width,tsCv.height);
-  tsctx.filter='blur(2px)';tsctx.drawImage(worldCv,0,0,tsCv.width,tsCv.height);tsctx.filter='none';
+  tsctx.filter='blur('+POSTV.tsBlur+'px)';tsctx.drawImage(worldCv,0,0,tsCv.width,tsCv.height);tsctx.filter='none';
   tsBand(maskT,0);tsBand(maskB,H-maskB.height);
  }
  // warm-key / cool-shadow grade
- vc.save();vc.globalCompositeOperation='overlay';vc.globalAlpha=.10;vc.fillStyle='#ffb45e';vc.fillRect(0,0,W,H);
- vc.globalCompositeOperation='soft-light';vc.globalAlpha=.15;vc.fillStyle='#2f4d80';vc.fillRect(0,0,W,H);vc.restore();
+ vc.save();vc.globalCompositeOperation='overlay';vc.globalAlpha=POSTV.g1a;vc.fillStyle=POSTV.g1c;vc.fillRect(0,0,W,H);
+ vc.globalCompositeOperation='soft-light';vc.globalAlpha=POSTV.g2a;vc.fillStyle=POSTV.g2c;vc.fillRect(0,0,W,H);vc.restore();
  // vignette
- const vg=vc.createRadialGradient(W*.5,H*.46,Math.min(W,H)*.44,W*.5,H*.55,Math.hypot(W,H)*.60);
- vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(8,12,6,.28)');
+ const vg=vc.createRadialGradient(W*POSTV.vinCX,H*POSTV.vinCY0,Math.min(W,H)*POSTV.vinR0,W*POSTV.vinCX,H*POSTV.vinCY1,Math.hypot(W,H)*POSTV.vinR1);
+ vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba('+POSTV.vinC+','+POSTV.vinA+')');
  vc.fillStyle=vg;vc.fillRect(0,0,W,H);
 }
 /* v27.1: a draw error must never kill the frame or blank the screen.
@@ -122,7 +146,12 @@ function renderCore(){
  ensurePost();
  const c=(worldCv?wctx:vc);
  c.setTransform(1,0,0,1,0,0);c.fillStyle='#141d0e';c.fillRect(0,0,view.width,view.height);
- if(!G){if(worldCv)compositePost();return;}
+ /* v93: glComposite (next file) presents the world through the WebGL post
+    pipeline and answers true; false means "no usable GL here" - headless, an
+    old browser, a lost context, or #nogl - and the 2d compositor below is the
+    unchanged fallback. The world CONTENT is drawn by the same 2d code either
+    way; only the present+post stage differs. */
+ if(!G){if(worldCv&&!glComposite())compositePost();return;}
  const z=G.zoom;
  const shx=(Math.random()-.5)*G.shake,shy=(Math.random()-.5)*G.shake,cx=G.cam.x+shx,cy=G.cam.y+shy;
  // everything in the world is drawn in a single scaled+translated space
@@ -199,8 +228,42 @@ function renderCore(){
  for(const cr of (G.crates||[]))if(inView(cr.x,cr.y)&&fogAt(cr.x,cr.y)===2)items.push([cr.x+cr.y,0,cr,'crate']);
  if(G.mode==='ctf')for(const f of G.flags)if(!f.carrier&&!f.home)items.push([f.x+f.y,3,f,'flag']);
  items.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
- for(const it of items)drawItemShadow(c,it);
- for(const it of items){if(it[3]==='prop')drawProp(c,it[2]);else if(it[3]==='nest')drawNest(c,it[2]);else if(it[3]==='node')drawNode(c,it[2]);else if(it[3]==='crate')drawCrate(c,it[2]);else if(it[3]==='bld')drawBld(c,it[2]);else if(it[3]==='unit')drawUnit(c,it[2]);else if(it[3]==='bug')drawBug(c,it[2]);else drawLooseFlag(c,it[2]);}
+ /* v94, roadmap 3 phase 3 second cut: THE SPRITE BAND - every depth-sorted
+    shadow and entity - draws on its OWN transparent canvas, under the same
+    camera transform (shake included: cx/cy are the frame's, not G.cam's).
+    One code path in both renderers: the band is always isolated, and
+    bandPresent() below answers either the canvas itself or its GL-processed
+    copy. What phase 5 changes is only what that GL pass DOES (per-pixel
+    lighting against a normal band); the seam is this merge. The known,
+    measured cost: the few additive ground auras inside the band (heal glow,
+    rally pulse) now add against band content rather than the terrain - see
+    the v94 record. Everything drawn AFTER the merge (projectiles, particles,
+    strikes, fog) keeps exact additive semantics against the whole scene. */
+ const bc=spctx||c;
+ if(spctx){
+  spctx.setTransform(1,0,0,1,0,0);spctx.clearRect(0,0,view.width,view.height);
+  spctx.setTransform(z,0,0,z,-cx*z,-cy*z);spctx.imageSmoothingEnabled=true;
+  /* v96: with a live GL lighting stage, the blit sites also write each
+     sprite's normal map onto nrmCv (via NCTX; they read the exact transform
+     off the color context, so the two canvases stay in register), and the
+     frame's light sources are collected for the shader. On every fallback
+     path NCTX stays null and the band pass is exactly v95's. */
+  NCTX=null;
+  if(nctx&&bandLit()){
+   nctx.setTransform(1,0,0,1,0,0);nctx.clearRect(0,0,view.width,view.height);
+   nctx.imageSmoothingEnabled=true;
+   NCTX=nctx;nrmCv._dirty=true;
+   bandLightsCollect(cx,cy,z);
+  }else if(GLB&&GLB.gl&&!GLB.dead){
+   /* lighting is off this frame but the GL hop still runs: last frame's
+      normals and lights must not haunt it - flat band, no point lights */
+   GLB.lights=[];
+   if(nctx&&nrmCv._dirty){nctx.setTransform(1,0,0,1,0,0);nctx.clearRect(0,0,view.width,view.height);nrmCv._dirty=false;}
+  }
+ }
+ for(const it of items)drawItemShadow(bc,it);
+ for(const it of items){if(it[3]==='prop')drawProp(bc,it[2]);else if(it[3]==='nest')drawNest(bc,it[2]);else if(it[3]==='node')drawNode(bc,it[2]);else if(it[3]==='crate')drawCrate(bc,it[2]);else if(it[3]==='bld')drawBld(bc,it[2]);else if(it[3]==='unit')drawUnit(bc,it[2]);else if(it[3]==='bug')drawBug(bc,it[2]);else drawLooseFlag(bc,it[2]);}
+ if(spctx){NCTX=null;c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(bandPresent(),0,0);c.restore();}
  for(const p of G.projs){
   if(fogAt(p.x,p.y)!==2)continue; // v26: no live munitions visible through fog
   const sx=isoX(p.x,p.y),sy=isoY(p.x,p.y),hy=sy-p.z;
@@ -381,7 +444,7 @@ function renderCore(){
  c.restore();
  c.setTransform(HW*z,HH*z,-HW*z,HH*z,(G.orgX-cx)*z,-cy*z);c.imageSmoothingEnabled=true;c.drawImage(G.fogCv,0,0);
  c.setTransform(1,0,0,1,0,0);
- if(worldCv)compositePost();
+ if(worldCv&&!glComposite())compositePost();
  v71Fills();
  if(G.placing)drawGhost(vc,G.cam.x,G.cam.y);
  if(MOUSE.down&&MOUSE.drag){const dbc=dragBoxCol();vc.strokeStyle=rgba(dbc.r,dbc.g,dbc.b,.9);vc.lineWidth=1.5;vc.strokeRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);vc.fillStyle=rgba(dbc.r,dbc.g,dbc.b,.1);vc.fillRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);}

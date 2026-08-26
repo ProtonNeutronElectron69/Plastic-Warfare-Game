@@ -36,6 +36,11 @@ harness/sim_out/
 harness/probe_out/
 harness/cut_v*.json
 
+# Texture pipeline intermediates (tools/dump_base_v95.js step one). The finished
+# textures in assets/img/ are committed; these 6x base renders are rebuilt from
+# the game itself whenever the pipeline runs.
+tools/_base_v95/
+
 # ---------------------------------------------------------------------------
 # Ordinary clutter your computer creates on its own
 # ---------------------------------------------------------------------------
@@ -52,3 +57,6 @@ desktop.ini
 node_modules/
 package-lock.json
 package.json
+
+# Python import cache from the texture tools
+tools/__pycache__/

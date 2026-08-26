@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v90.2)
+# Plastic Warfare headless test harness (updated at v96)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -6,7 +6,7 @@ actually cost, and the traps learned. If you are new to the project, read
 
 ## THE FACTION ABILITY ROADMAP (read this first if you are picking up mid-project)
 
-### Roadmap 3 (not started): real art and real sound. DECIDED.
+### Roadmap 3 (COMPLETE at v96): real art and real sound.
 
 The owner has decided to take the game to **textured sprites with per-pixel
 lighting and recorded audio**. The short version and the phase list are in
@@ -93,6 +93,390 @@ that way. `T66.C` writes an asset in and asserts neither `hashState` nor
 can legitimately hold different assets — one of them may have failed a download —
 and the match still has to agree tick for tick. **An asset may decide what a
 player sees or hears and must never decide what happens.**
+
+#### Phase 2 LANDED at v92: recorded audio. What it shipped, and what was measured
+
+The seams phase 1 left were exactly right and none of them moved: the loader,
+`sndAsset()`, the raw-bytes-until-gesture rule and the `audAt` gate are all
+untouched. What v92 added: `assets/snd/` with 33 mp3 takes across 25 voices
+(362 kB), `tools/render_snd_v92.py` (the renderer that made them),
+`tools/embed_snd.py` (packs them into `source/js/02c-snd-data.js` as base64),
+and in `03-audio.js` a `SNDV` per-voice parameter table plus three functions —
+`sndBuf` (decode on demand, cached into the `buf` slot), `sndLead` (see below)
+and `sndPlay` (plays a take through the same `aout()`/`rsend()` chain as the
+synthesis). Ten positional one-shot voices ask `sndPlay` first and synthesise
+when it answers false: `sfxGun`, `sfxFlame`, `sfxThrow`, `sfxLaunch`,
+`sfxBoom`, `sfxBuildingDestroy`, `sfxPop`, `sfxNestBreak`, `sfxStructBreak`,
+`sfxWhoosh`. The trails and all 42 layout pins reproduce over the diff, which
+was the acceptance test: audio may decide what a player hears, never what
+happens. That claim was also driven end-to-end rather than argued: the shipped
+file opened from `file://` in a real Chromium, a deathmatch booted, the real
+call sites fired recorded takes (`gun_rifle:true` ... `bld_destroy:true`, and
+an off-map shot correctly silenced by the `audAt` gate before `sndPlay` was
+ever consulted), and the browser match hashed **2521820048** at tick 30 —
+bit-identical to the same seed run headless with no audio in existence.
+
+**The count in the decision table was wrong, and is corrected rather than kept:
+there are 10 `sfx*` functions, not 13.** The claim "recorded sound changes N
+bodies and no call site" survives at 10. The continuous voices — the two mining
+ambience loops, the engine/rotor/building selection answers, the speech barks
+and the UI tones — stay synthesised on purpose: they are loops, models and
+speech, not one-shots, and nothing about the override architecture is waiting
+on them.
+
+**Finding 1: the double-click instruction is load-bearing, and it forced the
+data: URL design.** The README's first line to a player is "download
+`plastic-warfare.html` and double-click it" — a `file://` page, and every
+modern browser refuses `fetch()` of a RELATIVE url there. So a manifest of
+`'assets/snd/rifle.mp3'` entries would have meant NOBODY who plays the game the
+documented way ever hears the recorded audio, silently, with the fallback
+masking it. `fetch()` of a `data:` url works everywhere (verified in the real
+Chromium this session, from an actual `file://` page), so the takes ride inside
+the shipped file as `data:audio/mpeg;base64,` entries, generated into an
+ordinary source file so the build stays pure concatenation and T66.A's
+byte-for-byte pin holds. The price is honest and measured: the shipped file
+went 1,079,645 → 1,582,424 bytes (+47%), all of it the sound set. mp3 rather
+than wav is why it is only that: the same takes as 22 kHz wav were 1,010 kB
+against 362 kB. T67.B pins the `data:` scheme so a future phase cannot retire
+it without also consciously retiring the double-click claim.
+
+**Finding 2: mp3 encoder padding is real, browser-dependent, and handled at
+runtime, not at encode time.** A LAME-encoded one-shot decodes with its
+encoder delay returned as leading silence — measured 13–20 ms across the set
+in Chromium — and how much survives differs per decoder. A gunshot that lands
+20 ms after its tracer reads as broken. `sndLead()` therefore scans each
+decoded buffer once for the first sample above 0.003 and playback starts
+there (`buf.pwOff`), which is robust in every browser because it measures the
+decode actually in hand. A browser that cannot decode mp3 at all fails into
+`a.err` and that voice stays synthesised for the session — the fallback is the
+error handler.
+
+**What these takes are, stated plainly: rendered, not recorded.** This
+session's network reached package registries and nothing else, so no
+rights-clean field recordings were obtainable — and shipping audio nobody has
+rights to is not on the table. The takes are offline renders
+(`tools/render_snd_v92.py`, numpy/scipy, deterministic per-key seeds) of the
+SAME layer recipes the live engine plays — the part tuned by ear across
+v64–v88 — with processing the realtime graph cannot afford: 4th-order swept
+filters, modal resonators for the plastic crack and shell-casing rings, debris
+fields at 2-4x the grain density, and a per-file mastering chain. Rapid-fire
+weapons carry two takes each (plus ±4% rate and ±12% gain jitter per shot) so
+a burst is not one sample on repeat. **Nobody in this session could LISTEN to
+them** — QA was decode metrics and spectral sanity, not ears — so the owner's
+first listen is the real acceptance test. The two knobs if something sounds
+wrong: per-voice loudness lives ONLY in `SNDV` (the files are peak-normalised),
+and any single take can be replaced or deleted (drop/remove the file in
+`assets/snd/`, run `tools/embed_snd.py`, then `./build.sh`) — a deleted take
+falls back to synthesis for that voice alone, take counts permitting, and
+T67.E refuses a repo where the folder and the embedded table disagree.
+
+`tail_v92.js` (T67) carries the checks: coverage derived off `GUNV`/`EXPLV`
+both directions (a ninth gun voice fails until it gets takes or a conscious
+decision), mp3 frame-sync and size bounds, recorded-branch-before-synthesis
+asserted per function off the live source, the not-sim-state probe, and the
+folder/table byte-equality. The suite grew 5,202 → 5,234, all green at v92.
+
+#### v92.1: the owner's first listen, and what it changed
+
+v92's own record said it plainly: "the owner's first listen is the real
+acceptance test." It happened, and it returned eight findings. Every one
+became a change and a check (`tail_v92_1.js`, T68), and three of them
+corrected decisions this harness had PINNED the other way - those pins were
+rewritten to the new claims, not loosened. What the feedback taught, finding
+by finding:
+
+- **"Small arms on armor sound glassy, should be a metallic ping."** Two
+  faults hiding under one report. First, the v92 gun takes carried baked
+  sine-partial "shell casing" and "bolt" rings (3-5 kHz, 30-50 ms) - long
+  clean partials read as GLASS, and firing at armor exposes them because no
+  infantry pops mask the shot. Removed; the gun mechanism is damped filtered
+  noise now. Second, the game had NO impact sound at all - only death sounds -
+  so the ping the owner expected had nowhere to come from. v92.1 adds one:
+  `sfxRico` (three takes + synth fallback), fed from `applyDmg` inside the
+  existing per-target `lastShrap` throttle, gated to weapon class 'b' against
+  medium/heavy/bldg targets (nests excluded by name), then thinned by a 35%
+  Math.random draw and a 6-per-0.3 s budget window. Measured through the real
+  feed in Chromium: 30 bullet hits on a Tank produced 6 pings. Both gates are
+  DRIVEN in T68.B - bullets on a Grunt and rockets on a Tank must ring zero
+  times - because the v90.1 lesson is that a guard asserted in prose is a
+  guard unverified.
+- **"Armored buildings dying chime instead of exploding."** The Heavy
+  Barricade dies through `sfxStructBreak`, whose v64 brief was "pulled apart,
+  no detonation" - written when the same voice also played on a SOLD
+  structure. Selling has used the full teardown since v87.1, so combat was
+  the only caller left, and its comb resonator + modal ring-downs are a
+  chime by construction. Redesigned as a small blast with masonry crunch,
+  recorded take and synth fallback alike, and T43.F's "no detonation
+  transient" pin was REVERSED on purpose. The full building collapse also
+  contributed: its three detuned-saw groan, ported verbatim from the live
+  recipe, renders too clean offline and rings - the groan is torn pink noise
+  through a falling low-pass now, pitchless, with nothing to ring.
+- **"Hollow reverb on small arms and some explosions."** The v92 takes baked
+  a 14 ms room slapback into every gunshot AND the live convolvers were
+  layered on top - space applied twice. The baked room layer is gone and
+  every send was cut (small arms roughly halved, explosions by about a
+  third); T68.D pins the new ceilings so the wash cannot creep back.
+- **"Nests should be silent."** `sfxNestBreak` is an empty function now, the
+  take and its `SNDV` row are deleted, and the decision is pinned from both
+  sides: T68.A asserts the body is empty AND that the kill() call site
+  survives, so the silence lives in exactly one place. T43.F/T43.M dropped
+  the nest from their distinctness claims (23 combat voices, was 24).
+- **"Helicopter selection: just a brief rotor." / "Vehicle selection: just a
+  brief diesel."** The rotor answers lost their turbine and gearbox whine
+  layers and halved their windows; what differentiates the three is the
+  rotor itself (chop/blade rates, the Chinook's tandem beat - all still
+  pinned by T43.L). The eight ground-vehicle answers collapsed from bespoke
+  layer stacks to ONE diesel family (`DIESELV`): chug rate, fundamental,
+  window and level per kind, with the fundamentals on a geometric ladder
+  ~20% apart so every pair clears T43.L's 13% distinctness band without
+  leaning on jitter. The Bull still idles lowest and slowest, the Scout Bike
+  highest and fastest, and T68.E asserts every answer ends inside 0.7-0.75 s.
+  The one deliberate exception: the Observation Balloon keeps its v86 burner,
+  because it is the one "vehicle" with no engine to idle.
+- **"Add 'Ready to move' / 'Ready to fight'."** In `BARKS_INF`, additively -
+  T68.F checks the six v64 lines all survive.
+- **"Sniper should be a louder crack."** Its take is redesigned around a twin
+  supersonic crack (the N-wave's two shocks 4 ms apart) with a broad 3-7 kHz
+  whip band and only a modest thump, and its `SNDV` gain is now deliberately
+  the largest of the guns (.80 against the rifle's .44) - T68.C pins
+  "loudest gun in the set" as an inequality over the whole table.
+
+Suite at v92.1: 5,266 checks, all green (5,238 at v92), trails and all 42
+layout pins reproduce - the ricochet call sits in `applyDmg`, but
+both of its random draws are Math.random and T43.J drives the whole audio
+surface, `sfxRico` included, across a hash comparison.
+
+#### Phase 3, first cut, LANDED at v93: the WebGL stage - and the measurement that re-planned the phase
+
+**What shipped.** A dependency-free WebGL present+post stage
+(`source/js/25b-webgl.js`, ~250 lines): the world still renders through the
+UNTOUCHED 2d code into `worldCv`, and `glComposite()` uploads that frame and
+runs the whole post pass as real shaders - bright-pass + separable gaussian
+bloom, the tilt-shift bands, the overlay/soft-light grade and the vignette -
+on a WebGL canvas that sits UNDER `#view` in the DOM, so input and the
+screen-space overlays never move. The phase 1-2 rule applied to renderers:
+**GL overrides, it never replaces.** `compositePost()` is the permanent
+fallback (headless, old browsers, a lost context, `#nogl` in the URL), and
+both compositors read their tuning from one new `POSTV` table so the two
+looks cannot drift - T69.B pins both consumers, and T69.D pins that the file
+is still one self-contained script with no external anything.
+
+**Measured in Chromium, from a double-clicked file:** the GL stage comes
+alive, and the same tick of the same seed screenshotted through GL and
+through `#nogl` differs by a **mean 2.02/255 per channel (p95 = 4/255)**,
+concentrated in the tilt bands where the blur algorithms legitimately differ
+- visually the same game. The sim hash at that tick is **identical under
+both renderers**, and T69.C drives a render pass across a hash comparison
+headless. Suite 5,286/5,286 (5,266 at v92.1), all trails and layout pins reproduce.
+
+**The measurement that re-planned the phase, recorded because it contradicts
+the plan above.** The phase-3 sketch imagined swapping the renderer wholesale
+("PixiJS is the pick... draw sites blit cell.cv"). Read on the ground at v93,
+the cell blit is a MINORITY of the world pass: `renderCore` plus the entity
+painters contain hundreds of immediate-mode vector and gradient draws that
+are not sprites at all - twelve airborne particle types built from radial
+gradients and additive blending, per-projectile vector art, per-entity effect
+glows (heal aura, paint brackets, rally pulse) interleaved INSIDE the
+depth-sorted pass, independent turret sub-transforms, strike and targeting
+overlays. No sprite batcher replaces that cheaply, and a scene-graph library
+would fight the immediate-mode shape of all of it while adding ~450 kB that
+must ride inside the single file. So phase 3 became incremental: **first the
+pipeline (this cut), then the sprite band inside it.** The second cut - the
+depth-sorted item pass drawn by GL between a 2d underlay and a 2d overlay,
+which is the part phases 4 and 5 actually need on the GPU - has a concrete
+seam now: `glComposite` owns the frame, and the band migrates into it without
+the vector FX ever needing to leave canvas. Phase 4 (real textures) does NOT
+wait on that: the bake pipeline is renderer-agnostic, and a loaded texture
+blits through the 2d path exactly as a procedural cell does.
+
+#### Phase 3, second cut, LANDED at v94: the sprite band, and what it cost
+
+**What shipped.** The depth-sorted item pass - every shadow, prop, node,
+building, unit, creature and loose flag - now draws on its OWN transparent
+canvas (`sprCv`), under the same camera transform as the scene, and lands on
+the scene in exactly one source-over blit. That blit goes through
+`bandPresent()`: the answer is either the band canvas itself (headless,
+`#nogl`, no usable GL) or a GL-processed copy from an offscreen context of
+its own - today a declared PASSTHROUGH shader, premultiplied in and out.
+**The passthrough IS the deliverable**: band canvas → texture → program →
+back into the 2d merge, proven pixel-faithful end to end. Phase 5 swaps that
+shader for per-pixel lighting against a normal band and changes nothing else
+about the frame. One code path in both renderers: the band is ALWAYS
+isolated, so the suite exercises the real structure headless. T70 carries
+the pins.
+
+**Why the frame is sliced HERE and nowhere else.** The plan said "2d underlay
+→ GL sprites → 2d overlay" - and the overlay half of that dies on a
+measurement: the combat FX above the band (tracer glows, embers, fireballs,
+muzzle flashes) draw ADDITIVELY against whatever is beneath them, sprites
+included. Rasterize them onto a separate transparent layer and their
+interaction with the scene is unrecoverable - every explosion would change.
+So everything after the band merge still draws directly on the composed
+scene, additive semantics exact. The band itself contains 39 additive draws,
+but nearly all are specular highlights over the entity's OWN body -
+band-internal, unaffected. The exposed remainder is the ground auras (heal
+glow, rally pulse), and the screenshot diff put the whole concession at a
+**mean 0.048/255 per channel, p95 = 0** against the v93 renderer. That is
+the cut's entire visual cost, and it is invisible.
+
+**Two corrections this measurement round forced, recorded because that is
+the point of this file:**
+
+- **The v93 "mean 2.02/255" GL-vs-2d figure was inflated by the DOM.** The
+  message toasts fade on wall-clock, so two runs seconds apart photograph
+  different toast stacks - the diff heatmap put almost the whole difference
+  inside the toast boxes. Toasts excluded, GL-vs-2d is a **mean 0.58/255**.
+  Lesson for every future screenshot comparison: hide `#msgs` first.
+- **Software GL is now REFUSED, on a measurement.** On this GPU-less box a
+  forced CPU-rasterized GL frame costs ~74 ms against ~44 ms for the whole
+  2d path - the machine without real GL is exactly the machine the 2d
+  fallback exists for. Both stages therefore create their contexts with
+  `failIfMajorPerformanceCaveat:true` (`#forcegl` overrides, for testing;
+  this container's GL reports non-caveated, so the refusal itself could not
+  be demonstrated here - the attribute is standard and browser-judged).
+  These container numbers say nothing about real GPUs, where the whole
+  pipeline is a few texture uploads and seven trivial passes.
+
+Suite 5,303/5,303; every trail and all 42 layout pins reproduce; the sim
+hash is identical across v93-2d, v94-2d, v94-GL of the same tick.
+
+#### Phase 4 LANDED at v95: real textures for the whole roster
+
+**What shipped.** Every baked sprite in the game now draws from a real
+texture instead of the runtime vector painter: all ten infantry rows at
+five walk frames each, all sixteen vehicle hulls, and all seventeen baked
+buildings - in all four army colours for a shared row, in the owner's
+colour alone for a faction exclusive (the bake creates cells in the other
+colours too, but no army can ever field them, so the painter keeps those).
+The wildlife nest is the one baked-table exception: it belongs to the bug
+faction, which the sprite bake itself excludes, so its cells are never
+blitted and a texture for it would be dead weight. 212 files, committed
+twice on purpose exactly like the sounds: as auditable images in
+`assets/img/` and as base64 data: URLs in the generated
+`source/js/02d-img-data.js` (`tools/embed_img.py`), because the
+double-clicked file:// page can decode a data: URL and nothing else. T71.B
+holds the two byte-identical; T71.A derives the full roster from `U`/`B`/
+`FAC` in both directions, so adding a unit now FAILS the suite until the
+texture pipeline is re-run - the conscious step a textured game demands.
+
+**WebP, on a measurement.** The full roster as PNG is ~5.8 MB before
+base64 grows it 4/3 inside the shipped file. Lossy WebP at quality 95 is
+4-6x smaller at a mean error under 0.7/255 on covered pixels - invisible
+at game zoom - and the override architecture already handles the
+hypothetical browser that cannot decode one: a failed decode lands in
+`ASSETS_FAILED` and that sprite paints procedurally, exactly like a
+missing file. `embed_img.py` carries per-entry mime (`IMG_MIME`), so webp
+and png can coexist and a future hand-made texture can be dropped in as
+either.
+
+**The seam is three lines in `bakeSprites()`.** Each bake site asks
+`imgAsset('inf_<key>_<fac>_<frame>' / 'veh_<key>_<fac>' / 'bld_<key>_<fac>')`
+first; a hit becomes a cell through `cellFromImg()`, which returns exactly
+the `{cv,sil,ax,ay,w,h}` shape `bakeCell()` returns, so the draw sites, the
+shadow pass and the portraits cannot tell the two apart - measured in
+Chromium: the baked cell is pixel-identical to the PNG (mean diff 0), and
+`hashState()` is unchanged across a textured frame. A miss falls back to the
+painter, which is what the whole headless suite permanently exercises (the
+shim has no `Image`).
+
+**Where the textures come from, honestly.** No rights-clean art is
+obtainable from this container (registry-only network), and no generic pack
+would match the molded-army-men look or survive per-faction tinting - so the
+textures are OFFLINE-RENDERED by two committed tools: the game's own
+painters drawn at 6x supersample in headless Chromium
+(`tools/dump_base_v95.js`, which DERIVES the 212-sprite roster from
+`U`/`B`/`FAC` so a new row is picked up automatically), then a deterministic
+Python material pass (`tools/material_v95.py`) that adds what a vector
+painter cannot - bump-lit plastic grain in patches, a mold seam down
+infantry and vehicles, sparse scratches, worn edges on painted detail
+lines, micro-occlusion, a molded-color swirl - and finishes with the exact
+`enrichCell` numbers so a textured cell sits beside procedural neighbours
+without a style seam. Every random draw is seeded from kind_key alone: an
+army-man of every colour comes off the same mold, and a walk cycle must not
+boil between frames. The first cut of that pass relit the whole sprite from
+a distance-field dome and looked WORSE than the painter (washed out, forms
+pillowed); the shipped recipe keeps the painter's own shading as the light
+and adds only high-frequency material. Same lesson as v92's audio: generate
+from the tuned recipes, ship as swappable files, let the owner's eye be the
+acceptance test - the owner reviewed the eight-sprite first cut and asked
+for the whole roster on its look.
+
+**Three rails, all driven by T71:**
+
+- **A bake that ran early re-bakes once.** The field manual can bake from
+  the main menu before the page-open `assetsLoad()` resolves; the `.then`
+  now calls `rebakeIfAssetsLate()`, which rebuilds `SPR` exactly once if the
+  bake preceded the assets. Client-local by design: two players may re-bake
+  at different wall times, or never.
+- **The missing-asset warn gates on `Image`, not `fetch`** - because Node 22
+  HAS a global fetch, so the v92 comment "headless has no fetch" was wrong
+  in a way that only started to matter when img entries (which need `Image`,
+  absent under the shim) began landing in `ASSETS_FAILED` on every harness
+  run.
+- **The Choktaw's tail was clipped off every sprite since v88** - it never
+  had a `VEH_BOX` entry, so it baked in the 48-wide default while its
+  painter reaches x=-31.3. Found because the texture had to be authored in
+  the sprite's true box; fixed with `choktaw:[-33,-16,18,16]`, which also
+  widens its portrait. Display-only.
+
+Suite green with three pins consciously rewritten (T66.C boot line, T66.D
+"no texture in the bake" - the claim phase 4 exists to overturn - and
+T67.E's order.txt run growing one line); trails and all 42 layout pins
+reproduce untouched.
+
+#### Phase 5 LANDED at v96: per-pixel lighting, and the roadmap is complete
+
+**What shipped.** Every v95 texture gained a normal-map companion - a
+second image recording which way each pixel's surface faces - rendered by
+`tools/normal_v96.py` from the same base renders and, critically, WITH THE
+SAME RNG RECIPE as the material pass, so the grain a pixel shows in color
+is the grain it shows in relief. 212 maps, lossy WebP q92 (745 kB; on
+smooth direction fields the encode error is ~1% of tilt, invisible in
+shading), committed in `assets/nrm/` and embedded as `NRM_B64` by the same
+`tools/embed_img.py` run that packs the textures.
+
+**The frame's shape, filled in exactly where v94 said it would be.** The
+band pass now keeps a second canvas in register with the color band: the
+three cell-blit sites mirror each sprite's normal map through `NCTX`,
+reading the exact transform off the color context - which is also how a
+rotating vehicle picks a pre-rotated variant of its map (`nrmRot`,
+16 headings, vectors rotated in the values, cached lazily per cell),
+because canvas rotation turns pixel POSITIONS but not the directions
+stored in them. `bandPresent()`'s v94 passthrough became the lighting
+shader: constant lamp (the painters' own LIGHT, given altitude), a plastic
+specular, and up to `LIGHTV.max` point lights, all fed from the one
+`LIGHTV` table.
+
+**The claim the phase rests on: lighting is a MODULATION, not a new look.**
+The shader normalizes its lamp so a flat pixel - no normal map, a
+procedural fallback cell, live-drawn gear, a failed decode - comes out
+exactly as it went in. The fallback ladder never changes appearance class:
+no GL is v95 pixels directly, GL without maps is v95 pixels through the
+shader, GL with maps is v95 plus relief. Measured in Chromium: the
+lighting-only A/B (same page, same GL post, maps on/off) moves a mean
+0.69/255 over the frame with every changed pixel inside a sprite
+silhouette, and the marginal frame cost of the lit path against the flat
+GL path is zero within noise.
+
+**The showpiece: the battlefield casts light.** `bandLightsCollect()`
+gathers, fresh each frame, the explosion core flashes (`G.parts` t:'ex',
+by remaining life), the burning ground (`G.strikes[].burn`, clustered by
+4x4 tile buckets so a napalm field is a few steady lights rather than a
+lottery over the cap, flickering on `G.tick`), and muzzle flashes
+(`u.flash`). EVERY source is vision-gated - an explosion or a shot you
+cannot see lights nothing, because light through fog would be a wallhack.
+Client-local throughout: no srand, nothing hashed, nothing serialized;
+two clients may disagree about every light and still agree tick for tick.
+
+**One edge found by its own A/B:** a frame where lighting turns off while
+the GL hop still runs must not inherit the previous frame's normal band
+and lights - the stale-state clear in renderCore (T72.C) exists because
+the first A/B screenshot pair showed exactly that haunting.
+
+Suite green with T70's passthrough pins consciously rewritten (the claim
+v94 existed to set up, not a loosening) and T71/T67-style scoping edits;
+T72 carries the new pins. Trails and all 42 layout pins reproduce
+untouched.
 
 #### What phase 1 looked like before it landed, kept for the reasoning
 
