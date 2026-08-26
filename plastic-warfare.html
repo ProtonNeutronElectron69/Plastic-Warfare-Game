@@ -14807,8 +14807,8 @@ function quadPatch(c,Q,u0,v0,u1,v1){
  const p0=qp(Q,u0,v0),p1=qp(Q,u1,v0),p2=qp(Q,u1,v1),p3=qp(Q,u0,v1);
  c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.lineTo(p2.x,p2.y);c.lineTo(p3.x,p3.y);c.closePath();
 }
-/* ---- v97 molded-detail kit ----
-   The owner zoomed in and found "large flat surfaces, mostly square shapes":
+/* ---- molded-detail kit ----
+   v97: the owner zoomed in and found "large flat surfaces, mostly square shapes":
    the prism walls and roofs were single gradients. These helpers put molded
    STRUCTURE on them - panel seam grids, bolt heads, plinth bands, roof panel
    lines - all mapped through the same quad math the doors and windows use, so

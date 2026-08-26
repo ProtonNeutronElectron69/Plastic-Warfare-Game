@@ -35,7 +35,7 @@ const fs74 = require('fs');
   /* driven: a resize at DPR 2 doubles the backing, pins the CSS size, and
      vpW answers CSS - then everything restores to the shim's world */
   {
-    const d0 = global.devicePixelRatio, w0 = view.width, h0 = view.height;
+    const d0 = global.devicePixelRatio;
     global.devicePixelRatio = 2; resize();
     const backing2 = view.width === innerWidth * 2 && view.height === innerHeight * 2;
     const css2 = vpW() === innerWidth && view.style.width === innerWidth + 'px';
@@ -43,8 +43,11 @@ const fs74 = require('fs');
     global.devicePixelRatio = d0; resize();
     ok('T74.A resize at DPR 2: backing doubles, style and vpW stay CSS', backing2 && css2);
     ok('T74.A ...and the minimap backing follows so it is as crisp as the field', mm2);
-    ok('T74.A ...and a resize back restores the headless world exactly',
-      view.width === w0 && view.height === h0 && RDPR === 1 && mmCv.width === Math.round(MM_S));
+    /* the restore claim is against the WINDOW, not against whatever an earlier
+       tail poked into view.width directly - resize() derives from innerWidth,
+       and at RDPR 1 that is exactly the pre-v97 body */
+    ok('T74.A ...and a resize back lands on innerWidth at RDPR 1, the pre-v97 numbers',
+      view.width === innerWidth && view.height === innerHeight && RDPR === 1 && mmCv.width === Math.round(MM_S));
   }
 
   /* the one place DPR enters rendering, and the places it must NOT */
