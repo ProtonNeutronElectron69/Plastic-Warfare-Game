@@ -72,7 +72,7 @@ host/join mode for playing against another person.
 | Path | What it is |
 |---|---|
 | `plastic-warfare.html` | **The game.** This is the whole thing — open it to play. |
-| `source/` | The same game as ~30 readable files; `./build.sh` assembles them into the file above. |
+| `source/` | The same game as 34 readable files; `./build.sh` assembles them into the file above. |
 | `assets/snd/` | The sound effects as playable mp3 files — they also ride inside the game file, so it stays self-contained. |
 | `assets/img/` | The sprite textures as viewable webp images — same deal: they also ride inside the game file. |
 | `assets/nrm/` | The textures' normal maps — the per-pixel surface directions the lighting uses. |
@@ -85,8 +85,8 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v82 it makes **over 2,300
-individual checks** in its first segment alone, and over 4,500 across all five.
+that the results come out identical every time. As of v97 it makes **5,395
+individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
 something subtle three systems away, the tests say so before you ever see it.
