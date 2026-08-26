@@ -29,7 +29,7 @@ function myHQs(){
  if(!G||!G.human)return[];
  return G.human.blds.filter(b=>b.key==='hq'&&b.hp>0&&b.prog>=1).sort((a,b)=>a.id-b.id);
 }
-function hqCamTarget(b){return{x:isoX(b.x,b.y)-view.width/2/G.zoom,y:isoY(b.x,b.y)-view.height/2/G.zoom}}
+function hqCamTarget(b){return{x:isoX(b.x,b.y)-vpW()/2/G.zoom,y:isoY(b.x,b.y)-vpH()/2/G.zoom}}
 function hqCentred(b){const t=hqCamTarget(b);return Math.abs(G.cam.x-t.x)<1&&Math.abs(G.cam.y-t.y)<1}
 /* Three states, and the ordering is the point: the FIRST press must not move the
    camera, because the common case is "I want to queue a building while I watch
@@ -337,7 +337,7 @@ function switchArmy(i){
  G.human=p;
  const hq=p.blds.find(b=>b.key==='hq')||p.blds[0], st=p.start||{x:G.map.N/2,y:G.map.N/2};
  const cx=hq?hq.x:st.x, cy=hq?hq.y:st.y;
- G.cam.x=isoX(cx,cy)-view.width/2/G.zoom;G.cam.y=isoY(cx,cy)-view.height/2/G.zoom;
+ G.cam.x=isoX(cx,cy)-vpW()/2/G.zoom;G.cam.y=isoY(cx,cy)-vpH()/2/G.zoom;
  const fd=document.getElementById('facDot'),fn=document.getElementById('facName');
  if(fd)fd.style.background=FAC[p.fac].color;
  if(fn)fn.textContent=FAC[p.fac].name;
@@ -533,7 +533,7 @@ function watchFocus(i){
  if(p!==G.human)return switchArmy(i);
  const hq=p.blds.find(b=>b.key==='hq')||p.blds[0],st=p.start||{x:G.map.N/2,y:G.map.N/2};
  const cx=hq?hq.x:st.x,cy=hq?hq.y:st.y;
- G.cam.x=isoX(cx,cy)-view.width/2/G.zoom;G.cam.y=isoY(cx,cy)-view.height/2/G.zoom;
+ G.cam.x=isoX(cx,cy)-vpW()/2/G.zoom;G.cam.y=isoY(cx,cy)-vpH()/2/G.zoom;
  return true;
 }
 function watchToggle(){if(!G||!G.watch)return false;G.watchHide=!G.watchHide;lastWatchSig='';refreshWatchPanel();return true;}

@@ -45,7 +45,7 @@ function update(dt){
  if(KEY.ArrowLeft||KEY.a)G.cam.x-=spd; if(KEY.ArrowRight||KEY.d)G.cam.x+=spd;
  if(KEY.ArrowUp||KEY.w)G.cam.y-=spd; if(KEY.ArrowDown||KEY.s2)G.cam.y+=spd;
  if(MOUSE.inside){
-  if(MOUSE.x<14)G.cam.x-=spd; if(MOUSE.x>view.width-14)G.cam.x+=spd;
+  if(MOUSE.x<14)G.cam.x-=spd; if(MOUSE.x>vpW()-14)G.cam.x+=spd; // v97: MOUSE is CSS px, so the edge bands compare against the CSS size
   /* v90.2: this read `MOUSE.y<14&&MOUSE.y>44`, which no number satisfies - pushing
      the TOP edge has never scrolled the camera, in any release, while the help
      text has promised "push the screen edge" since v43. The intent is legible
@@ -53,9 +53,9 @@ function update(dt){
      first 44px of the window was chrome. Both halves are fixed here, and the
      bound is TOPBAR_H rather than a literal because this release is what made 44
      wrong twice over. Camera only - G.cam is neither hashed nor serialized. */
-  if(MOUSE.y>TOPBAR_H&&MOUSE.y<TOPBAR_H+14)G.cam.y-=spd; if(MOUSE.y>view.height-14)G.cam.y+=spd;
+  if(MOUSE.y>TOPBAR_H&&MOUSE.y<TOPBAR_H+14)G.cam.y-=spd; if(MOUSE.y>vpH()-14)G.cam.y+=spd;
  }
- G.cam.x=clamp(G.cam.x,-200,G.terr.width-view.width/G.zoom+200);
- G.cam.y=clamp(G.cam.y,-150,G.terr.height-view.height/G.zoom+150);
+ G.cam.x=clamp(G.cam.x,-200,G.terr.width-vpW()/G.zoom+200);
+ G.cam.y=clamp(G.cam.y,-150,G.terr.height-vpH()/G.zoom+150);
 }
 

@@ -92,8 +92,13 @@ const fs71 = require('fs');
   }
   ok('T71.B every texture decodes from base64 and opens on its format signature' + (badSig.length ? ' [' + badSig.slice(0, 3).join(', ') + ']' : ''),
     badSig.length === 0);
-  ok(`T71.B the whole set stays under two and a half megabytes (${Math.round(total / 1024)} kB)`,
-    total > 500 * 1024 && total < 2560 * 1024);
+  /* v97 REWRITE: the set was re-rendered at SS=4 (device-pixel crispness at
+     full zoom) with the painter detail pass baked in - measured 2589 kB,
+     up from 1602 at SS=3. The ceiling moves to 3.5 MB: room for one more
+     detail iteration, small enough that the shipped page stays a single
+     double-clickable file. */
+  ok(`T71.B the whole set stays under three and a half megabytes (${Math.round(total / 1024)} kB)`,
+    total > 500 * 1024 && total < 3584 * 1024);
 
   /* committed twice on purpose, like the sounds: auditable files a human can
      view and replace one at a time, and the base64 the game actually reads.

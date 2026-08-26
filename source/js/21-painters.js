@@ -37,6 +37,15 @@ function trooperBody(c,key,col,bob){
  c.fillStyle=rgb(mixc(b,WHITE,.28).r,mixc(b,WHITE,.28).g,mixc(b,WHITE,.28).b);rr(c,-1,-8.1+dy,2,1.9,.6);c.fill();
  // little pack on the back
  c.fillStyle=rgb(deep.r,deep.g,deep.b);rr(c,-5.3,-13+dy,2.4,6,1.2);c.fill();
+ c.save();c.globalAlpha=.5;c.strokeStyle=rgb(mixc(b,BLACK,.4).r,mixc(b,BLACK,.4).g,mixc(b,BLACK,.4).b);c.lineWidth=.7;
+ c.beginPath();c.moveTo(-5.1,-10.2+dy);c.lineTo(-3.1,-10.2+dy);c.stroke();c.restore(); // pack flap seam
+ /* v97: belt kit - two ammo pouches on the front of the belt and a canteen
+    on the right hip, the little lumps a toy soldier is molded with */
+ c.fillStyle=rgb(mixc(b,BLACK,.22).r,mixc(b,BLACK,.22).g,mixc(b,BLACK,.22).b);
+ rr(c,-.6,-7.4+dy,1.9,2.3,.7);c.fill();rr(c,1.7,-7.4+dy,1.9,2.3,.7);c.fill();
+ c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.14)';
+ rr(c,-.4,-7.2+dy,.7,1.7,.35);c.fill();rr(c,1.9,-7.2+dy,.7,1.7,.35);c.fill();c.restore();
+ plSphere(c,shade(col,.72),4.2,-6.3+dy,1.3,1.1,false); // plSphere parses HEX - shade() answers one
  plRim(c,col,0,-10+dy,4,5);
  gloss(c,-1.8,-13+dy,1.8,2.6);
  // ---- head ----
@@ -50,6 +59,12 @@ function trooperBody(c,key,col,bob){
   // brim
   c.fillStyle=rgb(mixc(helmetc,BLACK,.25).r,mixc(helmetc,BLACK,.25).g,mixc(helmetc,BLACK,.25).b);
   c.beginPath();c.ellipse(0,-16.9+dy,4.4,1.5,0,0,Math.PI);c.fill();
+  /* v97: the face lives under the brim - a soft cast shadow across the
+     upper face, and a chinstrap line down the cheek */
+  c.save();c.globalAlpha=.3;c.fillStyle=rgb(mixc(b,BLACK,.5).r,mixc(b,BLACK,.5).g,mixc(b,BLACK,.5).b);
+  c.beginPath();c.ellipse(0,-16.4+dy,3,1.1,0,0,Math.PI);c.fill();c.restore();
+  c.save();c.globalAlpha=.5;c.strokeStyle=rgb(mixc(helmetc,BLACK,.35).r,mixc(helmetc,BLACK,.35).g,mixc(helmetc,BLACK,.35).b);c.lineWidth=.7;
+  c.beginPath();c.moveTo(2.5,-16.6+dy);c.quadraticCurveTo(2.2,-15+dy,-.2,-14.6+dy);c.stroke();c.restore();
   plRim(c,col,0,-18.2+dy,3.6,3.4);
   gloss(c,-1.4,-20+dy,1.4,1.6);})();
  if(sarge){c.fillStyle='#ffd24d';for(let i=0;i<3;i++){c.beginPath();c.moveTo(-4,-11.5+i*1.7+dy);c.lineTo(-2,-12.3+i*1.7+dy);c.lineTo(-4,-13.1+i*1.7+dy);c.closePath();c.fill();}}
@@ -416,6 +431,28 @@ function prism(c,col,cx,baseY,hw,hd,H,opt){
  c.save();c.globalCompositeOperation='lighter';c.strokeStyle='rgba(255,255,255,.4)';c.lineWidth=1.4;c.beginPath();c.moveTo(Wp.x,Wp.y);c.lineTo(N.x,N.y);c.stroke();c.restore();
  // glossy band across the top
  if(!opt.matte){c.save();c.beginPath();c.moveTo(N.x,N.y);c.lineTo(E.x,E.y);c.lineTo(S.x,S.y);c.lineTo(Wp.x,Wp.y);c.closePath();c.clip();gloss(c,cx-hw*.2,N.y+hd*.5,hw*.34,hd*.3);c.restore();}
+ /* v97 opt.det: molded panel structure for a MAIN hull - seam grids sized to
+    the wall, a plinth at the foot, and a trim inset on the top face. Small
+    prisms (crates, kiosks, vents) stay plain; every big flat face this option
+    touches was one bare gradient before. */
+ if(opt.det){
+  const seQ=[Sg,Eg,E,S],swQ=[Sg,Wg,Wp,S];
+  const nse=Math.max(2,Math.round(hw/11)),us=[];for(let i=1;i<nse;i++)us.push(i/nse);
+  const vs=H>15?[.52]:[];
+  wallPanels(c,seQ,fSE,us,vs,hw+H);
+  wallPanels(c,swQ,fSW,us,vs,hw+H+7);
+  wallPlinth(c,seQ,fSE);wallPlinth(c,swQ,fSW);
+  if(H>15)wallBolts(c,seQ,.56,Math.max(3,nse),fSE);
+  // top trim: an inset diamond outline
+  c.save();c.globalAlpha=.18;c.strokeStyle=rgb(topD.r,topD.g,topD.b);c.lineWidth=1;
+  const cyT=baseY-H, ins=.84;
+  c.beginPath();
+  c.moveTo(cx+(N.x-cx)*ins,cyT+(N.y-cyT)*ins);
+  c.lineTo(cx+(E.x-cx)*ins,cyT+(E.y-cyT)*ins);
+  c.lineTo(cx+(S.x-cx)*ins,cyT+(S.y-cyT)*ins);
+  c.lineTo(cx+(Wp.x-cx)*ins,cyT+(Wp.y-cyT)*ins);
+  c.closePath();c.stroke();c.restore();c.globalAlpha=1;
+ }
  return {N,E,S,W:Wp,cx,topY:baseY-H,baseY,hw,hd,H};
 }
 /* a four-slope hip/pyramid roof sitting on a prism's top diamond (hw,hd at topY),
@@ -431,6 +468,18 @@ function hipRoof(c,col,cx,topY,hw,hd,rh){
   {p:[S,Wp,apex], col:mixc(b,AMB,.22)}     // SW slope
  ];
  for(const f of faces){c.fillStyle=rgb(f.col.r,f.col.g,f.col.b);c.beginPath();c.moveTo(f.p[0].x,f.p[0].y);c.lineTo(f.p[1].x,f.p[1].y);c.lineTo(f.p[2].x,f.p[2].y);c.closePath();c.fill();}
+ /* v97: contour lines up the two front slopes so they read as shingled */
+ c.save();c.lineWidth=1;
+ for(const f of [faces[2],faces[3]]){
+  const dk3=mixc(f.col,BLACK,.3);
+  for(const t of [.3,.6]){
+   c.globalAlpha=.2;c.strokeStyle=rgb(dk3.r,dk3.g,dk3.b);
+   const a={x:f.p[0].x+(apex.x-f.p[0].x)*t,y:f.p[0].y+(apex.y-f.p[0].y)*t};
+   const b2={x:f.p[1].x+(apex.x-f.p[1].x)*t,y:f.p[1].y+(apex.y-f.p[1].y)*t};
+   c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b2.x,b2.y);c.stroke();
+  }
+ }
+ c.restore();c.globalAlpha=1;
  // hip ridges
  c.save();c.globalAlpha=.5;c.strokeStyle=rgb(mixc(b,BLACK,.25).r,mixc(b,BLACK,.25).g,mixc(b,BLACK,.25).b);c.lineWidth=1;
  for(const cor of [N,E,S,Wp]){c.beginPath();c.moveTo(cor.x,cor.y);c.lineTo(apex.x,apex.y);c.stroke();}c.restore();
@@ -453,6 +502,9 @@ function gableRoof(c,col,cx,topY,hw,hd,rh){
  face([N,E,ridgeB,ridgeA],mixc(b,WHITE,.34));   // NE slope: lit
  face([Wp,S,ridgeB,ridgeA],mixc(b,AMB,.24));    // SW slope: soft shade
  face([E,S,ridgeB],mixc(b,AMB,.5));             // SE gable end wall
+ /* v97: panel lines on both visible slopes - the roof was two bare ramps */
+ roofPanels(c,[N,E,ridgeB,ridgeA],mixc(b,WHITE,.34),hw);
+ roofPanels(c,[Wp,S,ridgeB,ridgeA],mixc(b,AMB,.24),hw+3);
  // molded eave edge on the visible end + lit ridge line
  c.save();c.globalAlpha=.45;c.strokeStyle=rgb(mixc(b,BLACK,.3).r,mixc(b,BLACK,.3).g,mixc(b,BLACK,.3).b);c.lineWidth=1;
  c.beginPath();c.moveTo(E.x,E.y);c.lineTo(ridgeB.x,ridgeB.y);c.lineTo(S.x,S.y);c.stroke();c.restore();
@@ -480,6 +532,133 @@ function quadPatch(c,Q,u0,v0,u1,v1){
  const p0=qp(Q,u0,v0),p1=qp(Q,u1,v0),p2=qp(Q,u1,v1),p3=qp(Q,u0,v1);
  c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.lineTo(p2.x,p2.y);c.lineTo(p3.x,p3.y);c.closePath();
 }
+/* ---- molded-detail kit ----
+   v97: the owner zoomed in and found "large flat surfaces, mostly square shapes":
+   the prism walls and roofs were single gradients. These helpers put molded
+   STRUCTURE on them - panel seam grids, bolt heads, plinth bands, roof panel
+   lines - all mapped through the same quad math the doors and windows use, so
+   nothing can hang past a wall plane. Deterministic on purpose (a tiny sine
+   hash, no RNG): the offline texture pass re-renders these painters, and a
+   detail that moved between bakes would shear against its own normal map. */
+function dth(n){const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(s)}
+/* recessed panel-seam grid on a wall quad: verticals at us[], horizontals at
+   vs[], each seam a dark groove with a lit lip below-right (molded, not drawn).
+   Panels between the seams get a whisper of alternating tone so the wall
+   stops being one flat ramp. */
+function wallPanels(c,Q,base,us,vs,seed){
+ const dk2=mixc(base,BLACK,.4),lt2=mixc(base,WHITE,.5);
+ c.save();
+ // per-panel tonal variation
+ const uu=[0].concat(us,[1]),vv=[0].concat(vs,[1]);
+ for(let i=0;i<uu.length-1;i++)for(let j=0;j<vv.length-1;j++){
+  const t=dth((seed||0)+i*7.3+j*13.7)-.5;
+  c.globalAlpha=Math.abs(t)*.12;
+  c.fillStyle=t>0?rgb(lt2.r,lt2.g,lt2.b):rgb(dk2.r,dk2.g,dk2.b);
+  quadPatch(c,Q,uu[i],vv[j],uu[i+1],vv[j+1]);c.fill();
+ }
+ // seams: groove + lip
+ c.lineWidth=1;
+ for(const u of us){
+  c.globalAlpha=.26;c.strokeStyle=rgb(dk2.r,dk2.g,dk2.b);
+  const p0=qp(Q,u,.03),p1=qp(Q,u,.97);c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.stroke();
+  c.globalAlpha=.12;c.strokeStyle=rgb(lt2.r,lt2.g,lt2.b);
+  const q0=qp(Q,u+.012,.03),q1=qp(Q,u+.012,.97);c.beginPath();c.moveTo(q0.x,q0.y);c.lineTo(q1.x,q1.y);c.stroke();
+ }
+ for(const v of vs){
+  c.globalAlpha=.2;c.strokeStyle=rgb(dk2.r,dk2.g,dk2.b);
+  const p0=qp(Q,.03,v),p1=qp(Q,.97,v);c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.stroke();
+  c.globalAlpha=.1;c.strokeStyle=rgb(lt2.r,lt2.g,lt2.b);
+  const q0=qp(Q,.03,v-.018),q1=qp(Q,.97,v-.018);c.beginPath();c.moveTo(q0.x,q0.y);c.lineTo(q1.x,q1.y);c.stroke();
+ }
+ c.restore();c.globalAlpha=1;
+}
+/* a line of molded bolt heads across a wall quad at height v */
+function wallBolts(c,Q,v,n,base){
+ const dk2=mixc(base,BLACK,.45);
+ c.save();
+ for(let i=0;i<n;i++){
+  const p=qp(Q,.08+.84*i/(n-1),v);
+  c.globalAlpha=.5;c.fillStyle=rgb(dk2.r,dk2.g,dk2.b);c.beginPath();c.arc(p.x,p.y,.8,0,7);c.fill();
+  c.globalAlpha=.35;c.fillStyle='rgba(255,255,255,1)';c.beginPath();c.arc(p.x-.3,p.y-.3,.3,0,7);c.fill();
+ }
+ c.restore();c.globalAlpha=1;
+}
+/* darker plinth band along the foot of a wall quad, with a lit top lip */
+function wallPlinth(c,Q,base,v){
+ v=v||.14;
+ const dk2=mixc(base,AMB,.35);
+ c.save();c.globalAlpha=.4;c.fillStyle=rgb(dk2.r,dk2.g,dk2.b);
+ quadPatch(c,Q,0,0,1,v);c.fill();
+ c.globalAlpha=.16;c.strokeStyle='rgba(255,255,255,1)';c.lineWidth=1;
+ const p0=qp(Q,.02,v),p1=qp(Q,.98,v);c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.stroke();
+ c.restore();c.globalAlpha=1;
+}
+/* panel lines on a roof slope quad [eaveA,eaveB,ridgeB,ridgeA]: contours
+   parallel to the ridge plus faint corrugation runs up the slope */
+function roofPanels(c,Q,base,seed){
+ const dk2=mixc(base,BLACK,.35),lt2=mixc(base,WHITE,.5);
+ c.save();c.lineWidth=1;
+ for(const v of [.34,.66]){
+  c.globalAlpha=.22;c.strokeStyle=rgb(dk2.r,dk2.g,dk2.b);
+  const p0=qp(Q,.03,v),p1=qp(Q,.97,v);c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.stroke();
+  c.globalAlpha=.1;c.strokeStyle=rgb(lt2.r,lt2.g,lt2.b);
+  const q0=qp(Q,.03,v+.05),q1=qp(Q,.97,v+.05);c.beginPath();c.moveTo(q0.x,q0.y);c.lineTo(q1.x,q1.y);c.stroke();
+ }
+ for(let i=1;i<7;i++){
+  const u=i/7+((dth((seed||0)+i)-.5)*.02);
+  c.globalAlpha=.1;c.strokeStyle=rgb(dk2.r,dk2.g,dk2.b);
+  const p0=qp(Q,u,.04),p1=qp(Q,u,.96);c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.stroke();
+ }
+ // eave shadow along the bottom edge
+ c.globalAlpha=.3;c.strokeStyle=rgb(dk2.r,dk2.g,dk2.b);c.lineWidth=1.3;
+ const e0=qp(Q,.01,.02),e1=qp(Q,.99,.02);c.beginPath();c.moveTo(e0.x,e0.y);c.lineTo(e1.x,e1.y);c.stroke();
+ c.restore();c.globalAlpha=1;
+}
+/* small rooftop equipment: a vent/AC box with a louvered face and a fan ring */
+function roofVent(c,x,y,w,d,h,col){
+ const q=prism(c,col,x,y,w,d,h,{matte:true});
+ const f=wallCorners(q,1);
+ c.save();c.globalAlpha=.55;c.strokeStyle='#20242a';c.lineWidth=1;
+ for(const v of [.3,.5,.7]){const p0=qp(f,.15,v),p1=qp(f,.85,v);c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.stroke();}
+ c.globalAlpha=.5;c.beginPath();c.ellipse(q.cx,q.topY+d*.1,w*.42,d*.42,0,0,7);c.stroke();
+ c.restore();c.globalAlpha=1;
+ return q;
+}
+/* a run of rooftop pipe with mounting brackets and an elbow drop */
+function roofPipe(c,x0,y0,x1,y1,w){
+ w=w||1.8;
+ c.save();c.strokeStyle='#5a5f66';c.lineWidth=w;c.lineCap='round';
+ c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke();
+ c.strokeStyle='rgba(255,255,255,.25)';c.lineWidth=w*.4;
+ c.beginPath();c.moveTo(x0,y0-w*.22);c.lineTo(x1,y1-w*.22);c.stroke();
+ c.strokeStyle='#33373d';c.lineWidth=1;
+ const n=Math.max(2,Math.round(Math.hypot(x1-x0,y1-y0)/9));
+ for(let i=1;i<n;i++){const t=i/n,px=x0+(x1-x0)*t,py=y0+(y1-y0)*t;c.beginPath();c.moveTo(px,py-w*.7);c.lineTo(px,py+w*.7);c.stroke();}
+ c.restore();c.lineCap='butt';
+}
+/* a squat steel drum (fuel/water) with ribs; grounded at (x,y) */
+function drumAt(c,x,y,r,col){
+ const b2=hx2rgb(col||'#4e545c'),lt2=mixc(b2,WHITE,.3),dk2=mixc(b2,BLACK,.3);
+ const h=r*1.9;
+ c.fillStyle=rgb(dk2.r,dk2.g,dk2.b);c.beginPath();c.ellipse(x,y,r,r*.5,0,0,7);c.fill();
+ (function(){const g=c.createLinearGradient(x-r,0,x+r,0);g.addColorStop(0,rgb(lt2.r,lt2.g,lt2.b));g.addColorStop(.55,rgb(b2.r,b2.g,b2.b));g.addColorStop(1,rgb(dk2.r,dk2.g,dk2.b));c.fillStyle=g;c.fillRect(x-r,y-h,r*2,h);})();
+ c.fillStyle=rgb(lt2.r,lt2.g,lt2.b);c.beginPath();c.ellipse(x,y-h,r,r*.5,0,0,7);c.fill();
+ c.save();c.globalAlpha=.45;c.strokeStyle=rgb(dk2.r,dk2.g,dk2.b);c.lineWidth=1;
+ for(const t of [.3,.62]){c.beginPath();c.ellipse(x,y-h*t,r,r*.5,0,Math.PI*.98,Math.PI*2.02,true);c.stroke();}
+ c.restore();
+ c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.22)';c.fillRect(x-r*.62,y-h+r*.3,r*.34,h-r*.5);c.restore();
+}
+/* a banded wooden crate; grounded prism with plank seams both ways */
+function crateAt(c,x,y,hw,hd,h,tone){
+ const q=prism(c,tone||'#8a6f46',x,y,hw,hd,h,{matte:true});
+ c.save();c.globalAlpha=.45;c.strokeStyle='#5e4a2c';c.lineWidth=1;
+ c.beginPath();c.moveTo(q.W.x,q.W.y);c.lineTo(q.E.x,q.E.y);c.stroke();
+ for(const s of [1,-1]){const f=wallCorners(q,s);
+  const p0=qp(f,.5,.05),p1=qp(f,.5,.95);c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.stroke();
+  const m0=qp(f,.06,.5),m1=qp(f,.94,.5);c.beginPath();c.moveTo(m0.x,m0.y);c.lineTo(m1.x,m1.y);c.stroke();}
+ c.restore();c.globalAlpha=1;
+ return q;
+}
 /* grounded molded base pad the whole building sits on: a thin iso slab that
    reads as the sprue/footprint tab. hw/hd are screen half-extents. */
 function basePad(c,col,cx,baseY,hw,hd,thick){
@@ -494,6 +673,23 @@ function basePad(c,col,cx,baseY,hw,hd,thick){
  c.fillStyle=rgb(top.r,top.g,top.b);
  c.beginPath();c.moveTo(cx,baseY-hd);c.lineTo(cx+hw,baseY);c.lineTo(cx,baseY+hd);c.lineTo(cx-hw,baseY);c.closePath();c.fill();
  c.save();c.globalAlpha=.5;c.strokeStyle=rgb(mixc(b,AMB,.4).r,mixc(b,AMB,.4).g,mixc(b,AMB,.4).b);c.lineWidth=1;c.stroke();c.restore();
+ /* v97: the pad reads as poured slab now - expansion joints along both iso
+    axes and a molded bolt at each corner, instead of one flat diamond */
+ c.save();c.globalAlpha=.14;c.strokeStyle=rgb(sideD.r,sideD.g,sideD.b);c.lineWidth=1;
+ const Nn=[cx,baseY-hd],Ee=[cx+hw,baseY],Ss=[cx,baseY+hd],Ww=[cx-hw,baseY];
+ const lp=(A,B,t)=>[A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t];
+ for(const t of [.33,.66]){
+  let A=lp(Ww,Ss,t),B=lp(Nn,Ee,t);c.beginPath();c.moveTo(A[0],A[1]);c.lineTo(B[0],B[1]);c.stroke();
+  A=lp(Ww,Nn,t);B=lp(Ss,Ee,t);c.beginPath();c.moveTo(A[0],A[1]);c.lineTo(B[0],B[1]);c.stroke();
+ }
+ c.restore();
+ c.save();c.globalAlpha=.5;c.fillStyle=rgb(sideD.r,sideD.g,sideD.b);
+ for(const q of [[cx,baseY-hd*.82],[cx+hw*.82,baseY],[cx-hw*.82,baseY],[cx,baseY+hd*.82]]){
+  c.beginPath();c.arc(q[0],q[1],1,0,7);c.fill();
+  c.globalAlpha=.3;c.fillStyle='rgba(255,255,255,1)';c.beginPath();c.arc(q[0]-.35,q[1]-.35,.4,0,7);c.fill();
+  c.globalAlpha=.5;c.fillStyle=rgb(sideD.r,sideD.g,sideD.b);
+ }
+ c.restore();c.globalAlpha=1;
 }
 
 // a Czech-hedgehog anti-tank obstacle: three crossed I-beams. dark-gray when neutral,
@@ -532,9 +728,23 @@ function drawBarricade(c,b,sx,sy){
   for(const q of [[-5,9],[5,9]]){c.beginPath();c.ellipse(q[0],q[1],6.0,3.0,0,0,7);c.fill();}
  }
  for(const bm of beams){c.strokeStyle=dk;c.lineWidth=bw;c.beginPath();c.moveTo(bm[0],bm[1]);c.lineTo(bm[2],bm[3]);c.stroke();}
+ /* v97: I-beam structure on the members - a web groove down each beam's
+    centre and flange bolts along it, so a wall stops being three lines */
+ c.save();c.globalAlpha=.45;c.strokeStyle=shade(base,.34);c.lineWidth=hv?1.6:1.1;
+ for(const bm of beams){c.beginPath();c.moveTo(bm[0],bm[1]);c.lineTo(bm[2],bm[3]);c.stroke();}
+ c.globalAlpha=.6;c.fillStyle=shade(base,.3);
+ for(const bm of beams)for(const t of [.22,.5,.78]){
+  const px2=bm[0]+(bm[2]-bm[0])*t,py2=bm[1]+(bm[3]-bm[1])*t;
+  c.beginPath();c.arc(px2,py2,hv?.9:.7,0,7);c.fill();
+ }
+ c.restore();
  // lit top edge on each beam
  c.save();c.globalCompositeOperation='lighter';c.strokeStyle='rgba(255,255,255,.26)';c.lineWidth=hv?2.6:1.8;
  for(const bm of beams){c.beginPath();c.moveTo(bm[0],bm[1]-1.4);c.lineTo(bm[2],bm[3]-1.4);c.stroke();}
+ c.restore();
+ // beam end caps: the sawn face of each member reads at close zoom
+ c.save();c.globalAlpha=.85;c.fillStyle=shade(base,1.2);
+ for(const bm of beams){c.beginPath();c.ellipse(bm[2],bm[3],bw*.28,bw*.34,0,0,7);c.fill();}
  c.restore();
  // central rivet hub
  plSphere(c,lt,0,hv?-4:-2,hv?4.6:3.2,1,false);
@@ -1131,6 +1341,14 @@ function nestBody(c,ns){
   // crater
   c.fillStyle='#3a2a16';c.beginPath();c.ellipse(0,-16,6,3,0,0,7);c.fill();
   c.fillStyle='#211509';c.beginPath();c.ellipse(0,-15.5,3.4,1.6,0,0,7);c.fill();
+  /* v97: a worked mound - a lit crater rim, two side galleries part-way
+     down the slope, and a ring of carried pebbles banked at the foot */
+  c.save();c.globalAlpha=.5;c.strokeStyle='#e8cf9a';c.lineWidth=1;
+  c.beginPath();c.ellipse(0,-16.3,5.6,2.6,0,Math.PI*1.05,Math.PI*1.95);c.stroke();c.restore();
+  c.fillStyle='#2a1c0e';c.beginPath();c.ellipse(-8,-6,2.2,1.2,-.4,0,7);c.fill();
+  c.fillStyle='#241708';c.beginPath();c.ellipse(9,-3,1.8,1,-.3,0,7);c.fill();
+  for(let i=0;i<10;i++){const a=(i/10)*Math.PI+.12;const px=Math.cos(a)*17.5,py=7.5+Math.sin(a)*3;
+   c.fillStyle=i%2?'#c9b184':'#9a8256';c.beginPath();c.arc(px,py,1+((i*7)%3)*.3,0,7);c.fill();}
   gloss(c,-6,-12,4,2.4);
  } else if(ns.species==='roach'){
   // v66: a roach den - a gnawed corrugated flap propped off the ground with a
@@ -1148,6 +1366,15 @@ function nestBody(c,ns){
   // crumbs banked at the mouth
   for(let i=0;i<9;i++){const a=Math.random()*Math.PI;const px=Math.cos(a)*(7+Math.random()*7),py=7+Math.sin(a)*2.4;
    c.fillStyle=Math.random()<.5?'rgba(214,180,126,.8)':'rgba(150,118,72,.8)';c.beginPath();c.arc(px,py,.9+Math.random(),0,7);c.fill();}
+  /* v97: human litter a roach den collects - a bottle cap by the mouth,
+     rusted nail heads in the board, and gnaw marks up the ragged edge */
+  c.fillStyle='#b8443a';c.beginPath();c.arc(12,4.6,2,0,7);c.fill();
+  c.fillStyle='#d8d2c4';c.beginPath();c.arc(12,4.6,1.2,0,7);c.fill();
+  c.save();c.globalAlpha=.7;c.fillStyle='#5a4028';
+  for(const q of [[-10,-8],[-2,-13],[8,-9]]){c.beginPath();c.arc(q[0],q[1],.8,0,7);c.fill();}
+  c.globalAlpha=.5;c.strokeStyle='#6a4c2c';c.lineWidth=.8;
+  for(const q of [[-12,-13],[-8,-16],[2,-16.6]]){c.beginPath();c.moveTo(q[0],q[1]);c.lineTo(q[0]+2,q[1]+1.2);c.stroke();}
+  c.restore();
   gloss(c,-7,-11,4,2.4);
  } else {
   // a papery wasp nest hanging from a stalk: a teardrop with ridged bands
@@ -1157,6 +1384,18 @@ function nestBody(c,ns){
   c.strokeStyle='rgba(120,104,72,.5)';c.lineWidth=1.2;for(let i=0;i<4;i++){const yy=-14+i*6;c.beginPath();c.moveTo(-11+i,yy);c.quadraticCurveTo(0,yy+4,11-i,yy);c.stroke();}
   // dark entrance hole
   c.fillStyle='#2a2014';c.beginPath();c.ellipse(0,6,3,2.4,0,0,7);c.fill();
+  /* v97: paper is BUILT - two more wrap bands low on the teardrop, exposed
+     comb cells peeking at the entrance lip, and a papery scallop edge */
+  c.save();c.globalAlpha=.4;c.strokeStyle='rgba(120,104,72,.9)';c.lineWidth=1;
+  for(const yy of [6,10]){c.beginPath();c.moveTo(-9+yy*.4,yy);c.quadraticCurveTo(0,yy+3,9-yy*.4,yy);c.stroke();}
+  c.restore();
+  c.save();c.globalAlpha=.8;c.fillStyle='#c9b88e';
+  for(const q of [[-2.2,4.2],[2.2,4.4],[0,3.4]]){c.beginPath();c.arc(q[0],q[1],.9,0,7);c.fill();}
+  c.fillStyle='#6a5a3c';
+  for(const q of [[-2.2,4.2],[2.2,4.4],[0,3.4]]){c.beginPath();c.arc(q[0],q[1],.45,0,7);c.fill();}
+  c.restore();
+  c.save();c.globalAlpha=.5;c.strokeStyle='#b6a67e';c.lineWidth=.9;
+  c.beginPath();c.moveTo(-7,11);c.quadraticCurveTo(-4,12.6,-1,11.6);c.quadraticCurveTo(2,12.8,5,11.2);c.stroke();c.restore();
   gloss(c,-5,-16,4,3);
  }
 }
@@ -1172,13 +1411,25 @@ function drawBug(c,cr){
  if(cr.species==='ant'||cr.species==='fireant'){
   const fire=cr.species==='fireant';
   const body=fire?'#d6381a':'#7a1f12',leg=fire?'#7a1408':'#3a1208';
-  // six legs, animated
-  c.strokeStyle=leg;c.lineWidth=1.4;c.lineCap='round';
-  for(let s=-1;s<=1;s+=2)for(let i=-1;i<=1;i++){const ph=cr.legph+i*1.1+(s>0?1.5:0);const ly=s*2.4,lx=i*3;c.beginPath();c.moveTo(lx,ly*.5);c.lineTo(lx+Math.cos(ph)*2.2,ly+Math.sin(ph)*1.2+s*2.5);c.stroke();}
+  // six legs, animated - v97: two segments each, a bent knee instead of a stick
+  c.strokeStyle=leg;c.lineWidth=1.2;c.lineCap='round';
+  for(let s=-1;s<=1;s+=2)for(let i=-1;i<=1;i++){const ph=cr.legph+i*1.1+(s>0?1.5:0);
+   const ly=s*2.4,lx=i*3;
+   const kx=lx+Math.cos(ph)*1.2,ky=ly*.8+s*1.6+Math.sin(ph)*.5;
+   const fx=lx+Math.cos(ph)*2.2,fy=ly+Math.sin(ph)*1.2+s*2.5;
+   c.beginPath();c.moveTo(lx,ly*.5);c.lineTo(kx,ky);c.lineTo(fx,fy);c.stroke();}
   // three body segments (gaster, thorax, head)
   plSphere(c,body,-4.2,0,3.2,.9,false); // gaster
   plSphere(c,body,0,0,2.4,.9,false);    // thorax
   plSphere(c,body,3.6,0,2.6,.9,false);  // head
+  /* v97: an ant is segmented - petiole waist, gaster band lines, and two
+     glossy eye dots on the head */
+  c.save();c.globalAlpha=.55;c.strokeStyle=leg;c.lineWidth=.7;
+  c.beginPath();c.moveTo(-2.2,-1.4);c.quadraticCurveTo(-1.8,0,-2.2,1.4);c.stroke();
+  c.beginPath();c.moveTo(-4.4,-1.8);c.quadraticCurveTo(-4,0,-4.4,1.8);c.stroke();
+  c.beginPath();c.moveTo(-5.8,-1.3);c.quadraticCurveTo(-5.5,0,-5.8,1.3);c.stroke();c.restore();
+  c.fillStyle='#0e0804';c.beginPath();c.arc(4.4,-1.2,.55,0,7);c.fill();c.beginPath();c.arc(4.4,1.2,.55,0,7);c.fill();
+  c.fillStyle='rgba(255,255,255,.55)';c.beginPath();c.arc(4.25,-1.35,.2,0,7);c.fill();
   // mandibles + antennae
   c.strokeStyle=leg;c.lineWidth=1;c.beginPath();c.moveTo(5.4,-1);c.lineTo(7.4,-2.2);c.moveTo(5.4,1);c.lineTo(7.4,2.2);c.stroke();
   c.beginPath();c.moveTo(5,-1.4);c.lineTo(7.6,-3.4);c.moveTo(5,1.4);c.lineTo(7.6,3.4);c.stroke();
@@ -1198,6 +1449,12 @@ function drawBug(c,cr){
   c.strokeStyle=wasp?'#0c1020':'#1a1206';c.lineWidth=1.3;c.beginPath();c.moveTo(-6,0);c.lineTo(-8.8,0);c.stroke();
   // antennae
   c.strokeStyle=wasp?'#0c1020':'#1a1206';c.lineWidth=.9;c.beginPath();c.moveTo(5,-1);c.lineTo(7,-2.4);c.moveTo(5,1);c.lineTo(7,2.4);c.stroke();
+  /* v97: big compound eyes and a vein through each wing blur */
+  c.fillStyle=wasp?'#1a2036':'#241a08';c.beginPath();c.ellipse(4.4,-1.1,.9,.7,0,0,7);c.fill();c.beginPath();c.ellipse(4.4,1.1,.9,.7,0,0,7);c.fill();
+  c.fillStyle='rgba(255,255,255,.5)';c.beginPath();c.arc(4.2,-1.3,.3,0,7);c.fill();
+  c.save();c.globalAlpha=.35;c.strokeStyle='#ffffff';c.lineWidth=.6;
+  for(const s2 of [-1,1]){c.beginPath();c.moveTo(0,s2*2.2);c.quadraticCurveTo(-2.4,s2*3.6+wob*.2,-4.6,s2*3.8);c.stroke();}
+  c.restore();
   glint(c,3.4,-1,.7);
   c.restore();
  } else if(cr.species==='roach'){
@@ -1211,6 +1468,15 @@ function drawBug(c,cr){
   plSphere(c,sh,6.4,0,3.6,.9,false);  // pronotum shield
   plSphere(c,rb2,9.4,0,2.2,.9,false); // head
   c.strokeStyle=rb2;c.lineWidth=1;c.beginPath();c.moveTo(0,0);c.lineTo(-7,0);c.stroke(); // wing seam
+  /* v97: chitin detail - a lit edge along each wing case, spiracle dots
+     down the flank, and pronotum shine */
+  c.save();c.globalAlpha=.3;c.strokeStyle='#c89a5e';c.lineWidth=.7;
+  c.beginPath();c.moveTo(-6.5,-1.2);c.quadraticCurveTo(-1,-2.6,3,-2.2);c.stroke();
+  c.beginPath();c.moveTo(-6.5,1.2);c.quadraticCurveTo(-1,2.6,3,2.2);c.stroke();c.restore();
+  c.save();c.globalAlpha=.5;c.fillStyle=rb2;
+  for(let i=0;i<3;i++){c.beginPath();c.arc(-5+i*3,-3.6,.4,0,7);c.fill();c.beginPath();c.arc(-5+i*3,3.6,.4,0,7);c.fill();}
+  c.restore();
+  c.fillStyle='rgba(255,240,210,.28)';c.beginPath();c.ellipse(6.2,-1.2,1.4,.7,-.3,0,7);c.fill();
   c.strokeStyle=rb2;c.lineWidth=1.1;c.beginPath();c.moveTo(11,-1);c.quadraticCurveTo(15,-4,17.5,-2);c.moveTo(11,1);c.quadraticCurveTo(15,4,17.5,2);c.stroke();
   glint(c,4,-2,1.2);
   c.restore();
@@ -1227,6 +1493,14 @@ function drawBug(c,cr){
   c.fillStyle=pink;c.beginPath();c.arc(14.5,0,1.6,0,7);c.fill(); // nose
   c.fillStyle='#101014';c.beginPath();c.arc(9,-2.6,1.2,0,7);c.arc(9,2.6,1.2,0,7);c.fill(); // eyes
   c.strokeStyle='rgba(240,240,245,.7)';c.lineWidth=.7;c.beginPath();c.moveTo(13,-1);c.lineTo(19,-3);c.moveTo(13,1);c.lineTo(19,3);c.moveTo(13,0);c.lineTo(19,0);c.stroke(); // whiskers
+  /* v97: it reads as an animal now - a haunch line over the hip, short fur
+     strokes along the back, and little pink forepaws under the chin */
+  c.save();c.globalAlpha=.4;c.strokeStyle=mb2;c.lineWidth=1;
+  c.beginPath();c.ellipse(-4.5,1.5,4,4.6,.3,-.8,1.4);c.stroke();c.restore();
+  c.save();c.globalAlpha=.35;c.strokeStyle='#5a5f68';c.lineWidth=.6;
+  for(let i=0;i<6;i++){const fx=-8+i*2.6;c.beginPath();c.moveTo(fx,-5.6+Math.abs(i-2.5)*.5);c.lineTo(fx-1.4,-4+Math.abs(i-2.5)*.5);c.stroke();}
+  c.restore();
+  c.fillStyle=pink;c.beginPath();c.arc(9.5,4.6,.9,0,7);c.fill();c.beginPath();c.arc(11.5,4.2,.9,0,7);c.fill();
   glint(c,8,-3,1.6);
   c.restore();
  }

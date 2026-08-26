@@ -16,6 +16,28 @@ const view=document.getElementById('view'),vc=view.getContext('2d');
    Same reasoning as applyMMSize below, which already hard-codes the minimap
    wrap's own padding and border for the reserves it writes. */
 const TOPBAR_H=84;
+/* v97 RDPR - the render device-pixel ratio. Until now the canvases were sized
+   in CSS pixels, so on any high-DPI display the browser upscaled the whole
+   frame and every sprite went soft - the "units look blurry" the owner saw.
+   Backing stores are now device pixels (capped at 2: beyond that the cost
+   quadruples for detail nobody can see) while EVERYTHING ELSE stays in CSS
+   pixels: the mouse, G.zoom, G.cam, audAt's pan, the camera clamps. Only the
+   renderer multiplies by RDPR, at its transform. vpW/vpH answer the CSS size
+   wherever screen logic needs it - derived from the canvas rather than stored,
+   so a test that pokes view.width directly still reads coherent numbers.
+   Client-local, never hashed: two lockstep clients may disagree about RDPR the
+   same way they already disagree about window size. #dpr1 forces the old 1:1
+   rendering as an escape hatch. Headless the shim pins devicePixelRatio=1, so
+   the whole suite runs the exact pre-v97 numbers. */
+let RDPR=1;
+function calcDPR(){
+ let d=(typeof devicePixelRatio==='number'?devicePixelRatio:1)||1;
+ if(typeof location!=='undefined'&&/\bdpr1\b/.test(location.hash||''))d=1;
+ return Math.max(1,Math.min(d,2));
+}
+RDPR=calcDPR();
+function vpW(){return view.width/RDPR}
+function vpH(){return view.height/RDPR}
 const mmCv=document.getElementById('minimap'),mm=mmCv.getContext('2d');
 /* v27: minimap size cycle (small / medium / large). Pure client-side view
    preference; persisted in localStorage, applied before the first render. */
@@ -23,7 +45,10 @@ const MM_SIZES={small:132,medium:176,large:240};
 let mmSizeKey=(function(){try{const v=localStorage.getItem('pw_mmsize');return MM_SIZES[v]?v:'medium'}catch(e){return 'medium'}})();
 let MM_S=MM_SIZES[mmSizeKey];
 function applyMMSize(){
- MM_S=MM_SIZES[mmSizeKey];mmCv.width=MM_S;mmCv.height=MM_S;
+ /* v97: device-pixel backing (CSS size pinned to MM_S) so the minimap is as
+    crisp as the field; renderMinimap opens with an RDPR base transform */
+ MM_S=MM_SIZES[mmSizeKey];mmCv.width=Math.round(MM_S*RDPR);mmCv.height=Math.round(MM_S*RDPR);
+ mmCv.style.width=MM_S+'px';mmCv.style.height=MM_S+'px';
  const bt=document.getElementById('mmSizeBtn');if(bt)bt.textContent='\u25f1 '+mmSizeKey[0].toUpperCase();
  /* v73: the map is pinned to the corner, so everything that shares an edge with
     it has to know how big it currently is. Wrap width = MM_S + 6px padding and
@@ -39,7 +64,12 @@ function applyMMSize(){
 }
 (function(){const bt=document.getElementById('mmSizeBtn');if(bt)bt.onclick=()=>{mmSizeKey=mmSizeKey==='small'?'medium':mmSizeKey==='medium'?'large':'small';applyMMSize();sClick()};applyMMSize();})();
 
-function resize(){view.width=innerWidth;view.height=innerHeight}
+function resize(){
+ const d=calcDPR(); // browser zoom moves devicePixelRatio, and it fires resize
+ if(d!==RDPR){RDPR=d;mmCv.width=Math.round(MM_S*RDPR);mmCv.height=Math.round(MM_S*RDPR);}
+ view.width=Math.round(innerWidth*RDPR);view.height=Math.round(innerHeight*RDPR);
+ view.style.width=innerWidth+'px';view.style.height=innerHeight+'px';
+}
 addEventListener('resize',resize);resize();
 
 function isoX(x,y){return (x-y)*HW+G.orgX}

@@ -5,7 +5,7 @@ Read this first. It is the orientation; `harness/README.md` is the detail.
 ## The shape of the project
 
 The game is **assembled from `source/`** into one file, `plastic-warfare.html`
-(~3.8MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
+(~6.7MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
 audio, UI, netcode — is still one `<script>` block in the shipped file; it is now
 written as ~30 files listed in `source/order.txt`. There are no dependencies.
 Since v92 the recorded sound set rides inside the script as base64, and since
@@ -348,7 +348,7 @@ offline-rendered from the game's own painters plus a per-pixel material pass
 the painter; the shipped recipe keeps the painter's shading and adds only
 high-frequency material. They ship as lossy WebP q95 (4-6x smaller than PNG,
 error invisible at game zoom; a failed decode = painter, like any missing
-file), which holds the shipped file at ~3.8 MB. **T71.A now derives the full
+file), which held the shipped file at ~3.8 MB (v97's SS=4 re-render took it to ~6.7). **T71.A now derives the full
 roster from `U`/`B`/`FAC`, so adding a unit FAILS the suite until the texture
 pipeline is re-run** — the conscious step a textured game demands. Riding
 along: the Choktaw's tail had been clipped off every sprite since v88 (no
@@ -406,6 +406,32 @@ for the star sprite — that skip had silently meant "no light at all").
 Infantry normal maps were regenerated from a gentler per-kind recipe
 (`KIND_NRM` in `normal_v96.py`) because the old dome washed out half the
 figure — the wash was data, not shader.
+
+## v97 — the detail & resolution pass (owner feedback)
+
+**"Units look blurry" and "structures are simplistic" have separate causes,
+and the fix is two mechanisms plus an art pass** (`tail_v97.js`, T74 — full
+reasoning in the v97 section of `harness/README.md`). The blur was mostly
+that the canvases were sized in CSS pixels, so every high-DPI display got a
+browser-upscaled frame: backing stores are device pixels now (`RDPR`, capped
+at 2, `#dpr1` escape hatch) and RDPR multiplies exactly one thing — the
+renderer's transform. Everything else (G.zoom, G.cam, MOUSE, audAt, camera
+clamps) stays in CSS pixels via `vpW()/vpH()`, DERIVED from the canvas, so
+the sim, the input math and the headless suite (shim pins devicePixelRatio=1)
+are untouched. The bake supersample went `SS` 3 → 4 with the offline pipeline
+at RS=8 to match. Two traps for the next pass: **a canvas is a replaced
+element** — `inset:0` never stretched the GL canvas, it needs an explicit CSS
+size (glSize owns it; and never assign `style.cssText` after it, that wipes
+the width); and the base dump must clear `ASSETS.img` before rendering,
+because `drawBarricade` prefers a texture cell and would re-dump the previous
+release's wall texture. The simplicity fix is a deterministic detail kit in
+the painters (`wallPanels`/`roofPanels`/`wallBolts`/`drumAt`/`crateAt`/
+`hullSeam`…, `prism` `opt.det` on all sixteen prism hulls) plus bespoke
+greebles per building, vehicle, trooper, wall, nest and bug — the painters
+are the texture source, so the whole set was re-rendered and the detail
+shows textured AND in the fallback. Shipped file 4.81 → 6.69 MB; T71.B's
+texture ceiling consciously moved to 3.5 MB; trails and layout pins
+untouched.
 
 ## v92.1 — the audio feedback pass (roadmap 3, phase 2 follow-up)
 

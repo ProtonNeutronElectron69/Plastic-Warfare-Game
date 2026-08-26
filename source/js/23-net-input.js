@@ -160,7 +160,7 @@ view.addEventListener('mousedown',e=>{
  } else if(e.button===2){if(G.patrolAim){G.patrolAim=null;msg('Patrol cancelled.');return}if(G.radioTargeting){cancelRadioTargeting();return}if(G.placing){G.placing=null;G.barrDrag=null;return}if(G.amove){G.amove=false;return}rightClick(mx,my,e.shiftKey);}
 });
 // double-click a unit: select every on-screen unit of that same type
-function onScreenUnit(u){const z=G.zoom,sx=(isoX(u.x,u.y)-G.cam.x)*z,sy=(isoY(u.x,u.y)-G.cam.y)*z;return sx>=-20&&sx<=view.width+20&&sy>=-40&&sy<=view.height+20;}
+function onScreenUnit(u){const z=G.zoom,sx=(isoX(u.x,u.y)-G.cam.x)*z,sy=(isoY(u.x,u.y)-G.cam.y)*z;return sx>=-20&&sx<=vpW()+20&&sy>=-40&&sy<=vpH()+20;} // v97: screen math is CSS px
 view.addEventListener('dblclick',e=>{
  if(!G||G.over||G.placing||G.radioTargeting||G.amove)return;
  const t=pickAt(e.clientX,e.clientY);
@@ -230,8 +230,8 @@ function setZoom(nz,ax,ay){
  const wx=ax/z0+G.cam.x, wy=ay/z0+G.cam.y;
  G.zoom=nz;
  G.cam.x=wx-ax/nz; G.cam.y=wy-ay/nz;
- G.cam.x=clamp(G.cam.x,-200,G.terr.width-view.width/nz+200);
- G.cam.y=clamp(G.cam.y,-150,G.terr.height-view.height/nz+150);
+ G.cam.x=clamp(G.cam.x,-200,G.terr.width-vpW()/nz+200);
+ G.cam.y=clamp(G.cam.y,-150,G.terr.height-vpH()/nz+150);
 }
 view.addEventListener('wheel',e=>{
  if(!G||G.over)return;e.preventDefault();
@@ -256,7 +256,7 @@ addEventListener('keydown',e=>{
  }
  else if(k==='Tab'&&(G.test||G.watch)){e.preventDefault();switchArmy((G.human.i+1)%G.players.length);} // v50: cycle armies. v55: in a watch match the same cycle follows an army instead of commanding it
  else if(k==='F9')togglePause(); // v29: pause moved from P
- else if(k==='j'||k==='J'){if(G.lastEvent){G.cam.x=isoX(G.lastEvent.x,G.lastEvent.y)-view.width/2/G.zoom;G.cam.y=isoY(G.lastEvent.x,G.lastEvent.y)-view.height/2/G.zoom;pingEvent(G.lastEvent.x,G.lastEvent.y,'#ffe34d');}} // v29: jump-to-event moved from Space
+ else if(k==='j'||k==='J'){if(G.lastEvent){G.cam.x=isoX(G.lastEvent.x,G.lastEvent.y)-vpW()/2/G.zoom;G.cam.y=isoY(G.lastEvent.x,G.lastEvent.y)-vpH()/2/G.zoom;pingEvent(G.lastEvent.x,G.lastEvent.y,'#ffe34d');}} // v29: jump-to-event moved from Space
  else if((k==='['||k===']')&&G.watch){watchSpeedStep(k===']'?1:-1);} // v56: step the spectator speed (works with the box hidden)
  else if((k==='v'||k==='V')&&G.watch){watchToggle();} // v55: hide/show the spectator box
  else if(k==='x'||k==='X'){const ids=G.sel.filter(u=>u.kind==='unit'&&u.p===G.human).map(u=>u.id);if(ids.length)submitCmd('halt',{ids})} // v29: stop moved from H
@@ -269,9 +269,9 @@ addEventListener('keydown',e=>{
   const w=screenToWorld(MOUSE.x,MOUSE.y);
   spawnExplosion(w.x,w.y,e.shiftKey?2.2:1.2);stampScorch(w.x,w.y,e.shiftKey?22:12);G.shake=Math.max(G.shake,e.shiftKey?6:3);sfxBoom(w.x,w.y,e.shiftKey?'huge':'big');
  }
- else if(k==='+'||k==='='){setZoom(G.zoom*1.2,view.width/2,view.height/2)}
- else if(k==='-'||k==='_'){setZoom(G.zoom/1.2,view.width/2,view.height/2)}
- else if(k==='0'){setZoom(1,view.width/2,view.height/2)}
+ else if(k==='+'||k==='='){setZoom(G.zoom*1.2,vpW()/2,vpH()/2)}
+ else if(k==='-'||k==='_'){setZoom(G.zoom/1.2,vpW()/2,vpH()/2)}
+ else if(k==='0'){setZoom(1,vpW()/2,vpH()/2)}
  else if(/^[1-9]$/.test(k)){
   if(e.ctrlKey||e.metaKey){G.groups[k]=G.sel.filter(s=>s.kind==='unit'&&s.p===G.human);e.preventDefault();msg('Group '+k+' set ('+G.groups[k].length+' units)')}
   else{const g=(G.groups[k]||[]).filter(u=>u.hp>0&&G.units.includes(u));if(g.length)setSel(g)}
@@ -279,7 +279,7 @@ addEventListener('keydown',e=>{
 });
 addEventListener('keyup',e=>{const k=e.key.toLowerCase();KEY[e.key]=false;KEY[k]=false;if(k==='s')KEY.s2=false});
 function mmWorld(e){const r=mmCv.getBoundingClientRect(),s=MM_S/G.map.N;return{x:clamp((e.clientX-r.left)/s,0,G.map.N),y:clamp((e.clientY-r.top)/s,0,G.map.N)};}
-function mmPan(e){const w=mmWorld(e);G.cam.x=isoX(w.x,w.y)-view.width/2/G.zoom;G.cam.y=isoY(w.x,w.y)-view.height/2/G.zoom;}
+function mmPan(e){const w=mmWorld(e);G.cam.x=isoX(w.x,w.y)-vpW()/2/G.zoom;G.cam.y=isoY(w.x,w.y)-vpH()/2/G.zoom;}
 // right-click on the minimap: order the selected units to that spot (attack a known
 // enemy sitting there, otherwise move).
 function mmOrder(e){

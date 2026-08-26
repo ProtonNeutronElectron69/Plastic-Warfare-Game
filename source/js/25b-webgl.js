@@ -168,11 +168,14 @@ function ensureGL(){
  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
  gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
  GLP.texWorld=glTex(gl);
- GLP.wBloom=glGauss(POSTV.bloomBlur);GLP.wTs=glGauss(POSTV.tsBlur);
- glSize(W,H);
+ glSize(W,H); // v97: the gaussian weights moved in here, so a DPR change re-derives them with the buffers
  if(gl.getError()!==0)throw new Error('gl init error');
- /* alive: put the canvas UNDER #view so input and overlays are untouched */
- cv.style.cssText='position:absolute;inset:0';
+ /* alive: put the canvas UNDER #view so input and overlays are untouched.
+    v97: a canvas is a REPLACED element - inset:0 positions it but never
+    stretches it, so with a device-px backing it must carry an explicit CSS
+    size (glSize keeps it at the CSS viewport). Pre-v97 the backing WAS the
+    CSS size, which is why the missing width never showed. */
+ cv.style.position='absolute';cv.style.left='0';cv.style.top='0'; // properties, not cssText: glSize already wrote the CSS size and cssText would wipe it
  view.parentNode.insertBefore(cv,view);
  cv.addEventListener('webglcontextlost',ev=>{try{ev.preventDefault();}catch(_){}GLP.dead=1;try{cv.remove();}catch(_){}});
  return true;
@@ -374,6 +377,11 @@ function glTarget(gl,w,h){
 function glSize(W,H){
  const g=GLP,gl=g.gl;
  g.cv.width=W;g.cv.height=H;
+ g.cv.style.width=Math.round(W/RDPR)+'px';g.cv.style.height=Math.round(H/RDPR)+'px'; // v97: see ensureGL - replaced elements keep their intrinsic size
+ /* v97: sigma is a pixel value and the buffers are device pixels now, so the
+    same POSTV numbers mean the same VISUAL blur at any RDPR - exactly the
+    scaling the 2d compositor applies to its filter strings */
+ g.wBloom=glGauss(POSTV.bloomBlur*RDPR);g.wTs=glGauss(POSTV.tsBlur*RDPR);
  g.qw=Math.max(2,Math.round(W/4));g.qh=Math.max(2,Math.round(H/4)); // bloom res, matching blCv
  g.tw=Math.max(2,Math.round(W/3));g.th=Math.max(2,Math.round(H/3)); // tilt res, matching tsCv
  for(const k of ['tgBloomA','tgBloomB','tgTsA','tgTsB'])if(g[k]){gl.deleteTexture(g[k].t);gl.deleteFramebuffer(g[k].fb);}

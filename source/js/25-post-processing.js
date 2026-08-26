@@ -66,12 +66,12 @@ function compositePost(){
  if(FILT===1){
   // bloom: bright-pass approximation on a quarter-res copy, added back softly
   blctx.setTransform(1,0,0,1,0,0);blctx.clearRect(0,0,blCv.width,blCv.height);
-  blctx.filter='brightness('+POSTV.bloomBr+') contrast('+POSTV.bloomCon+') saturate('+POSTV.bloomSat+') blur('+POSTV.bloomBlur+'px)';
+  blctx.filter='brightness('+POSTV.bloomBr+') contrast('+POSTV.bloomCon+') saturate('+POSTV.bloomSat+') blur('+POSTV.bloomBlur*RDPR+'px)'; // v97: blur radii are pixel values, so they scale with the device backing
   blctx.drawImage(worldCv,0,0,blCv.width,blCv.height);blctx.filter='none';
   vc.save();vc.globalCompositeOperation='lighter';vc.globalAlpha=POSTV.bloomAdd;vc.drawImage(blCv,0,0,W,H);vc.restore();
   // tilt-shift: blurred third-res copy masked into the top & bottom bands
   tsctx.setTransform(1,0,0,1,0,0);tsctx.clearRect(0,0,tsCv.width,tsCv.height);
-  tsctx.filter='blur('+POSTV.tsBlur+'px)';tsctx.drawImage(worldCv,0,0,tsCv.width,tsCv.height);tsctx.filter='none';
+  tsctx.filter='blur('+POSTV.tsBlur*RDPR+'px)';tsctx.drawImage(worldCv,0,0,tsCv.width,tsCv.height);tsctx.filter='none';
   tsBand(maskT,0);tsBand(maskB,H-maskB.height);
  }
  // warm-key / cool-shadow grade
@@ -152,7 +152,12 @@ function renderCore(){
     unchanged fallback. The world CONTENT is drawn by the same 2d code either
     way; only the present+post stage differs. */
  if(!G){if(worldCv&&!glComposite())compositePost();return;}
- const z=G.zoom;
+ /* v97: the one place DPR enters the world pass. The canvases hold device
+    pixels now, so the world transform is the CSS zoom times RDPR - G.zoom,
+    G.cam, the mouse and every clamp stay in CSS pixels untouched. Everything
+    downstream that divides by z (vw/vh, the light collector's bounds) lands
+    back in the same units it always used. */
+ const z=G.zoom*RDPR;
  const shx=(Math.random()-.5)*G.shake,shy=(Math.random()-.5)*G.shake,cx=G.cam.x+shx,cy=G.cam.y+shy;
  // everything in the world is drawn in a single scaled+translated space
  c.setTransform(z,0,0,z,-cx*z,-cy*z);c.imageSmoothingEnabled=true;
@@ -447,12 +452,15 @@ function renderCore(){
  if(worldCv&&!glComposite())compositePost();
  v71Fills();
  if(G.placing)drawGhost(vc,G.cam.x,G.cam.y);
- if(MOUSE.down&&MOUSE.drag){const dbc=dragBoxCol();vc.strokeStyle=rgba(dbc.r,dbc.g,dbc.b,.9);vc.lineWidth=1.5;vc.strokeRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);vc.fillStyle=rgba(dbc.r,dbc.g,dbc.b,.1);vc.fillRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);}
+ /* v97: the drag box is drawn from MOUSE coords, which are CSS px - so the
+    screen-space overlays ride an RDPR base transform on the device-px canvas */
+ if(MOUSE.down&&MOUSE.drag){vc.setTransform(RDPR,0,0,RDPR,0,0);const dbc=dragBoxCol();vc.strokeStyle=rgba(dbc.r,dbc.g,dbc.b,.9);vc.lineWidth=1.5;vc.strokeRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);vc.fillStyle=rgba(dbc.r,dbc.g,dbc.b,.1);vc.fillRect(MOUSE.sx,MOUSE.sy,MOUSE.x-MOUSE.sx,MOUSE.y-MOUSE.sy);vc.setTransform(1,0,0,1,0,0);}
  view.style.cursor=(G.amove||G.radioTargeting)?'crosshair':(G.placing?'copy':'default');
  renderMinimap();
 }
 function renderMinimap(){
- const N=G.map.N,s=MM_S/N;mm.setTransform(1,0,0,1,0,0);mm.clearRect(0,0,MM_S,MM_S);mm.imageSmoothingEnabled=false;
+ /* v97: MM_S-space drawing over a device-px backing - one base transform */
+ const N=G.map.N,s=MM_S/N;mm.setTransform(RDPR,0,0,RDPR,0,0);mm.clearRect(0,0,MM_S,MM_S);mm.imageSmoothingEnabled=false;
  mm.drawImage(G.mmTerr,0,0,MM_S,MM_S);mm.drawImage(G.fogCv,0,0,MM_S,MM_S);
  const radar=G.test||G.players.some(pl=>allied(pl,G.human)&&pl.blds.some(b=>b.key==='radar'&&b.prog>=1)); // v29: allied radar is shared. v50: testing mode blips everything
  G.map.nodes.forEach((n,i)=>{const f=G.fog[Math.floor(n.y)*N+Math.floor(n.x)];if(f===0)return;const src2=f===2?n:(G.ghost&&G.ghost.nodes[i]);if(!src2)return;if(src2.wreck){mm.fillStyle='#c98a5e';mm.fillRect(n.x*s-1,n.y*s-1,2,2)}else{mm.fillStyle=src2.t==='plastic'?'#ffb95e':'#7fe3ff';mm.fillRect(n.x*s-1.5,n.y*s-1.5,3,3)}}); // v26: fogged dots use last-seen state
@@ -473,7 +481,7 @@ function renderMinimap(){
  }
  mm.strokeStyle='rgba(255,255,255,.9)';mm.lineWidth=1;
  const z=G.zoom;
- const cs=[[0,0],[view.width/z,0],[view.width/z,view.height/z],[0,view.height/z]].map(([x,y])=>unIso(x+G.cam.x,y+G.cam.y));
+ const cs=[[0,0],[vpW()/z,0],[vpW()/z,vpH()/z],[0,vpH()/z]].map(([x,y])=>unIso(x+G.cam.x,y+G.cam.y)); // v97: the viewport rect in CSS px, like the camera itself
  mm.beginPath();mm.moveTo(cs[0].x*s,cs[0].y*s);for(let i=1;i<4;i++)mm.lineTo(cs[i].x*s,cs[i].y*s);mm.closePath();mm.stroke();
 }
 

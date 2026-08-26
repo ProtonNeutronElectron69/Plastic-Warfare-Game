@@ -1,4 +1,4 @@
-/* dump_base_v95.js - render every baked sprite's painter raw, at 6x logical
+/* dump_base_v95.js - render every baked sprite's painter raw, at 8x logical
    resolution, straight out of the game itself.
 
    This is STEP ONE of the texture pipeline (step two is material_v95.py):
@@ -40,7 +40,13 @@ fs.mkdirSync(OUT, { recursive: true });
   await pg.waitForTimeout(800);
 
   const ids = await pg.evaluate(() => {
-    const RS = 6, out = [];
+    /* v97: RS follows the runtime supersample doubled (SS=4 -> RS=8), and the
+       embedded assets are cleared FIRST - drawBarricade prefers a texture
+       cell, so leaving them in would re-dump the previous release's wall
+       texture instead of the painter (a circle the other painters cannot
+       fall into because this tool calls them directly). */
+    const RS = 8, out = [];
+    for (const k in ASSETS.img) delete ASSETS.img[k];
     /* v96.1: the walls need a live G (drawBarricade reads G.neutral); a test
        fixture is synchronous and touches nothing this tool renders */
     newGame({ map: 'backyard', mode: 'dm', diff: 'normal', fac: 'green', opp: 1, seed: 1, test: true });

@@ -187,7 +187,7 @@ function armsToGun(c,col,ang){plLimb(c,col,-3.2,-13,Math.cos(ang)*2.5,-10.5+Math
    saturation/contrast pop), and blitted at runtime. Weapons, turrets, rotors,
    beacons and other animated parts stay live so continuous aim survives. */
 let BAKING=false;
-const SS=3; // bake supersample: crisp up to max zoom (2.4)
+const SS=4; // bake supersample. v97: 3 covered max zoom (2.4) only at 1:1 pixels; with RDPR the frame renders at zoom*RDPR device px, so 4 keeps sprites crisp up to ~1.7 DPR at full zoom. The texture pipeline renders at RS=2*SS and must match (tools/material_v95.py).
 const SPR={inf:{},veh:{},bld:{},barr:{},done:false};
 const VEH_BOX={truck:[-18,-14,18,14],medic:[-18,-14,18,14],jeep:[-15,-13,15,13],bike:[-12,-9,12,9],
  tank:[-16,-13,16,13],bulltank:[-22,-17,22,17],aatruck:[-18,-13,18,13],arty:[-16,-13,17,13],heli:[-28,-11,16,11],chinook:[-38,-16,24,16],apache:[-32,-13,18,13],apc:[-20,-14,20,14],
@@ -413,6 +413,23 @@ function bakeMapSprites(){
    Static parts only; baked into sprite cells.
    Drawn in the vehicle's unrotated local frame; heading rotation and all
    animated bits (beacons, cargo, turrets, rotors) stay live. ---- */
+/* v97 hull detailing: a recessed panel seam and a row of molded bolt heads,
+   the two strokes every hull below leans on. Deterministic, tiny, and drawn
+   OVER the existing paint so no hull's silhouette moves. */
+function hullSeam(c,x0,y0,x1,y1,a){
+ c.save();c.globalAlpha=a||.35;c.strokeStyle='#1f2126';c.lineWidth=.9;
+ c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke();
+ c.globalAlpha=(a||.35)*.4;c.strokeStyle='rgba(255,255,255,1)';
+ c.beginPath();c.moveTo(x0+.5,y0+.5);c.lineTo(x1+.5,y1+.5);c.stroke();
+ c.restore();
+}
+function boltRow(c,x0,y0,x1,y1,n){
+ c.save();
+ for(let i=0;i<n;i++){const t=n===1?.5:i/(n-1),px=x0+(x1-x0)*t,py=y0+(y1-y0)*t;
+  c.globalAlpha=.5;c.fillStyle='#191b20';c.beginPath();c.arc(px,py,.55,0,7);c.fill();
+  c.globalAlpha=.3;c.fillStyle='#ffffff';c.beginPath();c.arc(px-.2,py-.2,.25,0,7);c.fill();}
+ c.restore();c.globalAlpha=1;
+}
 function vehBody(c,key,col){
  const b=hx2rgb(col),dk=shade(col,.62),lt=shade(col,1.32);
  const deep=mixc(b,AMB,.55),litc=mixc(b,WHITE,.4);
@@ -433,6 +450,12 @@ function vehBody(c,key,col){
   c.fillStyle='#d8352a';c.fillRect(-7.5,-2.4,5,1.8);c.fillRect(-5.6,-4.3,1.8,5.6);
   // team-colour stripe along the bottom of the box so the faction still reads
   c.fillStyle=rgb(b.r,b.g,b.b);rr(c,-14,6.2,17,1.8,1);c.fill();
+  /* v97: the box works - panel seams, the rear door split, latch hardware
+     and a stubby exhaust behind the cab */
+  hullSeam(c,-9,-7.6,-9,5.8,.3);hullSeam(c,-13.6,-.6,2.6,-.6,.22);
+  hullSeam(c,-14,-2.2,-14,3.4,.5);boltRow(c,-13.2,-7.2,-13.2,5.4,4);
+  c.fillStyle='#3a3a42';rr(c,3.2,-8.6,1.6,2.6,.6);c.fill();
+  c.fillStyle='#2a2a30';c.beginPath();c.ellipse(4,-8.8,1,.5,0,0,7);c.fill();
   plRim(c,col,9,-2,5,6);
  }
  else if(key==='truck'){
@@ -446,6 +469,15 @@ function vehBody(c,key,col){
   // dump bed
   (function(){const g=c.createLinearGradient(-14,-8,-14,8);g.addColorStop(0,rgb(litc.r,litc.g,litc.b));g.addColorStop(.5,rgb(b.r,b.g,b.b));g.addColorStop(1,rgb(deep.r,deep.g,deep.b));c.fillStyle=g;rr(c,-14,-8,18,16,2.5);c.fill();})();
   c.fillStyle=rgba(AMB.r,AMB.g,AMB.b,.5);rr(c,-13,-1,16,8,2);c.fill();
+  /* v97: a hauler that has hauled - bed rib seams, a scatter of plastic
+     nuggets in the box, an exhaust stack and mud flaps behind the wheels */
+  hullSeam(c,-9.5,-7.6,-9.5,7.4,.3);hullSeam(c,-4.5,-7.6,-4.5,7.4,.3);
+  for(const q of [[-11,1.5],[-8,3.5],[-5.5,1],[-9.5,5.2],[-6,4.8]]){
+   c.fillStyle='#c9a94e';c.beginPath();c.arc(q[0],q[1],1.15,0,7);c.fill();
+   c.fillStyle='rgba(255,240,180,.6)';c.beginPath();c.arc(q[0]-.35,q[1]-.35,.4,0,7);c.fill();}
+  c.fillStyle='#3a3a42';rr(c,3.4,-8.4,1.6,2.8,.6);c.fill();
+  c.fillStyle='#2a2a30';c.beginPath();c.ellipse(4.2,-8.6,1,.5,0,0,7);c.fill();
+  c.fillStyle='#26262c';rr(c,-13.6,5.6,2.6,1.6,.5);c.fill();rr(c,-13.6,-7.2,2.6,1.6,.5);c.fill();
   plRim(c,col,9,-2,5,6);
  }
  else if(key==='bike'){
@@ -465,6 +497,12 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
    // mounted MG
    c.strokeStyle='#1f1f25';c.lineWidth=2.4;c.lineCap='round';c.beginPath();c.moveTo(-3,-1);c.lineTo(7,-1);c.stroke();
    plRim(c,col,0,-4,8,2);glint(c,-6,-4,.9);
+   /* v97: field kit - a windshield frame folded on the hood, a jerry can
+      strapped at the tail, and hood latches */
+   c.strokeStyle='#26262c';c.lineWidth=1;c.beginPath();c.moveTo(1.6,-5);c.lineTo(1.6,5);c.stroke();
+   c.fillStyle='#4a5a3c';rr(c,-11.6,-3.2,2.6,3.6,.6);c.fill();
+   c.fillStyle='rgba(255,255,255,.2)';rr(c,-11.2,-2.8,.8,2.8,.4);c.fill();
+   boltRow(c,4.5,-4.6,4.5,4.4,3);
   decalStar(c,7.4,-.2,2.3,'#f4f7fa');
  }
  else if(key==='tank'||key==='bulltank'||key==='arty'){
@@ -479,6 +517,16 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
   c.fillStyle=rgba(AMB.r,AMB.g,AMB.b,.4);rr(c,-11,2,22,4.5,2.5);c.fill();
   // glacis bevel
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.14)';c.beginPath();c.moveTo(-11,-6);c.lineTo(11,-6);c.lineTo(8,-3.5);c.lineTo(-8,-3.5);c.closePath();c.fill();c.restore();
+  /* v97: fighting-vehicle furniture - engine-deck grille lines at the rear,
+     a tow cable looped along the flank, spare track links on the glacis */
+  c.save();c.globalAlpha=.4;c.strokeStyle='#191b20';c.lineWidth=.8;
+  for(let i=0;i<3;i++){c.beginPath();c.moveTo(-10.6,-4.6+i*1.6);c.lineTo(-6.2,-4.6+i*1.6);c.stroke();}
+  c.restore();
+  c.strokeStyle='#3c3f46';c.lineWidth=1.1;
+  c.beginPath();c.moveTo(-9,5.2);c.quadraticCurveTo(-2,6.6,6,5.4);c.stroke();
+  c.fillStyle='#2a2d33';c.beginPath();c.arc(-9,5.2,.9,0,7);c.fill();c.beginPath();c.arc(6,5.4,.9,0,7);c.fill();
+  if(key!=='arty'){for(let i=0;i<3;i++){c.fillStyle='#26292f';rr(c,9.2,-2.4+i*1.9,2.2,1.5,.4);c.fill();}}
+  hullSeam(c,-3.5,-6.2,-3.5,6.2,.3);
   if(key==='arty'){
 
    // missile rack pod
@@ -502,6 +550,14 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
   // cockpit bubble
   (function(){const cp=c.createRadialGradient(5,-1.6,.5,6.2,0,5);cp.addColorStop(0,'#f2fbff');cp.addColorStop(.5,'#a8d8f0');cp.addColorStop(1,'#5a92b4');c.fillStyle=cp;c.beginPath();c.ellipse(6.4,0,4.8,4.2,0,-1.5,1.5);c.fill();})();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.6)';c.beginPath();c.ellipse(5.4,-1.6,1.4,1,-.5,0,7);c.fill();c.restore();
+  /* v97: airframe detail - panel seams down the boom, an intake atop the
+     engine cowl, and a tail-rotor gearbox nub */
+  c.save();c.globalAlpha=.45;c.strokeStyle='#1f2126';c.lineWidth=.8;
+  for(const bx2 of [-10,-15,-19.5]){c.beginPath();c.moveTo(bx2,-1.9+(-bx2-6)*.048);c.lineTo(bx2,1.9-(-bx2-6)*.048);c.stroke();}
+  c.restore();
+  c.fillStyle='#33363c';rr(c,-4.5,-3.6,4,2,.8);c.fill();
+  c.fillStyle='#15171b';rr(c,-3.9,-3.3,2.8,1.3,.5);c.fill();
+  c.fillStyle='#3c3f46';c.beginPath();c.arc(-24.4,-2.6,1.1,0,7);c.fill();
   if(apa){ // v30 Apache: stub wings carrying rocket pods
    c.fillStyle=rgb(deep.r,deep.g,deep.b);rr(c,-3,-8.6,7,2.2,1);c.fill();rr(c,-3,6.4,7,2.2,1);c.fill();
    c.fillStyle='#1f1f25';rr(c,2.2,-8.4,3.6,1.8,.8);c.fill();rr(c,2.2,6.6,3.6,1.8,.8);c.fill();
@@ -529,6 +585,15 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
   // skids
   c.strokeStyle='#3a3a42';c.lineWidth=1.6;
   c.beginPath();c.moveTo(-6,-9.8);c.lineTo(9,-9.8);c.moveTo(-6,9.8);c.lineTo(9,9.8);c.stroke();
+  /* v97: boom panel seams, a cowl intake, and rack support struts */
+  c.save();c.globalAlpha=.4;c.strokeStyle='#1f2126';c.lineWidth=.8;
+  for(const bx2 of [-13,-18,-23]){c.beginPath();c.moveTo(bx2,-3.2);c.lineTo(bx2,2.6);c.stroke();}
+  c.restore();
+  c.fillStyle='#33363c';rr(c,-6,-6.8,4.4,2,.8);c.fill();
+  c.fillStyle='#15171b';rr(c,-5.4,-6.5,3.2,1.3,.5);c.fill();
+  c.save();c.globalAlpha=.6;c.strokeStyle='#2b2b31';c.lineWidth=1;
+  for(const rx of [-4,3]){c.beginPath();c.moveTo(rx,-9.4);c.lineTo(rx,-11);c.moveTo(rx,7.4);c.lineTo(rx,9.4);c.stroke();}
+  c.restore();
   plRim(c,col,2,0,10,8);gloss(c,-2,-5,2.6,3.2);glint(c,10,-4,.9);
  }
  else if(key==='choktaw'){
@@ -561,6 +626,12 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
   c.strokeStyle='#2e2e36';c.lineWidth=1.8;c.lineCap='round';
   c.beginPath();c.moveTo(1,-6.6);c.lineTo(4.5,-9.6);c.moveTo(1,6.6);c.lineTo(4.5,9.6);c.stroke();
   c.fillStyle='#4a4a54';c.beginPath();c.arc(4.6,-9.8,1.1,0,7);c.fill();c.beginPath();c.arc(4.6,9.8,1.1,0,7);c.fill();
+  /* v97: boom panel seams and an exhaust cluster behind the rotor mast */
+  c.save();c.globalAlpha=.4;c.strokeStyle='#1f2126';c.lineWidth=.8;
+  for(const bx2 of [-12,-16.5,-21]){c.beginPath();c.moveTo(bx2,-2.2);c.lineTo(bx2,2.2);c.stroke();}
+  c.restore();
+  c.fillStyle='#33363c';rr(c,-3,-6.4,3.6,1.8,.7);c.fill();
+  c.fillStyle='#191b20';c.beginPath();c.ellipse(-3.2,-5.5,.8,.5,0,0,7);c.fill();c.beginPath();c.ellipse(-1.4,-5.5,.8,.5,0,0,7);c.fill();
   // skids
   c.strokeStyle='#3a3a42';c.lineWidth=1.5;
   c.beginPath();c.moveTo(-5,-8.6);c.lineTo(8,-8.6);c.moveTo(-5,8.6);c.lineTo(8,8.6);c.stroke();
@@ -584,6 +655,12 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
   c.fillStyle='#0e1a24';for(let i=0;i<4;i++){rr(c,-9+i*6,-7.4,3.4,1.8,.8);c.fill();rr(c,-9+i*6,5.6,3.4,1.8,.8);c.fill();}
   // hull seams
   c.strokeStyle='#26262c';c.lineWidth=1.1;c.beginPath();c.moveTo(-19,-9);c.lineTo(-19,9);c.moveTo(6,-9);c.lineTo(6,9);c.stroke();
+  /* v97: more airframe - fuel caps on the sponsons, a spine seam with a
+     bolt run, and formation lights at the tail corners */
+  hullSeam(c,-17,0,13,0,.25);boltRow(c,-16,-.9,12,-.9,7);
+  c.fillStyle='#4a4e56';c.beginPath();c.arc(-8,-9.4,1.1,0,7);c.fill();c.beginPath();c.arc(-8,9.4,1.1,0,7);c.fill();
+  c.fillStyle='#c9403a';c.beginPath();c.arc(-19.6,-7.4,.7,0,7);c.fill();
+  c.fillStyle='#3fae5a';c.beginPath();c.arc(-19.6,7.4,.7,0,7);c.fill();
   decalStar(c,1,0,2.4,'#f4f7fa');
  }
  else if(key==='aatruck'){ // v51: air-defence truck. HULL ONLY - the missile rack is live-painted by aaTurret so it can swivel independently
@@ -603,6 +680,11 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.6)';rr(c,12.9,-4,1,3.4,.5);c.fill();c.restore();
   // team stripe along the chassis skirt
   c.fillStyle=rgb(b.r,b.g,b.b);rr(c,-15,4.2,29,1.8,.9);c.fill();
+  /* v97: cab door seam, an exhaust stack, and hazard stripes on the tail */
+  hullSeam(c,8.4,-6,8.4,6,.35);
+  c.fillStyle='#3a3a42';rr(c,3.6,-8.2,1.6,2.6,.6);c.fill();
+  c.fillStyle='#2a2a30';c.beginPath();c.ellipse(4.4,-8.4,1,.5,0,0,7);c.fill();
+  for(let i=0;i<4;i++){c.fillStyle=i%2?'#191919':'#ffd24d';rr(c,-15,-5.5+i*2.7,1.6,2.7,0);c.fill();}
   decalStar(c,9.2,0,2,'#f4f7fa');
  }
  else if(key==='cmdtruck'){
@@ -628,6 +710,10 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
   c.save();c.translate(1.5,-11);c.rotate(-.5);
   (function(){const dg=c.createLinearGradient(-6,-4,5,4);dg.addColorStop(0,'#fafcff');dg.addColorStop(1,'#aeb6c0');c.fillStyle=dg;c.beginPath();c.ellipse(0,0,6.5,3.6,0,0,7);c.fill();})();
   c.fillStyle='#4a4e54';c.fillRect(-.6,0,1.2,4);c.restore();
+  /* v97: the signals box gets a door - rear seam, grab rail and a step */
+  hullSeam(c,-15,-2,-15,4,.5);hullSeam(c,-6,-8.6,-6,8.6,.3);
+  c.strokeStyle='#3c3f46';c.lineWidth=1;c.beginPath();c.moveTo(-14.4,-7.2);c.lineTo(-9,-7.2);c.stroke();
+  c.fillStyle='#26262c';rr(c,-14.6,8.6,3.6,1.4,.5);c.fill();
   plRim(c,col,-5,-2,7,7);gloss(c,-9,-7,2.2,2.8);
  }
  else if(key==='balloon'){
@@ -652,6 +738,13 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
   // rigging down to the basket
   c.strokeStyle='rgba(60,56,48,.85)';c.lineWidth=1;
   for(const rx of [-6,-2,2,6]){c.beginPath();c.moveTo(rx,-14);c.lineTo(rx*.62,-5.5);c.stroke();}
+  /* v97: a field balloon is patched - one lighter fabric square off-centre
+     on the envelope, stitched at the edge */
+  c.save();c.globalAlpha=.5;c.fillStyle=rgb(mixc(env,WHITE,.35).r,mixc(env,WHITE,.35).g,mixc(env,WHITE,.35).b);
+  c.beginPath();c.moveTo(5,-40);c.lineTo(10.4,-38.2);c.lineTo(9.6,-32.6);c.lineTo(4.4,-34.6);c.closePath();c.fill();
+  c.globalAlpha=.55;c.strokeStyle=rgb(mixc(env,BLACK,.4).r,mixc(env,BLACK,.4).g,mixc(env,BLACK,.4).b);c.lineWidth=.7;
+  c.setLineDash([1.2,1.2]);c.beginPath();c.moveTo(5,-40);c.lineTo(10.4,-38.2);c.lineTo(9.6,-32.6);c.lineTo(4.4,-34.6);c.closePath();c.stroke();c.setLineDash([]);
+  c.restore();
   // wicker basket
   c.fillStyle='#8a6a3c';rr(c,-5.4,-6,10.8,8,1.6);c.fill();
   c.save();c.globalAlpha=.4;c.strokeStyle='#5c4526';c.lineWidth=.9;
@@ -674,6 +767,10 @@ toyWheel(c,-6.5,0,3.4,2.9);toyWheel(c,7,0,3.4,2.9);
   plRim(c,col,-4,0,3,1.2);plRim(c,col,4,0,3,1.2);
   // rear door seam
   c.strokeStyle='#26262c';c.lineWidth=1.2;c.beginPath();c.moveTo(-12,-5);c.lineTo(-12,5);c.stroke();
+  /* v97: driver's vision slits in the nose and bolt runs along the skirts */
+  c.fillStyle='#10141a';rr(c,9.2,-3.2,2,1.2,.4);c.fill();rr(c,9.2,2,2,1.2,.4);c.fill();
+  boltRow(c,-11,-7.2,11,-7.2,6);boltRow(c,-11,7.2,11,7.2,6);
+  hullSeam(c,0,-7.6,0,7.6,.25);
   decalStar(c,8,0,2.2,'#f4f7fa');
  }
 }
@@ -769,9 +866,9 @@ function bldBody(c,k,col,sz){
 
  if(k==='hq'){
   // wide command bastion: stepped prism block + domed roof + comms mast + flag, all stacked
-  const body=prism(c,col,0,HD*.55,S*.82,HD*.82,30);
+  const body=prism(c,col,0,HD*.55,S*.82,HD*.82,30,{det:1});
   // upper set-back tier
-  const tier=prism(c,shade(col,1.06),0,body.topY+HD*.28,S*.5,HD*.5,14);
+  const tier=prism(c,shade(col,1.06),0,body.topY+HD*.28,S*.5,HD*.5,14,{det:1});
   // armored door recessed into the SE wall plane, plus molded panel seams
   const seW=wallCorners(body,1),swW=wallCorners(body,-1),jam=mixc(B0,AMB,.7);
   c.fillStyle=rgb(jam.r,jam.g,jam.b);quadPatch(c,seW,.08,0,.34,.62);c.fill();
@@ -791,13 +888,24 @@ function bldBody(c,k,col,sz){
   const mx=-S*.5, mtop=body.topY-30;
   c.strokeStyle='#3c3c44';c.lineWidth=2.6;c.beginPath();c.moveTo(mx,body.topY+2);c.lineTo(mx,mtop);c.stroke();
   c.save();c.globalCompositeOperation='lighter';c.strokeStyle='rgba(255,255,255,.3)';c.lineWidth=1;c.beginPath();c.moveTo(mx-.7,body.topY+2);c.lineTo(mx-.7,mtop);c.stroke();c.restore();
-
+  /* v97: the command roof works for a living now - vents, a crew hatch, a
+     pipe run into the tier, and the mast earns a guy wire */
+  c.save();c.globalAlpha=.55;c.strokeStyle='#3c3c44';c.lineWidth=1;
+  c.beginPath();c.moveTo(mx,mtop+3);c.lineTo(mx-S*.22,body.topY+HD*.3);c.stroke();c.restore();
+  roofVent(c,S*.42,body.topY+HD*.3,6.5,4.5,6,shade(col,.74));
+  roofVent(c,S*.24,body.topY+HD*.52,5,3.6,4.5,shade(col,.68));
+  roofPipe(c,S*.36,body.topY+HD*.28,S*.12,body.topY+HD*.12,1.8);
+  const hhx=-S*.22,hhy=body.topY+HD*.5;
+  c.save();c.globalAlpha=.5;c.strokeStyle=rgb(deep.r,deep.g,deep.b);c.lineWidth=1.4;
+  c.beginPath();c.ellipse(hhx,hhy,5,2.6,0,0,7);c.stroke();
+  c.globalAlpha=.35;c.beginPath();c.ellipse(hhx,hhy,3.2,1.6,0,0,7);c.stroke();
+  c.globalAlpha=.6;c.beginPath();c.moveTo(hhx+3.2,hhy);c.lineTo(hhx+5.4,hhy+.9);c.stroke();c.restore();
  }
  else if(k==='barracks'){
   // a gable-roofed hut: low prism walls, a proper two-slope molded roof with
   // end walls, a doorway fitted flush into the SE wall, and sandbag lines that
   // hug the pad's front edges instead of cutting straight across the hull
-  const body=prism(c,shade(col,.92),0,HD*.55,S*.74,HD*.74,12);
+  const body=prism(c,shade(col,.92),0,HD*.55,S*.74,HD*.74,12,{det:1});
   const roof=gableRoof(c,col,0,body.topY,S*.86,HD*.86,17);
   // ridge cap
   const cap=mixc(B0,BLACK,.3);
@@ -817,11 +925,28 @@ function bldBody(c,k,col,sz){
   for(let i=0;i<4;i++){const u=.16+i*.2;plSphere(c,'#9a8a5e',u*padHW,HD*.62+(1-u)*padHD*.92,4.2,.62,false);}
   for(let i=0;i<3;i++){const u=.2+i*.2;plSphere(c,'#8f8054',-u*padHW,HD*.62+(1-u)*padHD*.92,4,.62,false);}
   for(let i=0;i<2;i++){const u=.28+i*.2;plSphere(c,'#a5946a',u*padHW,HD*.62+(1-u)*padHD*.92-4.6,3.8,.62,false);}
+  /* v97: bunkhouse life - two framed windows on the SW wall, a stovepipe
+     through the SW slope with a rain cap, and footlockers by the door */
+  const swW2=wallCorners(body,-1),frm2=mixc(B0,AMB,.68);
+  for(const wu of [[.3,.46],[.58,.74]]){
+   c.fillStyle=rgb(frm2.r,frm2.g,frm2.b);quadPatch(c,swW2,wu[0]-.02,.3,wu[1]+.02,.62);c.fill();
+   c.fillStyle='rgba(125,205,235,.75)';quadPatch(c,swW2,wu[0],.34,wu[1],.58);c.fill();
+   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(190,240,255,.3)';quadPatch(c,swW2,wu[0],.5,wu[1],.58);c.fill();c.restore();
+   c.strokeStyle=rgb(deep.r,deep.g,deep.b);c.lineWidth=1;
+   const mm2=(wu[0]+wu[1])/2,q0=qp(swW2,mm2,.34),q1=qp(swW2,mm2,.58);
+   c.beginPath();c.moveTo(q0.x,q0.y);c.lineTo(q1.x,q1.y);c.stroke();
+  }
+  const spx=-S*.34,spy0=body.topY-HD*.1;
+  c.fillStyle='#3c3c44';rr(c,spx-1.6,spy0-13,3.2,13,1.2);c.fill();
+  c.fillStyle='#2a2a30';c.beginPath();c.ellipse(spx,spy0-13.5,3,1.2,0,0,7);c.fill();
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.2)';rr(c,spx-1.1,spy0-12,1,11,.5);c.fill();c.restore();
+  crateAt(c,padHW*.6,HD*.62+padHD*.5,5,3.4,5,'#8a6f46');
+  crateAt(c,padHW*.74,HD*.62+padHD*.34,4.2,3,4.2,'#9a7d54');
  }
  else if(k==='lab'){
   // research lab: prism block with a glowing observation dome, a glazed console
   // band and crew door fitted flush into the walls, and an equipment pod annex
-  const body=prism(c,shade(col,.9),0,HD*.55,S*.78,HD*.78,20);
+  const body=prism(c,shade(col,.9),0,HD*.55,S*.78,HD*.78,20,{det:1});
   // equipment pod hugging the left-front wall
   prism(c,shade(col,.78),-S*.52,HD*.66,S*.14,HD*.14,9,{matte:true});
   // glass observation dome on top, lit from within
@@ -839,7 +964,12 @@ function bldBody(c,k,col,sz){
   c.fillStyle='#1c2126';quadPatch(c,swW,.19,0,.37,.6);c.fill();
   // little antenna with a blinking node
   c.strokeStyle='#3c3c44';c.lineWidth=2;c.beginPath();c.moveTo(S*.5,body.topY+2);c.lineTo(S*.5,body.topY-14);c.stroke();
-
+  /* v97: the plumbing that feeds the dome - two pressure tanks against the
+     SW wall, a pipe run over the eave into the pod, and a roof vent */
+  drumAt(c,-padHW*.62,HD*.62+padHD*.42,4,'#aeb6c0');
+  drumAt(c,-padHW*.44,HD*.62+padHD*.58,3.4,'#9aa2ac');
+  roofPipe(c,-padHW*.6,HD*.62+padHD*.4-8,-S*.52,HD*.4,1.6);
+  roofVent(c,S*.4,body.topY+HD*.42,5.5,4,5,shade(col,.72));
   // flask emblem
   c.fillStyle='#bfe7ff';c.font='bold 13px sans-serif';c.textAlign='center';c.fillText('🔬',0,body.topY-4);c.textAlign='left';
  }
@@ -847,7 +977,7 @@ function bldBody(c,k,col,sz){
   // a hangar: tall prism, long low gable roof, and a roll-up door recessed INTO
   // the SE wall. Jamb, slats and the hazard lintel all follow the wall plane,
   // so nothing hangs past the hull anymore.
-  const body=prism(c,col,0,HD*.55,S*.84,HD*.84,24);
+  const body=prism(c,col,0,HD*.55,S*.84,HD*.84,24,{det:1});
   gableRoof(c,shade(col,.8),0,body.topY,S*.9,HD*.9,12);
   const seW=wallCorners(body,1),jam=mixc(B0,AMB,.72);
   c.fillStyle=rgb(jam.r,jam.g,jam.b);quadPatch(c,seW,.15,0,.91,.74);c.fill();
@@ -868,12 +998,27 @@ function bldBody(c,k,col,sz){
   c.fillStyle='#3c3c44';rr(c,S*.26-2.6,-30,5.2,14,2);c.fill();
   c.fillStyle='#2a2a30';c.beginPath();c.ellipse(S*.26,-30,4,1.8,0,0,7);c.fill();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.2)';rr(c,S*.26-2.2,-29,1.4,12,1);c.fill();c.restore();
+  /* v97: a working motor pool - a tire stack and oil drums by the door, a
+     dark drip stain on the pad, and a work lamp on a bracket over the lintel */
+  (function(){const tx2=padHW*.66,ty2=HD*.62+padHD*.52;
+   for(let i=0;i<3;i++){const yy=ty2-i*3.4;
+    c.fillStyle='#1c1c22';c.beginPath();c.ellipse(tx2,yy,5.4,2.7,0,0,7);c.fill();
+    c.fillStyle='#2e2e36';c.beginPath();c.ellipse(tx2,yy-1.1,5.4,2.7,0,0,7);c.fill();
+    c.fillStyle='#15151a';c.beginPath();c.ellipse(tx2,yy-1.1,2.3,1.15,0,0,7);c.fill();}
+   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.14)';c.beginPath();c.ellipse(tx2-2,ty2-8.2,1.8,.8,0,0,7);c.fill();c.restore();})();
+  drumAt(c,padHW*.84,HD*.62+padHD*.28,3.6,'#4e545c');
+  c.save();c.globalAlpha=.3;c.fillStyle='#14140f';c.beginPath();c.ellipse(padHW*.3,HD*.62+padHD*.6,9,3.6,0,0,7);c.fill();
+  c.globalAlpha=.2;c.beginPath();c.ellipse(padHW*.4,HD*.62+padHD*.72,4.5,1.8,0,0,7);c.fill();c.restore();
+  (function(){const lp2=qp(seW,.53,.86);
+   c.strokeStyle='#2e2e36';c.lineWidth=1.4;c.beginPath();c.moveTo(lp2.x,lp2.y);c.lineTo(lp2.x+4,lp2.y-3);c.stroke();
+   c.fillStyle='#ffe9a8';c.beginPath();c.arc(lp2.x+4.6,lp2.y-3.4,1.5,0,7);c.fill();
+   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,235,170,.35)';c.beginPath();c.arc(lp2.x+4.6,lp2.y-3.4,3.4,0,7);c.fill();c.restore();})();
   // wrench emblem on the roof
   c.fillStyle='#ffd24d';c.font='bold 13px sans-serif';c.textAlign='center';c.fillText('🔧',0,body.topY-6);c.textAlign='left';
  }
  else if(k==='helipad'){
   // a raised landing platform: low prism plinth + flat circular pad with H + corner lights
-  const body=prism(c,shade(col,.86),0,HD*.55,S*.86,HD*.86,9,{matte:true});
+  const body=prism(c,shade(col,.86),0,HD*.55,S*.86,HD*.86,9,{matte:true,det:1});
   const py=body.topY;
   // dark tarmac disc
   c.fillStyle=rgb(deep.r,deep.g,deep.b);c.beginPath();c.ellipse(0,py,S*.78,HD*.78,0,0,7);c.fill();
@@ -893,8 +1038,20 @@ function bldBody(c,k,col,sz){
   const kio=prism(c,shade(col,1.04),-S*.5,py-HD*.28,S*.13,HD*.13,11);
   c.fillStyle='rgba(125,205,235,.85)';quadPatch(c,wallCorners(kio,1),.14,.42,.86,.7);c.fill();
   c.fillStyle='#22262b';quadPatch(c,wallCorners(kio,-1),.2,0,.5,.62);c.fill();
-  // four corner lights
-
+  /* v97: an airfield has hardware - a bolt ring inside the pad lip, fuel
+     drums behind the kiosk, and two floodlight masts on the plinth corners */
+  c.save();c.globalAlpha=.4;c.fillStyle=rgb(lip.r,lip.g,lip.b);
+  for(let i=0;i<12;i++){const a2=i/12*6.283;c.beginPath();c.arc(Math.cos(a2)*S*.66,py+Math.sin(a2)*HD*.66,.9,0,7);c.fill();}
+  c.restore();
+  drumAt(c,-S*.68,py+HD*.12,3.4,'#4e545c');
+  drumAt(c,-S*.58,py+HD*.24,3,'#586069');
+  for(const fx2 of [S*.72,-S*.2]){
+   const fy2=fx2>0?py+HD*.4:py+HD*.78;
+   c.strokeStyle='#33373d';c.lineWidth=1.8;c.beginPath();c.moveTo(fx2,fy2);c.lineTo(fx2,fy2-20);c.stroke();
+   c.fillStyle='#2a2e34';rr(c,fx2-3,fy2-24,6,4.4,1.2);c.fill();
+   c.fillStyle='#ffe9a8';rr(c,fx2-2.2,fy2-23.2,4.4,2.8,.8);c.fill();
+   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,235,170,.25)';c.beginPath();c.arc(fx2,fy2-22,4.6,0,7);c.fill();c.restore();
+  }
  }
  else if(k==='fwdpad'){
   /* v85: deliberately the Helipad's poor relation - a field strip, not a hangar.
@@ -902,7 +1059,7 @@ function bldBody(c,k,col,sz){
      is obvious, but marked with a repair cross instead of an H, ringed in the
      medic's green rather than the helipad's yellow, and carrying a fuel bowser and
      a windsock instead of a control kiosk. */
-  const body=prism(c,shade(col,.9),0,HD*.5,S*.8,HD*.8,7,{matte:true});
+  const body=prism(c,shade(col,.9),0,HD*.5,S*.8,HD*.8,7,{matte:true,det:1});
   const py=body.topY;
   c.fillStyle=rgb(deep.r,deep.g,deep.b);c.beginPath();c.ellipse(0,py,S*.72,HD*.72,0,0,7);c.fill();
   (function(){const pg=c.createRadialGradient(LIGHT.x*S*.3,py+LIGHT.y*HD*.3,2,0,py,S*.74);pg.addColorStop(0,rgb(mixc(B0,BLACK,.18).r,mixc(B0,BLACK,.18).g,mixc(B0,BLACK,.18).b));pg.addColorStop(1,rgb(mixc(B0,BLACK,.48).r,mixc(B0,BLACK,.48).g,mixc(B0,BLACK,.48).b));c.fillStyle=pg;c.beginPath();c.ellipse(0,py,S*.64,HD*.64,0,0,7);c.fill();})();
@@ -923,11 +1080,15 @@ function bldBody(c,k,col,sz){
   c.beginPath();c.moveTo(S*.5,py-HD*.1);c.lineTo(S*.5,py-HD*.1-16);c.stroke();
   c.fillStyle='#e8663a';c.beginPath();c.moveTo(S*.5,py-HD*.1-16);c.lineTo(S*.5+9,py-HD*.1-13.6);c.lineTo(S*.5+9,py-HD*.1-10.4);c.lineTo(S*.5,py-HD*.1-11);c.closePath();c.fill();
   c.fillStyle='rgba(245,245,245,.85)';c.beginPath();c.moveTo(S*.5+4.4,py-HD*.1-14.8);c.lineTo(S*.5+6.4,py-HD*.1-14.3);c.lineTo(S*.5+6.4,py-HD*.1-10.8);c.lineTo(S*.5+4.4,py-HD*.1-11.2);c.closePath();c.fill();
+  /* v97: field-strip clutter - a tool crate and a spares box by the bowser */
+  crateAt(c,-S*.24,py+HD*.62,4.6,3.2,4.4,'#8a6f46');
+  c.fillStyle='#3a3e34';rr(c,-S*.06-4,py+HD*.68-3.4,8,3.4,1);c.fill();
+  c.fillStyle='#4a4e42';rr(c,-S*.06-4,py+HD*.68-4.6,8,1.6,.8);c.fill();
  }
  else if(k==='generator'){
   // a power shed: prism housing with the glowing cell recessed into the SE
   // wall, a molded vent grille on the roof, and a ground cable to the pad edge
-  const body=prism(c,shade(col,.9),0,HD*.55,S*.72,HD*.72,18);
+  const body=prism(c,shade(col,.9),0,HD*.55,S*.72,HD*.72,18,{det:1});
   const seW=wallCorners(body,1),frm=mixc(B0,AMB,.7);
   c.fillStyle=rgb(frm.r,frm.g,frm.b);quadPatch(c,seW,.2,.08,.5,.76);c.fill();
   (function(){const pt=qp(seW,.24,.7),pb=qp(seW,.24,.14);const vg=c.createLinearGradient(pt.x,pt.y,pb.x,pb.y);vg.addColorStop(0,'#fff0a0');vg.addColorStop(.5,'#f4c430');vg.addColorStop(1,'#b8860b');c.fillStyle=vg;quadPatch(c,seW,.24,.14,.46,.7);c.fill();})();
@@ -942,6 +1103,20 @@ function bldBody(c,k,col,sz){
   const gr=prism(c,shade(col,.5),S*.2,body.topY+HD*.2,S*.16,HD*.16,5,{matte:true});
   c.strokeStyle='rgba(200,205,215,.35)';c.lineWidth=1;
   for(let i=-1;i<=1;i++){c.beginPath();c.moveTo(gr.cx+i*3.6,gr.topY+1);c.lineTo(gr.cx+i*3.6-2.2,gr.topY+HD*.14);c.stroke();}
+  /* v97: a transformer earns its hum - a ribbed radiator block against the
+     SW wall, insulator posts on the roof with a droop of wire between them */
+  (function(){const rad=prism(c,shade(col,.62),-S*.56,HD*.7,S*.13,HD*.11,10,{matte:true});
+   c.save();c.globalAlpha=.6;c.strokeStyle='#22262b';c.lineWidth=1;
+   const rf=wallCorners(rad,1);
+   for(const uu of [.2,.38,.56,.74]){const p0=qp(rf,uu,.08),p1=qp(rf,uu,.9);c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);c.stroke();}
+   c.restore();})();
+  (function(){const iy=body.topY+HD*.3,ix=[-S*.3,-S*.05,S*.2];
+   c.strokeStyle='#8d8d99';c.lineWidth=1.1;
+   for(const x2 of ix){c.beginPath();c.moveTo(x2,iy);c.lineTo(x2,iy-7);c.stroke();}
+   c.fillStyle='#d8dce2';for(const x2 of ix){c.beginPath();c.arc(x2,iy-7.6,1.3,0,7);c.fill();}
+   c.strokeStyle='rgba(60,60,70,.8)';c.lineWidth=.9;
+   for(let i2=0;i2<2;i2++){const a2=ix[i2],b2=ix[i2+1];
+    c.beginPath();c.moveTo(a2,iy-7.6);c.quadraticCurveTo((a2+b2)/2,iy-4.4,b2,iy-7.6);c.stroke();}})();
   c.fillStyle='#fffce0';c.font='bold 12px sans-serif';c.textAlign='center';c.fillText('⚡',0,body.topY+2);c.textAlign='left';
  }
  else if(k==='turbine'){
@@ -955,6 +1130,15 @@ function bldBody(c,k,col,sz){
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.18)';c.beginPath();c.ellipse(-2.4,baseTopY-4.6,2.6,1.1,0,0,7);c.fill();c.restore();
   (function(){const g=c.createLinearGradient(-4,0,4,0);g.addColorStop(0,'#d6dbe1');g.addColorStop(.5,'#fbfdff');g.addColorStop(1,'#aeb4bc');c.fillStyle=g;c.beginPath();c.moveTo(-3.4,baseTopY);c.lineTo(3.4,baseTopY);c.lineTo(1.5,-40);c.lineTo(-1.5,-40);c.closePath();c.fill();})();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.4)';c.beginPath();c.moveTo(-3,baseTopY);c.lineTo(-1.2,baseTopY);c.lineTo(-.6,-40);c.lineTo(-1.4,-40);c.closePath();c.fill();c.restore();
+  /* v97: service hardware at the foot - anchor bolts around the collar, a
+     hazard band on it, and mast segment flanges up the tower */
+  c.save();c.globalAlpha=.7;c.fillStyle='#2a2e34';
+  for(const a2 of [.6,1.9,3.2,4.5,5.7]){c.beginPath();c.arc(Math.cos(a2)*6.2,baseTopY-.4+Math.sin(a2)*2.6,.8,0,7);c.fill();}
+  c.restore();
+  for(let i2=0;i2<4;i2++){c.fillStyle=i2%2?'#191919':'#ffd24d';const xx=-7.5+i2*3.75;c.fillRect(xx,baseTopY-2.4,3.75,1.4);}
+  c.save();c.globalAlpha=.5;c.strokeStyle='#9aa0a8';c.lineWidth=1;
+  for(const yy of [-12,-24,-34]){const w2=3.4-(-yy)*.045;c.beginPath();c.moveTo(-w2,yy);c.lineTo(w2,yy);c.stroke();}
+  c.restore();
   // nacelle + blades
 
  }
@@ -977,19 +1161,27 @@ function bldBody(c,k,col,sz){
   for(let i=0;i<6;i++){const t=i/5;c.beginPath();c.moveTo(lx0,lyA+(lyT-lyA)*t);c.lineTo(lx1,lyB+(lyT-lyB)*t);c.stroke();}
   plSphere(c,'#9a8a5e',-legSpread*.8,footY+2,3.4,.6,false);plSphere(c,'#8f8054',-legSpread*.52,footY+3.5,3.2,.6,false);
   // platform box (small prism)
-  const plat=prism(c,shade(col,.96),0,legTop+8,S*.6,HD*.6,10);
+  const plat=prism(c,shade(col,.96),0,legTop+8,S*.6,HD*.6,10,{det:1});
   // railing posts around the platform top
   c.strokeStyle=rgb(deep.r,deep.g,deep.b);c.lineWidth=1.6;
   for(const cor of [[-S*.55,plat.topY+1],[S*.55,plat.topY+1],[0,plat.topY-HD*.5],[0,plat.topY+HD*.5]]){c.beginPath();c.moveTo(cor[0],cor[1]);c.lineTo(cor[0],cor[1]-6);c.stroke();}
   // pitched roof over the platform
   hipRoof(c,shade(col,.82),0,plat.topY,S*.66,HD*.66,12);
+  /* v97: garrison clutter - an aerial off the roof apex, a spotlight under
+     the eave, and an ammo crate dropped at the foot of the ladder */
+  c.strokeStyle='#8d8d99';c.lineWidth=1;c.beginPath();c.moveTo(S*.2,plat.topY-HD*.4-10);c.lineTo(S*.2,plat.topY-HD*.4-22);c.stroke();
+  c.fillStyle='#c8c8d2';c.beginPath();c.arc(S*.2,plat.topY-HD*.4-22.6,.9,0,7);c.fill();
+  c.fillStyle='#2a2e34';rr(c,-S*.6-2.6,plat.topY+3,5.2,4,1.2);c.fill();
+  c.fillStyle='#ffe9a8';c.beginPath();c.ellipse(-S*.6+.2,plat.topY+5,1.6,1.3,0,0,7);c.fill();
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,235,170,.22)';c.beginPath();c.arc(-S*.6,plat.topY+5,3.6,0,7);c.fill();c.restore();
+  crateAt(c,legSpread*.62,footY+HD*.3,4.4,3,4.2,'#7a6a3e');
   // rotating auto-cannon mounted just under the roof eave (dark team-shade barrel + tiny black muzzle)
 
  }
  else if(k==='radar'){
   // a sensor cabin: fitted console glazing and crew door, an equipment box
   // alongside, and a braced post for the sweeping dish (drawn live)
-  const body=prism(c,shade(col,.92),0,HD*.55,S*.66,HD*.66,14);
+  const body=prism(c,shade(col,.92),0,HD*.55,S*.66,HD*.66,14,{det:1});
   const seW=wallCorners(body,1),swW=wallCorners(body,-1);
   c.fillStyle='rgba(125,205,235,.8)';quadPatch(c,seW,.16,.36,.6,.62);c.fill();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(190,240,255,.3)';quadPatch(c,seW,.16,.52,.6,.62);c.fill();c.restore();
@@ -1004,13 +1196,26 @@ function bldBody(c,k,col,sz){
   c.fillStyle=rgb(deep.r,deep.g,deep.b);c.fillRect(-1.4,body.topY-26,2.8,26);
   c.strokeStyle='rgba(44,44,50,.7)';c.lineWidth=1;
   c.beginPath();c.moveTo(0,body.topY-22);c.lineTo(-S*.5,HD*.62);c.moveTo(0,body.topY-22);c.lineTo(S*.42,HD*.7);c.stroke();
+  /* v97: signals hardware - flange bolts up the dish post, a cable run from
+     the cabin into the equipment box, and a spare cable drum on the pad */
+  c.save();c.globalAlpha=.6;c.strokeStyle='#22262b';c.lineWidth=1;
+  for(const yy of [body.topY-8,body.topY-16])c.strokeRect(-1.8,yy-.6,3.6,1.2);
+  c.restore();
+  c.strokeStyle='#33373d';c.lineWidth=1.3;
+  c.beginPath();c.moveTo(S*.3,HD*.5);c.quadraticCurveTo(S*.44,HD*.72,S*.54,HD*.62);c.stroke();
+  (function(){const dx2=-padHW*.6,dy2=HD*.62+padHD*.5;
+   c.fillStyle='#6a5638';c.beginPath();c.ellipse(dx2,dy2,4.6,2.3,0,0,7);c.fill();
+   c.fillStyle='#7a6544';c.fillRect(dx2-4.6,dy2-5,9.2,5);
+   c.fillStyle='#8a7350';c.beginPath();c.ellipse(dx2,dy2-5,4.6,2.3,0,0,7);c.fill();
+   c.fillStyle='#5a4a30';c.beginPath();c.ellipse(dx2,dy2-5,2,1,0,0,7);c.fill();
+   c.save();c.globalAlpha=.5;c.strokeStyle='#4e3f28';c.lineWidth=.9;c.beginPath();c.ellipse(dx2,dy2-2.5,4.6,2.3,0,Math.PI*.98,Math.PI*2.02,true);c.stroke();c.restore();})();
  }
  else if(k==='foundry'){
   /* v87: a casting shed - a low hall with a banded stack, a glowing pour spout cut
      into the SE wall and slag heaped on the pad. The heat is what the building IS,
      so it is in the silhouette rather than in an overlay; the PULSE on the spout is
      the live half, in bldLive. */
-  const body=prism(c,shade(col,.86),0,HD*.55,S*.7,HD*.7,15);
+  const body=prism(c,shade(col,.86),0,HD*.55,S*.7,HD*.7,15,{det:1});
   const seW=wallCorners(body,1),swW=wallCorners(body,-1);
   c.fillStyle='#2a1c12';quadPatch(c,seW,.3,0,.4,.55);c.fill();               // the spout, recessed
   c.fillStyle='#ff7a1e';quadPatch(c,seW,.34,.04,.32,.4);c.fill();
@@ -1027,13 +1232,23 @@ function bldBody(c,k,col,sz){
   c.beginPath();c.ellipse(S*.62,HD*.6,S*.16,HD*.2,0,0,7);c.fill();
   c.beginPath();c.ellipse(S*.44,HD*.74,S*.12,HD*.16,0,0,7);c.fill();
   plSphere(c,'#8a6a3c',S*.62,HD*.56,3,.7,false);
+  /* v97: the yard works - fresh ingots cooling in a row by the spout, a
+     quench barrel, and heat-vent grilles on the hall roof */
+  (function(){const iy2=HD*.62+padHD*.62;
+   for(let i2=0;i2<3;i2++){const ix2=padHW*.14+i2*7;
+    c.fillStyle='#8f6a30';rr(c,ix2-2.6,iy2-2-i2*.4,5.2,2.6,.8);c.fill();
+    c.fillStyle='#c89a4a';rr(c,ix2-2.6,iy2-2.8-i2*.4,5.2,1.2,.6);c.fill();
+    c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,180,80,.28)';rr(c,ix2-2,iy2-2.6-i2*.4,4,1,.5);c.fill();c.restore();}})();
+  drumAt(c,-padHW*.7,HD*.62+padHD*.4,3.6,'#4e545c');
+  roofVent(c,S*.3,body.topY+HD*.34,5.5,4,4.5,shade(col,.6));
+  roofVent(c,-S*.02,body.topY+HD*.52,4.6,3.4,4,shade(col,.56));
  }
  else if(k==='cmdpost'){
   /* v86: a low sandbagged command hut under a map awning, with a standard on a
      short pole. It has to read as a place men gather rather than as a machine, so
      there is no dish, no mast and no glazing beyond the door - the Radar Tent next
      to it in Green's build list already owns that silhouette. */
-  const body=prism(c,shade(col,.9),0,HD*.55,S*.62,HD*.62,13);
+  const body=prism(c,shade(col,.9),0,HD*.55,S*.62,HD*.62,13,{det:1});
   const seW=wallCorners(body,1),swW=wallCorners(body,-1),jam=mixc(B0,AMB,.66);
   c.fillStyle=rgb(jam.r,jam.g,jam.b);quadPatch(c,seW,.34,0,.32,.66);c.fill();     // doorway
   c.fillStyle='#20242a';quadPatch(c,seW,.37,0,.26,.55);c.fill();
@@ -1052,13 +1267,27 @@ function bldBody(c,k,col,sz){
   c.moveTo(-S*.52,body.topY-13);c.lineTo(0,body.topY-19);c.lineTo(S*.52,body.topY-13);c.lineTo(0,body.topY-7);c.closePath();c.fill();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.18)';c.beginPath();
   c.moveTo(-S*.52,body.topY-13);c.lineTo(0,body.topY-19);c.lineTo(0,body.topY-13);c.closePath();c.fill();c.restore();
+  /* v97: a place men gather needs their kit - a field table with a spread
+     map by the door, jerry cans against the wall, and a lantern hook */
+  (function(){const tx2=padHW*.5,ty2=HD*.62+padHD*.44;
+   c.strokeStyle='#4a4038';c.lineWidth=1.3;
+   c.beginPath();c.moveTo(tx2-5,ty2);c.lineTo(tx2-6,ty2-6);c.moveTo(tx2+5,ty2+2);c.lineTo(tx2+6,ty2-4);c.stroke();
+   c.fillStyle='#7a6544';c.beginPath();c.moveTo(tx2-8,ty2-6);c.lineTo(tx2+2,ty2-9.4);c.lineTo(tx2+9,ty2-4.6);c.lineTo(tx2-1,ty2-1.2);c.closePath();c.fill();
+   c.fillStyle='#e8e0c2';c.beginPath();c.moveTo(tx2-5.4,ty2-6);c.lineTo(tx2+1.4,ty2-8.2);c.lineTo(tx2+6,ty2-5);c.lineTo(tx2-.8,ty2-2.8);c.closePath();c.fill();
+   c.save();c.globalAlpha=.6;c.strokeStyle='#a4543a';c.lineWidth=.8;
+   c.beginPath();c.moveTo(tx2-3.4,ty2-5.4);c.quadraticCurveTo(tx2,ty2-6.6,tx2+3.6,ty2-4.8);c.stroke();
+   c.strokeStyle='#3a5a8a';c.beginPath();c.moveTo(tx2-2.6,ty2-3.8);c.lineTo(tx2+2.2,ty2-6.8);c.stroke();c.restore();})();
+  (function(){for(let i2=0;i2<2;i2++){const jx=-padHW*.56+i2*6.4,jy=HD*.62+padHD*.32;
+   c.fillStyle=i2?'#4a5a3c':'#55684a';rr(c,jx-2.6,jy-6.4,5.2,6.4,1);c.fill();
+   c.fillStyle='#33402a';rr(c,jx-1,jy-7.4,2,1.4,.5);c.fill();
+   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.14)';rr(c,jx-2,jy-6,1.2,5.4,.5);c.fill();c.restore();}})();
   // flag pole (the standard itself waves in bldLive)
   c.strokeStyle='#3c3c44';c.lineWidth=2;c.beginPath();c.moveTo(S*.5,body.topY-11);c.lineTo(S*.5,body.topY-34);c.stroke();
   plSphere(c,'#ffd24d',S*.5,body.topY-35,2,1,false);
  }
  else if(k==='radiotower'){
   // v30: a squat equipment cabin under a tall guyed lattice mast with a beacon
-  const body=prism(c,shade(col,.92),0,HD*.55,S*.5,HD*.5,10);
+  const body=prism(c,shade(col,.92),0,HD*.55,S*.5,HD*.5,10,{det:1});
   const seW=wallCorners(body,1);
   c.fillStyle='rgba(125,205,235,.8)';quadPatch(c,seW,.2,.34,.5,.6);c.fill();
   const mtop=body.topY-52;
@@ -1069,10 +1298,19 @@ function bldBody(c,k,col,sz){
   c.beginPath();c.moveTo(0,mtop+8);c.lineTo(-S*.6,HD*.66);c.moveTo(0,mtop+8);c.lineTo(S*.55,HD*.74);c.stroke();
   c.fillStyle='#ffd24d';c.beginPath();c.arc(0,mtop,1.7,0,7);c.fill();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,220,120,.35)';c.beginPath();c.arc(0,mtop,3.4,0,7);c.fill();c.restore();
+  /* v97: the guys get anchors - concrete blocks where the wires land, a
+     feed cable from cabin to mast, and rivets around the cabin window */
+  for(const an of [[-S*.6,HD*.66],[S*.55,HD*.74]]){
+   c.fillStyle='#6a6f76';c.beginPath();c.moveTo(an[0]-3,an[1]);c.lineTo(an[0],an[1]-2.2);c.lineTo(an[0]+3,an[1]);c.lineTo(an[0],an[1]+2.2);c.closePath();c.fill();
+   c.fillStyle='#82878e';c.beginPath();c.moveTo(an[0]-3,an[1]-1.2);c.lineTo(an[0],an[1]-3.4);c.lineTo(an[0]+3,an[1]-1.2);c.lineTo(an[0],an[1]+1);c.closePath();c.fill();
+  }
+  c.strokeStyle='#33373d';c.lineWidth=1.1;
+  c.beginPath();c.moveTo(S*.2,body.topY+HD*.2);c.quadraticCurveTo(S*.1,body.topY-4,1.6,body.topY-8);c.stroke();
+  wallBolts(c,seW,.68,4,B0);
  }
  else if(k==='dump'){
   // ammo depot: low concrete prism + stacked crates + warhead sign
-  const body=prism(c,'#a07f4e',0,HD*.55,S*.7,HD*.7,12,{matte:true});
+  const body=prism(c,'#a07f4e',0,HD*.55,S*.7,HD*.7,12,{matte:true,det:1});
   // faction banner stripe on the front
   c.fillStyle=col;quadPatch(c,wallCorners(body,1),.08,.32,.82,.5);c.fill();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.14)';quadPatch(c,wallCorners(body,1),.08,.44,.82,.5);c.fill();c.restore();
@@ -1088,11 +1326,22 @@ function bldBody(c,k,col,sz){
   c.fillStyle='#2e2e34';rr(c,-8,body.topY-33,16,14,3);c.fill();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.12)';rr(c,-8,body.topY-33,16,4,3);c.fill();c.restore();
   c.fillStyle='#ffd24d';c.font='bold 11px sans-serif';c.textAlign='center';c.fillText('💥',0,body.topY-22);c.textAlign='left';
+  /* v97: an ammo dump is DANGEROUS - hazard chevrons along the pad's front
+     lip, shell crates by the wall, and a pair of powder drums */
+  c.save();c.globalAlpha=.75;
+  for(let i2=0;i2<6;i2++){const u=.1+i2*.15;
+   c.fillStyle=i2%2?'#191919':'#ffd24d';
+   const px2=u*padHW,py2=HD*.62+(1-u)*padHD;
+   c.beginPath();c.moveTo(px2-2.4,py2+2);c.lineTo(px2+1.2,py2+.6);c.lineTo(px2+3.2,py2+1.8);c.lineTo(px2-.4,py2+3.2);c.closePath();c.fill();}
+  c.restore();
+  crateAt(c,-padHW*.6,HD*.62+padHD*.46,5,3.4,4.6,'#7a6a3e');
+  drumAt(c,-padHW*.78,HD*.62+padHD*.26,3.2,'#5a4a30');
+  drumAt(c,-padHW*.64,HD*.62+padHD*.14,2.8,'#6a5638');
  }
  else if(k==='bunker'){
   // squat fortified pillbox: heavy low prism, domed cap with a hatch ring, and
   // firing slits fitted per wall face with molded lintels
-  const body=prism(c,shade(col,.86),0,HD*.55,S*.86,HD*.86,12,{matte:true});
+  const body=prism(c,shade(col,.86),0,HD*.55,S*.86,HD*.86,12,{matte:true,det:1});
   plSphere(c,col,0,body.topY+2,S*.6,.6,true);
   // hatch ring on the dome cap
   const hat=mixc(B0,BLACK,.35);
@@ -1106,6 +1355,18 @@ function bldBody(c,k,col,sz){
    c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(120,160,255,.25)';quadPatch(c,Q,u0,.59,u1,.66);c.fill();c.restore();
   }
   slit(seW,.16,.38);slit(seW,.52,.74);slit(swW,.24,.5);
+  /* v97: a pillbox is POURED - shutter-board seams across the concrete,
+     sandbags banked under the slits, a periscope stub and an aerial on the
+     cap, and rebar ties showing at the wall foot */
+  c.save();c.globalAlpha=.14;c.strokeStyle=rgb(mixc(B0,BLACK,.4).r,mixc(B0,BLACK,.4).g,mixc(B0,BLACK,.4).b);c.lineWidth=1;
+  for(const vv of [.28,.52,.76]){const p0=qp(seW,.03,vv),p1=qp(seW,.97,vv);c.beginPath();c.moveTo(p0.x,p0.y);c.lineTo(p1.x,p1.y);
+   const q0=qp(swW,.03,vv),q1=qp(swW,.97,vv);c.moveTo(q0.x,q0.y);c.lineTo(q1.x,q1.y);c.stroke();}
+  c.restore();
+  for(let i2=0;i2<4;i2++){const u=.14+i2*.2;plSphere(c,'#9a8a5e',u*padHW,HD*.62+(1-u)*padHD*.9,3.8,.6,false);}
+  for(let i2=0;i2<2;i2++){const u=.26+i2*.2;plSphere(c,'#8f8054',u*padHW,HD*.62+(1-u)*padHD*.9-3.8,3.4,.6,false);}
+  c.fillStyle='#33373d';rr(c,-S*.06,body.topY-S*.36*.62-8,2.6,7,1);c.fill();
+  c.fillStyle='#22262b';rr(c,-S*.06-1,body.topY-S*.36*.62-9.6,4.6,2,.8);c.fill();
+  c.strokeStyle='#8d8d99';c.lineWidth=1;c.beginPath();c.moveTo(S*.2,body.topY-S*.3*.6);c.lineTo(S*.2,body.topY-S*.3*.6-9);c.stroke();
  }
  else if(k==='outpost'){
   // forward base: sandbag ring around a small shack, with field supplies inside
@@ -1113,7 +1374,7 @@ function bldBody(c,k,col,sz){
   for(let i=0;i<11;i++){const a=i/11*6.28;plSphere(c,'#b39a64',Math.cos(a)*S*.82,HD*.55+Math.sin(a)*HD*.82,4.6,.6,false);}
   // second sandbag course over the front arc
   for(let i=0;i<4;i++){const a=(.14+i*.09)*6.28;plSphere(c,'#a5946a',Math.cos(a)*S*.82,HD*.55+Math.sin(a)*HD*.82-4.4,4,.6,false);}
-  const body=prism(c,col,0,HD*.3,S*.5,HD*.5,16);
+  const body=prism(c,col,0,HD*.3,S*.5,HD*.5,16,{det:1});
   // doorway fitted into the SE wall
   const seW=wallCorners(body,1),jam=mixc(B0,AMB,.66);
   c.fillStyle=rgb(jam.r,jam.g,jam.b);quadPatch(c,seW,.14,0,.5,.74);c.fill();
@@ -1126,6 +1387,17 @@ function bldBody(c,k,col,sz){
   const px=S*.34,ptop=body.topY-16;
   c.strokeStyle='#4a4a52';c.lineWidth=2;c.beginPath();c.moveTo(px,body.topY);c.lineTo(px,ptop);c.stroke();
 
+  /* v97: a camp lives here - a stone fire ring with charred wood, a second
+     crate on the first, and a bedroll against the shack wall */
+  (function(){const fx2=-S*.5,fy2=HD*.72;
+   for(let i2=0;i2<7;i2++){const a2=i2/7*6.283;plSphere(c,'#8a8f98',fx2+Math.cos(a2)*5,fy2+Math.sin(a2)*2.6,1.5,.7,false);}
+   c.fillStyle='#241c14';c.beginPath();c.ellipse(fx2,fy2,3.4,1.7,0,0,7);c.fill();
+   c.strokeStyle='#3a2c1c';c.lineWidth=1.2;c.beginPath();c.moveTo(fx2-2.4,fy2+.8);c.lineTo(fx2+2.6,fy2-1);c.moveTo(fx2-2,fy2-1.2);c.lineTo(fx2+2,fy2+1);c.stroke();})();
+  crateAt(c,-S*.62,HD*.56,3.6,2.6,3.6,'#9a7d54');
+  (function(){const bx2=S*.16,by2=HD*.68;
+   c.fillStyle='#6a7a52';rr(c,bx2-6,by2-3.4,12,3.4,1.7);c.fill();
+   c.save();c.globalAlpha=.4;c.strokeStyle='#4a5638';c.lineWidth=.9;
+   for(const xx of [-3,0,3]){c.beginPath();c.moveTo(bx2+xx,by2-3.2);c.lineTo(bx2+xx,by2);c.stroke();}c.restore();})();
   c.fillStyle='#ff9b3a';c.font='bold 12px sans-serif';c.textAlign='center';c.fillText('⬢',0,body.topY-2);c.textAlign='left';
  }
  else if(k==='supply'){
@@ -1171,6 +1443,17 @@ function bldBody(c,k,col,sz){
   c.restore();
   c.save();c.globalCompositeOperation='lighter';c.strokeStyle='rgba(255,255,255,.4)';c.lineWidth=1.4;
   c.beginPath();c.moveTo(tW.x,tW.y);c.lineTo(tN.x,tN.y);c.stroke();c.restore();
+  /* v97: yard clutter outside the canopy line - a fourth drum, a strapped
+     crate waiting on the pad, and a coil of rope dropped by the posts */
+  drumAt(c,S*.78,HD*.8,3.6,'#4e545c');
+  (function(){const q=crateAt(c,S*.62,HD*.98,4.6,3.2,4.4,'#9a7d54');
+   c.save();c.globalAlpha=.6;c.strokeStyle='#3c3228';c.lineWidth=1.1;
+   c.beginPath();c.moveTo(q.W.x,q.W.y+1);c.lineTo(q.E.x,q.E.y+1);c.stroke();c.restore();})();
+  (function(){const rx2=-S*.7,ry2=HD*.92;
+   c.strokeStyle='#8a7350';c.lineWidth=1.6;
+   c.beginPath();c.ellipse(rx2,ry2,4,2,0,0,7);c.stroke();
+   c.strokeStyle='#a08a62';c.lineWidth=1;
+   c.beginPath();c.ellipse(rx2,ry2-.8,3.2,1.6,0,0,7);c.stroke();})();
   c.fillStyle='#e8f0d8';c.font='bold 12px sans-serif';c.textAlign='center';c.fillText('🪖',0,tN.y+HD*.62);c.textAlign='left';
  }
 }

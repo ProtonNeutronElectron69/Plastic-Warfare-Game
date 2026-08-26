@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v96.1)
+# Plastic Warfare headless test harness (updated at v97)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -510,6 +510,77 @@ check** (`tail_v96_1.js`, T73 - the v92.1 pattern applied to pixels).
   to 3.6, dome and painted-shape weights down ~40%) and 125 regenerated
   maps; measured on the A/B, the lit grunt keeps its face shading instead
   of blowing through it.
+
+#### v97 - the detail & resolution pass
+
+**The owner zoomed in and found two different problems wearing one word.**
+"Units look blurry" and "structures are simplistic - large flat surfaces,
+mostly square shapes" arrived as one request; measured, they have separate
+causes and the release is two mechanisms plus an art pass (`tail_v97.js`,
+T74).
+
+**The blur was mostly the canvas, not the sprites.** Since v1 the canvases
+were sized in CSS pixels (`view.width=innerWidth`), so on ANY high-DPI
+display the browser upscaled the whole frame - at devicePixelRatio 2 the
+game literally rendered at half resolution and was stretched. v97 makes the
+backing stores device pixels (`RDPR`, capped at 2, `#dpr1` escape hatch)
+while EVERYTHING else stays in CSS pixels: `G.zoom`, `G.cam`, `MOUSE`,
+`audAt`'s pan, every camera clamp - all reading `vpW()/vpH()`, which are
+DERIVED from the canvas (`view.width/RDPR`) rather than stored, so a test
+that pokes `view.width` directly still reads coherent numbers and no second
+copy can drift. RDPR multiplies exactly one thing: the renderer's transform
+(`z = G.zoom*RDPR`); the screen-space overlays, the minimap and both
+compositors' pixel-valued blur radii follow it, and the GL post canvas
+gained an explicit CSS size - **a canvas is a replaced element, so its
+`inset:0` never stretched it**; pre-v97 the intrinsic size WAS the CSS
+size, which is why the missing width never showed. The first Chromium run
+at deviceScaleFactor 2 presented the world at double size because of
+exactly that, and a second bug hid behind the fix: assigning
+`style.cssText` after `glSize` wiped the width glSize had just set.
+Verified: DPR-2 frame aligns with the DPR-1 frame at mean 0.77/255 (all of
+it resolution), clicks land, hash and snapshot silent. Headless the shim
+pins devicePixelRatio=1, so the suite runs the exact pre-v97 numbers.
+
+**The second resolution half is the bake.** SS went 3 to 4 (crisp to zoom
+2.4 at ~1.7 DPR) and the offline pipeline followed (RS=8 in
+`dump_base_v95.js`, `RS, SS = 8, 4` in the material and normal passes -
+the two must share the grid or color grain shears against relief grain).
+One trap found in advance: the base dump renders walls through
+`drawBarricade`, which since v96.1 prefers a texture cell - so the dump now
+clears `ASSETS.img` first, or it would re-dump the PREVIOUS release's wall
+texture instead of the painter. T74.C reads texture dimensions straight out
+of the WebP headers and demands the box at SS=4, which the v96 set cannot
+answer.
+
+**The simplicity was the painters, and the painters are the texture
+source, so one fix feeds both.** A deterministic detail kit (`dth` hash,
+no RNG - detail that moved between the color render and the normal render
+would shear against its own relief): `wallPanels` seam grids with per-panel
+tonal variation, `wallBolts`, `wallPlinth`, `roofPanels`, `roofVent`,
+`roofPipe`, `drumAt`, `crateAt`, and `hullSeam`/`boltRow` for vehicles.
+`prism` takes `opt.det` and all sixteen prism-hulled buildings request it;
+both roofs draw panel structure; `basePad` reads as poured slab (expansion
+joints, corner bolts). On top of the kit every building gains its own
+story - HQ roof vents/hatch/pipe and a mast guy wire, barracks windows and
+a stovepipe, garage tire stack, oil stain and work lamp, helipad floodlight
+masts and a pad bolt ring, generator radiator and insulator wire, dump
+hazard chevrons, bunker shutter-board seams and periscope, foundry cooling
+ingots, cmdpost map table, outpost fire ring, radar cable drum, radiotower
+guy anchors, supply yard clutter. Vehicles gain seams, bolt rows, exhausts,
+cargo and lights per hull; troopers gain belt pouches, a canteen, brim
+shadow and chinstrap; walls gain I-beam webs, flange bolts and sawn end
+caps; nests gain galleries, litter and comb cells; bugs gain jointed legs,
+eyes, wing veins and fur. One integration bug caught on the boards: the
+trooper canteen was passed an `rgb()` string, but `plSphere` parses HEX
+(`hx2rgb`) - it rendered black; `shade()` answers hex.
+
+**Cost, measured:** textures 1602 kB to 2589 kB, normal maps 710 kB to
+1072 kB, the shipped file 4.81 MB to 6.69 MB - still one double-clickable
+page. T71.B's size ceiling consciously moved to 3.5 MB; T72.A's 1.5 MB
+normal-map ceiling holds as written. Baked-cell memory grows (16/9)x.
+
+**Trails and all 42 layout pins reproduce untouched** - render-only, as
+every release since v91 promised.
 
 #### What phase 1 looked like before it landed, kept for the reasoning
 
