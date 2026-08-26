@@ -318,11 +318,17 @@ that presents the 2d-drawn world through real shaders — gaussian bloom,
 tilt-shift, grade, vignette — with `compositePost()` as the permanent fallback
 and one `POSTV` table feeding both looks. Measured: GL frame vs 2d frame of the
 same tick differ by mean 2.02/255; the sim hash is identical under both.
-**Second cut, still open:** the depth-sorted sprite band migrates INSIDE
-`glComposite` (2d underlay → GL sprites → 2d overlay), which is what phase 5
-needs. Phase 4 does not wait on it — a loaded texture blits through the 2d path
-exactly as a procedural cell does. Full reasoning in the v93 section of
-`harness/README.md`.
+**Second cut LANDED AT v94:** the depth-sorted sprite band draws on its own
+canvas and merges through `bandPresent()` — a GL passthrough today, phase 5's
+lighting shader tomorrow, the band canvas itself wherever GL is not real. The
+"2d overlay as its own GL texture" half of the old sketch was dropped on a
+measurement: the combat FX above the band blend ADDITIVELY against the scene
+and do not survive being rasterized separately, so they still draw directly on
+the composed frame. The band split itself cost a measured mean 0.048/255.
+Software GL is refused (`failIfMajorPerformanceCaveat`) because a CPU-emulated
+GL frame measured ~2x the whole 2d path. Phase 4 does not wait on any of this —
+a loaded texture blits through the 2d path exactly as a procedural cell does.
+Full reasoning in the v93 and v94 sections of `harness/README.md`.
 
 **Phase 4 — real textures, one unit at a time.** The bake is per-key-per-faction,
 so the Grunt can be a real texture while the other 24 stay procedural.

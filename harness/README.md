@@ -289,6 +289,57 @@ the vector FX ever needing to leave canvas. Phase 4 (real textures) does NOT
 wait on that: the bake pipeline is renderer-agnostic, and a loaded texture
 blits through the 2d path exactly as a procedural cell does.
 
+#### Phase 3, second cut, LANDED at v94: the sprite band, and what it cost
+
+**What shipped.** The depth-sorted item pass - every shadow, prop, node,
+building, unit, creature and loose flag - now draws on its OWN transparent
+canvas (`sprCv`), under the same camera transform as the scene, and lands on
+the scene in exactly one source-over blit. That blit goes through
+`bandPresent()`: the answer is either the band canvas itself (headless,
+`#nogl`, no usable GL) or a GL-processed copy from an offscreen context of
+its own - today a declared PASSTHROUGH shader, premultiplied in and out.
+**The passthrough IS the deliverable**: band canvas → texture → program →
+back into the 2d merge, proven pixel-faithful end to end. Phase 5 swaps that
+shader for per-pixel lighting against a normal band and changes nothing else
+about the frame. One code path in both renderers: the band is ALWAYS
+isolated, so the suite exercises the real structure headless. T70 carries
+the pins.
+
+**Why the frame is sliced HERE and nowhere else.** The plan said "2d underlay
+→ GL sprites → 2d overlay" - and the overlay half of that dies on a
+measurement: the combat FX above the band (tracer glows, embers, fireballs,
+muzzle flashes) draw ADDITIVELY against whatever is beneath them, sprites
+included. Rasterize them onto a separate transparent layer and their
+interaction with the scene is unrecoverable - every explosion would change.
+So everything after the band merge still draws directly on the composed
+scene, additive semantics exact. The band itself contains 39 additive draws,
+but nearly all are specular highlights over the entity's OWN body -
+band-internal, unaffected. The exposed remainder is the ground auras (heal
+glow, rally pulse), and the screenshot diff put the whole concession at a
+**mean 0.048/255 per channel, p95 = 0** against the v93 renderer. That is
+the cut's entire visual cost, and it is invisible.
+
+**Two corrections this measurement round forced, recorded because that is
+the point of this file:**
+
+- **The v93 "mean 2.02/255" GL-vs-2d figure was inflated by the DOM.** The
+  message toasts fade on wall-clock, so two runs seconds apart photograph
+  different toast stacks - the diff heatmap put almost the whole difference
+  inside the toast boxes. Toasts excluded, GL-vs-2d is a **mean 0.58/255**.
+  Lesson for every future screenshot comparison: hide `#msgs` first.
+- **Software GL is now REFUSED, on a measurement.** On this GPU-less box a
+  forced CPU-rasterized GL frame costs ~74 ms against ~44 ms for the whole
+  2d path - the machine without real GL is exactly the machine the 2d
+  fallback exists for. Both stages therefore create their contexts with
+  `failIfMajorPerformanceCaveat:true` (`#forcegl` overrides, for testing;
+  this container's GL reports non-caveated, so the refusal itself could not
+  be demonstrated here - the attribute is standard and browser-judged).
+  These container numbers say nothing about real GPUs, where the whole
+  pipeline is a few texture uploads and seven trivial passes.
+
+Suite 5,303/5,303; every trail and all 42 layout pins reproduce; the sim
+hash is identical across v93-2d, v94-2d, v94-GL of the same tick.
+
 #### What phase 1 looked like before it landed, kept for the reasoning
 
 #### Phase 1 is the only phase with a structural risk, and it lands on `main`
