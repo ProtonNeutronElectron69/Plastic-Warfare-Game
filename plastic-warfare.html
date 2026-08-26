@@ -15763,6 +15763,7 @@ function drawTargeting(c){
    bloom, a warm-key / cool-shadow grade, and a vignette. If ctx.filter is
    unsupported the blur-based passes degrade gracefully to grade + vignette. */
 let worldCv=null,wctx=null,tsCv=null,tsctx=null,blCv=null,blctx=null,bandCv=null,bandctx=null,maskT=null,maskB=null,FILT=-1;
+let sprCv=null,spctx=null; // v94: the depth-sorted sprite band's own transparent canvas (phase 3, second cut)
 /* v93: THE POST-PASS TUNING TABLE, extracted so the 2d compositor below and the
    WebGL shader stage (next file) read the SAME numbers. These are the v64-v90
    values verbatim, just named: change one here and both renderers move
@@ -15788,13 +15789,17 @@ function ensurePost(){
  if(worldCv&&worldCv.width===W&&worldCv.height===H)return;
  try{
   worldCv=document.createElement('canvas');worldCv.width=W;worldCv.height=H;wctx=worldCv.getContext('2d');
+  /* v94: the sprite band renders here, alone, and is merged onto the scene in
+     one blit - straight, or through the GL band stage. That seam is what
+     phase 5's per-pixel lighting slots into. */
+  sprCv=document.createElement('canvas');sprCv.width=W;sprCv.height=H;spctx=sprCv.getContext('2d');
   if(FILT<0){try{wctx.filter='blur(1px)';FILT=(wctx.filter&&wctx.filter!=='none')?1:0;wctx.filter='none';}catch(e){FILT=0;}}
   tsCv=document.createElement('canvas');tsCv.width=Math.max(2,Math.round(W/3));tsCv.height=Math.max(2,Math.round(H/3));tsctx=tsCv.getContext('2d');
   blCv=document.createElement('canvas');blCv.width=Math.max(2,Math.round(W/4));blCv.height=Math.max(2,Math.round(H/4));blctx=blCv.getContext('2d');
   const th=Math.max(2,Math.round(H*POSTV.tsTopH)),bh=Math.max(2,Math.round(H*POSTV.tsBotH));
   maskT=mkMask(W,th,true);maskB=mkMask(W,bh,false);
   bandCv=document.createElement('canvas');bandCv.width=W;bandCv.height=Math.max(th,bh);bandctx=bandCv.getContext('2d');
- }catch(e){worldCv=null;wctx=null;}
+ }catch(e){worldCv=null;wctx=null;sprCv=null;spctx=null;}
 }
 function tsBand(mask,y){
  const W=view.width,H=view.height;
@@ -15975,8 +15980,25 @@ function renderCore(){
  for(const cr of (G.crates||[]))if(inView(cr.x,cr.y)&&fogAt(cr.x,cr.y)===2)items.push([cr.x+cr.y,0,cr,'crate']);
  if(G.mode==='ctf')for(const f of G.flags)if(!f.carrier&&!f.home)items.push([f.x+f.y,3,f,'flag']);
  items.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
- for(const it of items)drawItemShadow(c,it);
- for(const it of items){if(it[3]==='prop')drawProp(c,it[2]);else if(it[3]==='nest')drawNest(c,it[2]);else if(it[3]==='node')drawNode(c,it[2]);else if(it[3]==='crate')drawCrate(c,it[2]);else if(it[3]==='bld')drawBld(c,it[2]);else if(it[3]==='unit')drawUnit(c,it[2]);else if(it[3]==='bug')drawBug(c,it[2]);else drawLooseFlag(c,it[2]);}
+ /* v94, roadmap 3 phase 3 second cut: THE SPRITE BAND - every depth-sorted
+    shadow and entity - draws on its OWN transparent canvas, under the same
+    camera transform (shake included: cx/cy are the frame's, not G.cam's).
+    One code path in both renderers: the band is always isolated, and
+    bandPresent() below answers either the canvas itself or its GL-processed
+    copy. What phase 5 changes is only what that GL pass DOES (per-pixel
+    lighting against a normal band); the seam is this merge. The known,
+    measured cost: the few additive ground auras inside the band (heal glow,
+    rally pulse) now add against band content rather than the terrain - see
+    the v94 record. Everything drawn AFTER the merge (projectiles, particles,
+    strikes, fog) keeps exact additive semantics against the whole scene. */
+ const bc=spctx||c;
+ if(spctx){
+  spctx.setTransform(1,0,0,1,0,0);spctx.clearRect(0,0,view.width,view.height);
+  spctx.setTransform(z,0,0,z,-cx*z,-cy*z);spctx.imageSmoothingEnabled=true;
+ }
+ for(const it of items)drawItemShadow(bc,it);
+ for(const it of items){if(it[3]==='prop')drawProp(bc,it[2]);else if(it[3]==='nest')drawNest(bc,it[2]);else if(it[3]==='node')drawNode(bc,it[2]);else if(it[3]==='crate')drawCrate(bc,it[2]);else if(it[3]==='bld')drawBld(bc,it[2]);else if(it[3]==='unit')drawUnit(bc,it[2]);else if(it[3]==='bug')drawBug(bc,it[2]);else drawLooseFlag(bc,it[2]);}
+ if(spctx){c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(bandPresent(),0,0);c.restore();}
  for(const p of G.projs){
   if(fogAt(p.x,p.y)!==2)continue; // v26: no live munitions visible through fog
   const sx=isoX(p.x,p.y),sy=isoY(p.x,p.y),hy=sy-p.z;
@@ -16339,8 +16361,12 @@ function ensureGL(){
  }
  const cv=document.createElement('canvas');
  cv.width=W;cv.height=H;
- const gl=cv.getContext('webgl',{alpha:false,antialias:false,depth:false,stencil:false})
-       ||cv.getContext('experimental-webgl',{alpha:false,antialias:false,depth:false,stencil:false});
+ /* v94: refuse a SOFTWARE rasterizer. Measured on a GPU-less box, CPU-emulated
+    GL costs ~2x the whole 2d frame - a machine without real GL is exactly the
+    machine the 2d fallback exists for. #forcegl overrides, for testing. */
+ const att={alpha:false,antialias:false,depth:false,stencil:false,
+  failIfMajorPerformanceCaveat:!(typeof location!=='undefined'&&/\bforcegl\b/.test(location.hash||''))};
+ const gl=cv.getContext('webgl',att)||cv.getContext('experimental-webgl',att);
  if(!gl)return false;
  /* everything from here throws into glComposite's catch on a fake or broken
     context - the shim's permissive proxy dies at the first link-status check,
@@ -16364,6 +16390,63 @@ function ensureGL(){
  view.parentNode.insertBefore(cv,view);
  cv.addEventListener('webglcontextlost',ev=>{try{ev.preventDefault();}catch(_){}GLP.dead=1;try{cv.remove();}catch(_){}});
  return true;
+}
+/* v94, phase 3 second cut: THE BAND STAGE. renderCore hands the sprite
+   band's canvas here before merging it onto the scene; the answer is either
+   that canvas untouched (no GL - headless, #nogl, a dead context) or a
+   GL-processed copy from an offscreen context of its own. Today the shader is
+   a PASSTHROUGH: the deliverable is the proven round-trip - band canvas up to
+   a texture, through a program, back into the 2d merge as the same pixels -
+   because that hop, with a lighting shader and a normal band in place of the
+   passthrough, IS phase 5. Premultiplied in and out, so translucent sprite
+   edges survive the trip; measured at v94 in Chromium against the direct
+   merge. Fallback rule as everywhere: GL overrides, never replaces. */
+let GLB=null; // the band stage: {gl,cv,...} once alive, {dead:1} once given up on. Client-local, never hashed.
+const GLSL_BAND='precision mediump float;varying vec2 uv;uniform sampler2D uTex;void main(){gl_FragColor=texture2D(uTex,uv);}';
+function bandPresent(){
+ try{
+  if(GLB&&GLB.dead)return sprCv;
+  if(typeof location!=='undefined'&&/\bnogl\b/.test(location.hash||''))return sprCv;
+  const W=view.width,H=view.height;
+  if(!GLB||!GLB.gl){
+   const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+   const gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,depth:false,stencil:false,
+    failIfMajorPerformanceCaveat:!(typeof location!=='undefined'&&/\bforcegl\b/.test(location.hash||''))}); // v94: same software-GL refusal as the post stage
+   if(!gl)return sprCv;
+   GLB={gl,cv};
+   GLB.prog=glProg(gl,GLSL_BAND,['uTex']);
+   const buf=gl.createBuffer();
+   gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+   gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+   GLB.tex=glTex(gl);
+   if(gl.getError()!==0)throw new Error('band gl init error');
+   cv.addEventListener('webglcontextlost',ev=>{try{ev.preventDefault();}catch(_){}GLB.dead=1;});
+  }
+  const g=GLB,gl=g.gl;
+  if(g.cv.width!==W||g.cv.height!==H){g.cv.width=W;g.cv.height=H;}
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.viewport(0,0,W,H);
+  gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D,g.tex);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,sprCv);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+  gl.useProgram(g.prog.p);
+  gl.uniform1i(g.prog.uTex,0);
+  gl.disable(gl.BLEND);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  /* renderCore drawImages this canvas in the SAME task, before the browser
+     composites - which is why no preserveDrawingBuffer is needed */
+  return g.cv;
+ }catch(e){
+  GLB={dead:1};
+  if(typeof WebGLRenderingContext!=='undefined')try{console.warn('[pw] WebGL band stage failed; presenting the band directly:',e);}catch(_){}
+  return sprCv;
+ }
 }
 function glTex(gl){
  const t=gl.createTexture();

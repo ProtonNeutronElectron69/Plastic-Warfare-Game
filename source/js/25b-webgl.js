@@ -147,8 +147,12 @@ function ensureGL(){
  }
  const cv=document.createElement('canvas');
  cv.width=W;cv.height=H;
- const gl=cv.getContext('webgl',{alpha:false,antialias:false,depth:false,stencil:false})
-       ||cv.getContext('experimental-webgl',{alpha:false,antialias:false,depth:false,stencil:false});
+ /* v94: refuse a SOFTWARE rasterizer. Measured on a GPU-less box, CPU-emulated
+    GL costs ~2x the whole 2d frame - a machine without real GL is exactly the
+    machine the 2d fallback exists for. #forcegl overrides, for testing. */
+ const att={alpha:false,antialias:false,depth:false,stencil:false,
+  failIfMajorPerformanceCaveat:!(typeof location!=='undefined'&&/\bforcegl\b/.test(location.hash||''))};
+ const gl=cv.getContext('webgl',att)||cv.getContext('experimental-webgl',att);
  if(!gl)return false;
  /* everything from here throws into glComposite's catch on a fake or broken
     context - the shim's permissive proxy dies at the first link-status check,
@@ -172,6 +176,63 @@ function ensureGL(){
  view.parentNode.insertBefore(cv,view);
  cv.addEventListener('webglcontextlost',ev=>{try{ev.preventDefault();}catch(_){}GLP.dead=1;try{cv.remove();}catch(_){}});
  return true;
+}
+/* v94, phase 3 second cut: THE BAND STAGE. renderCore hands the sprite
+   band's canvas here before merging it onto the scene; the answer is either
+   that canvas untouched (no GL - headless, #nogl, a dead context) or a
+   GL-processed copy from an offscreen context of its own. Today the shader is
+   a PASSTHROUGH: the deliverable is the proven round-trip - band canvas up to
+   a texture, through a program, back into the 2d merge as the same pixels -
+   because that hop, with a lighting shader and a normal band in place of the
+   passthrough, IS phase 5. Premultiplied in and out, so translucent sprite
+   edges survive the trip; measured at v94 in Chromium against the direct
+   merge. Fallback rule as everywhere: GL overrides, never replaces. */
+let GLB=null; // the band stage: {gl,cv,...} once alive, {dead:1} once given up on. Client-local, never hashed.
+const GLSL_BAND='precision mediump float;varying vec2 uv;uniform sampler2D uTex;void main(){gl_FragColor=texture2D(uTex,uv);}';
+function bandPresent(){
+ try{
+  if(GLB&&GLB.dead)return sprCv;
+  if(typeof location!=='undefined'&&/\bnogl\b/.test(location.hash||''))return sprCv;
+  const W=view.width,H=view.height;
+  if(!GLB||!GLB.gl){
+   const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+   const gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,depth:false,stencil:false,
+    failIfMajorPerformanceCaveat:!(typeof location!=='undefined'&&/\bforcegl\b/.test(location.hash||''))}); // v94: same software-GL refusal as the post stage
+   if(!gl)return sprCv;
+   GLB={gl,cv};
+   GLB.prog=glProg(gl,GLSL_BAND,['uTex']);
+   const buf=gl.createBuffer();
+   gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+   gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+   GLB.tex=glTex(gl);
+   if(gl.getError()!==0)throw new Error('band gl init error');
+   cv.addEventListener('webglcontextlost',ev=>{try{ev.preventDefault();}catch(_){}GLB.dead=1;});
+  }
+  const g=GLB,gl=g.gl;
+  if(g.cv.width!==W||g.cv.height!==H){g.cv.width=W;g.cv.height=H;}
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.viewport(0,0,W,H);
+  gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D,g.tex);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,sprCv);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+  gl.useProgram(g.prog.p);
+  gl.uniform1i(g.prog.uTex,0);
+  gl.disable(gl.BLEND);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  /* renderCore drawImages this canvas in the SAME task, before the browser
+     composites - which is why no preserveDrawingBuffer is needed */
+  return g.cv;
+ }catch(e){
+  GLB={dead:1};
+  if(typeof WebGLRenderingContext!=='undefined')try{console.warn('[pw] WebGL band stage failed; presenting the band directly:',e);}catch(_){}
+  return sprCv;
+ }
 }
 function glTex(gl){
  const t=gl.createTexture();

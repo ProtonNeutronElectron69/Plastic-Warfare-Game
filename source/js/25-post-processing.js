@@ -4,6 +4,7 @@
    bloom, a warm-key / cool-shadow grade, and a vignette. If ctx.filter is
    unsupported the blur-based passes degrade gracefully to grade + vignette. */
 let worldCv=null,wctx=null,tsCv=null,tsctx=null,blCv=null,blctx=null,bandCv=null,bandctx=null,maskT=null,maskB=null,FILT=-1;
+let sprCv=null,spctx=null; // v94: the depth-sorted sprite band's own transparent canvas (phase 3, second cut)
 /* v93: THE POST-PASS TUNING TABLE, extracted so the 2d compositor below and the
    WebGL shader stage (next file) read the SAME numbers. These are the v64-v90
    values verbatim, just named: change one here and both renderers move
@@ -29,13 +30,17 @@ function ensurePost(){
  if(worldCv&&worldCv.width===W&&worldCv.height===H)return;
  try{
   worldCv=document.createElement('canvas');worldCv.width=W;worldCv.height=H;wctx=worldCv.getContext('2d');
+  /* v94: the sprite band renders here, alone, and is merged onto the scene in
+     one blit - straight, or through the GL band stage. That seam is what
+     phase 5's per-pixel lighting slots into. */
+  sprCv=document.createElement('canvas');sprCv.width=W;sprCv.height=H;spctx=sprCv.getContext('2d');
   if(FILT<0){try{wctx.filter='blur(1px)';FILT=(wctx.filter&&wctx.filter!=='none')?1:0;wctx.filter='none';}catch(e){FILT=0;}}
   tsCv=document.createElement('canvas');tsCv.width=Math.max(2,Math.round(W/3));tsCv.height=Math.max(2,Math.round(H/3));tsctx=tsCv.getContext('2d');
   blCv=document.createElement('canvas');blCv.width=Math.max(2,Math.round(W/4));blCv.height=Math.max(2,Math.round(H/4));blctx=blCv.getContext('2d');
   const th=Math.max(2,Math.round(H*POSTV.tsTopH)),bh=Math.max(2,Math.round(H*POSTV.tsBotH));
   maskT=mkMask(W,th,true);maskB=mkMask(W,bh,false);
   bandCv=document.createElement('canvas');bandCv.width=W;bandCv.height=Math.max(th,bh);bandctx=bandCv.getContext('2d');
- }catch(e){worldCv=null;wctx=null;}
+ }catch(e){worldCv=null;wctx=null;sprCv=null;spctx=null;}
 }
 function tsBand(mask,y){
  const W=view.width,H=view.height;
@@ -216,8 +221,25 @@ function renderCore(){
  for(const cr of (G.crates||[]))if(inView(cr.x,cr.y)&&fogAt(cr.x,cr.y)===2)items.push([cr.x+cr.y,0,cr,'crate']);
  if(G.mode==='ctf')for(const f of G.flags)if(!f.carrier&&!f.home)items.push([f.x+f.y,3,f,'flag']);
  items.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
- for(const it of items)drawItemShadow(c,it);
- for(const it of items){if(it[3]==='prop')drawProp(c,it[2]);else if(it[3]==='nest')drawNest(c,it[2]);else if(it[3]==='node')drawNode(c,it[2]);else if(it[3]==='crate')drawCrate(c,it[2]);else if(it[3]==='bld')drawBld(c,it[2]);else if(it[3]==='unit')drawUnit(c,it[2]);else if(it[3]==='bug')drawBug(c,it[2]);else drawLooseFlag(c,it[2]);}
+ /* v94, roadmap 3 phase 3 second cut: THE SPRITE BAND - every depth-sorted
+    shadow and entity - draws on its OWN transparent canvas, under the same
+    camera transform (shake included: cx/cy are the frame's, not G.cam's).
+    One code path in both renderers: the band is always isolated, and
+    bandPresent() below answers either the canvas itself or its GL-processed
+    copy. What phase 5 changes is only what that GL pass DOES (per-pixel
+    lighting against a normal band); the seam is this merge. The known,
+    measured cost: the few additive ground auras inside the band (heal glow,
+    rally pulse) now add against band content rather than the terrain - see
+    the v94 record. Everything drawn AFTER the merge (projectiles, particles,
+    strikes, fog) keeps exact additive semantics against the whole scene. */
+ const bc=spctx||c;
+ if(spctx){
+  spctx.setTransform(1,0,0,1,0,0);spctx.clearRect(0,0,view.width,view.height);
+  spctx.setTransform(z,0,0,z,-cx*z,-cy*z);spctx.imageSmoothingEnabled=true;
+ }
+ for(const it of items)drawItemShadow(bc,it);
+ for(const it of items){if(it[3]==='prop')drawProp(bc,it[2]);else if(it[3]==='nest')drawNest(bc,it[2]);else if(it[3]==='node')drawNode(bc,it[2]);else if(it[3]==='crate')drawCrate(bc,it[2]);else if(it[3]==='bld')drawBld(bc,it[2]);else if(it[3]==='unit')drawUnit(bc,it[2]);else if(it[3]==='bug')drawBug(bc,it[2]);else drawLooseFlag(bc,it[2]);}
+ if(spctx){c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(bandPresent(),0,0);c.restore();}
  for(const p of G.projs){
   if(fogAt(p.x,p.y)!==2)continue; // v26: no live munitions visible through fog
   const sx=isoX(p.x,p.y),sy=isoY(p.x,p.y),hy=sy-p.z;
