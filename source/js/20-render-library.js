@@ -187,7 +187,7 @@ function armsToGun(c,col,ang){plLimb(c,col,-3.2,-13,Math.cos(ang)*2.5,-10.5+Math
    saturation/contrast pop), and blitted at runtime. Weapons, turrets, rotors,
    beacons and other animated parts stay live so continuous aim survives. */
 let BAKING=false;
-const SS=3; // bake supersample: crisp up to max zoom (2.4)
+const SS=4; // bake supersample. v97: 3 covered max zoom (2.4) only at 1:1 pixels; with RDPR the frame renders at zoom*RDPR device px, so 4 keeps sprites crisp up to ~1.7 DPR at full zoom. The texture pipeline renders at RS=2*SS and must match (tools/material_v95.py).
 const SPR={inf:{},veh:{},bld:{},barr:{},done:false};
 const VEH_BOX={truck:[-18,-14,18,14],medic:[-18,-14,18,14],jeep:[-15,-13,15,13],bike:[-12,-9,12,9],
  tank:[-16,-13,16,13],bulltank:[-22,-17,22,17],aatruck:[-18,-13,18,13],arty:[-16,-13,17,13],heli:[-28,-11,16,11],chinook:[-38,-16,24,16],apache:[-32,-13,18,13],apc:[-20,-14,20,14],

@@ -53,9 +53,15 @@ const fs69 = require('fs');
   ok('T69.B the GL stage feeds its uniforms from the same table',
     ['POSTV.sat', 'POSTV.bloomBr', 'POSTV.tsTopH', 'POSTV.g1c', 'POSTV.vinA']
       .every(k => glComposite.toString().indexOf(k) >= 0));
-  ok('T69.B the blur kernels derive from the same blur radii',
-    ensureGL.toString().indexOf('glGauss(POSTV.bloomBlur)') >= 0 &&
-    ensureGL.toString().indexOf('glGauss(POSTV.tsBlur)') >= 0);
+  /* v97 REWRITE: the kernels moved into glSize and gained the RDPR factor -
+     sigma is a pixel value and the buffers are device pixels now, so scaling
+     by RDPR is what KEEPS the visual blur equal to the 2d path's (which
+     scales its filter strings the same way). The claim is unchanged: the
+     radii come from POSTV and nowhere else. */
+  ok('T69.B the blur kernels derive from the same blur radii, at the device scale',
+    glSize.toString().indexOf('glGauss(POSTV.bloomBlur*RDPR)') >= 0 &&
+    glSize.toString().indexOf('glGauss(POSTV.tsBlur*RDPR)') >= 0 &&
+    ensureGL.toString().indexOf('glGauss(') < 0);
   ok('T69.B the masks derive from the same band strengths',
     mkMask.toString().indexOf('POSTV.tsTopA') >= 0 && mkMask.toString().indexOf('POSTV.tsBotA') >= 0);
 }

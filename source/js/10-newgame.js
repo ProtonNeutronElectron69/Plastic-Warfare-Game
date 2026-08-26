@@ -172,7 +172,7 @@ function newGame(s){
  if(G.mode==='surv'){G.surv={no:0,t:SURV_BUILD,done:false,fx:G.map.N/2+0.5,fy:G.map.N/2+0.5};} // v33
  // camera on human base
  const hs=G.human.start;
- G.cam.x=isoX(hs.x,hs.y)-view.width/2/G.zoom;G.cam.y=isoY(hs.x,hs.y)-view.height/2/G.zoom;
+ G.cam.x=isoX(hs.x,hs.y)-vpW()/2/G.zoom;G.cam.y=isoY(hs.x,hs.y)-vpH()/2/G.zoom;
  updateTopbar();
  msg(G.mode==='dm'?('Destroy every enemy structure! '+(DM_TIME>0&&!G.test?'Time limit '+dmMMSS(DM_TIME)+' \u2014 if it runs out, the biggest base still standing wins.':'')):G.mode==='ctf'?'Capture the enemy flag '+CTF_TARGET+' times! Your flag must be home to score.':G.mode==='koth'?`Hold the central hill! Control it alone for ${KOTH_TARGET}s to win.`:'🛡️ Wave Survival: defend the central flag through all '+SURV_WAVE_N+' waves! First wave in 1:00.');
  if(matchTeamed()&&G.mode!=='surv')msg('🤝 Team battle: allied armies share vision and win together.'); // v29

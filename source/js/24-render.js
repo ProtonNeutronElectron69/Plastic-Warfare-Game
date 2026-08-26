@@ -1,8 +1,8 @@
 /* ---------------- RENDER ---------------- */
 function drawGhost(c,cx,cy){
- const z=G.zoom;
+ const z=G.zoom,zr=z*RDPR; // v97: mouse math stays CSS (z); only the transform takes the device ratio
  const key=G.placing.key,sz=B[key].sz;
- c.save();c.setTransform(z,0,0,z,-cx*z,-cy*z);
+ c.save();c.setTransform(zr,0,0,zr,-cx*zr,-cy*zr);
  // v32: aura rings while placing. Green = your legal zones (10 around HQs,
  // 4 around outposts), skipped for 'anywhere' keys (HQ/outpost placements
  // ignore them). Red = live-visible enemy HQ 10-tile exclusion rings

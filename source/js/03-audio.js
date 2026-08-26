@@ -171,7 +171,7 @@ function audAt(x,y){
  const N=G.map.N;if(x<0||y<0||x>=N||y>=N)return null;
  if(G.fog[(Math.floor(y)*N+Math.floor(x))]!==2)return null;
  const z=G.zoom,sx=(isoX(x,y)-G.cam.x)*z,sy=(isoY(x,y)-G.cam.y)*z;
- const W=view.width,H=view.height,M=90;
+ const W=vpW(),H=vpH(),M=90; // v97: the ear listens in CSS px, like the eye aims
  if(sx<-M||sx>W+M||sy<-M||sy>H+M)return null;
  const dx=sx<0?-sx:(sx>W?sx-W:0),dy=sy<0?-sy:(sy>H?sy-H:0);
  const gain=clamp(1-Math.max(dx,dy)/M,0,1);
