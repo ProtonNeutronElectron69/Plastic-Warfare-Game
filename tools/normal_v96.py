@@ -28,7 +28,7 @@ spec = importlib.util.spec_from_file_location('m95', os.path.join(_here, 'materi
 m95 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m95)
 
-RS, SS = 6, 3
+RS, SS = 8, 4  # v97: matches material_v95.py - the two passes must share the grid
 K = RS // SS
 
 def normals(base_png, out_path, sid, seam, P, lossless=True, q=95):

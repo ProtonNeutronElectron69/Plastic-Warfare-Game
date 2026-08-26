@@ -3,7 +3,7 @@
 phase-4 texture pipeline (step one is dump_base_v95.js).
 
 Reads the 6x base renders from tools/_base_v95/ and writes the finished
-textures into assets/img/ at the bake's own SS=3 supersample - run
+textures into assets/img/ at the bake's own SS=4 supersample - run
 tools/embed_img.py afterwards to refresh the embedded table, then
 ./build.sh. The worklist is whatever step one rendered, so the roster
 lives in ONE place (dump_base_v95.js derives it from the game's tables).
@@ -37,7 +37,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 
-RS, SS = 6, 3
+RS, SS = 8, 4  # v97: the runtime bake went SS=4 for device-pixel rendering; RS stays 2*SS
 K = RS // SS
 LIGHT = np.array([-0.46, -0.66])
 
