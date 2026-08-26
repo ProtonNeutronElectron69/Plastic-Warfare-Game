@@ -32,10 +32,13 @@ const fs71 = require('fs');
      infantry row gets 5 frames, every vehicle its hull, every non-wall
      building its body - in all four colours for a shared row, in the
      owner's colour alone for a faction exclusive. The wildlife nest is out
-     because it belongs to the bug faction, which the bake excludes. A row
-     added to U or B fires here until the texture pipeline is re-run
-     (dump_base_v95.js + material_v95.py + embed_img.py) - which is the
-     conscious step a textured game demands of a new unit. */
+     because it belongs to the bug faction, which the bake excludes.
+     v96.1 (owner feedback): the WALLS joined the pass - a shared wall in
+     all four colours plus the map's NEUTRAL dark gray, an exclusive one in
+     its owner's colour alone. A row added to U or B fires here until the
+     texture pipeline is re-run (dump_base_v95.js + material_v95.py +
+     normal_v96.py + embed_img.py) - the conscious step a textured game
+     demands of a new unit. */
   const facs = Object.keys(FAC).filter(f => f !== 'bug');
   const excl = {};
   for (const f of facs) { for (const k of FAC[f].uu) excl[k] = f; for (const k of FAC[f].ub) excl[k] = f; }
@@ -45,7 +48,11 @@ const fs71 = require('fs');
     if (U[k].a === 'inf') { for (const f of facsOf(k)) for (let i = 0; i < 5; i++) want.push('inf_' + k + '_' + f + '_' + i); }
     else for (const f of facsOf(k)) want.push('veh_' + k + '_' + f);
   }
-  for (const k in B) { if (B[k].barr || k === 'nest') continue; for (const f of facsOf(k)) want.push('bld_' + k + '_' + f); }
+  for (const k in B) {
+    if (k === 'nest') continue;
+    if (B[k].barr) { for (const f of (excl[k] ? [excl[k]] : facs.concat('neutral'))) want.push('bld_' + k + '_' + f); continue; }
+    for (const f of facsOf(k)) want.push('bld_' + k + '_' + f);
+  }
   /* v96: the manifest's img half now also carries the normal maps under
      nrm_ keys - T72 (tail_v96) owns that half; this roster pin scopes to
      the textures */

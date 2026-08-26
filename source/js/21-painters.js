@@ -500,6 +500,19 @@ function basePad(c,col,cx,baseY,hw,hd,thick){
 // team-colored when built by a player. shadow is already laid down by drawBld.
 function drawBarricade(c,b,sx,sy){
  const neutral=b.p===G.neutral;
+ /* v96.1: the wall takes its texture cell when one loaded - same override
+    rule as every sprite, except the fallback is this very painter rather
+    than a baked cell, because that is what walls have been since v88 */
+ const wcell=SPR.done&&SPR.barr[b.t.hbarr?'hbarricade':'barricade'];
+ const cell=wcell&&wcell[neutral?'neutral':b.p.fac];
+ if(cell){
+  c.save();c.translate(sx,sy);
+  const wpr=b.prog;if(wpr<1){c.globalAlpha=.5+.5*wpr;c.translate(0,(1-wpr)*8);}
+  c.drawImage(cell.cv,-cell.ax,-cell.ay,cell.w,cell.h);
+  if(NCTX&&cell.nrm){NCTX.setTransform(c.getTransform());NCTX.drawImage(cell.nrm,-cell.ax,-cell.ay,cell.w,cell.h);}
+  c.restore();
+  return;
+ }
  const base=neutral?'#5a5a60':FAC[b.p.fac].color;
  const dk=shade(base,.55),lt=shade(base,1.35);
  c.save();c.translate(sx,sy);

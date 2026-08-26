@@ -41,6 +41,9 @@ fs.mkdirSync(OUT, { recursive: true });
 
   const ids = await pg.evaluate(() => {
     const RS = 6, out = [];
+    /* v96.1: the walls need a live G (drawBarricade reads G.neutral); a test
+       fixture is synchronous and touches nothing this tool renders */
+    newGame({ map: 'backyard', mode: 'dm', diff: 'normal', fac: 'green', opp: 1, seed: 1, test: true });
     const facs = Object.keys(FAC).filter(f => f !== 'bug');
     const excl = {};
     for (const f of facs) { for (const k of FAC[f].uu) excl[k] = f; for (const k of FAC[f].ub) excl[k] = f; }
@@ -65,7 +68,20 @@ fs.mkdirSync(OUT, { recursive: true });
       }
     }
     for (const k in B) {
-      if (B[k].barr || k === 'nest') continue;
+      if (k === 'nest') continue;
+      if (B[k].barr) {
+        /* v96.1: the walls, live-painted since v88, joined the texture pass on
+           the owner's ask. A shared wall also exists NEUTRAL on maps (dark
+           gray); an exclusive one only in its owner's colour. Same box rule
+           as everything else: the painter's own measured extent plus margin. */
+        const box = BARR_BOX[k];
+        const wfacs = excl[k] ? [excl[k]] : facs.concat('neutral');
+        for (const f of wfacs) {
+          const b = { p: f === 'neutral' ? G.neutral : { fac: f }, prog: 1, t: { hbarr: !!B[k].hbarr } };
+          render('bld_' + k + '_' + f, box, c => drawBarricade(c, b, 0, 0));
+        }
+        continue;
+      }
       const sz = B[k].sz, S = sz * HW, HD = sz * HH;
       const box = BLD_BOX[k] || [-S - 10, -Math.max(70, S * 1.2), S + 10, HD * 1.58 + 8];
       for (const f of facsOf(k)) render('bld_' + k + '_' + f, box, c => bldBody(c, k, FAC[f].color, sz));

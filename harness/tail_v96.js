@@ -66,9 +66,11 @@ const fs72 = require('fs');
   section('T72.B the map rides the cell, and headless nothing lights');
 
   const src = bakeSprites.toString();
-  ok('T72.B all three bake sites attach a normal map when one loaded',
-    (src.match(/imgAsset\('nrm_'\+id\)/g) || []).length === 3 &&
-    (src.match(/SPR\.hasNrm=true/g) || []).length === 3);
+  /* v96.1: the walls joined the pass, so the bake grew a FOURTH attach site
+     (SPR.barr) - a conscious count bump, the growth T73 documents */
+  ok('T72.B all four bake sites attach a normal map when one loaded',
+    (src.match(/imgAsset\('nrm_'\+id\)/g) || []).length === 4 &&
+    (src.match(/SPR\.hasNrm=true/g) || []).length === 4);
 
   G = null; newGame({ map: 'backyard', mode: 'dm', diff: 'normal', fac: 'gray', opp: 3, seed: 960003 });
   ok('T72.B headless no Image exists, so no cell holds a map and the switch stays off',

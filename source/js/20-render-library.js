@@ -188,12 +188,16 @@ function armsToGun(c,col,ang){plLimb(c,col,-3.2,-13,Math.cos(ang)*2.5,-10.5+Math
    beacons and other animated parts stay live so continuous aim survives. */
 let BAKING=false;
 const SS=3; // bake supersample: crisp up to max zoom (2.4)
-const SPR={inf:{},veh:{},bld:{},done:false};
+const SPR={inf:{},veh:{},bld:{},barr:{},done:false};
 const VEH_BOX={truck:[-18,-14,18,14],medic:[-18,-14,18,14],jeep:[-15,-13,15,13],bike:[-12,-9,12,9],
  tank:[-16,-13,16,13],bulltank:[-22,-17,22,17],aatruck:[-18,-13,18,13],arty:[-16,-13,17,13],heli:[-28,-11,16,11],chinook:[-38,-16,24,16],apache:[-32,-13,18,13],apc:[-20,-14,20,14],
  cmdtruck:[-20,-30,20,15],balloon:[-26,-52,26,20],
  firebomb:[-34,-15,20,15], // v87: wider than the Huey's box - the belly racks hang outside the hull // v86: both boxes are TALL - the Command Truck's aerials stand well above the cab and the balloon is mostly envelope
  choktaw:[-33,-16,18,16]}; // v95: it had NO entry, so it baked in the 48-wide default and its tail boom (painted to x=-31.3) was clipped off every sprite since v88
+/* v96.1: the walls joined the texture pass (owner feedback - they were the one
+   baked-table hole left). drawBarricade's own measured extents plus margin;
+   the heavy wall is broader and taller than the plain one on purpose. */
+const BARR_BOX={barricade:[-14,-17,14,13],hbarricade:[-19,-23,19,16]};
 const BLD_BOX={hq:[-102,-80,102,86],barracks:[-70,-52,70,62],lab:[-70,-48,70,62],garage:[-102,-64,102,86],
  supply:[-68,-54,68,62],
  helipad:[-102,-30,102,86],generator:[-70,-34,70,62],turbine:[-38,-54,38,36],guardtower:[-38,-66,38,36],
@@ -295,7 +299,7 @@ function nrmRot(cell,ang){
    different wall times, or never. */
 function rebakeIfAssetsLate(){
  if(SPR.done&&!SPR.assets&&Object.keys(ASSETS.img).length){
-  SPR.done=false;SPR.inf={};SPR.veh={};SPR.bld={};bakeSprites();
+  SPR.done=false;SPR.inf={};SPR.veh={};SPR.bld={};SPR.barr={};bakeSprites();
  }
 }
 function blitVeh(c,key,fac){
@@ -337,7 +341,21 @@ function bakeSprites(){
   }
  }
  for(const k in B){
-  if(B[k].barr)continue; // v88: both walls are live-painted rather than baked
+  if(B[k].barr){
+   /* v96.1: the walls take a texture cell now (owner feedback) - but ONLY a
+      texture: there is no procedural bake behind them, because drawBarricade
+      itself is the fallback, exactly as it has painted since v88. A shared
+      wall also exists NEUTRAL on maps, so that is a fifth colour. */
+   SPR.barr[k]={};
+   for(const f of facs.concat('neutral')){
+    const id='bld_'+k+'_'+f,im=imgAsset(id);
+    if(!im)continue;
+    const bx=BARR_BOX[k],cell=cellFromImg(im,bx[0],bx[1],bx[2],bx[3]);
+    const nm=imgAsset('nrm_'+id);if(nm){cell.nrm=nrmFromImg(nm,cell);SPR.hasNrm=true}
+    SPR.barr[k][f]=cell;
+   }
+   continue;
+  }
   const sz=B[k].sz,S=sz*HW,HD=sz*HH;
   const box=BLD_BOX[k]||[-S-10,-Math.max(70,S*1.2),S+10,HD*1.58+8];
   SPR.bld[k]={};

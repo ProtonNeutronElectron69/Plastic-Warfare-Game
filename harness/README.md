@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v96)
+# Plastic Warfare headless test harness (updated at v96.1)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -477,6 +477,39 @@ Suite green with T70's passthrough pins consciously rewritten (the claim
 v94 existed to set up, not a loosening) and T71/T67-style scoping edits;
 T72 carries the new pins. Trails and all 42 layout pins reproduce
 untouched.
+
+#### v96.1 - the graphics feedback pass
+
+**The owner played v96 and sent back three findings; each is a change and a
+check** (`tail_v96_1.js`, T73 - the v92.1 pattern applied to pixels).
+
+- **The walls had no textures - correctly, and wrongly.** Both barricades
+  are live-painted rather than baked (v88's decision), so the v95 pass
+  skipped them by structure. They join now on their own terms: a texture
+  cell per colour - the shared wall in all four army colours plus the
+  map's NEUTRAL dark gray, the Heavy Barricade in Gray's alone - blitted
+  by `drawBarricade` itself, with the hedgehog painter as the fallback
+  (there is deliberately no baked procedural cell behind a wall; the
+  painter IS the fallback, as it has been since v88). The bake box is the
+  painter's measured extent plus margin (`BARR_BOX`), the same probe the
+  Choktaw fix used. T71.A's derived roster grew the wall rule in the same
+  edit as the generator, so they cannot drift.
+- **Flame cast almost no light.** Two causes, both real: the burn-cell
+  source shipped timid (r 64 / i .34 reads as nothing in play), and a
+  flame WEAPON mid-stream cast nothing at all - the muzzle-flash source
+  skips weapon class 'f' (that skip is for the star sprite, correct), and
+  no burn cell exists under a plain flamethrower. `LIGHTV.fire` was raised
+  to r 90 / i .75 and a new `LIGHTV.flame` source (r 120 / i .85) lights a
+  flame weapon at its stream's MIDPOINT - the glow sits on what is being
+  burned, not on the nozzle. Pinned as an ORDER (flame > flash), not just
+  numbers.
+- **Infantry lighting washed out half the figure.** Data, not shader: a
+  tiny silhouette makes the distance-transform molding dome steep
+  everywhere, so most of a lit infantryman sat at the lamp's maximum. The
+  fix is a per-kind override in `normal_v96.py` (`KIND_NRM`: inf nz 2.4
+  to 3.6, dome and painted-shape weights down ~40%) and 125 regenerated
+  maps; measured on the A/B, the lit grunt keeps its face shading instead
+  of blowing through it.
 
 #### What phase 1 looked like before it landed, kept for the reasoning
 
