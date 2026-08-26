@@ -84,6 +84,7 @@
        UNITS ..................................................... per-key unit painters
        BUILDINGS ................................................. per-key building painters
        face-fitted detailing ..................................... decals fitted to a drawn face
+       molded-detail kit ......................................... v97 seam/bolt/greeble helpers
        CAST SHADOWS .............................................. baked contact shadows
        PROPS ..................................................... map clutter painters
        WILDLIFE NESTS & CREATURES ................................ nest + bug painters
