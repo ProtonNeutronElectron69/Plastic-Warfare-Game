@@ -34,12 +34,12 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v97, and what a fresh session does)
+## Where the game stands (v98, and what a fresh session does)
 
-The game is at **v97**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v98**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
-(v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). There is no
-release in flight.
+(v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 is a
+standalone owner pass (below). There is no release in flight.
 
 **Known open fronts, none started:**
 
@@ -50,10 +50,14 @@ release in flight.
 - **Balance.** The v90 baseline below still stands: Green likely overshoots via
   the plastic-threshold reserves, Blue is last and untouched, `turtle` has
   responded to nothing. Measure with `probe_v89.sh` before re-pricing anything.
+  v98 re-priced ONE building on the owner's instruction (the Heavy Barricade,
+  60 → 40) and did not touch any of the three findings above.
 - `T26.C`'s air-value question is still open.
 
 **How a release ships.** One version per PR. Start a fresh branch from
-`origin/main`, work it as vNN (or vNN.N for a feedback/repair pass), add a
+`origin/main`, work it as vNN (or vNN.N for a feedback/repair pass), **bump
+`GAME_VER` and `GAME_DATE` in `source/js/01-constants.js`** (since v98 the menu
+prints them and the save tag derives from them — one place, both numbers), add a
 `tail_vNN.js` with the release's pins (register it in `harness/seg.sh` line ~49
 AND `harness/tails.txt`), record the release in `harness/README.md` and update
 this file, then push and open a **draft** PR into `main`. The owner reviews —
@@ -88,7 +92,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,395 checks at v97.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,500 checks at v98.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -250,6 +254,57 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v98 — four owner asks (not part of a roadmap)
+
+Four small things the owner asked for, each landing as a change AND a check
+(`tail_v98.js`, T75). Full evidence is the v98 section of `harness/README.md`.
+
+- **The Heavy Barricade is 40 plastic (was 60), its mine roll 15% (was 10%), and
+  the mine is visible to its OWNER alone.** The old price made HP-per-plastic flat
+  against the cheap wall and what you bought was the aura and the mine; at 40 the
+  wall is deliberately better plastic-for-HP, and the constant's comment now says
+  that rather than still claiming the old argument. An ALLY no longer sees the
+  mine — but `mineArms` is untouched, so a teammate is still not blown up by a
+  wall he cannot see. **Sight and safety are two claims and only the first one
+  moved**; T75.A drives both.
+- **A release stamp in the menu's bottom-right corner.** `GAME_VER` /
+  `GAME_DATE` in `01-constants.js`, printed by `menuStamp()`. `GAME_DATE` stays
+  ISO and `stampDate` reformats it with a REGEX, never `new Date` — that parses
+  as UTC midnight and `getDate()` reads back local, so half the world would have
+  been shown the wrong day. It also exposed a hand-typed `v:86` in `saveState`,
+  twelve releases stale; the tag is `GAME_VER_N` now.
+- **The number row fires the selection panel's ability buttons**, 1-9 down the
+  row, through `ABIL_HOT` / `abilAdd` — `MENU_HOT`'s design pointed at the other
+  half of the panel, so the panel rebuild IS the context gate. **This is a
+  REBINDING**: the control groups moved to F1-F9 (Ctrl+F1-F9 to save) and pause
+  moved F9 → F10, because no key in this file may mean two things at once and
+  eleven units carry a toggle. The owner chose that from three options.
+- **A hover tick and a stronger click** on the setup screen and the Field Manual
+  (`sTick`, `sMenuClick`), bound once per host by `menuAudioBind`. The twenty
+  per-site `sClick()` calls in those two hosts are DELETED — a delegated click
+  plus a per-site one would sound twice. `#manualBtn` keeps its `sClick`: it is
+  HUD, and the HUD's voice did not change.
+
+**The re-price is a HUMAN lever, and that bounds what it can have done to the
+balance table.** Read off the tables: `aiTick` asks for a faction exclusive once
+unless its row carries `mult` (the Bunker and the Turbine have it, the Heavy
+Barricade does not), and `aiBarricades` names `'barricade'` at all four of its
+sites. A Gray bot puts up ONE heavy wall, ever. `sim.sh` cannot measure this — no
+batch was run and none is claimed.
+
+**The trails moved, and the route is the thing to carry forward.** A GRAY-only
+re-price moved a green trail, a tan trail and two AI trails. The path is not the
+building: `RESEARCH.b_hbarricade`'s cost is DERIVED from `B.hbarricade.cp`, every
+trail boots three real CPU opponents (one Gray), and the Gray bot starts that
+research at **tick 627** — inside the 900-tick window. "No army in this match can
+BUILD it" is not the same claim as "nothing in this match reads its PRICE".
+
+**A `data-tune` slot proves the NUMBER is not a second copy. It proves nothing
+about the sentence around it.** The Field Manual said "One in
+`<span data-tune="hbarrMineP">`" and that slot returns a PERCENTAGE — right at
+10% purely by coincidence, and wrong by a factor of two at 15%. Both the manual
+and the wall's own card state a percentage now.
 
 ## v90.2 — the HUD legibility pass (not part of the roadmap)
 

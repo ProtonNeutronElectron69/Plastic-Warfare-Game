@@ -355,7 +355,14 @@ const AI_POUR_N=2;     // ...and how many Garages must have something queued to 
    wasted plastic; the cap is what stops a solid block of them from being
    arithmetically unkillable, and it is a cap on the TOTAL rather than on the
    count so it cannot be walked around by mixing in the cheap barricade.
-   HBARR_MINE_P is the one-time 10% roll, HBARR_MINE_D the three tiles in front.
+   HBARR_MINE_P is the one-time roll and HBARR_MINE_D the three tiles in front.
+   v98: the wall is 40 rather than 60 and the roll 15% rather than 10%, both by
+   the owner's decision. The 60 was chosen so HP-per-plastic came out flat
+   against the ordinary barricade and the aura and the mine were what the extra
+   bought; at 40 the wall is DELIBERATELY better plastic-for-HP than the cheap
+   one, which is the whole point of a re-price. It stays a Gray exclusive behind
+   a Lab and a research project, so the cheap wall is still what the other three
+   armies lay and still what Gray lays before the tech lands.
    SMOKESCR_BOX is 7 by specification and SMOKESCR_RED is 40% against the
    Mortar's SMOKE_RED of 20% over a 2-tile radius for 5 seconds. That gap is
    INTENDED and is written down here so a later balance pass reads it as a
@@ -368,11 +375,11 @@ const PAINT_BOX=2;       // ...over this many tiles square
 const PAINT_T=10;        // ...for this many seconds
 const PAINT_CD=20;       // ...and the cooldown, on the v87 u.abCool clock
 const HBARR_HP=BARR_HP*3;// Heavy Barricade: triple the ordinary wall
-const HBARR_COST=60;     // ...at three times the plastic, so HP per plastic is flat and what you buy is the aura and the mine
+const HBARR_COST=40;     // ...v98: 60 -> 40, so it is now twice the wall's plastic for three times its HP, and the aura and the mine ride on top
 const HBARR_RED=0.15;    // ...damage taken cut per wall in reach, STACKING with the others
 const HBARR_CAP=0.60;    // ...but never past this in total, however many overlap
 const HBARR_R=1.5;       // ...the reach itself: the ring of tiles immediately around a 1x1 wall
-const HBARR_MINE_P=0.10; // ...the one-time roll on completion that buries a mine
+const HBARR_MINE_P=0.15; // ...v98: 0.10 -> 0.15, the one-time roll on completion that buries a mine
 const HBARR_MINE_D=3;    // ...that many tiles in front, front being the nearest enemy HQ
 const SMOKESCR_BOX=7;    // Smokescreen: the side of the square it covers
 const SMOKESCR_RED=0.40; // ...damage cut for friendly units AND structures inside it

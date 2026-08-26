@@ -86,6 +86,20 @@ canvas{display:block}
 #startBtn:hover{transform:translateY(-2px);box-shadow:inset 0 2px 0 rgba(255,255,255,.85),0 9px 0 #8a5f00,0 18px 30px rgba(0,0,0,.55),0 0 54px rgba(255,205,60,.4)}
 #startBtn:active{transform:translateY(5px);box-shadow:inset 0 3px 6px rgba(0,0,0,.3),0 2px 0 #8a5f00}
 #infoBtn{margin-top:18px}
+/* v98: the release stamp, moulded into the bottom-right corner of the parade
+   ground. position:fixed and NOT a flowed child of the column: #setup scrolls
+   (the whole menu is taller than most windows), so a stamp in the flow would
+   land under the Field Manual button and off the bottom of the screen. It is
+   still a CHILD of #setup, which is what makes it appear and disappear with the
+   menu without a second show/hide anywhere in the file. pointer-events:none so
+   it can never eat a click meant for the button beside it, and its text is
+   written once by menuStamp() off GAME_VER / GAME_DATE - nothing here is
+   hand-typed. */
+#verStamp{position:fixed;right:14px;bottom:11px;pointer-events:none;
+  font:11px/1 'Courier New',monospace;letter-spacing:2.2px;color:#8fae76;
+  background:rgba(6,11,4,.55);border:1px solid rgba(143,174,118,.30);
+  border-radius:6px;padding:6px 10px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 2px 6px rgba(0,0,0,.45)}
 #menuBg{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
 /* ---------- HUD ---------- */
 #hud{position:absolute;inset:0;pointer-events:none;display:none;z-index:10}
@@ -136,6 +150,14 @@ canvas{display:block}
 .bb:hover:not(.dis){background:rgba(255,255,255,.22)}
 .bb.dis{opacity:.42;cursor:not-allowed}
 .bb b{display:block;font-size:12px}
+/* v98: the ability button's number key, mirroring .tl .hk across the panel. The
+   position and padding are a SECOND rule rather than folded into the .bb rule
+   above, because that rule is transcribed by T49.A from its first declaration
+   onward and must keep opening on `background`. */
+.bb{position:relative;padding-right:22px}
+.bb .ak{position:absolute;top:4px;right:4px;min-width:15px;padding:0 3px;border-radius:4px;
+ background:rgba(6,9,4,.8);border:1px solid rgba(255,210,77,.5);color:#ffd24d;
+ font-size:10px;line-height:13px;font-weight:bold;text-align:center;pointer-events:none}
 .cp{color:#ffb95e;font-weight:bold}.ce{color:#7fe3ff;font-weight:bold}
 /* v90.1: 1240 held TWELVE tiles, and every army's Construct menu is thirteen, so
    the build menu had always wrapped onto a second row and stood twice as tall as
@@ -395,6 +417,7 @@ canvas{display:block}
   <div id="netPanel" style="display:none"></div>
   <button id="startBtn">⚔ START BATTLE</button>
   <button id="infoBtn" class="opt">📘 Field Manual — Units, Structures &amp; Controls</button>
+  <div id="verStamp"></div>
 </div>
 
 <div id="infoPanel">
@@ -418,14 +441,15 @@ canvas{display:block}
     <b>F</b> then click: attack-move &nbsp;•&nbsp; <b>P</b>: patrol — then click the two waypoints &nbsp;•&nbsp; <b>H</b>: hold position &nbsp;•&nbsp; <b>X</b>: stop<br>
     <b>U</b>: unload the selected APC / Chinook &nbsp;•&nbsp; <b>Esc</b>: cancel targeting / placement / attack-move, otherwise clear the selection
     <h3>Groups &amp; Army</h3>
-    <b>Ctrl + 1–9</b>: save the selection as a control group &nbsp;•&nbsp; <b>1–9</b>: recall it<br>
+    <b>Ctrl + F1–F9</b>: save the selection as a control group &nbsp;•&nbsp; <b>F1–F9</b>: recall it<br>
+    <b>1–9</b>: fire the selected units’ ability buttons, numbered left to right down the panel &mdash; with a mixed group each button moves only the men that carry that ability<br>
     <b>Space</b>: select your whole army (Dump Trucks stay put)
     <h3>Camera</h3>
     <b>Arrow keys / WASD</b> or push the <b>screen edge</b>: scroll<br>
     <b>Mouse wheel</b> or <b>+ / −</b>: zoom &nbsp;•&nbsp; <b>0</b>: reset zoom &nbsp;•&nbsp; <b>J</b>: jump the camera to the last alert<br>
     <b>Minimap</b>: left-click or drag to look around &nbsp;•&nbsp; <b>right-click</b> to order the selection there &nbsp;•&nbsp; <b>◱</b> cycles its size
     <h3>Game</h3>
-    <b>F9</b> or the <b>⏸ button</b>: pause &nbsp;•&nbsp; <b>🔊</b>: mute &nbsp;•&nbsp; <b>📘 Manual</b>: the full Field Manual — <b>? Help</b>: quick reference &nbsp;•&nbsp; <b>↩ Quit</b>: back to this menu<br>
+    <b>F10</b> or the <b>⏸ button</b>: pause &nbsp;•&nbsp; <b>🔊</b>: mute &nbsp;•&nbsp; <b>📘 Manual</b>: the full Field Manual — <b>? Help</b>: quick reference &nbsp;•&nbsp; <b>↩ Quit</b>: back to this menu<br>
     Click a <b>queued unit</b> in the production panel to cancel it (full refund)<br>
     <b>💰 Sell</b> (selection panel): sell any completed structure except the HQ for 50% of its plastic cost<br>
     <b>Barricade tool</b>: pick it, then click-and-drag to lay a whole line at once<br>
@@ -469,10 +493,11 @@ canvas{display:block}
   <b>Ctrl+1-9</b>: set group, <b>1-9</b>: recall &nbsp;•&nbsp; <b>Space</b>: select your whole army &nbsp;•&nbsp; <b>J</b>: jump to last alert<br>
   <b>Q</b> (or the <b>🏛 HQ</b> button above the panel): select your HQ and open the build menu from anywhere on the map — press again to centre the camera on it, again for your next HQ<br>
   <b>Build menu hotkeys</b>: every Construct, Train and Research tile carries a letter in its top-left corner. They're per-building, so the same key means something different depending on what you have selected<br>
+  <b>Ability hotkeys</b>: every ability button in the selection panel carries a <b>number</b> in its top-right corner, counted down the row from 1. Like the build letters they exist only while the button is on screen. Control groups live on <b>F1&ndash;F9</b> (<b>Ctrl + F1&ndash;F9</b> to save)<br>
   <b>Minimap</b>: left-click/drag to look, <b>right-click</b> to order units there &nbsp;•&nbsp; <b>◱</b> cycles its size &nbsp;•&nbsp; a queued unit can be <b>clicked to cancel</b> (full refund)<br>
   <b>🧪 Testing Mode</b> (set up before the battle): you command every army in the match. Click an <b>army chip</b> in the top bar or press <b>Tab</b> to switch sides. Everything is free and finishes instantly, all research starts unlocked, you can build anywhere, there is no fog of war, and the Radio Tower call-downs have no cooldown.<br>
   <b>👁 Spectate Mode</b> (set up before the battle): four CPU armies fight it out and you just watch — full vision, no orders. The <b>spectator box</b> on the right lists every army's <b>AI profile</b>, resources, supply, live <b>mining rate</b>, its unit / structure / research queues and its army composition. Click a card or press <b>Tab</b> to follow an army; <b>V</b> hides the box. The speed chips (or <b>[</b> and <b>]</b>) run the match at 0.75x to 2x — this changes the pace only, never the outcome.<br>
-  <b>Arrows / WASD or screen edge</b>: scroll &nbsp;•&nbsp; <b>Scroll wheel</b> or <b>+ / −</b>: zoom (<b>0</b> resets) &nbsp;•&nbsp; <b>F9</b>: pause &nbsp;•&nbsp; <b>Esc</b>: cancel &nbsp;•&nbsp; <b>B</b> / <b>Shift+B</b>: preview blast FX at cursor<br><br>
+  <b>Arrows / WASD or screen edge</b>: scroll &nbsp;•&nbsp; <b>Scroll wheel</b> or <b>+ / −</b>: zoom (<b>0</b> resets) &nbsp;•&nbsp; <b>F10</b>: pause &nbsp;•&nbsp; <b>Esc</b>: cancel &nbsp;•&nbsp; <b>B</b> / <b>Shift+B</b>: preview blast FX at cursor<br><br>
   <b>⬢ Plastic</b> is hauled by Dump Trucks from toy piles — stacked building bricks, soldier sprues, and spilled toy-bin scraps. Every plastic pile is marked with a pulsing amber ⬢ above it. A ⛏ over a truck means it's actively mining. <b>⚡ Electricity</b> is hauled from giant AA batteries, or trickled in by Generators.<br><br>
   <b>Trucks</b>: right-click a pile to harvest it; right-click your <b>HQ</b> to force them to unload right now. Destroyed units leave a salvageable <b>scrap wreck</b> worth <span data-tune="salvagePct"></span>% of their plastic cost — send a truck to pick it up.<br><br>
   Build a <b>Barracks</b> for infantry, a <b>Garage</b> for vehicles, a <b>Helipad</b> for choppers. With a production building selected, right-click sets its rally point. Every building (barricades included) must be placed within <b><span data-tune="hqR"></span> tiles of your HQ</b> or <b><span data-tune="opR"></span> tiles of one of your Outposts</b> — only the HQ and Outpost themselves are exempt: they can go anywhere you can see (even far from base, but not into the fog of war). Nobody can build within <b><span data-tune="foeR"></span> tiles of an enemy HQ</b>, and every structure needs <b><span data-tune="gap"></span> clear <span data-tune="gapT"></span></b> between it and any other structure so your units can always drive out of your own base; barricades are exempt from each other, so walls still lay solid. Build an <b>Outpost</b> to push your borders out: it builds Dump Trucks, acts as a resource drop-off so trucks don't have to drive all the way home, and opens a <span data-tune="opR"></span>-tile build zone for a forward defensive line. You hold <b>one HQ at a time</b>; if it is destroyed, the <b>🏛 button above the minimap</b> places a new one at the ordinary price, so losing your headquarters costs you the building and not the match.<br><br>
@@ -480,7 +505,7 @@ canvas{display:block}
   <b>Radio Tower</b> (Lab unlock, 1 per army): a static uplink that opens the call-down panel on the right — <b><span data-tune="radioList"></span></b>. Every army gets the Artillery Barrage and the Paradrop; the rest belong to one army each, and you only ever see your own. <b>Napalm</b> is Tan's: it rains fire and a lingering burn across a <span data-tune="napBox"></span>×<span data-tune="napBox"></span> area; the <b>Artillery Barrage</b> walks <span data-tune="barrN"></span> off-map shells through a <span data-tune="barrBox"></span> box, <span data-tune="barrGap"></span>s apart, at <span data-tune="barrDmg"></span> damage inside a <span data-tune="barrR"></span>-tile blast (×<span data-tune="barrInf"></span> against infantry). Those <span data-tune="radioVis"></span> need vision. Paradrop puts <span data-tune="paraN"></span> elite Paratroopers anywhere, even in fog — SMGs shred infantry, AT grenades crack vehicles, slow HE charges level buildings. <b>Rapid Redeploy</b> is Blue's alone and is the only call-down that creates nobody: select up to <span data-tune="liftMax"></span> of your own infantry, click anywhere on the map even in fog, and they come down under canopies at the far end a moment later. <b>Supply Drop</b> is Green's alone: two crates on canopies, one carrying <span data-tune="dropP"></span> ⬢ and one carrying <span data-tune="dropE"></span> ⚡, which lie where they land with no expiry until one of <em>your</em> units walks over them — nobody else can pick them up, and nothing on the board can destroy them. <b>Smokescreen</b> is Gray's alone: a <span data-tune="scrBox"></span>&times;<span data-tune="scrBox"></span> cloud in which your units <em>and your structures</em> take <span data-tune="scrRed"></span>% less damage for <span data-tune="scrT"></span> seconds. It is deliberately heavier than the Mortar Squad's Smoke Rounds in every dimension — wider, longer, twice the reduction, and it covers buildings — because it costs a Radio Tower and the shared cooldown where the mortar's costs one loaded tube. Click an ability, then click the map (right-click cancels). One shared <span data-tune="radioCd"></span> cooldown.<br><br>
   <b>Green Army exclusives.</b> <b>Sarge</b> patches himself up at <span data-tune="sargeRegen"></span> HP/sec once he has been out of contact for <span data-tune="sargeCalm"></span> seconds, and his <b>On Me!</b> toggle gives allied infantry within <span data-tune="sargeR"></span> tiles +<span data-tune="sargeAura"></span>% damage while cutting his own by <span data-tune="sargeSelf"></span>%. <b>Mortar Squads</b> ramp +<span data-tune="wfStep"></span>% per consecutive shell on one target up to +<span data-tune="wfCap"></span>%, and their <b>Smoke Rounds</b> toggle shells your own men instead: no damage, but a <span data-tune="smokeR"></span>-tile cloud that cuts damage taken by <span data-tune="smokeRed"></span>% for <span data-tune="smokeT"></span> seconds. The <b>Radar Tent</b>'s <b>Target Uplink</b> gives your whole army +<span data-tune="upRg"></span> range and +<span data-tune="upVi"></span> sight for <span data-tune="upT"></span> seconds on a <span data-tune="upCd"></span>-second cooldown. The <b>Command Truck</b> carries no guns at all: its <b>Forward Command</b> is a build zone that travels, opening <span data-tune="cmdR"></span> tiles of buildable ground around it for three structures and no others — <span data-tune="cmdBlds"></span> — and its <b>Broadcast</b> toggle makes allies within <span data-tune="bcastR"></span> tiles reload <span data-tune="bcastRt"></span>% faster while pinning the truck exactly where it stands. The <b>Observation Balloon</b> has the best sight in the game at <span data-tune="ballVi"></span> tiles, drifts slowly, and is the one thing on the board that ordinary weapons cannot touch: only AA missiles can target it at all and they land for <span data-tune="ballAa"></span>% damage, while splash never reaches it. Its <b>High Ground</b> gives every ally inside that vision +<span data-tune="highRg"></span> range. It is a clock, though — the gas lasts <span data-tune="ballFuel"></span> seconds and then it falls, killing everyone aboard, so spend <b>Bail</b> before that to put <span data-tune="bailCrew"></span> on the ground beneath it and scuttle the balloon yourself. The <b>Command Post</b> makes your army learn faster within <span data-tune="cpostR"></span> tiles — promotions cost <span data-tune="cpostVet"></span>% fewer kills — and its <b>Regroup</b> hands every unit in that radius <span data-tune="regroupHp"></span>% of its own maximum health back at once, on a <span data-tune="regroupCd"></span>-second cooldown.<br><br>
   <b>Tan Army exclusives.</b> The <b>Flamethrower</b>'s <b>Cook-Off</b> leaves everything he touches burning for <span data-tune="cookDps"></span> damage/sec, and his <b>Pressure Valve</b> toggle adds <span data-tune="valveDmg"></span>% damage and +<span data-tune="valveRg"></span> range at the price of <span data-tune="valveBack"></span>% of the damage he deals being taken by the man holding the hose. The <b>&quot;Bull&quot; Heavy Tank</b>'s ablative plate ignores small-arms fire completely, which is to say <span data-tune="plateRow"></span> cannot hurt it at all, and its <b>Full Throttle</b> toggle adds <span data-tune="thrSpd"></span>% speed and crushes enemy infantry and barricades it drives over, but silences both its weapons while it rolls. The <b>Munitions Dump</b>'s <b>Scuttle</b> blows the building itself for <span data-tune="scDm"></span> damage across <span data-tune="scR"></span> tiles, and your own units and structures take <span data-tune="scFf"></span>% of it. The <b>Firebomb Heli</b> sows fire rather than shooting at things: <b>Scorched Earth</b> leaves the ground burning for <span data-tune="scorchT"></span> seconds at <span data-tune="scorchDps"></span> damage/sec under everything it hits, so a target that holds its position keeps burning and one that walks away does not. Its <b>Napalm Blast</b> empties the racks — <span data-tune="fbN"></span> firebombs on random tiles within <span data-tune="fbR"></span> of the helicopter, <span data-tune="fbDm"></span> damage each, every one leaving <span data-tune="fbBurn"></span> seconds of fire at <span data-tune="groundDps"></span>/sec that burns <em>your</em> men and buildings exactly as readily as theirs — on a <span data-tune="fbCd"></span>-second cooldown, the first cooldown ability any unit in the game has carried. The fire is on the ground, so it cannot reach an aircraft: the helicopter that dropped it is safe above it, and so is everything else with rotors. The <b>Foundry</b> gives every vehicle built while it stands +<span data-tune="foundryHp"></span>% hull permanently, and its <b>Pour</b> finishes the vehicle at the front of <em>every</em> Garage queue at once for <span data-tune="pourCost"></span>% of each one's plastic on top, on a <span data-tune="pourCd"></span>-second cooldown.<br><br>
-  <b>Gray Army exclusives.</b> The <b>Sniper</b> cannot be picked as a target at all until he fires, and drops back out of sight <span data-tune="camoT"></span> seconds after his last shot — an approach tool above all, since it covers him on the way in rather than through a firefight — and his <b>Called Shot</b> toggle adds <span data-tune="csDmg"></span>% damage but restricts him to enemy infantry for as long as it runs. <b>Rocket Artillery</b> shell-shocks whoever lives through the blast, adding <span data-tune="shockSet"></span> <span data-tune="shockSetT"></span> to a survivor's reload on top of whatever it already reads, and its <b>Ripple Fire</b> toggle trades the single shell for a salvo of <span data-tune="ripN"></span> rockets at <span data-tune="ripDm"></span>% damage each, bursting wider and scattered across the target, paid for with <span data-tune="ripRt"></span>% more reload. The <b>Bunker</b> garrisons <span data-tune="bunkGar"></span> infantry who fire from cover and cannot be caught by splash, and its <b>Lockdown</b> buttons them up: the garrison stops firing entirely, but the bunker takes <span data-tune="lockRed"></span>% less damage for <span data-tune="lockT"></span> seconds, on a <span data-tune="lockCd"></span>-second cooldown. The <b>Choktaw Heli</b> carries two weapons at once and fires both: rocket pods that take armour, aircraft and structures, and a door gun that takes infantry and wildlife, so it never has to choose. It is also the eye of the army — <b>Forward Observer</b> gives every friendly arcing weapon, which is to say the Mortar Squad and the Rocket Artillery, +<span data-tune="fobRg"></span> tiles of reach against anything the Choktaw itself can see, and nothing at all against a target it cannot. Its <b>Paint</b> marks a <span data-tune="paintBox"></span>&times;<span data-tune="paintBox"></span> area you choose: every enemy unit inside takes +<span data-tune="paintDmg"></span>% damage from <em>every</em> source for <span data-tune="paintT"></span> seconds, on a <span data-tune="paintCd"></span>-second cooldown. The mark rides the men rather than the ground, so it follows them out of the box, and painting a unit that is already lit restarts its clock instead of stacking a second mark. The <b>Heavy Barricade</b> is the ordinary wall at <span data-tune="hbarrHp"></span> HP, and everything of yours on the tiles around it — units, structures and other walls alike — takes <span data-tune="hbarrRed"></span>% less damage. That aura <em>stacks</em>: overlapping walls add up, to a ceiling of <span data-tune="hbarrCap"></span>%, so four of them reach the cap and a fifth is wasted plastic. One in <span data-tune="hbarrMineP"></span> of them buries a mine <span data-tune="hbarrMineD"></span> tiles toward the nearest enemy HQ as it finishes — a mine only your army can see, and one that lets your own men walk over it.<br><br>
+  <b>Gray Army exclusives.</b> The <b>Sniper</b> cannot be picked as a target at all until he fires, and drops back out of sight <span data-tune="camoT"></span> seconds after his last shot — an approach tool above all, since it covers him on the way in rather than through a firefight — and his <b>Called Shot</b> toggle adds <span data-tune="csDmg"></span>% damage but restricts him to enemy infantry for as long as it runs. <b>Rocket Artillery</b> shell-shocks whoever lives through the blast, adding <span data-tune="shockSet"></span> <span data-tune="shockSetT"></span> to a survivor's reload on top of whatever it already reads, and its <b>Ripple Fire</b> toggle trades the single shell for a salvo of <span data-tune="ripN"></span> rockets at <span data-tune="ripDm"></span>% damage each, bursting wider and scattered across the target, paid for with <span data-tune="ripRt"></span>% more reload. The <b>Bunker</b> garrisons <span data-tune="bunkGar"></span> infantry who fire from cover and cannot be caught by splash, and its <b>Lockdown</b> buttons them up: the garrison stops firing entirely, but the bunker takes <span data-tune="lockRed"></span>% less damage for <span data-tune="lockT"></span> seconds, on a <span data-tune="lockCd"></span>-second cooldown. The <b>Choktaw Heli</b> carries two weapons at once and fires both: rocket pods that take armour, aircraft and structures, and a door gun that takes infantry and wildlife, so it never has to choose. It is also the eye of the army — <b>Forward Observer</b> gives every friendly arcing weapon, which is to say the Mortar Squad and the Rocket Artillery, +<span data-tune="fobRg"></span> tiles of reach against anything the Choktaw itself can see, and nothing at all against a target it cannot. Its <b>Paint</b> marks a <span data-tune="paintBox"></span>&times;<span data-tune="paintBox"></span> area you choose: every enemy unit inside takes +<span data-tune="paintDmg"></span>% damage from <em>every</em> source for <span data-tune="paintT"></span> seconds, on a <span data-tune="paintCd"></span>-second cooldown. The mark rides the men rather than the ground, so it follows them out of the box, and painting a unit that is already lit restarts its clock instead of stacking a second mark. The <b>Heavy Barricade</b> is the ordinary wall at <span data-tune="hbarrHp"></span> HP, and everything of yours on the tiles around it — units, structures and other walls alike — takes <span data-tune="hbarrRed"></span>% less damage. That aura <em>stacks</em>: overlapping walls add up, to a ceiling of <span data-tune="hbarrCap"></span>%, so four of them reach the cap and a fifth is wasted plastic. Each one has a <span data-tune="hbarrMineP"></span>% chance of burying a mine <span data-tune="hbarrMineD"></span> tiles toward the nearest enemy HQ as it finishes — a mine only <em>you</em> can see, and one that lets your own men, and an ally's, walk over it.<br><br>
   <b>Blue Army exclusives.</b> The <b>Scout Bike</b> is evasive, taking <span data-tune="evadeRed"></span>% less damage in any moment he is genuinely moving — which is worth nothing while he sits still trading shots, and that is where most of his damage is taken — and his <b>Flat Out</b> toggle adds <span data-tune="flatSpd"></span>% speed and +<span data-tune="flatVi"></span> sight, but holds his fire completely and refuses attack orders while it runs. The <b>Chinook</b> lifts <span data-tune="chinCap"></span> infantry and makes friendly infantry near it hit <span data-tune="chinAura"></span>% harder, and its <b>Air Assault</b> toggle opens the hold so the squad fires out at whatever it can reach — they can be shot back at while they do it, and the aircraft cannot move at all until you close it again. The <b>Wind Turbine</b>'s <b>Overdrive</b> runs it at ×<span data-tune="overMul"></span> output for <span data-tune="overT"></span> seconds and then produces nothing whatsoever for <span data-tune="overOff"></span> seconds, on a <span data-tune="overCd"></span>-second cooldown; across the full cycle that is less electricity than leaving it alone, so it buys the power earlier rather than cheaper. The <b>Signal Runner</b> is weaker and worse-armed than a Grunt on purpose — what you are buying is his radio. <b>Radio Net</b> passively gives friendly infantry within <span data-tune="rnetR"></span> tiles +<span data-tune="rnetVi"></span> sight, and his <b>Sprint</b> toggle gives every friendly infantryman within <span data-tune="sprintR"></span> tiles, himself included, +<span data-tune="sprintSpd"></span>% movement speed — but nobody inside the radius will fire, take an attack order, or so much as acquire a target while it runs. The <b>Forward Pad</b> repairs friendly aircraft within <span data-tune="padR"></span> tiles at <span data-tune="padRep"></span> HP/sec, which is the only aircraft repair in the game, and its <b>Scramble</b> gives every aircraft you own — anywhere on the map, not just the ones on the pad — +<span data-tune="scramSpd"></span>% speed for <span data-tune="scramT"></span> seconds on a <span data-tune="scramCd"></span>-second cooldown.<br><br>
   <b>APC</b> (Garage): unarmed transport carrying 10 infantry — right-click it with infantry selected to load, press <b>U</b> (or the panel button) to unload. It shields itself and nearby allied infantry (−25% damage); if destroyed, the squad bails out losing only 15% health.<br><br>
   <b>Chinook</b> (Blue only, Helipad): the fastest chopper in the game and the biggest transport — <span data-tune="chinCap"></span> infantry, loaded and unloaded exactly like an APC, flown straight over water, walls and minefields. It carries no weapons at all, but allied infantry within <b>3 tiles</b> of it hit <b>15% harder</b> (one Chinook only; a second does not stack, though a Munitions Dump does). Over open water it will refuse to unload.<br><br>
@@ -614,6 +639,23 @@ canvas{display:block}
      MENU BACKDROP (MENUBG) ...................................... the animated setup-screen backdrop
    ============================================================ */
 /* ---------------- CONSTANTS & MATH HELPERS ---------------- */
+/* v98: the release stamp the main menu prints in its corner. TWO constants and
+   not one string, because the menu prints them apart and a test reads them
+   apart. GAME_DATE is ISO on purpose - it is what the repository can check
+   against a commit, and menuStamp() is the only place it is ever rewritten for
+   a human to read. Neither is sim state: nothing here is hashed, serialized or
+   sent over the wire, and a peer on a different build is caught by the protocol
+   check that already exists rather than by this. Bump BOTH every release. */
+const GAME_VER='v98';
+const GAME_DATE='2026-08-26';
+/* the same version as a NUMBER, for the save-snapshot tag. That tag was a
+   hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
+   the version that nothing tied back to the first, which is the trap this whole
+   pair exists to close. Derived rather than declared: a vNN.N release keeps the
+   integer of its NN, which is what a snapshot tag has always meant. Nothing
+   reads it back (loadState ignores it and it is not hashed); it is a label on
+   the blob, and T49.E pins both of those. */
+const GAME_VER_N=parseInt(String(GAME_VER).slice(1),10)||0;
 const TW=64, TH=32, HW=TW/2, HH=TH/2;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 // Fisher-Yates shuffle (returns the same array, shuffled in place).
@@ -1124,7 +1166,14 @@ const AI_POUR_N=2;     // ...and how many Garages must have something queued to 
    wasted plastic; the cap is what stops a solid block of them from being
    arithmetically unkillable, and it is a cap on the TOTAL rather than on the
    count so it cannot be walked around by mixing in the cheap barricade.
-   HBARR_MINE_P is the one-time 10% roll, HBARR_MINE_D the three tiles in front.
+   HBARR_MINE_P is the one-time roll and HBARR_MINE_D the three tiles in front.
+   v98: the wall is 40 rather than 60 and the roll 15% rather than 10%, both by
+   the owner's decision. The 60 was chosen so HP-per-plastic came out flat
+   against the ordinary barricade and the aura and the mine were what the extra
+   bought; at 40 the wall is DELIBERATELY better plastic-for-HP than the cheap
+   one, which is the whole point of a re-price. It stays a Gray exclusive behind
+   a Lab and a research project, so the cheap wall is still what the other three
+   armies lay and still what Gray lays before the tech lands.
    SMOKESCR_BOX is 7 by specification and SMOKESCR_RED is 40% against the
    Mortar's SMOKE_RED of 20% over a 2-tile radius for 5 seconds. That gap is
    INTENDED and is written down here so a later balance pass reads it as a
@@ -1137,11 +1186,11 @@ const PAINT_BOX=2;       // ...over this many tiles square
 const PAINT_T=10;        // ...for this many seconds
 const PAINT_CD=20;       // ...and the cooldown, on the v87 u.abCool clock
 const HBARR_HP=BARR_HP*3;// Heavy Barricade: triple the ordinary wall
-const HBARR_COST=60;     // ...at three times the plastic, so HP per plastic is flat and what you buy is the aura and the mine
+const HBARR_COST=40;     // ...v98: 60 -> 40, so it is now twice the wall's plastic for three times its HP, and the aura and the mine ride on top
 const HBARR_RED=0.15;    // ...damage taken cut per wall in reach, STACKING with the others
 const HBARR_CAP=0.60;    // ...but never past this in total, however many overlap
 const HBARR_R=1.5;       // ...the reach itself: the ring of tiles immediately around a 1x1 wall
-const HBARR_MINE_P=0.10; // ...the one-time roll on completion that buries a mine
+const HBARR_MINE_P=0.15; // ...v98: 0.10 -> 0.15, the one-time roll on completion that buries a mine
 const HBARR_MINE_D=3;    // ...that many tiles in front, front being the nearest enemy HQ
 const SMOKESCR_BOX=7;    // Smokescreen: the side of the square it covers
 const SMOKESCR_RED=0.40; // ...damage cut for friendly units AND structures inside it
@@ -3086,6 +3135,57 @@ function sfxWhoosh(x,y){
 // pure:1 keeps the humanisation off these: a click that wanders in pitch reads as a fault.
 function sClick(){if(muted||!ac())return;ptone({ft:'sine',f0:900,dur:.05,gain:.04,pure:1});}
 function sUiTone(){if(muted||!ac())return;ptone({ft:'sine',f0:600,dur:.06,gain:.05,pure:1});}
+/* --- the menu's own chrome, added at v98 ---
+   A tick under the cursor and a clack under the click. Both are `pure`, on
+   sClick's own rule: an interface sound that wanders in pitch reads as a fault
+   rather than as feedback.
+   sTick is deliberately the quietest voice in the file - it fires on every
+   button the cursor crosses, and a hover sound you NOTICE is a hover sound you
+   will hate by the third menu. sMenuClick is the answer to it and is the
+   stronger of the pair by design: a bright transient for the contact and a
+   short falling body under it, roughly twice sClick's level. sClick is
+   unchanged and still owns every in-match button; these two own the setup
+   screen and the Field Manual. */
+function sTick(){if(muted||!ac())return;ptone({ft:'sine',f0:1650,dur:.022,gain:.020,pure:1});}
+function sMenuClick(){
+ if(muted||!ac())return;
+ ptone({ft:'sine',f0:1250,dur:.032,gain:.052,pure:1});
+ ptone({ft:'triangle',f0:520,f1:300,sweep:.05,dur:.085,gain:.075,pure:1});
+}
+/* THE MENU'S HOVER/CLICK DELEGATION, bound once per host.
+   One delegated pair per host and NOT a line inside every handler: the setup
+   screen builds its faction cards, map cards and whole online-lobby panel at
+   runtime, and the Field Manual rebuilds its gallery on every tab - a per-site
+   call would have to be remembered into each of them, which is the v90.1 trap
+   (a painter grew a new argument and the fifteenth caller was missed for a
+   whole release). A delegated listener cannot be forgotten by a button that has
+   not been written yet.
+   mouseover BUBBLES and fires again for every child inside a card, so the tick
+   is gated on the closest interactive ancestor actually CHANGING - otherwise
+   sliding across a card's three lines of text ticks three times. A move onto
+   dead space inside the host clears the memory (so returning to the same button
+   ticks again) and mouseleave clears it on the way out. mouseenter would not
+   bubble at all and could not be delegated.
+   The click sound REPLACES the sClick() the menu's own handlers used to make
+   one by one; those calls are gone in this release, so a click still makes
+   exactly one sound. Everything inside the HUD keeps sClick(). */
+const MENU_HIT='button,.card,.icell';
+let menuHoverEl=null;
+function menuAudioBind(host){
+ if(!host||!host.addEventListener)return false;
+ host.addEventListener('mouseover',e=>{
+  const el=(e&&e.target&&e.target.closest)?e.target.closest(MENU_HIT):null;
+  if(el===menuHoverEl)return;
+  menuHoverEl=el;
+  if(el&&!el.disabled)sTick();
+ });
+ host.addEventListener('mouseleave',()=>{menuHoverEl=null});
+ host.addEventListener('click',e=>{
+  const el=(e&&e.target&&e.target.closest)?e.target.closest(MENU_HIT):null;
+  if(el&&!el.disabled)sMenuClick();
+ });
+ return true;
+}
 /* v27.1: soft two-tone nudge when a fresh attack blip lands on the minimap.
    Non-positional UI sound, quiet, and throttled hard: one nudge every few
    seconds no matter how hot the battle gets. */
@@ -3586,7 +3686,7 @@ const B={
     Priced at three times the wall for three times the hull, which makes HP per
     plastic identical - what the extra 40 buys is the aura and the mine, not
     tougher plastic per coin. */
- hbarricade:{cat:'def',n:'Heavy Barricade',hp:HBARR_HP,sz:1,cp:HBARR_COST,ce:0,bt:2.2,vi:0,barr:1,hbarr:1,req:'lab',tech:'b_hbarricade',d:`Reinforced wall, ${HBARR_HP} HP. Everything of yours on the tiles around it — units, structures, other walls — takes ${Math.round(HBARR_RED*100)}% less damage, and overlapping walls STACK to ${Math.round(HBARR_CAP*100)}%. One in ${Math.round(1/HBARR_MINE_P)} buries a mine ${HBARR_MINE_D} tiles forward that only your army sees. Click-and-drag to lay a line.`},
+ hbarricade:{cat:'def',n:'Heavy Barricade',hp:HBARR_HP,sz:1,cp:HBARR_COST,ce:0,bt:2.2,vi:0,barr:1,hbarr:1,req:'lab',tech:'b_hbarricade',d:`Reinforced wall, ${HBARR_HP} HP. Everything of yours on the tiles around it — units, structures, other walls — takes ${Math.round(HBARR_RED*100)}% less damage, and overlapping walls STACK to ${Math.round(HBARR_CAP*100)}%. A ${Math.round(HBARR_MINE_P*100)}% chance to bury a mine ${HBARR_MINE_D} tiles forward that only YOU see. Click-and-drag to lay a line.`},
  barricade:{cat:'def',n:'Barricade',hp:BARR_HP,sz:1,cp:BARR_COST,ce:0,bt:1.0,vi:0,barr:1,d:`Czech hedgehog: blocks ground movement, ${BARR_HP} HP, ${BARR_COST} ⬢ each. Click-and-drag to lay a line.`},
  nest:{n:'Wildlife Nest',hp:NEST_HP,sz:1,cp:0,ce:0,bt:1,vi:0,neutralNest:1,d:'A wild critter den. Smash it to stop the swarm from respawning.'}
 };
@@ -3824,24 +3924,50 @@ const MAPS={
 };
 
 /* ---------------- SETUP SCREEN ---------------- */
+/* v98: the release stamp in the menu's corner. The DATE is reformatted for a
+   human here and nowhere else - GAME_DATE stays ISO so it can be checked
+   against the repository, and this is the one function that turns it into
+   "26 AUG 2026". Parsed with a regex rather than through Date, deliberately:
+   `new Date('2026-08-26')` is parsed as UTC MIDNIGHT and getDate() reads back
+   local, so every player west of Greenwich would have been shown the 25th. A
+   string that does not match the ISO shape is printed verbatim rather than
+   silently becoming NaN. */
+const STAMP_MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+function stampDate(iso){
+ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||''));
+ if(!m)return String(iso||'');
+ return (+m[3])+' '+(STAMP_MON[+m[2]-1]||m[2])+' '+m[1];
+}
+function menuStamp(){
+ const el=document.getElementById('verStamp');
+ if(!el)return '';
+ const t=String(GAME_VER).toUpperCase()+' \u00b7 UPDATED '+stampDate(GAME_DATE);
+ el.textContent=t;
+ return t;
+}
+menuStamp();
+/* v98: the setup screen's hover tick and click clack, bound once on the host.
+   #netPanel and both card rows are built at runtime and are inside #setup, so
+   one binding here covers every button the menu will ever grow. */
+menuAudioBind(document.getElementById('setup'));
 let SETUP={fac:'green',mode:'dm',map:'backyard',opp:1,diff:'normal',test:0,watch:0}; // v50: test = the sandbox toggle. v55: watch = spectate mode
 const facRow=document.getElementById('facRow');
 for(const k in FAC){if(k==='bug')continue;const f=FAC[k];const c=document.createElement('div');c.className='card'+(k==='green'?' sel':'');c.innerHTML=`<div class="cname"><div class="dot" style="background:${f.color}"></div>${f.name}</div><div class="cdesc">${f.desc}</div><div class="uq">★ ${f.uu.map(k=>U[k].n).join(' • ')}<br>★ ${f.ub.map(k=>B[k].n).join(' • ')}</div>`;
- c.onclick=()=>{document.querySelectorAll('#facRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');SETUP.fac=k;sClick()};facRow.appendChild(c)}
+ c.onclick=()=>{document.querySelectorAll('#facRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');SETUP.fac=k};facRow.appendChild(c)}
 const mapRow=document.getElementById('mapRow');
 for(const k in MAPS){const m=MAPS[k];const c=document.createElement('div');c.className='card mcard'+(k==='backyard'?' sel':'');c.dataset.map=k;if(m.survOnly){c.dataset.survonly='1';c.style.display='none';} /* v35: survival-only maps hidden outside Wave Survival */ c.innerHTML=`<div class="cname">${m.n}</div><div class="cdesc">${m.d}</div>`;
- c.onclick=()=>{document.querySelectorAll('#mapRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');SETUP.map=k;sClick()};mapRow.appendChild(c)}
-document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.mode=b.dataset.mode;refreshTeamRow();sClick()}); // v33
-document.querySelectorAll('[data-opp]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-opp]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.opp=+b.dataset.opp;sClick()});
-document.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-diff]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.diff=b.dataset.diff;sClick()});
+ c.onclick=()=>{document.querySelectorAll('#mapRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');SETUP.map=k};mapRow.appendChild(c)}
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.mode=b.dataset.mode;refreshTeamRow()}); // v33
+document.querySelectorAll('[data-opp]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-opp]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.opp=+b.dataset.opp});
+document.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-diff]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.diff=b.dataset.diff});
 // v50: testing mode. refreshTeamRow relabels the army-count row and the team chips off SETUP.test.
-document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-test]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.test=+b.dataset.test;if(SETUP.test)setWatchMode(0);refreshTeamRow();sClick()});
+document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-test]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.test=+b.dataset.test;if(SETUP.test)setWatchMode(0);refreshTeamRow()});
 // v55: SPECTATE MODE. The opposite sandbox: testing mode hands you every army,
 // spectate mode hands you none. Selecting either clears the other through these
 // two setters, which repaint their own row so the screen never shows both lit.
 function setWatchMode(v){SETUP.watch=v?1:0;document.querySelectorAll('[data-watch]').forEach(x=>x.classList.toggle('sel',+x.dataset.watch===SETUP.watch));}
 function setTestMode(v){SETUP.test=v?1:0;document.querySelectorAll('[data-test]').forEach(x=>x.classList.toggle('sel',+x.dataset.test===SETUP.test));}
-document.querySelectorAll('[data-watch]').forEach(b=>b.onclick=()=>{setWatchMode(+b.dataset.watch);if(SETUP.watch)setTestMode(0);refreshTeamRow();sClick()});
+document.querySelectorAll('[data-watch]').forEach(b=>b.onclick=()=>{setWatchMode(+b.dataset.watch);if(SETUP.watch)setTestMode(0);refreshTeamRow()});
 // v29: per-slot team pickers. Clicking a chip cycles its team 1-4; matching numbers
 // ally (shared vision, no friendly fire, joint victory). Chips beyond the current
 // opponent count hide themselves; an all-one-team pick falls back to FFA in newGame.
@@ -3873,7 +3999,7 @@ function refreshTeamRow(){
   b.textContent=`${watch?'CPU '+(i+1):test?'Army '+(i+1):TSLOT_NAMES[i]} — Team ${SETUP.teams[i]}`;
  });
 }
-document.querySelectorAll('[data-tslot]').forEach(b=>b.onclick=()=>{const i=+b.dataset.tslot;SETUP.teams[i]=SETUP.teams[i]%4+1;refreshTeamRow();sClick()});
+document.querySelectorAll('[data-tslot]').forEach(b=>b.onclick=()=>{const i=+b.dataset.tslot;SETUP.teams[i]=SETUP.teams[i]%4+1;refreshTeamRow()});
 document.querySelectorAll('[data-opp]').forEach(b=>b.addEventListener('click',refreshTeamRow));
 refreshTeamRow();
 /* v91: the load is kicked off when the page opens (below) and merely AWAITED
@@ -4233,11 +4359,11 @@ function lobOpenHost(){
  P.appendChild(lobEl('div','nsub','📨 <b>Invite</b> — one code covers every open seat, and every reply comes back to one box'));
  const invRow=lobEl('div','nrow');
  const mintB=lobEl('button','opt','📨 Create lobby code');mintB.id='lobMint';
- mintB.onclick=()=>{sClick();lobMintInvites()};
+ mintB.onclick=()=>{lobMintInvites()};
  invRow.appendChild(mintB);
  const copyB=lobEl('button','opt','📋 Copy');
  copyB.onclick=()=>{const t=document.getElementById('lobCode');if(!t||!t.value)return;
-  if(t.select)t.select();lobCopy(t.value);lobHostStat('Lobby code copied — paste it to your friends.');sClick()};
+  if(t.select)t.select();lobCopy(t.value);lobHostStat('Lobby code copied — paste it to your friends.')};
  invRow.appendChild(copyB);P.appendChild(invRow);
  const codeTa=lobEl('textarea','ncode nwide');codeTa.id='lobCode';codeTa.readOnly=true;
  codeTa.placeholder='Set a slot to Open (friend), then press Create lobby code…';
@@ -4277,12 +4403,12 @@ function lobRenderSlots(){
    const ni=(roleIdx+1)%LOB_ROLES.length;
    r.role=LOB_ROLES[ni][0];r.diff=LOB_ROLES[ni][1]||'normal';
    if(r.role!=='open'&&r.pc){try{r.pc.close()}catch(e){};r.pc=null;r.ch=null;r.state='idle';r.blob=null;r.ready=false}
-   lobRefresh();sClick();
+   lobRefresh();
   };
   row.appendChild(roleB);
   if(r.role==='cpu'){
    const facB=lobEl('button','opt','⚑ '+FAC[r.fac].name);
-   facB.onclick=()=>{r.fac=fk[(fk.indexOf(r.fac)+1)%fk.length];lobRefresh();sClick()};
+   facB.onclick=()=>{r.fac=fk[(fk.indexOf(r.fac)+1)%fk.length];lobRefresh()};
    row.appendChild(facB);
   }
   if(r.role==='open'){
@@ -4368,7 +4494,7 @@ function lobOpenJoin(){
  outRow.appendChild(outTa);
  const cpB=lobEl('button','opt','📋 Copy');
  cpB.onclick=()=>{if(!outTa.value)return;if(outTa.select)outTa.select();
-  lobCopy(outTa.value);lobJoinStat('Reply copied — send it to the host.');sClick()};
+  lobCopy(outTa.value);lobJoinStat('Reply copied — send it to the host.')};
  outRow.appendChild(cpB);
  outRow.style.display='none';P.appendChild(outRow);
  const goRow=lobEl('div','nrow');
@@ -4377,7 +4503,7 @@ function lobOpenJoin(){
  lobSetRosBlock(P);
  const rdyRow=lobEl('div','nrow');
  const rdyB=lobEl('button','opt','⏳ Click when ready');rdyB.id='lobReady';rdyB.disabled=true;
- rdyB.onclick=()=>{if(!LOBBY||LOBBY.mode!=='join'||!LOBBY.join.ch)return;LOBBY.ready=!LOBBY.ready;lobJoinReadyLabel();lobJoinSendPick();sClick()};
+ rdyB.onclick=()=>{if(!LOBBY||LOBBY.mode!=='join'||!LOBBY.join.ch)return;LOBBY.ready=!LOBBY.ready;lobJoinReadyLabel();lobJoinSendPick()};
  rdyRow.appendChild(rdyB);P.appendChild(rdyRow);
  P.appendChild(lobChatBlock());
  const st=lobEl('div','nstat','');st.id='lobJoinStat';P.appendChild(st);
@@ -4411,7 +4537,7 @@ function lobJoinSeats(){
  el.appendChild(lobEl('span','nlab','Take a seat:'));
  for(const it of inv.items){
   const b=lobEl('button','opt'+(it.seat===LOBBY.seat?' nseaton':''),lobSeatName(it.seat));
-  b.onclick=()=>{if(!LOBBY||LOBBY.seat===it.seat)return;LOBBY.seat=it.seat;lobJoinSeats();lobJoinAnswer();sClick()};
+  b.onclick=()=>{if(!LOBBY||LOBBY.seat===it.seat)return;LOBBY.seat=it.seat;lobJoinSeats();lobJoinAnswer()};
   el.appendChild(b);
  }
 }
@@ -4465,8 +4591,8 @@ function lobJoinChanOpen(ch){
  };
  ch.onclose=()=>{if(LOBBY&&LOBBY.mode==='join'){LOBBY.join.ch=null;LOBBY.ready=false;lobJoinStat('⚠ The host closed the connection.');lobRefresh()}};
 }
-document.getElementById('hostOnlineBtn').onclick=()=>{sClick();lobOpenHost()};
-document.getElementById('joinOnlineBtn').onclick=()=>{sClick();lobOpenJoin()};
+document.getElementById('hostOnlineBtn').onclick=()=>{lobOpenHost()};
+document.getElementById('joinOnlineBtn').onclick=()=>{lobOpenJoin()};
 /* v47: ONE delegated listener per setup row, registered once for the session.
    lobOpenJoin used to add its own facRow listener on every open, so backing out
    and rejoining N times sent N duplicate picks per army click. Clicks bubble here
@@ -7023,13 +7149,73 @@ function v71Fills(){
    tail_v86 pins the premise rather than leaving it as prose here. */
 const MENU_KEYS=['c','e','g','i','k','l','m','n','o','r','t','v','y','z'];
 let MENU_HOT=Object.create(null),MENU_HOT_N=0;
-function hotReset(){MENU_HOT=Object.create(null);MENU_HOT_N=0}
+/* v98: the ABILITY registry is declared here, beside the menu's, rather than
+   down beside the functions that use it. hotReset clears both, and a `let`
+   assigned before its own declaration has been evaluated is a temporal-dead-zone
+   fault waiting for the first caller that runs during the parse - the trap the
+   v86 note records from the other direction. The block that explains it is
+   further down, above abilAdd. */
+const ABIL_KEYS=['1','2','3','4','5','6','7','8','9'];
+let ABIL_HOT=Object.create(null),ABIL_HOT_N=0;
+function hotReset(){MENU_HOT=Object.create(null);MENU_HOT_N=0;ABIL_HOT=Object.create(null);ABIL_HOT_N=0}
 function hotNext(){return MENU_HOT_N<MENU_KEYS.length?MENU_KEYS[MENU_HOT_N++]:null}
 /* Fires the tile's OWN onclick, dimmed or not, so a key and a click are one code
    path. Every one of those handlers already validates downstream. */
 function menuHotkey(k){
  const b=MENU_HOT[String(k).toLowerCase()];
  if(!b||typeof b.onclick!=='function')return false;
+ b.onclick();return true;
+}
+/* --- ability hotkeys, added at v98 ---
+   The number row fires the selection panel's ABILITY buttons: 1 is the first
+   button the panel put in the row, 2 the second, and so on down the row you are
+   looking at. This is MENU_HOT's design applied to the other half of the panel -
+   the registry is rebuilt by hotReset() with the panel and only with the panel,
+   so a digit means something only while its button is on screen and nothing
+   needs a mode gate around it.
+   The numbers were free to take because the control groups moved OFF them in
+   this same release, to F1-F9 (23-net-input.js records why, and the Field Manual
+   says so). A digit therefore still means exactly one thing, which is the rule
+   MENU_KEYS was picked under and the reason this could not simply shadow them.
+   Order is APPEND order, in both the single-unit panel and the mixed-group one.
+   That is what makes the owner's rule - "for a group of mixed units, 1, 2, and
+   so on" - hold with no second list to keep in step: whatever goes into the row
+   first is 1. It also means BUILDING abilities are deliberately not in here.
+   A structure's panel already hands its Construct, Train and Research tiles the
+   MENU_KEYS letters; numbering the two or three ability buttons above them is a
+   separate decision and has not been asked for.
+   ABIL_KEYS and ABIL_HOT are declared up beside MENU_HOT, for the reason the
+   note there gives.
+   Client-local: nothing here is hashed, serialized or visible to the sim. */
+function abilNext(){return ABIL_HOT_N<ABIL_KEYS.length?ABIL_KEYS[ABIL_HOT_N++]:null}
+/* Takes the next number, stamps the badge, registers the button and hosts it.
+   Every unit-ability site calls THIS instead of pb.appendChild, which is what
+   stops a button from shipping without a key by being added somewhere new, and
+   what stops the numbering from disagreeing with the order the player sees.
+   The badge is prefixed onto innerHTML rather than inserted as a node: `.bb`
+   buttons carry no live child references (the V71FILL wash/edge pairs live on
+   `.tl` tiles and `.qc` queue chips), so a re-parse costs nothing, and a plain
+   property write is the one form the headless shim also implements.
+   Past the ninth a button carries no key rather than reusing one, exactly as
+   hotNext does; no selection in the game reaches nine ability buttons today. */
+function abilAdd(host,bt){
+ const k=abilNext();
+ if(k){
+  ABIL_HOT[k]=bt;
+  bt.innerHTML='<span class="ak">'+k+'</span>'+bt.innerHTML;
+  bt.title=(bt.title?bt.title+'\n':'')+'Hotkey: '+k;
+ }
+ host.appendChild(bt);
+ return bt;
+}
+/* Fires the button's OWN onclick, so a key and a click are one code path - and
+   REFUSES a disabled one, so they stay one code path when it is greyed out: a
+   browser swallows the click on a disabled button and calling onclick() by hand
+   would not. Every handler behind these validates downstream anyway; this is
+   about the two surfaces agreeing, not about safety. */
+function abilHotkey(k){
+ const b=ABIL_HOT[String(k)];
+ if(!b||b.disabled||typeof b.onclick!=='function')return false;
  b.onclick();return true;
 }
 /* o = {kind,art,fac,name,c:[[glyph,val,cls,short]],dis,locked,mark,up,fill,tip,hk,onclick} */
@@ -7429,7 +7615,7 @@ function refreshSelPanel(){
     if(e.entrenched){submitCmd('unentrench',{ids:[e.id]});sClick();}
     else{G.radioTargeting={unit:e,mode:'entrench'};msg('Click to aim the entrench cone.');sClick();}
    };
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v79 SARGE: the "On Me!" broadcast ---
      Every number in the label reads the constants, so a tuning pass moves one
@@ -7439,7 +7625,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.onMe?'Stand Down':'On Me!'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(SARGE_AURA*100)}% damage to infantry within ${SARGE_AURA_R}, −${Math.round((1-SARGE_SELF)*100)}% his own</span>`;
    bt.title=`Allied infantry within ${SARGE_AURA_R} tiles hit ${Math.round(SARGE_AURA*100)}% harder while Sarge broadcasts. His own damage is cut ${Math.round((1-SARGE_SELF)*100)}% for as long as it runs.`;
    bt.onclick=()=>{submitCmd('onme',{ids:[e.id],on:!e.onMe});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   // --- v79 MORTAR: ammunition select ---
   if(e.kind==='unit'&&e.p===G.human&&e.t.smokeCap){
@@ -7447,7 +7633,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.smoke?'High Explosive':'Smoke Rounds'}</b><br><span style="font-size:10px;opacity:.75">−${Math.round(SMOKE_RED*100)}% damage taken under a ${SMOKE_R}-tile cloud, ${SMOKE_T}s</span>`;
    bt.title=`Smoke rounds do no damage. The tube shells whichever friendly unit near it is under fire, and anything of yours inside the cloud takes ${Math.round(SMOKE_RED*100)}% less for ${SMOKE_T} seconds.`;
    bt.onclick=()=>{submitCmd('smoke',{ids:[e.id],on:!e.smoke});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v80 FLAMETHROWER: the pressure valve --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.valve){
@@ -7455,7 +7641,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.valve?'Close Valve':'Pressure Valve'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(VALVE_DMG*100)}% damage, +${VALVE_RG} range, ${Math.round(VALVE_BACK*100)}% of it back on him</span>`;
    bt.title=`Open the valve: ${Math.round(VALVE_DMG*100)}% more damage and ${VALVE_RG} tile more reach, but ${Math.round(VALVE_BACK*100)}% of every point he deals is taken by the flamethrower himself.`;
    bt.onclick=()=>{submitCmd('valve',{ids:[e.id],on:!e.valve});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v80 BULL: full throttle --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.throttle){
@@ -7463,7 +7649,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.thr?'Throttle Down':'Full Throttle'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(THROTTLE_SPD*100)}% speed, crushes infantry & barricades, cannot fire</span>`;
    bt.title=`Charge: ${Math.round(THROTTLE_SPD*100)}% faster, and enemy infantry and barricades under the tracks are crushed outright. Both weapons are silent for as long as it runs.`;
    bt.onclick=()=>{submitCmd('throttle',{ids:[e.id],on:!e.thr});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v81 SNIPER: called shot --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.cshot){
@@ -7471,7 +7657,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.cs?'Free Fire':'Called Shot'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(CS_DMG*100)}% damage, infantry only</span>`;
    bt.title=`Take only infantry targets, and hit them ${Math.round(CS_DMG*100)}% harder. He will not fire on vehicles, aircraft or structures while it runs.`;
    bt.onclick=()=>{submitCmd('cshot',{ids:[e.id],on:!e.cs});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v81 ROCKET ARTILLERY: ripple fire --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.ripple){
@@ -7479,7 +7665,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.rip?'Single Fire':'Ripple Fire'}</b><br><span style="font-size:10px;opacity:.75">${RIPPLE_N} rockets at ${Math.round(RIPPLE_DM*100)}% each, +${Math.round((RIPPLE_RT-1)*100)}% reload</span>`;
    bt.title=`Fire a ${RIPPLE_N}-rocket salvo scattered across a wider box, each rocket carrying ${Math.round(RIPPLE_DM*100)}% of a full shell, then reload ${Math.round((RIPPLE_RT-1)*100)}% longer.`;
    bt.onclick=()=>{submitCmd('ripple',{ids:[e.id],on:!e.rip});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v82 SCOUT BIKE: flat out --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.flat){
@@ -7487,7 +7673,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.flat?'Slow Down':'Flat Out'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(FLAT_SPD*100)}% speed, +${FLAT_VI} sight, no guns</span>`;
    bt.title=`Run flat out: ${Math.round(FLAT_SPD*100)}% faster and ${FLAT_VI} tiles more sight, but he will not fire and cannot be sent at a target while it runs.`;
    bt.onclick=()=>{submitCmd('flat',{ids:[e.id],on:!e.flat});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v82 CHINOOK: air assault --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.assault){
@@ -7495,7 +7681,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.aslt?'Cease Fire':'Air Assault'}</b><br><span style="font-size:10px;opacity:.75">the squad fires out; the aircraft cannot move</span>`;
    bt.title='Open the hold: every man aboard fires on what he can reach, and can be answered by it. The Chinook is pinned in place for as long as it runs.';
    bt.onclick=()=>{submitCmd('assault',{ids:[e.id],on:!e.aslt});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- Signal Runner: sprint, added at v85 --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.sprint){
@@ -7503,7 +7689,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.spr?'Slow Down':'Sprint'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(SPRINT_SPD*100)}% speed to infantry within ${SPRINT_R}, none of them may fire</span>`;
    bt.title=`Sound the whistle: every friendly infantryman within ${SPRINT_R} tiles moves ${Math.round(SPRINT_SPD*100)}% faster, the Runner included. Nobody inside the radius will fire, take an attack order, or acquire a target while it runs.`;
    bt.onclick=()=>{submitCmd('sprint',{ids:[e.id],on:!e.spr});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- Firebomb Heli: napalm blast, added at v87 ---
      The first unit button in the file with a cooldown on it, so it is also the
@@ -7517,7 +7703,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>🔥 Napalm Blast</b><br><span style="font-size:10px;opacity:.75">${ready?`${FB_N} firebombs within ${FB_R}; the fire burns your men too`:Math.ceil(e.abCool)+'s cooldown'}</span>`;
    bt.title=`Empty the racks: ${FB_N} firebombs on random tiles within ${FB_R} of the helicopter, each leaving ${FB_BURN} seconds of fire that burns FRIENDLY units and structures as readily as enemy ones. ${FB_CD}-second cooldown.`;
    bt.onclick=()=>{if(!ready)return;submitCmd('napalmblast',{ids:[e.id]});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- Choktaw: paint, added at v88 ---
      Shaped like the Napalm Blast above it - the same cooldown readout on the same
@@ -7536,7 +7722,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>🎯 Paint</b><br><span style="font-size:10px;opacity:.75">${ready?`${PAINT_BOX}×${PAINT_BOX} area, +${Math.round(PAINT_DMG*100)}% damage taken for ${PAINT_T}s`:Math.ceil(e.abCool)+'s cooldown'}</span>`;
    bt.title=`Mark a ${PAINT_BOX}×${PAINT_BOX} area: every enemy unit inside it takes +${Math.round(PAINT_DMG*100)}% damage from EVERY source for ${PAINT_T} seconds. Click to place the box. ${PAINT_CD}-second cooldown.`;
    bt.onclick=()=>{if(!ready)return;G.radioTargeting={unit:e,mode:'paint'};msg('Click to place the paint box.');sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- Command Truck: broadcast, added at v86 --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.bcast){
@@ -7544,7 +7730,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.bcast?'Close Net':'Broadcast'}</b><br><span style="font-size:10px;opacity:.75">allies within ${BCAST_R} reload ${Math.round(BCAST_RT*100)}% faster; the truck cannot move</span>`;
    bt.title=`Open the net: every allied unit within ${BCAST_R} tiles reloads ${Math.round(BCAST_RT*100)}% faster. The Command Truck is pinned where it stands for as long as it runs.`;
    bt.onclick=()=>{submitCmd('bcast',{ids:[e.id],on:!e.bcast});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- Observation Balloon: bail out, added at v86 ---
      Destructive on one click, on the same argument the Munitions Dump's Scuttle
@@ -7558,7 +7744,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>🪂 Bail</b><br><span style="font-size:10px;opacity:.75">${BAIL_CREW.length} men out, balloon destroyed — ${left}s of gas left</span>`;
    bt.title=`Put ${BAIL_CREW.map(k=>U[k].n).join(', ')} on the ground beneath the balloon and destroy it. Let the gas run out instead and the crew goes down with it.`;
    bt.onclick=()=>{submitCmd('bail',{ids:[e.id]});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   // ---- v30 APC: troop bay readout + unload ----
   if(e.kind==='unit'&&e.p.human&&e.t.cap){
@@ -7568,7 +7754,7 @@ function refreshSelPanel(){
    bt.title=`Drop the squad here. Right-click the ${e.t.n} with infantry selected to load them aboard.`;
    if(!n2)bt.classList.add('dis');
    bt.onclick=()=>{if(!(e.garrison||[]).length)return;if(!dropOk(e)){msg('No clear ground below.');return}submitCmd('unloadu',{ids:[e.id]});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
  } else {
   const counts={};for(const e of G.sel)counts[e.t.n]=(counts[e.t.n]||0)+1;
@@ -7611,7 +7797,7 @@ function refreshSelPanel(){
     }
     submitCmd(a.c,{ids:list.map(g=>g.id),on:!any});sClick();
    };
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* v87: Firebombs are the one group button that is NOT a toggle, so they stay
      hand-written below the loop. Only the ones actually off cooldown are counted
@@ -7623,7 +7809,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>🔥 Napalm Blast (${fbs.length})</b><br><span style="font-size:10px;opacity:.75">${FB_N} firebombs each, and the fire burns your men too</span>`;
    bt.title='Empty the racks on every selected Firebomb Heli that is off cooldown.';
    bt.onclick=()=>{submitCmd('napalmblast',{ids:fbs.map(g=>g.id)});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
  }
 }
@@ -16443,7 +16629,7 @@ function saveState(){
  return JSON.stringify({
   // v50: `test` is match config like mode/diff - serialized so a resync cannot
   // silently restore costs, and NOT folded into hashState.
-  v:86,test:!!G.test,watch:!!G.watch,seed:G.seed,rngS:G.rngS,tick:G.tick,EID:EID,hazAcc:G.hazAcc||0,mode:G.mode,mapKey:G.matchCfg?G.matchCfg.map:'backyard',
+  v:GAME_VER_N,test:!!G.test,watch:!!G.watch,seed:G.seed,rngS:G.rngS,tick:G.tick,EID:EID,hazAcc:G.hazAcc||0,mode:G.mode,mapKey:G.matchCfg?G.matchCfg.map:'backyard',
   over:G.over,
   players:G.players.map(p=>({i:p.i,fac:p.fac,team:p.team,human:p.human,name:p.name||null,diff:_diffKey(p.diff),
    res:{p:p.res.p,e:p.res.e},alive:p.alive,score:p.score,kothScore:p.kothScore,stats:p.stats,start:p.start,
@@ -17123,7 +17309,10 @@ addEventListener('keydown',e=>{
   if(ids.length){G.patrolAim={pts:[],ids};msg('Patrol: click the FIRST waypoint (Esc cancels).');}
  }
  else if(k==='Tab'&&(G.test||G.watch)){e.preventDefault();switchArmy((G.human.i+1)%G.players.length);} // v50: cycle armies. v55: in a watch match the same cycle follows an army instead of commanding it
- else if(k==='F9')togglePause(); // v29: pause moved from P
+ /* v29: pause moved from P. v98: F9 -> F10, because the control groups landed on
+    F1-F9 when the abilities took the number row, and F9 cannot mean two things.
+    The pause BUTTON in the top bar is untouched and is still the primary. */
+ else if(k==='F10'){e.preventDefault();togglePause()}
  else if(k==='j'||k==='J'){if(G.lastEvent){G.cam.x=isoX(G.lastEvent.x,G.lastEvent.y)-vpW()/2/G.zoom;G.cam.y=isoY(G.lastEvent.x,G.lastEvent.y)-vpH()/2/G.zoom;pingEvent(G.lastEvent.x,G.lastEvent.y,'#ffe34d');}} // v29: jump-to-event moved from Space
  else if((k==='['||k===']')&&G.watch){watchSpeedStep(k===']'?1:-1);} // v56: step the spectator speed (works with the box hidden)
  else if((k==='v'||k==='V')&&G.watch){watchToggle();} // v55: hide/show the spectator box
@@ -17140,9 +17329,24 @@ addEventListener('keydown',e=>{
  else if(k==='+'||k==='='){setZoom(G.zoom*1.2,vpW()/2,vpH()/2)}
  else if(k==='-'||k==='_'){setZoom(G.zoom/1.2,vpW()/2,vpH()/2)}
  else if(k==='0'){setZoom(1,vpW()/2,vpH()/2)}
- else if(/^[1-9]$/.test(k)){
-  if(e.ctrlKey||e.metaKey){G.groups[k]=G.sel.filter(s=>s.kind==='unit'&&s.p===G.human);e.preventDefault();msg('Group '+k+' set ('+G.groups[k].length+' units)')}
-  else{const g=(G.groups[k]||[]).filter(u=>u.hp>0&&G.units.includes(u));if(g.length)setSel(g)}
+ /* v98: THE NUMBER ROW FIRES ABILITIES, AND THE CONTROL GROUPS MOVED TO F1-F9.
+    The owner asked for number hotkeys on the unit ability buttons, and 1-9 were
+    the control groups, so one of the two had to move. Shadowing was refused for
+    the reason MENU_KEYS is the alphabet it is: no key in this file means two
+    things at once, and eleven units carry a toggle, so "abilities win while
+    something with an ability is selected" would have taken group recall away
+    most of the time you wanted it.
+    ABIL_HOT is empty unless the panel is showing ability buttons, so this branch
+    is context-gated by the registry exactly as the build-menu letters are - and
+    it FALLS THROUGH when nothing is registered rather than swallowing the key.
+    G.groups is untouched in shape: still keyed by the digit, so a save written
+    before this release restores its groups unchanged, and switchArmy still
+    clears them the same way. Client-local, hashed nowhere. */
+ else if(/^[1-9]$/.test(k)&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&abilHotkey(k)){/* an ability fired */}
+ else if(/^F[1-9]$/.test(k)){
+  e.preventDefault();const gk=k.slice(1);
+  if(e.ctrlKey||e.metaKey){G.groups[gk]=G.sel.filter(s=>s.kind==='unit'&&s.p===G.human);msg('Group '+gk+' set ('+G.groups[gk].length+' units)')}
+  else{const g=(G.groups[gk]||[]).filter(u=>u.hp>0&&G.units.includes(u));if(g.length)setSel(g)}
  }
 });
 addEventListener('keyup',e=>{const k=e.key.toLowerCase();KEY[e.key]=false;KEY[k]=false;if(k==='s')KEY.s2=false});
@@ -17576,16 +17780,21 @@ function renderCore(){
  }
  /* ---- v88: THE BURIED MINES ONLY THEIR OWNER CAN SEE ----
     The map's own scattered mines are drawn by nobody and stay that way. A wall's
-    mine is drawn for the army that buried it and for its allies alone, which is
-    the whole of "only Gray can see it" - a client-local read of G.human, exactly
-    like the fog it sits under, so the sim never learns who is looking. A
-    spectator sees none of them, on the same rule that gives a spectator no army.
-    Deliberately small and dull: it is a reminder of where your own field is, not
-    a beacon. */
+    mine is drawn for the army that buried it and for NOBODY else - a
+    client-local read of G.human, exactly like the fog it sits under, so the sim
+    never learns who is looking. A spectator sees none of them, on the same rule
+    that gives a spectator no army. Deliberately small and dull: it is a reminder
+    of where your own field is, not a beacon.
+    v98: an ALLY no longer sees it either, by the owner's decision - "visible to
+    the owner only" is now the identity `ow===G.human` rather than allied(). The
+    ARMING rule is untouched and deliberately still allied(): mineArms keeps the
+    mine asleep under an ally's men, so a teammate walking the line is safe
+    without being shown where the line is. Sight and safety are two claims here,
+    and only the first one moved. */
  if(G.human&&G.map.mines)for(const mn of G.map.mines){
   if(!mn.live||!mn.gray)continue;
   const ow=G.players[mn.pi];
-  if(!ow||!allied(ow,G.human))continue;
+  if(ow!==G.human)continue;
   if(fogAt(mn.x,mn.y)===0)continue;
   const mx2=isoX(mn.x,mn.y),my2=isoY(mn.x,mn.y),pf=.45+.25*Math.sin(G.tick*.05+mn.x);
   c.save();c.globalAlpha=pf;
@@ -18551,7 +18760,7 @@ function infoBuildGrid(){
   cell.className='icell'+(INFO.kind===kind&&INFO.key===k?' sel':'');
   cell.appendChild(infoPortraitCv(kind,k,infoFacOf(kind,k)));
   const nm=document.createElement('div');nm.className='inm';nm.textContent=t.n;cell.appendChild(nm);
-  cell.onclick=()=>{infoSelect(kind,k);sClick()};
+  cell.onclick=()=>{infoSelect(kind,k)};
   grid.appendChild(cell);
  }
 }
@@ -18626,10 +18835,16 @@ function closeInfo(){
  INFO.open=false;document.getElementById('infoPanel').classList.remove('open');
  if(INFO.raf){cancelAnimationFrame(INFO.raf);INFO.raf=0}
 }
-document.getElementById('infoBtn').onclick=()=>{ac();openInfo();sClick()};
+document.getElementById('infoBtn').onclick=()=>{ac();openInfo()};
 document.getElementById('manualBtn').onclick=()=>{openInfo();sClick()};
-document.getElementById('infoClose').onclick=()=>{closeInfo();sClick()};
-document.querySelectorAll('#infoHead .itab').forEach(b=>b.onclick=()=>{infoShowTab(b.dataset.itab);sClick()});
+document.getElementById('infoClose').onclick=()=>{closeInfo()};
+document.querySelectorAll('#infoHead .itab').forEach(b=>b.onclick=()=>{infoShowTab(b.dataset.itab)});
+/* v98: the manual answers the cursor and the click the same way the setup screen
+   does, through the one delegated pair in 03-audio.js. The gallery is rebuilt on
+   every tab and on every selection, so per-cell wiring would have to be redone
+   on each rebuild; the host outlives all of them. #manualBtn is NOT in here - it
+   lives in the HUD and keeps sClick(), because the HUD's voice did not change. */
+menuAudioBind(document.getElementById('infoPanel'));
 addEventListener('keydown',e=>{if(INFO.open&&e.key==='Escape')closeInfo()});
 
 /* ==================== MENU BACKDROP (MENUBG) ====================

@@ -262,7 +262,7 @@ function infoBuildGrid(){
   cell.className='icell'+(INFO.kind===kind&&INFO.key===k?' sel':'');
   cell.appendChild(infoPortraitCv(kind,k,infoFacOf(kind,k)));
   const nm=document.createElement('div');nm.className='inm';nm.textContent=t.n;cell.appendChild(nm);
-  cell.onclick=()=>{infoSelect(kind,k);sClick()};
+  cell.onclick=()=>{infoSelect(kind,k)};
   grid.appendChild(cell);
  }
 }
@@ -337,9 +337,15 @@ function closeInfo(){
  INFO.open=false;document.getElementById('infoPanel').classList.remove('open');
  if(INFO.raf){cancelAnimationFrame(INFO.raf);INFO.raf=0}
 }
-document.getElementById('infoBtn').onclick=()=>{ac();openInfo();sClick()};
+document.getElementById('infoBtn').onclick=()=>{ac();openInfo()};
 document.getElementById('manualBtn').onclick=()=>{openInfo();sClick()};
-document.getElementById('infoClose').onclick=()=>{closeInfo();sClick()};
-document.querySelectorAll('#infoHead .itab').forEach(b=>b.onclick=()=>{infoShowTab(b.dataset.itab);sClick()});
+document.getElementById('infoClose').onclick=()=>{closeInfo()};
+document.querySelectorAll('#infoHead .itab').forEach(b=>b.onclick=()=>{infoShowTab(b.dataset.itab)});
+/* v98: the manual answers the cursor and the click the same way the setup screen
+   does, through the one delegated pair in 03-audio.js. The gallery is rebuilt on
+   every tab and on every selection, so per-cell wiring would have to be redone
+   on each rebuild; the host outlives all of them. #manualBtn is NOT in here - it
+   lives in the HUD and keeps sClick(), because the HUD's voice did not change. */
+menuAudioBind(document.getElementById('infoPanel'));
 addEventListener('keydown',e=>{if(INFO.open&&e.key==='Escape')closeInfo()});
 
