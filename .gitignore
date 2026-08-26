@@ -57,3 +57,6 @@ desktop.ini
 node_modules/
 package-lock.json
 package.json
+
+# Python import cache from the texture tools
+tools/__pycache__/

@@ -180,37 +180,94 @@ function ensureGL(){
 /* v94, phase 3 second cut: THE BAND STAGE. renderCore hands the sprite
    band's canvas here before merging it onto the scene; the answer is either
    that canvas untouched (no GL - headless, #nogl, a dead context) or a
-   GL-processed copy from an offscreen context of its own. Today the shader is
-   a PASSTHROUGH: the deliverable is the proven round-trip - band canvas up to
-   a texture, through a program, back into the 2d merge as the same pixels -
-   because that hop, with a lighting shader and a normal band in place of the
-   passthrough, IS phase 5. Premultiplied in and out, so translucent sprite
-   edges survive the trip; measured at v94 in Chromium against the direct
-   merge. Fallback rule as everywhere: GL overrides, never replaces. */
+   GL-processed copy from an offscreen context of its own.
+
+   v96, phase 5: the passthrough became the LIGHTING SHADER. Two textures go
+   up - the color band and the normal band renderCore's blit sites filled in
+   register with it - and every band pixel is relit per-pixel: the constant
+   lamp (same direction the painters and the offline material pass always
+   used) modulated by the pixel's own surface direction, a plastic specular,
+   and up to LIGHTV.max point lights collected each frame from what is
+   actually burning, exploding or firing on screen. The math is NORMALIZED
+   so a flat pixel (no normal map, nm.a<.5) comes out exactly as it went in:
+   the whole v95 look is the identity case, procedural fallback cells and
+   live-drawn gear included - they simply sit flat under the same lamp.
+   Premultiplied in and out for the color band; the normal band uploads
+   WITHOUT premultiply, because its RGB are directions, not colors.
+   Fallback rule as everywhere: GL overrides, never replaces. */
 let GLB=null; // the band stage: {gl,cv,...} once alive, {dead:1} once given up on. Client-local, never hashed.
-const GLSL_BAND='precision mediump float;varying vec2 uv;uniform sampler2D uTex;void main(){gl_FragColor=texture2D(uTex,uv);}';
+/* THE LIGHTING TUNING TABLE - the shader's only source of numbers, so the
+   look is one edit and one pin. dir/z: the game's constant lamp (LIGHT of
+   the painters, given altitude). amb/kd/ks/shin: the normalized relight -
+   amb+kd scale RELIEF strength, not overall brightness (flat pixels are
+   untouched whatever these hold). Point lights: radius px at zoom 1, color,
+   intensity; ptZ their height above the band in px. */
+const LIGHTV={
+ z:.70,amb:.60,kd:.62,ks:.55,shin:26,
+ max:10,ptZ:36,
+ ex:{r:170,c:[1.0,.62,.28],i:1.05},   // explosion core flash, by remaining life
+ fire:{r:64,c:[1.0,.55,.20],i:.34},   // one burning ground cell (clusters sum)
+ flash:{r:80,c:[1.0,.78,.42],i:.5}    // a muzzle flash, by remaining flash time
+};
+const GLSL_BAND='precision mediump float;varying vec2 uv;'+
+ 'uniform sampler2D uTex,uNrm;uniform vec2 uRes;'+
+ 'uniform vec3 uLdir;uniform float uAmb,uKd,uKs,uShin;'+
+ 'uniform int uLn;uniform vec3 uLp[10];uniform vec3 uLc[10];uniform float uLr[10];'+
+ 'void main(){'+
+ 'vec4 c=texture2D(uTex,uv);'+
+ 'vec4 nm=texture2D(uNrm,uv);'+
+ 'vec3 n=nm.a<.5?vec3(0.,0.,1.):normalize(nm.rgb*2.-1.);'+
+ 'float base=(uAmb+uKd*max(dot(n,uLdir),0.))/(uAmb+uKd*uLdir.z);'+
+ 'vec3 hv=normalize(uLdir+vec3(0.,0.,1.));'+
+ 'float spec=uKs*(pow(max(dot(n,hv),0.),uShin)-pow(hv.z,uShin));'+
+ 'vec2 px=vec2(uv.x*uRes.x,(1.-uv.y)*uRes.y);'+   // canvas coords, y down - the normals' own frame
+ 'vec3 add=vec3(0.);'+
+ 'for(int i=0;i<10;i++){if(i>=uLn)break;'+
+  'vec3 d=vec3(uLp[i].xy-px,uLp[i].z);'+
+  'float dist=length(d);'+
+  'float at=max(0.,1.-dist/uLr[i]);at*=at;'+
+  'add+=uLc[i]*at*max(dot(n,d/max(dist,1.)),0.);}'+
+ 'gl_FragColor=vec4(clamp(c.rgb*base+(spec*c.a)+add*c.a,0.,1.),c.a);}';
+/* create-or-resize the band context; shared by bandPresent and bandLit so
+   the first lit frame is the first frame. All the v94 discipline lives
+   here now: software-GL refusal, #forcegl, context-loss kills the stage. */
+function bandEnsure(){
+ if(GLB&&GLB.dead)return false;
+ if(typeof location!=='undefined'&&/\bnogl\b/.test(location.hash||''))return false;
+ const W=view.width,H=view.height;
+ if(!W||!H)return false;
+ if(GLB&&GLB.gl){
+  if(GLB.cv.width!==W||GLB.cv.height!==H){GLB.cv.width=W;GLB.cv.height=H;}
+  return true;
+ }
+ const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+ const gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,depth:false,stencil:false,
+  failIfMajorPerformanceCaveat:!(typeof location!=='undefined'&&/\bforcegl\b/.test(location.hash||''))}); // v94: same software-GL refusal as the post stage
+ if(!gl)return false;
+ GLB={gl,cv,lights:[]};
+ GLB.prog=glProg(gl,GLSL_BAND,['uTex','uNrm','uRes','uLdir','uAmb','uKd','uKs','uShin',
+  'uLn','uLp[0]','uLc[0]','uLr[0]']);
+ const buf=gl.createBuffer();
+ gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+ gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+ gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+ GLB.tex=glTex(gl);
+ GLB.texN=glTex(gl);
+ if(gl.getError()!==0)throw new Error('band gl init error');
+ cv.addEventListener('webglcontextlost',ev=>{try{ev.preventDefault();}catch(_){}GLB.dead=1;});
+ return true;
+}
+/* the switch renderCore reads before spending anything on the normal band:
+   true only when the GL stage is usable AND the bake actually holds normal
+   maps. Never throws - a failure marks the stage dead, like bandPresent. */
+function bandLit(){
+ try{return !!(SPR.done&&SPR.hasNrm&&bandEnsure());}
+ catch(e){GLB={dead:1};return false;}
+}
 function bandPresent(){
  try{
-  if(GLB&&GLB.dead)return sprCv;
-  if(typeof location!=='undefined'&&/\bnogl\b/.test(location.hash||''))return sprCv;
-  const W=view.width,H=view.height;
-  if(!GLB||!GLB.gl){
-   const cv=document.createElement('canvas');cv.width=W;cv.height=H;
-   const gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,depth:false,stencil:false,
-    failIfMajorPerformanceCaveat:!(typeof location!=='undefined'&&/\bforcegl\b/.test(location.hash||''))}); // v94: same software-GL refusal as the post stage
-   if(!gl)return sprCv;
-   GLB={gl,cv};
-   GLB.prog=glProg(gl,GLSL_BAND,['uTex']);
-   const buf=gl.createBuffer();
-   gl.bindBuffer(gl.ARRAY_BUFFER,buf);
-   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
-   gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
-   GLB.tex=glTex(gl);
-   if(gl.getError()!==0)throw new Error('band gl init error');
-   cv.addEventListener('webglcontextlost',ev=>{try{ev.preventDefault();}catch(_){}GLB.dead=1;});
-  }
-  const g=GLB,gl=g.gl;
-  if(g.cv.width!==W||g.cv.height!==H){g.cv.width=W;g.cv.height=H;}
+  if(!bandEnsure())return sprCv;
+  const g=GLB,gl=g.gl,W=view.width,H=view.height;
   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
   gl.viewport(0,0,W,H);
   gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
@@ -219,10 +276,24 @@ function bandPresent(){
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,sprCv);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D,g.texN);
+  /* directions, not colors: no premultiply, ever */
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,nrmCv||sprCv);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
   gl.useProgram(g.prog.p);
-  gl.uniform1i(g.prog.uTex,0);
+  gl.uniform1i(g.prog.uTex,0);gl.uniform1i(g.prog.uNrm,1);
+  gl.uniform2f(g.prog.uRes,W,H);
+  const dl=Math.hypot(LIGHT.x,LIGHT.y,LIGHTV.z);
+  gl.uniform3f(g.prog.uLdir,LIGHT.x/dl,LIGHT.y/dl,LIGHTV.z/dl);
+  gl.uniform1f(g.prog.uAmb,LIGHTV.amb);gl.uniform1f(g.prog.uKd,LIGHTV.kd);
+  gl.uniform1f(g.prog.uKs,LIGHTV.ks);gl.uniform1f(g.prog.uShin,LIGHTV.shin);
+  const ls=g.lights||[],n=Math.min(ls.length,LIGHTV.max);
+  const lp=new Float32Array(LIGHTV.max*3),lc=new Float32Array(LIGHTV.max*3),lr=new Float32Array(LIGHTV.max);
+  for(let i=0;i<n;i++){const l=ls[i];lp[i*3]=l.x;lp[i*3+1]=l.y;lp[i*3+2]=l.z;lc[i*3]=l.c[0];lc[i*3+1]=l.c[1];lc[i*3+2]=l.c[2];lr[i]=l.r;}
+  gl.uniform1i(g.prog.uLn,n);
+  gl.uniform3fv(g.prog['uLp[0]'],lp);gl.uniform3fv(g.prog['uLc[0]'],lc);gl.uniform1fv(g.prog['uLr[0]'],lr);
   gl.disable(gl.BLEND);
   gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   /* renderCore drawImages this canvas in the SAME task, before the browser
@@ -232,6 +303,46 @@ function bandPresent(){
   GLB={dead:1};
   if(typeof WebGLRenderingContext!=='undefined')try{console.warn('[pw] WebGL band stage failed; presenting the band directly:',e);}catch(_){}
   return sprCv;
+ }
+}
+/* v96: what is allowed to cast light, gathered fresh each frame in canvas
+   pixels. Three sources, all of them things the player can already SEE -
+   everything is gated on vision, so a hidden enemy's muzzle flash lights
+   nothing (light through fog would be a wallhack). Burning ground cells
+   cluster by 4x4 tile buckets so a napalm field is a few steady lights
+   rather than a lottery over the cap. Flicker rides G.tick (shared, but
+   render-only); no srand, no Math.random, nothing written to G. */
+function bandLightsCollect(cx,cy,zz){
+ const L=GLB.lights=[];
+ const put=(wx,wy,r,c,i)=>{
+  if(L.length>=LIGHTV.max||i<=0)return;
+  const x=(isoX(wx,wy)-cx)*zz,y=(isoY(wx,wy)-cy)*zz,rr=r*zz;
+  if(x<-rr||y<-rr||x>view.width+rr||y>view.height+rr)return;
+  L.push({x,y,z:LIGHTV.ptZ*zz,r:rr,c:[c[0]*i,c[1]*i,c[2]*i]});
+ };
+ for(const p of G.parts){
+  if(p.t!=='ex')continue;
+  if(fogAt(p.x,p.y)!==2)continue;
+  put(p.x,p.y,LIGHTV.ex.r*(p.sc||1),LIGHTV.ex.c,LIGHTV.ex.i*Math.max(0,p.life/.36));
+ }
+ const buckets={};
+ for(const s of G.strikes){
+  if(!s.burn)continue;
+  for(const b of s.burn){
+   if(fogAt(b.x,b.y)!==2)continue;
+   const k=(b.x>>2)+'_'+(b.y>>2);
+   const e=buckets[k]||(buckets[k]={x:0,y:0,n:0});
+   e.x+=b.x+.5;e.y+=b.y+.5;e.n++;
+  }
+ }
+ for(const k in buckets){
+  const e=buckets[k],fl=.75+.25*Math.sin(G.tick*.6+e.x*1.7+e.y*2.3);
+  put(e.x/e.n,e.y/e.n,LIGHTV.fire.r*Math.sqrt(e.n),LIGHTV.fire.c,LIGHTV.fire.i*Math.min(e.n,6)*fl);
+ }
+ for(const u of G.units){
+  if(!(u.flash>0)||u.garrisoned)continue;
+  if(u.p!==G.human&&!visibleToHuman(u))continue;
+  put(u.x,u.y,LIGHTV.flash.r,LIGHTV.flash.c,LIGHTV.flash.i*Math.min(1,u.flash/.1));
  }
 }
 function glTex(gl){

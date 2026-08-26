@@ -355,7 +355,21 @@ along: the Choktaw's tail had been clipped off every sprite since v88 (no
 `VEH_BOX` entry) — found because the texture needed the true box. Full record
 in the v95 section of `harness/README.md`.
 
-**Phase 5 — normal maps and lighting.** Nearly free once 3 and 4 are done.
+**Phase 5 — normal maps and lighting. LANDED AT v96 — the roadmap is
+COMPLETE.** Every texture gained a normal map (`tools/normal_v96.py`, same
+rng recipe as the material pass so color grain and relief grain agree;
+`assets/nrm/`, 745 kB embedded), the band pass mirrors them onto a second
+canvas in register with the color band (`NCTX`; rotating vehicles pick a
+heading-quantized variant with the VECTORS rotated, not just the pixels),
+and v94's passthrough shader became the real thing: constant lamp, plastic
+specular, and up to ten point lights collected per frame from explosions,
+burning ground and muzzle flashes — every source vision-gated, because
+light through fog would be a wallhack. **The lighting is a normalized
+MODULATION: a flat pixel comes out exactly as it went in**, so every
+fallback rung still shows v95's pixels, and the lit path costs zero extra
+frame time within noise. `LIGHTV` is the one tuning table. T72 carries the
+pins; T70's passthrough pins were consciously rewritten. Full record in the
+v96 section of `harness/README.md`.
 
 ### Traps, named in advance
 

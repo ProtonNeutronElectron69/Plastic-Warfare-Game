@@ -11,6 +11,10 @@ no internet connection needed.
 **▶ To play: download `plastic-warfare.html` and double-click it.** It opens in
 your web browser and you are straight into the setup screen.
 
+Prefer the original hand-drawn look? The classic (v90.2) game — the last
+version before the textured-and-lit overhaul — lives unchanged on the
+[`classic` branch](https://github.com/ProtonNeutronElectron69/Plastic-Warfare-Game/tree/classic).
+
 ---
 
 ## The four armies
@@ -71,6 +75,7 @@ host/join mode for playing against another person.
 | `source/` | The same game as ~30 readable files; `./build.sh` assembles them into the file above. |
 | `assets/snd/` | The sound effects as playable mp3 files — they also ride inside the game file, so it stays self-contained. |
 | `assets/img/` | The sprite textures as viewable webp images — same deal: they also ride inside the game file. |
+| `assets/nrm/` | The textures' normal maps — the per-pixel surface directions the lighting uses. |
 | `harness/` | The automated test suite: 60+ test files that play the game headlessly and check nothing broke. |
 | `harness/README.md` | The full development record — the design decisions, the balance measurements, and the traps learned at every version. |
 | `tools/` | The scripts used to build one version from the previous one. |
@@ -110,7 +115,15 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 88.1**.
+The game is at **version 96**.
+
+**Roadmap 3 (v91–v96) — complete.** The whole game moved to real art and real
+sound while playing exactly the same: the code split into readable source
+files with a build step (v91), every sound effect became a recorded take
+(v92), the renderer gained a WebGL stage (v93–v94), every unit and structure
+got a real texture (v95), and everything is lit per pixel — explosions and
+fires now cast light on what stands near them (v96). The pre-overhaul game is
+preserved on the `classic` branch.
 
 **Roadmap 1 (v79–v82) — complete.** Every exclusive unit and building that
 existed then got one passive and one toggleable ability: Green at v79, Tan at

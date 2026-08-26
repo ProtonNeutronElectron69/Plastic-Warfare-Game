@@ -48,15 +48,22 @@ section('T70 v94: the sprite band and its GL stage');
 
   ok('T70.B headless, the band presents directly - the fake context flunks',
     bandPresent() === sprCv && !!(GLB && GLB.dead));
-  const src = bandPresent.toString();
+  /* REWRITTEN AT v96: the create-or-resize discipline moved from bandPresent
+     into bandEnsure (shared with bandLit, so the first lit frame is the
+     first frame), and the declared passthrough became the lighting shader -
+     which is the claim v94 existed to set up, not a loosening. The identity
+     property survives in a stronger form: a pixel with no normal map
+     (nm.a<.5 -> flat) comes out of the lighting math exactly as it went in,
+     which T72 (tail_v96) pins in detail. */
+  const src = bandEnsure.toString();
   ok('T70.B #nogl forces the direct path, matching the post stage',
     src.indexOf('nogl') >= 0);
-  ok('T70.B the round-trip is premultiplied both ways, so sprite edges survive',
-    src.indexOf('UNPACK_PREMULTIPLY_ALPHA_WEBGL') >= 0 && src.indexOf('premultipliedAlpha:true') >= 0);
+  ok('T70.B the color round-trip is premultiplied both ways, so sprite edges survive',
+    bandPresent.toString().indexOf('UNPACK_PREMULTIPLY_ALPHA_WEBGL') >= 0 && src.indexOf('premultipliedAlpha:true') >= 0);
   ok('T70.B a lost context kills the stage, not the frame',
     src.indexOf("'webglcontextlost'") >= 0);
-  ok('T70.B today the shader is a declared passthrough - phase 5 replaces it',
-    GLSL_BAND.indexOf('gl_FragColor=texture2D(uTex,uv)') >= 0);
+  ok('T70.B the v94 passthrough became the v96 lighting shader, flat pixels its identity case',
+    GLSL_BAND.indexOf('nm.a<.5') >= 0 && GLSL_BAND.indexOf('/(uAmb+uKd*uLdir.z)') >= 0);
 }
 
 /* ---------- C: client-local, sim-silent ---------- */
@@ -79,10 +86,11 @@ section('T70 v94: the sprite band and its GL stage');
      on texture uploads alone. A machine without real GL is exactly the machine
      compositePost exists for, so both stages ask the browser to refuse a
      major-performance-caveat context. #forcegl overrides, for testing. */
+  /* v96: the band's context creation lives in bandEnsure now */
   ok('T70.D the post stage refuses a caveated context',
     ensureGL.toString().indexOf('failIfMajorPerformanceCaveat') >= 0);
   ok('T70.D the band stage refuses one too',
-    bandPresent.toString().indexOf('failIfMajorPerformanceCaveat') >= 0);
+    bandEnsure.toString().indexOf('failIfMajorPerformanceCaveat') >= 0);
   ok('T70.D ...and #forcegl exists to override both, for measurement',
-    ensureGL.toString().indexOf('forcegl') >= 0 && bandPresent.toString().indexOf('forcegl') >= 0);
+    ensureGL.toString().indexOf('forcegl') >= 0 && bandEnsure.toString().indexOf('forcegl') >= 0);
 }
