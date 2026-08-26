@@ -4,22 +4,32 @@ phase-4 texture pipeline (step one is dump_base_v95.js).
 
 Reads the 6x base renders from tools/_base_v95/ and writes the finished
 textures into assets/img/ at the bake's own SS=3 supersample - run
-tools/embed_img.py afterwards to refresh the embedded table, then ./build.sh.
+tools/embed_img.py afterwards to refresh the embedded table, then
+./build.sh. The worklist is whatever step one rendered, so the roster
+lives in ONE place (dump_base_v95.js derives it from the game's tables).
 
-THE RECIPE, AND WHY IT IS SHAPED THIS WAY. The painter's own shading IS the
-light: the first cut of this pass flattened the albedo and relit everything
-from a distance-field height dome, and the result read WORSE than the
-painter - washed out, flat decks pillowed. What ships adds only what a
-vector painter cannot: bump-lit plastic grain in patches, a mold seam down
-the infantryman, sparse bright scratches, worn edges where painted detail
-changes hard, micro-occlusion in painted crevices, a molded-color swirl.
-It finishes with the exact enrichCell numbers (rim/shadow offsets scaled to
-the final supersample, sat 1.15, contrast 1.05), because textured cells SKIP
-enrichCell at runtime and must not sit duller than procedural neighbours.
+WHY WEBP AND NOT PNG. The full roster is 212 sprites; as PNG that is
+~5.8 MB before base64 puts it inside the shipped file. Measured on real
+textures, lossy WebP at quality 95 is 4-6x smaller with a mean error
+under 0.7/255 on covered pixels - invisible at game zoom - and a decode
+failure in some hypothetical non-WebP browser degrades to the procedural
+painter by the override architecture, exactly like a missing file.
 
-Deterministic: every random draw is seeded from the sprite id (one shared
-seed across an infantryman's five frames so the grain does not boil between
-walk steps). Needs numpy, scipy, pillow.
+THE RECIPE, AND WHY IT IS SHAPED THIS WAY. The painter's own shading IS
+the light: the first cut of this pass flattened the albedo and relit
+everything from a distance-field height dome, and the result read WORSE
+than the painter - washed out, flat decks pillowed. What ships adds only
+what a vector painter cannot: bump-lit plastic grain in patches, a mold
+seam down infantry and vehicles, sparse bright scratches, worn edges
+where painted detail changes hard, micro-occlusion in painted crevices,
+a molded-color swirl. It finishes with the exact enrichCell numbers
+(rim/shadow offsets scaled to the final supersample, sat 1.15, contrast
+1.05), because textured cells SKIP enrichCell at runtime and must not
+sit duller than procedural neighbours.
+
+Deterministic: every random draw is seeded from kind_key alone - an
+army-man of every colour comes off the same mold, and a walk cycle must
+not boil between frames. Needs numpy, scipy, pillow.
 """
 import os, sys
 import json, hashlib, os
@@ -133,31 +143,30 @@ def process(base_png, out_png, sid, seam, P):
     aa = pm[:, :, 3:4]
     rgb_o = np.where(aa > 1, pm[:, :, :3] / np.maximum(aa / 255, 1e-6), 0)
     final = np.concatenate([np.clip(rgb_o, 0, 255), np.clip(aa, 0, 255)], axis=2).astype(np.uint8)
-    Image.fromarray(final, 'RGBA').save(out_png, optimize=True)
+    Image.fromarray(final, 'RGBA').save(out_png, 'WEBP', quality=95, method=6, exact=True)
 
 DEFAULTS = dict(grain=.38, emboss=.5, seam=.6, nz=2.4, kd=.8, ks=.7, shin=36,
                 scratches=4, scr_a=.12, wear=.25, ao=.10, mottle=.045)
 
 
-# per-sprite overrides: vehicles carry a little less grain than buildings
-CFG = {
-    'veh_cmdtruck_green': {'grain': 0.3},
-    'veh_firebomb_tan': {'grain': 0.3},
-    'veh_choktaw_gray': {'grain': 0.3},
-}
+# per-kind overrides: vehicles carry a little less grain than buildings
+KIND_CFG = {'veh': {'grain': 0.3}}
 
 if __name__ == '__main__':
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
     base = os.path.join(root, 'tools', '_base_v95')
     outd = os.path.join(root, 'assets', 'img')
     os.makedirs(outd, exist_ok=True)
-    ids = [f'inf_runner_blue_{i}' for i in range(5)] + [
-        'veh_cmdtruck_green', 'veh_firebomb_tan', 'veh_choktaw_gray',
-        'bld_fwdpad_blue', 'bld_cmdpost_green', 'bld_foundry_tan', 'bld_bunker_gray']
+    ids = sorted(f[:-4] for f in os.listdir(base) if f.endswith('.png'))
+    if not ids:
+        sys.exit('no base renders - run tools/dump_base_v95.js first')
     for sid in ids:
+        kind = sid.split('_', 1)[0]
         P = dict(DEFAULTS)
-        P.update(CFG.get(sid, {}))
-        seed_id = 'inf_runner_blue' if sid.startswith('inf_runner') else sid
-        seam = 'v' if not sid.startswith('bld') else 'none'
-        process(os.path.join(base, sid + '.png'), os.path.join(outd, sid + '.png'), seed_id, seam, P)
+        P.update(KIND_CFG.get(kind, {}))
+        # one seed per kind_key: an army-man of every colour comes off the same
+        # mold, and a walk cycle must not boil between frames
+        seed_id = '_'.join(sid.split('_')[:2])
+        seam = 'v' if kind != 'bld' else 'none'
+        process(os.path.join(base, sid + '.png'), os.path.join(outd, sid + '.webp'), seed_id, seam, P)
         print('ok', sid)

@@ -70,7 +70,7 @@ host/join mode for playing against another person.
 | `plastic-warfare.html` | **The game.** This is the whole thing — open it to play. |
 | `source/` | The same game as ~30 readable files; `./build.sh` assembles them into the file above. |
 | `assets/snd/` | The sound effects as playable mp3 files — they also ride inside the game file, so it stays self-contained. |
-| `assets/img/` | The sprite textures as viewable png files — same deal: they also ride inside the game file. |
+| `assets/img/` | The sprite textures as viewable webp images — same deal: they also ride inside the game file. |
 | `harness/` | The automated test suite: 60+ test files that play the game headlessly and check nothing broke. |
 | `harness/README.md` | The full development record — the design decisions, the balance measurements, and the traps learned at every version. |
 | `tools/` | The scripts used to build one version from the previous one. |

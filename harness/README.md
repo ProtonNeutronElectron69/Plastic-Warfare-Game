@@ -340,17 +340,34 @@ the point of this file:**
 Suite 5,303/5,303; every trail and all 42 layout pins reproduce; the sim
 hash is identical across v93-2d, v94-2d, v94-GL of the same tick.
 
-#### Phase 4, first cut, LANDED at v95: real textures for eight sprites, and the pipeline that makes the other seventeen cheap
+#### Phase 4 LANDED at v95: real textures for the whole roster
 
-**What shipped.** Each army's exclusive unit and one exclusive structure now
-draw from a real PNG texture instead of the runtime vector painter: Blue's
-Signal Runner (all five walk frames) and Forward Pad, Green's Command Truck
-and Command Post, Tan's Firebomb Heli and Foundry, Gray's Choktaw Heli and
-Bunker. Twelve PNGs, 404 kB, committed twice on purpose exactly like the
-sounds: as auditable files in `assets/img/` and as base64 data: URLs in the
-generated `source/js/02d-img-data.js` (`tools/embed_img.py`), because the
+**What shipped.** Every baked sprite in the game now draws from a real
+texture instead of the runtime vector painter: all ten infantry rows at
+five walk frames each, all sixteen vehicle hulls, and all seventeen baked
+buildings - in all four army colours for a shared row, in the owner's
+colour alone for a faction exclusive (the bake creates cells in the other
+colours too, but no army can ever field them, so the painter keeps those).
+The wildlife nest is the one baked-table exception: it belongs to the bug
+faction, which the sprite bake itself excludes, so its cells are never
+blitted and a texture for it would be dead weight. 212 files, committed
+twice on purpose exactly like the sounds: as auditable images in
+`assets/img/` and as base64 data: URLs in the generated
+`source/js/02d-img-data.js` (`tools/embed_img.py`), because the
 double-clicked file:// page can decode a data: URL and nothing else. T71.B
-holds the two byte-identical.
+holds the two byte-identical; T71.A derives the full roster from `U`/`B`/
+`FAC` in both directions, so adding a unit now FAILS the suite until the
+texture pipeline is re-run - the conscious step a textured game demands.
+
+**WebP, on a measurement.** The full roster as PNG is ~5.8 MB before
+base64 grows it 4/3 inside the shipped file. Lossy WebP at quality 95 is
+4-6x smaller at a mean error under 0.7/255 on covered pixels - invisible
+at game zoom - and the override architecture already handles the
+hypothetical browser that cannot decode one: a failed decode lands in
+`ASSETS_FAILED` and that sprite paints procedurally, exactly like a
+missing file. `embed_img.py` carries per-entry mime (`IMG_MIME`), so webp
+and png can coexist and a future hand-made texture can be dropped in as
+either.
 
 **The seam is three lines in `bakeSprites()`.** Each bake site asks
 `imgAsset('inf_<key>_<fac>_<frame>' / 'veh_<key>_<fac>' / 'bld_<key>_<fac>')`
@@ -365,19 +382,24 @@ shim has no `Image`).
 **Where the textures come from, honestly.** No rights-clean art is
 obtainable from this container (registry-only network), and no generic pack
 would match the molded-army-men look or survive per-faction tinting - so the
-textures are OFFLINE-RENDERED: the game's own painters drawn at 6x
-supersample in headless Chromium, then a Python material pass
-(`scratchpad`-side, deterministic per sprite) that adds what a vector
-painter cannot - bump-lit plastic grain in patches, a mold seam down the
-infantryman, sparse scratches, worn edges on painted detail lines,
-micro-occlusion, a molded-color swirl - and finishes with the exact
+textures are OFFLINE-RENDERED by two committed tools: the game's own
+painters drawn at 6x supersample in headless Chromium
+(`tools/dump_base_v95.js`, which DERIVES the 212-sprite roster from
+`U`/`B`/`FAC` so a new row is picked up automatically), then a deterministic
+Python material pass (`tools/material_v95.py`) that adds what a vector
+painter cannot - bump-lit plastic grain in patches, a mold seam down
+infantry and vehicles, sparse scratches, worn edges on painted detail
+lines, micro-occlusion, a molded-color swirl - and finishes with the exact
 `enrichCell` numbers so a textured cell sits beside procedural neighbours
-without a style seam. The first cut of that pass relit the whole sprite from
+without a style seam. Every random draw is seeded from kind_key alone: an
+army-man of every colour comes off the same mold, and a walk cycle must not
+boil between frames. The first cut of that pass relit the whole sprite from
 a distance-field dome and looked WORSE than the painter (washed out, forms
 pillowed); the shipped recipe keeps the painter's own shading as the light
 and adds only high-frequency material. Same lesson as v92's audio: generate
 from the tuned recipes, ship as swappable files, let the owner's eye be the
-acceptance test.
+acceptance test - the owner reviewed the eight-sprite first cut and asked
+for the whole roster on its look.
 
 **Three rails, all driven by T71:**
 

@@ -1,18 +1,22 @@
-/* tail_v95.js - T71: roadmap 3, phase 4 (first cut). Real textures for one
-   unit and one structure per army, riding the manifest as data: URLs and
-   entering the game through the sprite bake.
+/* tail_v95.js - T71: roadmap 3, phase 4. Real textures for the WHOLE baked
+   roster - every unit's five walk frames or hull and every non-wall
+   building, in all four colours for shared rows and the owner's colour for
+   exclusives - riding the manifest as data: URLs and entering the game
+   through the sprite bake.
 
-     A  the roster: each army's exclusive unit and one exclusive structure
-     B  the data: real PNGs, shipped inside the page, byte-equal to assets/img
+     A  the roster: derived from U/B/FAC, so a new row fires until textured
+     B  the data: real images (webp), shipped inside the page, byte-equal
+        to assets/img
      C  the seam: bakeSprites prefers a texture, falls back to the painter
      D  the guard rails: rebake-on-late-assets, the headless warn gate
      E  client-local, sim-silent
 
    The textures are OFFLINE-RENDERED from the game's own painters plus a
-   per-pixel material pass (plastic grain, mold seams, wear, relight), the
-   same honesty as v92's sounds: each is one PNG in assets/img/, swappable
-   for real art one file at a time via tools/embed_img.py. The one display
-   fix riding along: the Choktaw had no VEH_BOX entry, so it baked in the
+   per-pixel material pass (plastic grain, mold seams, wear - see
+   tools/material_v95.py for the recipe and the relight dead end), the same
+   honesty as v92's sounds: each is one file in assets/img/, swappable for
+   real art one file at a time via tools/embed_img.py. The one display fix
+   riding along: the Choktaw had no VEH_BOX entry, so it baked in the
    48-wide default and its tail boom (painted to x=-31.3) was clipped off
    every sprite since v88. */
 'use strict';
@@ -22,33 +26,33 @@ const fs71 = require('fs');
 
 /* ---------- A: the roster ---------- */
 {
-  section('T71.A one exclusive unit and one exclusive structure per army');
+  section('T71.A the whole roster is textured, derived from the tables');
 
-  /* transcribed on purpose (rule 5): growing the set is a conscious edit
-     here. 5 walk frames for the one infantryman; single cells otherwise. */
-  const want = [
-    'inf_runner_blue_0', 'inf_runner_blue_1', 'inf_runner_blue_2', 'inf_runner_blue_3', 'inf_runner_blue_4',
-    'veh_cmdtruck_green', 'veh_firebomb_tan', 'veh_choktaw_gray',
-    'bld_fwdpad_blue', 'bld_cmdpost_green', 'bld_foundry_tan', 'bld_bunker_gray'];
+  /* DERIVED, both directions, from the same rule the generator uses: every
+     infantry row gets 5 frames, every vehicle its hull, every non-wall
+     building its body - in all four colours for a shared row, in the
+     owner's colour alone for a faction exclusive. The wildlife nest is out
+     because it belongs to the bug faction, which the bake excludes. A row
+     added to U or B fires here until the texture pipeline is re-run
+     (dump_base_v95.js + material_v95.py + embed_img.py) - which is the
+     conscious step a textured game demands of a new unit. */
+  const facs = Object.keys(FAC).filter(f => f !== 'bug');
+  const excl = {};
+  for (const f of facs) { for (const k of FAC[f].uu) excl[k] = f; for (const k of FAC[f].ub) excl[k] = f; }
+  const facsOf = k => excl[k] ? [excl[k]] : facs;
+  const want = [];
+  for (const k in U) {
+    if (U[k].a === 'inf') { for (const f of facsOf(k)) for (let i = 0; i < 5; i++) want.push('inf_' + k + '_' + f + '_' + i); }
+    else for (const f of facsOf(k)) want.push('veh_' + k + '_' + f);
+  }
+  for (const k in B) { if (B[k].barr || k === 'nest') continue; for (const f of facsOf(k)) want.push('bld_' + k + '_' + f); }
   const keys = Object.keys(ASSET_MANIFEST.img).sort();
-  ok(`T71.A the manifest img half holds exactly the 12 first-cut textures (${keys.length})`,
-    keys.length === want.length && want.slice().sort().every((k, i) => k === keys[i]));
-
-  /* derived, both directions: every key names a real row of the right kind,
-     owned by the faction in the key - so a rename in U/B fires here */
-  const parse = k => k.match(/^(inf|veh|bld)_([a-z]+)_(blue|green|tan|gray)(?:_([0-4]))?$/);
-  ok('T71.A every key parses as kind_row_faction and names a real exclusive',
-    keys.every(k => {
-      const m = parse(k); if (!m) return false;
-      const [, kind, row, fac, fr] = m;
-      if (kind === 'inf') return U[row] && U[row].a === 'inf' && fr !== undefined && FAC[fac].uu.includes(row);
-      if (kind === 'veh') return U[row] && U[row].a !== 'inf' && fr === undefined && FAC[fac].uu.includes(row);
-      return B[row] && !B[row].barr && fr === undefined && FAC[fac].ub.includes(row);
-    }));
-  ok('T71.A all four armies are covered, unit and structure both',
-    ['blue', 'green', 'tan', 'gray'].every(f =>
-      keys.some(k => k.endsWith('_' + f) && !k.startsWith('bld_') || /^inf_.*_[0-4]$/.test(k) && k.includes('_' + f + '_')) &&
-      keys.some(k => k.startsWith('bld_') && k.endsWith('_' + f))));
+  const ws = want.sort();
+  const miss = ws.filter(k => !ASSET_MANIFEST.img[k]), extra = keys.filter(k => ws.indexOf(k) < 0);
+  ok(`T71.A the manifest holds a texture for every baked sprite the tables define (${keys.length})` +
+    (miss.length ? ' missing [' + miss.slice(0, 3).join(', ') + ']' : '') +
+    (extra.length ? ' extra [' + extra.slice(0, 3).join(', ') + ']' : ''),
+    miss.length === 0 && extra.length === 0);
 }
 
 /* ---------- B: the data ---------- */
@@ -58,33 +62,40 @@ const fs71 = require('fs');
   const keys = Object.keys(IMG_B64);
   ok('T71.B IMG_B64 and the manifest agree key for key',
     keys.length === Object.keys(ASSET_MANIFEST.img).length && keys.every(k => ASSET_MANIFEST.img[k]));
-  ok('T71.B every texture url is a data: url, so the double-clicked file needs no folder beside it',
-    keys.every(k => ASSET_MANIFEST.img[k].startsWith('data:image/png;base64,')));
+  /* webp because the full roster as png is ~5.8 MB and as q95 webp is 4-6x
+     smaller at a mean error under 0.7/255 - and a browser that could not
+     decode one would fall back to the painter like any missing file */
+  ok('T71.B every texture url is a data: url in its own declared format',
+    keys.every(k => ASSET_MANIFEST.img[k].startsWith('data:' + IMG_MIME[k] + ';base64,')));
 
-  let badPng = [], total = 0;
+  const SIG = {
+    'image/webp': b => b.length > 16 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP',
+    'image/png': b => b.length > 16 && b.readUInt32BE(0) === 0x89504e47,
+  };
+  let badSig = [], total = 0;
   for (const k of keys) {
     let buf = null;
     try { buf = Buffer.from(IMG_B64[k], 'base64'); } catch (e) { }
-    if (!buf || buf.length < 1024 || buf.readUInt32BE(0) !== 0x89504e47) badPng.push(k);
+    if (!buf || buf.length < 512 || !SIG[IMG_MIME[k]] || !SIG[IMG_MIME[k]](buf)) badSig.push(k);
     else total += buf.length;
   }
-  ok('T71.B every texture decodes from base64 and opens on the PNG signature' + (badPng.length ? ' [' + badPng.slice(0, 3).join(', ') + ']' : ''),
-    badPng.length === 0);
-  ok(`T71.B the whole set stays under three quarters of a megabyte (${Math.round(total / 1024)} kB)`,
-    total > 100 * 1024 && total < 768 * 1024);
+  ok('T71.B every texture decodes from base64 and opens on its format signature' + (badSig.length ? ' [' + badSig.slice(0, 3).join(', ') + ']' : ''),
+    badSig.length === 0);
+  ok(`T71.B the whole set stays under two and a half megabytes (${Math.round(total / 1024)} kB)`,
+    total > 500 * 1024 && total < 2560 * 1024);
 
   /* committed twice on purpose, like the sounds: auditable files a human can
      view and replace one at a time, and the base64 the game actually reads.
      This is the check that the two can never quietly disagree. */
   let files = [];
-  try { files = fs71.readdirSync('../assets/img').filter(f => f.endsWith('.png')).sort(); } catch (e) { }
+  try { files = fs71.readdirSync('../assets/img').filter(f => /\.(webp|png)$/.test(f)).sort(); } catch (e) { }
   const sk = keys.slice().sort();
   ok(`T71.B assets/img holds exactly the embedded textures (${files.length} files)`,
-    files.length === sk.length && files.every((f, i) => f.slice(0, -4) === sk[i]));
+    files.length === sk.length && files.every((f, i) => f.replace(/\.(webp|png)$/, '') === sk[i]));
   let drifted = [];
   for (const f of files) {
     const disk = fs71.readFileSync('../assets/img/' + f).toString('base64');
-    if (disk !== IMG_B64[f.slice(0, -4)]) drifted.push(f);
+    if (disk !== IMG_B64[f.replace(/\.(webp|png)$/, '')]) drifted.push(f);
   }
   ok('T71.B every embedded texture is byte-identical to its file - re-run tools/embed_img.py if not' +
     (drifted.length ? ' [' + drifted.join(', ') + ']' : ''), drifted.length === 0);
