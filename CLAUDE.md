@@ -92,7 +92,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,526 checks at v99.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,538 checks at v99.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -300,9 +300,26 @@ because the push gate does — an opening army hasn't outgrown `pushSize` yet.
 And the desk trail held because its one CPU is an ALLY: no foes, no threats,
 nothing for v99 to reach (`repin_v99.py` names that in `UNMOVED_OK`).
 
+**The owner's feedback pass on the same release (played before merge):** with
+the jitter gone, the winning bot idled 39–80% of its army through the endgame
+— one seed stalemated to the time limit because two stragglers held a 39-man
+wave "live" (the busy floor was an absolute 2) and everything else waited on
+a gate that could never open. Four changes, T76.G/H/I: the wave's busy floor
+**scales** (live while a quarter still moves or fights), a wave that ended
+STANDING rolls forward within seconds while a WIPED one keeps the profile's
+clock, **the press** walks a live assault across the base one objective at a
+time (idle wave members re-march when the aim point clears; a hill-holding
+wave never advances off its hill), and **commitment scales with contact** —
+CALM (no picket response 45 s) or CRUSH (twice every foe's fighters) halve
+the home guard, both quarter it, recent pressure keeps it whole. Measured:
+duels of 40–450 s at 39–80% idle became 29–45 s at 6–26%, attacking share
+tripled. `probe_v99.sh` now prints the duel readout too.
+
 **Fixture trap, recorded in the README too:** "killing" a unit with `hp=0`
 without `kill()` leaves it in the army census — the first cut of T76.B
-relaunched a wave off six corpses.
+relaunched a wave off six corpses. And an absolute liveness floor on a group
+whose size spans two orders of magnitude is a stall waiting for a big group —
+the busy floor had to scale.
 
 ## v98 — four owner asks (not part of a roadmap)
 

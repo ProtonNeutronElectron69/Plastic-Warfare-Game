@@ -1167,14 +1167,15 @@ turned them all back. Measured at 26 units diverting on a single tick.
 | divert-and-return flips | 1,268 | 547, nearly all picket fight-then-resume |
 | worst same-tick diversions | 26 units | 10, quota-bounded |
 
-The A/B on strength: 16 matches, SEED0=900, identical seeds both sides. Army
-wins Tan 8→7, Green 3→5, Gray 2→3, Blue 3→1; total kills 12,698 → 12,515.
-Doctrine wins reshuffled between the two attacking profiles (aggressive 2→5,
-harasser 5→2, balanced 5→7 on top both sides) - every movement inside the
-batch noise the v90 section warns about ("6 wins under one map pairing and 4
-under another", on identical seeds). The release does not measurably weaken or
-strengthen the bots on this read, which is the intended outcome: the army
-fights the same, it just stops wasting the walking.
+The A/B on strength, re-run on the final bytes after the owner-feedback pass:
+16 matches, SEED0=900, identical seeds both sides. Army wins Tan 8→4, Green
+3→8, Gray 2→3, Blue 3→1; total kills 12,698 → 12,495; harasser tops the
+doctrine table at 8 of 16 exactly as it tops the v90 baseline, turtle takes 1
+on both sides. Individual cells move more than the earlier intermediate read
+did - endgames now RESOLVE instead of idling into the time limit, so more
+matches produce a decisive winner - but every doctrine keeps its baseline
+rank and the total intensity is unchanged. The army fights the same; it stops
+wasting the walking and it finishes.
 
 ### What was deliberately NOT changed
 
@@ -1187,6 +1188,57 @@ fights the same, it just stops wasting the walking.
 - **The feint** still bluffs, the transport doctrine still ferries (`aiCarry`
   keys on its own `wid`, unaffected), and the survival recall, harass parties
   and scouts keep their own order streams.
+
+### v99 owner feedback: the winning bot idled its army through the endgame
+
+The owner played the first cut, confirmed the jitter gone, and named a new
+symptom exactly again: near the end of a match the bot that is about to win
+idles most of its army while a few units mop up the last base. Reproduced and
+measured (the duel readout now ships in `probe_v99.sh`): final duels of
+40-450 seconds with the leader's army 39-80% idle, and one seed **stalemated
+to the time limit at wu=39, busy=3 for over six minutes** - two stragglers
+held the wave "live" (the busy floor was an absolute 2), so the push stayed
+gated, the idle majority had no path back into action, and reinforcements
+marched to the stale aim point and idled beside them.
+
+Four changes, each a finding landing as a change AND a check (T76.G/H/I):
+
+- **The busy floor scales with the wave.** A wave is an assault while a
+  QUARTER of it still moves or fights; under that it has arrived, and
+  dissolving is what re-aims everybody.
+- **A wave that ended standing rolls forward.** Dissolution distinguishes a
+  WIPED wave (under three survivors - regroup on the profile's clock, as
+  before) from one that went quiet on its feet - that one pulls `nextPush` to
+  a two-second breath and the next objective launches at once, survivors
+  leading the closest-first slice.
+- **The press: a live assault walks the base one objective at a time.** When
+  no enemy building stands within 8 tiles of the aim point, it advances to
+  the nearest one still standing and the wave members idling at the rubble
+  re-march at it - idle members only, once per advance, so the churn is
+  bounded by how fast objectives fall. A HOLDING wave (`ai.waveRaze=0`: the
+  hill, the flag) never advances - standing idle on the objective is its
+  whole job - though its stragglers beyond 8 tiles are still pulled in.
+- **Commitment scales with contact.** `defendFrac` is the guard under threat;
+  holding a turtle's 45% home while the last base burns was the other half of
+  the idling. CALM (no picket response for 45 s) or CRUSH (fielding twice the
+  fighters every surviving foe holds together) halves the guard; both quarter
+  it; recent pressure keeps the full fraction. The launch's `commitN` and the
+  reinforcement guard read the same dial, so they agree on what stays home.
+
+Measured after, five seed/map combos: duels of 29-45 s at 6-26% idle with the
+attacking share roughly tripled, every match resolving before the time limit.
+The flip count rose (547 to ~1,000 on one seed) and its composition is the
+point: ~90% are the picket's fight-then-resume through savedDest - more
+marches reaching enemy ground means more brushes with the picket - and zero
+come from the press or the relaunch. Same-tick diversions stay quota-bounded
+at 10-11.
+
+**The trap this exposed, for the next wave-shaped mechanism:** an absolute
+liveness floor on a group whose size varies two-orders-of-magnitude is a
+stall waiting for a big group. And the first fix cut (rolling offensive and
+contact scaling WITHOUT the scaled busy floor) made one seed WORSE - 453 s
+and 80% idle - which only the re-measurement caught: the stuck-wave state was
+starving the very mechanisms added to drain it. Measure after, every time.
 
 ### v99: a nine-release-old test needed a conscious edit, and got a rewrite
 
@@ -3745,7 +3797,11 @@ now runs each table from its own cfg and asserts both the equality that should h
 ## Contents
 
 v99 adds tail_v99.js (T76), riding segment 3 and listed last in tails.txt.
-Sections A-F: the push launched once and never re-aimed while it lives (both
+Sections G-I are the owner-feedback pass on the same release: the rolling
+offensive (a standing wave pulls the clock, a wiped one keeps it), the press
+(a cleared aim point advances and re-marches the idlers; a holding wave keeps
+its hill), and contact-scaled commitment (pressure keeps the full guard, calm
+and crushing quarters it). Sections A-F: the push launched once and never re-aimed while it lives (both
 triggers held TRUE for five ticks, zero relaunches, zero re-aims), the wave's
 death re-arming the trigger with a mutation arm that erases the wave and
 demands an immediate relaunch, reinforcement joining idles to the live wave

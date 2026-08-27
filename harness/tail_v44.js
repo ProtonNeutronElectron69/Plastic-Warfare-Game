@@ -23,9 +23,9 @@ section('T24 v44: medic station keeping');
    passed unedited are blind to a unit-stat edit rather than evidence of one. */
 const BASE45_AI={
   'backyard:dm:normal:green:3:441001': [1992729124, 1681538260, 20647052],
-  'kitchen:ctf:hard:tan:2:441002': [727851956, 759645023, 3782242684],
+  'kitchen:ctf:hard:tan:2:441002': [727851956, 759645023, 1018944105],
   'sandbox:koth:easy:gray:3:441003': [3046594802, 2588436254, 716712371],
-  'livingroom:dm:hard:blue:3:441004': [381593247, 4037400891, 2044974635],
+  'livingroom:dm:hard:blue:3:441004': [381593247, 4037400891, 3166033042],
 };
 // every key a v43 medic could carry into a snapshot (captured from the v43 build),
 // plus 'mesc': the v44.1 order tag, movement-only and deliberately unhashed. It is

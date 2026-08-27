@@ -19,6 +19,20 @@
      D  the defend picket: local, capped, and it hands the march back
      E  the phase machine survives a defend interrupt mid-wave
      F  it is all sim state: serialized, and the trigger still fires at all
+     G  a wave that ended STANDING rolls forward; a wiped one waits the clock
+     H  the press: a cleared aim point advances, idle wave members re-march,
+        and a hill-holding wave is never walked off its hill
+     I  commitment scales with CONTACT: calm and crushing commits the army
+
+   G, H and I are the owner's SECOND finding on this release: with the jitter
+   fixed, the winning bot idled 39-80% of its army through the endgame while a
+   few units chewed the last base - one seed measured six minutes at wu=39,
+   busy=3, because two stragglers held the wave "live" forever. The wave's busy
+   floor scales now, a spent-but-standing wave re-arms the push in seconds, a
+   live assault walks the base one objective at a time, and a bot that is calm
+   at home and crushing afield commits up to nine-tenths of its army. Measured
+   across five seed/map combos: final duels of 370-453s at 40-80% idle became
+   29-45s at 6-26%, with the attacking share roughly tripled.
 
    Nothing in this release touches a unit, a price, a building or the map;
    it is entirely a change to how the bots COMMAND what they already have. */
@@ -255,4 +269,107 @@ const wave99=(p)=>p.units.filter(u=>u.aiWave===p.ai.waveId&&u.hp>0);
  aiTick(p9);
  ok('T76.F MUTATION: erase the wave and the same triggers fire at once',
     ai9.waveId===wid+1);
+}
+
+/* ---------- G: the rolling offensive ---------- */
+{
+ section('T76.G a standing wave rolls forward; a wiped one waits the clock');
+ G=null;newGame(cfg99('backyard','dm',990701,3));
+ const p=bot99(),ai=armBot99(p);
+ squad99(p,6);
+ aiTick(p);
+ ok('T76.G fixture: a live wave with the clock set far out',
+    ai.waveId===1&&ai.nextPush>ai.t+10);
+ /* the wave WINS: everyone still stands, nothing left to do */
+ for(const u of wave99(p)){u.state='idle';u.path=null;u.target=null;}
+ aiTick(p);
+ ok('T76.G a wave that ended standing pulls the clock to a breath',
+    ai.phase!=='attack'&&ai.nextPush<=ai.t+4);
+ let relaunched=false;
+ for(let i=0;i<6&&!relaunched;i++){aiTick(p);relaunched=ai.waveId===2;}
+ ok('T76.G ...and the next objective launches within seconds', relaunched);
+ /* the wave DIES: the clock stands where the launch put it */
+ G=null;newGame(cfg99('backyard','dm',990702,3));
+ const p2=bot99(),ai2=armBot99(p2);
+ squad99(p2,6);
+ aiTick(p2);
+ const clock2=ai2.nextPush;
+ for(const u of wave99(p2)){u.hp=0;kill(u,null);}
+ aiTick(p2);
+ ok('T76.G a wave that was wiped regroups on the profile\'s clock, unhurried',
+    ai2.phase!=='attack'&&ai2.nextPush===clock2&&ai2.waveId===1);
+}
+
+/* ---------- H: the press ---------- */
+{
+ section('T76.H a live assault walks the base; a holding wave keeps its hill');
+ G=null;newGame(cfg99('backyard','dm',990801,3));
+ const p=bot99(),ai=armBot99(p);
+ squad99(p,6);
+ aiTick(p);
+ const wv=wave99(p);
+ ok('T76.H fixture: a live wave aimed at an enemy structure',
+    ai.waveId===1&&ai.waveRaze===1&&!!ai.waveDest&&wv.length>=6);
+ /* the objective falls: raze everything within 8 tiles of the aim point,
+    while enough of the wave stays busy that the assault is still LIVE */
+ for(const q of G.players){
+  if(q===p||!q.alive||allied(q,p))continue;
+  for(const b of q.blds.slice())if(dhyp(b.x-ai.waveDest.x,b.y-ai.waveDest.y)<=8){b.hp=0;kill(b,null);}
+ }
+ const keepBusy=Math.max(2,Math.ceil(wv.length*0.25));
+ wv.forEach((u,i)=>{if(i>=keepBusy){u.state='idle';u.path=null;u.target=null;}});
+ const d0={x:ai.waveDest.x,y:ai.waveDest.y};
+ aiTick(p);
+ ok('T76.H the cleared aim point advanced to the nearest standing enemy work',
+    (ai.waveDest.x!==d0.x||ai.waveDest.y!==d0.y)&&
+    G.players.some(q=>q!==p&&q.alive&&!allied(q,p)&&q.blds.some(b=>dhyp(b.x-ai.waveDest.x,b.y-ai.waveDest.y)<=2)));
+ const rearmed=wv.filter(u=>u.hp>0&&u.state==='amove'&&u.dest&&dhyp(u.dest.x-ai.waveDest.x,u.dest.y-ai.waveDest.y)<8);
+ ok('T76.H ...and the men idling at the rubble are marching on it',
+    rearmed.length>=wv.length-keepBusy-1&&ai.phase==='attack'&&ai.waveId===1);
+ /* a HOLDING wave: same cleared ground, and the aim point must not move */
+ G=null;newGame(cfg99('backyard','dm',990802,3));
+ const p2=bot99(),ai2=armBot99(p2);
+ squad99(p2,6);
+ aiTick(p2);
+ ai2.waveRaze=0;                                     // pretend this wave holds the hill
+ for(const q of G.players){
+  if(q===p2||!q.alive||allied(q,p2))continue;
+  for(const b of q.blds.slice())if(dhyp(b.x-ai2.waveDest.x,b.y-ai2.waveDest.y)<=8){b.hp=0;kill(b,null);}
+ }
+ const wv2=wave99(p2),kb2=Math.max(2,Math.ceil(wv2.length*0.25));
+ wv2.forEach((u,i)=>{if(i>=kb2){u.state='idle';u.path=null;u.target=null;}});
+ const h0={x:ai2.waveDest.x,y:ai2.waveDest.y};
+ aiTick(p2);
+ ok('T76.H a holding wave is never walked off its objective',
+    ai2.waveDest.x===h0.x&&ai2.waveDest.y===h0.y);
+ ok('T76.H ...though its stragglers are still pulled onto it',
+    wv2.filter(u=>u.hp>0&&u.state==='amove'&&u.dest&&dhyp(u.dest.x-h0.x,u.dest.y-h0.y)<8).length>=wv2.length-kb2-1);
+}
+
+/* ---------- I: contact-scaled commitment ---------- */
+{
+ section('T76.I calm at home and crushing afield commits the army');
+ /* THREATENED: pressure just fired, foes hold real armies - the full guard */
+ G=null;newGame(cfg99('backyard','dm',990901,3));
+ const p=bot99(),ai=armBot99(p,{guard:0.4});
+ ai.defend=G.tick;                                   // the picket fired moments ago
+ squad99(p,12);
+ aiTick(p);
+ const w1=wave99(p).length,r1=p.units.filter(u=>u.t.dm&&!u.garrisoned&&u.key!=='truck').length;
+ ok('T76.I under pressure the full guard fraction stays home',
+    ai.waveId===1&&w1<r1&&w1<=Math.ceil(r1*0.68));
+ /* CALM AND CRUSHING: no pressure for a minute, the foes\' armies are gone */
+ G=null;newGame(cfg99('backyard','dm',990902,3));
+ const p2=bot99(),ai2=armBot99(p2,{guard:0.4});
+ for(const q of G.players){
+  if(q===p2||!q.alive||allied(q,p2))continue;
+  for(const u of q.units.slice()){u.hp=0;kill(u,null);}
+ }
+ squad99(p2,12);
+ aiTick(p2);
+ const w2=wave99(p2).length,r2=p2.units.filter(u=>u.t.dm&&!u.garrisoned&&u.key!=='truck').length;
+ ok('T76.I calm and crushing quarters the guard: nearly everyone marches',
+    ai2.waveId===1&&w2>=Math.ceil(r2*0.85));
+ ok('T76.I ...which is strictly more of the army than pressure allows',
+    w2/r2>w1/r1);
 }
