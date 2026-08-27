@@ -936,14 +936,31 @@ that is honoured exactly - one pair, `recut_v99.js` / `repin_v99.py`, carried
 forward by the release that MOVES the trails rather than by every release, which
 is why the pair is a version behind the game (see `../CLAUDE.md`).
 
-**Two leftovers sit outside that discipline and are recorded here rather than
-quietly removed**: `tools/splice_v79.py` and `tools/splice_v82.py`, spent at v79
-and v82, both of them pre-split scripts that edit the shipped file directly.
-Nothing reads them, no test names them, and neither can run. They are dead
-weight rather than a trap - but a new session should know they were spent long
-before the v91 source split, and should not read `tools/` as a list of things
-that still work. The six scripts beside them (the audio renderer and the
-four-step texture pipeline) DO work and are documented in `../CLAUDE.md`.
+**Two leftovers sat outside that discipline until the owner cleared them.**
+`tools/splice_v79.py` and `tools/splice_v82.py` were spent at v79 and v82 and
+went on sitting in `tools/` for the whole of both later roadmaps. Neither could
+run against the tree it sat in, for three separate reasons, and the third is
+the interesting one: each guards on the source it expects, so v79's edits abort
+on anything that is not a v78 file and v82's on anything that is not v81;
+v82 hard-codes absolute paths (`/home/claude/plastic-warfare-v81.html`) to
+files that never existed here; and v79's default target is `pw.html`, which
+since v91 is a git-ignored copy that the next `build.sh` overwrites - so even a
+"successful" run would have edited a file that is regenerated from `source/`
+seconds later. Nothing read them and no test named them; they were dead weight
+rather than a trap, and they are deleted now, on the owner's instruction, which
+puts `tools/` back in line with the rule stated above.
+
+**The lesson is the third reason, not the deletion.** After v91 the shipped
+HTML is GENERATED. Any tool that edits it - a splice, a patch script, a
+one-off sed - is writing to a file that `build.sh` will overwrite from
+`source/` without complaint, so it fails silently rather than loudly. Edit
+`source/`; there is no supported way to edit the game file itself.
+
+What remains there is the six scripts that DO work and are documented in
+`../CLAUDE.md`: the audio renderer (`render_snd_v92.py`), the four-step texture
+pipeline (`dump_base_v95.js` → `material_v95.py` → `normal_v96.py` →
+`embed_img.py`) and `embed_snd.py`. Read `tools/` as a list of things that run,
+because as of now it is one again.
 
 The original text follows.
 
