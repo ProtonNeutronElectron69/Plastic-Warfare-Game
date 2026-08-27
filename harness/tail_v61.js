@@ -263,22 +263,31 @@ function roundTrip61(seed,type){
  placeBuilding=function(p,key,tx,ty){
   placed++;
   if(placeDeny(p,key,tx,ty)!=='')illegal++;
-  seen.push({key,tx,ty,barr:!!B[key].barr});
-  return _pb(p,key,tx,ty);
+  const r=_pb(p,key,tx,ty);
+  seen.push({key,tx,ty,barr:!!B[key].barr,ref:p.blds[p.blds.length-1]});
+  return r;
  };
  for(let i=1;i<=5400;i++)update(DT61);
  placeBuilding=_pb;
  ok(`T40.G bots kept building under the rule (${placed} placements)`,placed>=12);
  ok('T40.G every live placement was legal at call time',illegal===0);
- // and the standing layout honours it: any pair placed through placeDeny during
- // the run must hold the gap unless both are barricades
+ /* and the STANDING layout honours it - which is what this check always said it
+    claimed. v99: the scan used to pair every placement in the window against
+    every other with no notion of death, and the first time a bot's base was
+    razed and rebuilt inside the three minutes, it flagged the rebuild: a supply
+    yard legally re-placed on its own predecessor's exact tiles paired against
+    that dead predecessor. The rule the game enforces - and `illegal` above
+    already proves it held at every call - is against buildings that are
+    STANDING, so the pair scan now demands both parties still stand. */
  let bad=0;
+ const standing=e=>e.ref&&G.blds.includes(e.ref)&&e.ref.hp>0;
  for(let i=0;i<seen.length;i++)for(let j=i+1;j<seen.length;j++){
   const a=seen[i],b=seen[j];
   if(a.barr&&b.barr)continue;
+  if(!standing(a)||!standing(b))continue;
   if(bldGap(a.key,a.tx,a.ty,{tx:b.tx,ty:b.ty,sz:B[b.key].sz})<BUILD_GAP)bad++;
  }
- ok(`T40.G no pair placed during the run violates the gap (${bad})`,bad===0);
+ ok(`T40.G no standing pair placed during the run violates the gap (${bad})`,bad===0);
  const bot=G.players.find(p=>p.ai&&p.alive&&p.blds.length);
  ok('T40.G a live bot still holds a real base',!!bot&&bot.blds.filter(b=>b.key!=='barricade').length>=4);
  if(bot){

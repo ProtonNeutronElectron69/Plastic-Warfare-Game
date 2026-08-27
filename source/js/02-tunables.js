@@ -387,6 +387,12 @@ const SMOKESCR_T=10;     // ...and how many seconds it stands
 /* The BOT threshold, named here on the same rule as v86's and v87's. */
 const SCR_AI_N=4;        // Smokescreen: friendly units under fire in one box before a bot calls it
 const PAINT_AI_N=3;      // Paint: enemy ground units inside the box before a bot spends the Choktaw's cooldown on it
+/* v99: how far a bot's soldier will answer a base intrusion from. Threats are
+   detected within 14 tiles of a building; 24 covers the base, its walls and the
+   staging ground outside them, and deliberately NOT a wave halfway across the
+   map - the map-wide recall was half of the jitter the release fixes. */
+const AI_DEF_R=24;       // defend recall: tiles from the intruder inside which a unit responds
+const AI_DEF_N=5;        // ...and how many respond per intruder, closest first - the picket, not the army
 /* Help-panel slots. The static help markup carries <span data-tune="key"> holes;
    applyHelpTune fills them once at boot. Pure UI: nothing here is hashed. */
 const HELP_TUNE={

@@ -908,10 +908,43 @@ function aiTick(p){
  if(threats.length){
   ai.defend=G.tick;ai.phase='defend';
   // committed scouts/harassers keep their orders; entrenched gunners hold their cone
-  let ti=0;
+  /* v99: the recall is LOCAL now. This loop used to pull every idle or marching
+     unit the bot owned, from anywhere on the map - one enemy scout brushing an
+     outpost turned the whole mid-march army around, and when the scout died or
+     left, the wave logic turned it back: the second half of the owner's jitter
+     report. A unit answers only from within AI_DEF_R of the intruder it is
+     assigned; the home guard the launch held back is by construction near the
+     base, so the base is still defended, and a wave deep in enemy territory
+     finishes its job instead of abandoning it to chase a bike.
+     A marcher that does respond writes u.savedDest first, the help-response
+     idiom from applyDmg: when the intruder dies, the attack state hands the
+     unit straight back to the march it was on, instead of leaving it idle in
+     the yard. */
+  /* v99: ...and PROPORTIONATE. Even split round-robin across three threats, the
+     old loop ordered EVERY eligible unit in radius - twenty men lunging at one
+     bike, measured. Each intruder now draws at most AI_DEF_N responders, the
+     closest first, each sent at the nearest intruder with quota left; everyone
+     past the quota keeps doing what it was doing. A real assault is met by the
+     layers that always met it - the per-unit auto-acquire, the help response in
+     applyDmg, the garrison and the towers - this block is the early-warning
+     picket, not the whole defense. */
+  const resp=[];
   for(const u of army){
    if(u.aiRole||u.entrenched)continue;
-   if(u.state==='idle'||u.state==='amove'||(u.state==='move'&&!u.target)){orderAttack(u,threats[ti%threats.length]);ti++;}
+   if(u.state!=='idle'&&u.state!=='amove'&&!(u.state==='move'&&!u.target))continue;
+   let bd=1e9;
+   for(const th of threats){const d=dhyp(u.x-th.x,u.y-th.y);if(d<bd)bd=d;}
+   if(bd<=AI_DEF_R)resp.push({u,d:bd});
+  }
+  resp.sort((a,b2)=>a.d-b2.d);
+  const quota=threats.map(()=>AI_DEF_N);
+  for(const r of resp){
+   let bi=-1,bd=1e9;
+   for(let i=0;i<threats.length;i++){if(quota[i]<=0)continue;const d=dhyp(r.u.x-threats[i].x,r.u.y-threats[i].y);if(d<bd){bd=d;bi=i}}
+   if(bi<0)break;
+   quota[bi]--;
+   if((r.u.state==='amove'||r.u.state==='move')&&r.u.dest)r.u.savedDest=r.u.dest;
+   orderAttack(r.u,threats[bi]);
   }
  }
 
@@ -1175,25 +1208,100 @@ function aiTick(p){
  }
 
  // ---- OFFENSE: stage, then push in waves; don't full-retreat on a scratch ----
+ /* v99: A PUSH IS AN EVENT, NOT A STANDING CONDITION. The trigger below fired
+    whenever the army was big enough (sizeReady) - and nothing about launching a
+    wave ever made it smaller: the committed units stay in readyArmy, so once an
+    army outgrew its capped pushSize the block fired on EVERY aiTick, re-ordering
+    the entire wave every 0.6 seconds for the rest of the match. Each firing also
+    re-rolled the target (the rivalIdx%3 rotation, scoreFoes' srand noise, the
+    koth/ctf rolls), so two of every three ticks aimed at one foe and the third at
+    another - which is the army-wide "jitter" the owner reported: every unit not
+    in a fight veering the same way at once, then turning back. Measured before
+    the fix: one bot launched 174 "waves" in a 10-minute match, 94% of them one
+    aiTick apart; the design cadence in pr.repeat is 34-155 aiTicks.
+    The gate is WAVE-LIVENESS, not the phase flag, because the threat response
+    flips phase to 'defend' while a wave is mid-march and the push must not
+    relaunch through that door either. A wave is live while three of its units
+    survive and two are still going somewhere or fighting; when it falls under
+    that, the remnant is released (aiWave=0, so the stage drift regroups it) and
+    the phase machine returns to 'build' - which is what re-arms the next push,
+    on pr.repeat's clock or the size trigger, exactly as the comment above the
+    trigger always claimed. */
+ const wu99=ai.waveId?p.units.filter(u=>u.aiWave===ai.waveId&&u.hp>0):[];
+ const waveBusy99=wu99.filter(u=>u.state==='attack'||u.state==='move'||u.state==='amove').length;
+ /* the busy floor SCALES with the wave (v99 owner feedback): an absolute
+    floor of two let a couple of stragglers hold a forty-man wave "live" for
+    hundreds of seconds - measured on one seed at wu=39, busy=3 for over six
+    minutes, the army idling beside the last enemy base while three units
+    chewed on it, reinforcements marching to the stale aim point and idling
+    too. A wave is an assault while a QUARTER of it is still moving or
+    fighting; under that it has arrived, and dissolving it is what re-aims
+    everybody - the still-busy few included, whose auto-acquire re-engages
+    them the moment the relaunch points them anywhere near a target. */
+ const waveLive=wu99.length>=3&&waveBusy99>=Math.max(2,Math.ceil(wu99.length*0.25));
+ /* v99 owner feedback: A WAVE THAT ENDED STANDING ROLLS FORWARD. Dissolution
+    reaches here two ways, and they must not pace alike. A wave that was WIPED
+    (under three survivors) regroups on the profile's clock, exactly as before.
+    A wave that went quiet with its men still standing has WON its objective -
+    the aim point is razed and there is nothing left in acquisition range - and
+    waiting out the full pr.repeat there is how the winning bot was measured
+    idling 39-69% of its army through the endgame while three units chewed the
+    last base. The clock is pulled to a two-second breath instead; the next
+    launch re-targets through scoreFoes as ever, and its closest-first slice
+    means the survivors at the front lead the next objective. A tactical
+    retreat never passes through here (it zeroes aiWave and sets 'build'
+    itself), so its deliberately raised clock is untouched. */
+ if(ai.phase==='attack'&&!waveLive){
+  for(const u of wu99)u.aiWave=0;
+  ai.phase='build';
+  if(wu99.length>=3)ai.nextPush=Math.min(ai.nextPush,ai.t+4);
+ }
  const defendHold=pr.defendHold;
  if(ai.phase!=='defend'||G.tick-ai.defend>defendHold){
-  if(ai.phase==='defend'&&G.tick-ai.defend>defendHold)ai.phase='build';
-  // time OR size based trigger so they don't sit forever
-  const sizeReady=readyArmy.length>=ai.pushSize;
+  if(ai.phase==='defend'&&G.tick-ai.defend>defendHold)ai.phase=waveLive?'attack':'build'; // v99: a defend interrupt hands back to the wave still out there, so its retreat watch and reinforcement resume
+  /* time OR size based trigger so they don't sit forever. v99: SIZE LAUNCHES THE
+     OPENING, THE CLOCK PACES THE REST - which is what pr.repeat's own doc comment
+     ("AI-tick gap between main waves") always described. sizeReady used to stay
+     armed after every wave, so the tactical retreat's pull-back was relaunched at
+     the same superior force one aiTick later: the army turned for home and
+     turned straight back, the retreat-shaped half of the jitter. Every wave
+     after the first now waits for nextPush, which the launch sets to the
+     profile's cadence and the retreat deliberately raises. */
+  const sizeReady=readyArmy.length>=ai.pushSize&&!ai.waveId;
   const timeReady=ai.t>ai.nextPush;
-  // commit the army minus a profile-dependent home-guard fraction
-  const commitN=Math.max(4,Math.ceil(readyArmy.length*(1-pr.defendFrac)));
-  if(foes.length&&(sizeReady||timeReady)&&readyArmy.length>=Math.max(4,Math.round(ai.pushSize*0.6))){
+  /* commit the army minus a home-guard fraction - SCALED BY CONTACT (v99 owner
+     feedback). defendFrac is the profile's guard under threat; holding a
+     turtle's 45% of the army at home while the last enemy base burns is where
+     the other half of the endgame idling came from. Two cheap reads decide the
+     posture: CALM is no threat response for 45 seconds (ai.defend is the sim
+     tick the picket last fired, 0 if never), CRUSH is fielding at least twice
+     the fighters every surviving foe holds together. Either alone halves the
+     guard, both quarter it, and a bot under recent pressure keeps the full
+     fraction - which is the "high contact" end of the same dial. The same
+     fraction feeds the reinforcement guard below, so the launch and the
+     trickle agree on what stays home. */
+  const foeFight99=foes.reduce((n,q)=>n+q.units.filter(u2=>u2.t.dm&&!u2.garrisoned).length,0);
+  const calm99=G.tick-ai.defend>1350;
+  const crush99=readyArmy.length>=foeFight99*2+4;
+  const gFrac99=pr.defendFrac*((calm99&&crush99)?0.25:(calm99||crush99)?0.5:1);
+  const commitN=Math.max(4,Math.ceil(readyArmy.length*(1-gFrac99)));
+  if(!waveLive&&foes.length&&(sizeReady||timeReady)&&readyArmy.length>=Math.max(4,Math.round(ai.pushSize*0.6))){
    ai.rivalIdx++;
    const scored=scoreFoes();
    // pick from the best two, rotating, so attention spreads between rivals over time
    const tgt=(scored.length>1&&ai.rivalIdx%3===0)?scored[1].q:scored[0].q;
    let dest={x:tgt.start.x,y:tgt.start.y};
+   /* v99 owner feedback: raze76 records the wave's PURPOSE. A wave aimed at a
+      structure advances its aim point across the base as objectives fall (the
+      press, below); a wave holding the hill or hunting the flag must NOT be
+      walked off its objective toward the nearest shed the moment it arrives -
+      at the hill there is no enemy building within reach by design. */
+   let raze76=1;
    // v22 soft-spot targeting: weigh distance against local defensive power, so waves
    // hit the enemy's weakest-defended structure instead of always the nearest one
    let bs2=1e18;for(const b of tgt.blds){const s=dhyp(b.x-p.start.x,b.y-p.start.y)*0.6+powAt(p,b.x,b.y,true)*0.12;if(s<bs2){bs2=s;dest={x:b.x,y:b.y}}}
-   if(G.mode==='ctf'){const f=G.flags.find(f=>f.owner===tgt);if(f&&srand()<.65)dest={x:f.x,y:f.y}}
-   if(G.mode==='koth'&&G.hill&&srand()<.75)dest={x:G.hill.x,y:G.hill.y}; // fight over the hill
+   if(G.mode==='ctf'){const f=G.flags.find(f=>f.owner===tgt);if(f&&srand()<.65){dest={x:f.x,y:f.y};raze76=0}}
+   if(G.mode==='koth'&&G.hill&&srand()<.75){dest={x:G.hill.x,y:G.hill.y};raze76=0} // fight over the hill
    dest=safeSpot(dest.x,dest.y);
    // keep the home guard back; send the rest (closest units lead the charge)
    const wave=readyArmy.slice().sort((a,b2)=>dhyp(a.x-dest.x,a.y-dest.y)-dhyp(b2.x-dest.x,b2.y-dest.y)).slice(0,commitN);
@@ -1246,6 +1354,8 @@ function aiTick(p){
    if(feint){ai.feintDone=true;ai.nextPush=ai.t+16+srand()*20;}
    else{
     ai.phase='attack';
+    ai.waveDest={x:dest.x,y:dest.y}; // v99: the standing aim point reinforcements march on. Plain data on the brain: _encAi copies it, loadState spreads it back
+    ai.waveRaze=raze76;              // ...and whether the press below may advance it
     ai.pushSize=Math.min(pr.pushCap,ai.pushSize+pr.pushGrow);
     ai.nextPush=ai.t+pr.repeat[0]+srand()*pr.repeat[1];
     // v48: medics ride along - ordered at the same point, their v44 station
@@ -1253,8 +1363,57 @@ function aiTick(p){
     for(const m2 of p.units)if(m2.key==='medic'&&!m2.garrisoned&&m2.hp>0)orderMove(m2,dest.x,dest.y,false);
    }
    if(tgt===G.human){pingEvent(dest.x,dest.y,'#ff6a5a');setTimeout(()=>{if(G&&!G.over)msg(`⚠ ${FAC[p.fac].name} is on the move!`)},(2+Math.random()*3)*1000);}
-  } else if(ai.phase==='attack'&&readyArmy.length<3){
-   ai.phase='build'; // wave spent, regroup
+  }
+ }
+ /* v99: REINFORCE THE WAVE INSTEAD OF RELAUNCHING IT. The old every-tick push
+    had one virtue: freshly built units were swept toward the fight continuously.
+    With the push an event again, that job is done honestly - while a wave is
+    live, an IDLE ready unit that is not on it marches to the standing aim point
+    and joins the wave (aiWave, so the tactical retreat covers it too). Only idle
+    units are ordered, once each - a unit ordered here is 'amove' next tick and
+    the guard refuses it - so nothing already moving is ever re-aimed, which is
+    the whole point of the release. The home guard keeps its defendFrac share:
+    the closest-to-home idles stay, counted against the same fraction the launch
+    held back. (The old `readyArmy<3 -> regroup` else-branch this replaces was
+    nearly unreachable - readyArmy counts the whole army, home guard included -
+    and the wave-liveness bookkeeping above is now the real end-of-wave door.) */
+ if(waveLive&&ai.waveDest&&ai.phase==='attack'){
+  /* THE PRESS (v99 owner feedback). A live assault walks the enemy base one
+     objective at a time: when no enemy building stands within 8 tiles of the
+     aim point any more, the point advances to the nearest one still standing,
+     and every wave member idling at the OLD objective is re-marched at the new
+     one. Idle members only, once per advance - the busy ones keep the fight
+     they are in and follow on later cycles - so the churn is bounded by how
+     fast objectives actually fall. Without this, the men who finished first
+     stood at the rubble while a dozen teammates fought on: the wave was
+     correctly LIVE, so neither dissolution nor reinforcement could reach them.
+     A holding wave (waveRaze=0: the hill, the flag) never advances - standing
+     idle ON the objective is that wave's whole job - but its stragglers more
+     than 8 tiles out are still pulled in. */
+  if(ai.waveRaze){
+   let nx76=0,ny76=0,nd76=1e18;
+   for(const q of foes)for(const b of q.blds){const d=(b.x-ai.waveDest.x)**2+(b.y-ai.waveDest.y)**2;if(d<nd76){nd76=d;nx76=b.x;ny76=b.y}}
+   if(nd76<1e18&&nd76>64)ai.waveDest={x:nx76,y:ny76};
+  }
+  for(const u of wu99){
+   if(u.state!=='idle'||u.entrenched)continue;
+   if(dhyp(u.x-ai.waveDest.x,u.y-ai.waveDest.y)<=8)continue;
+   const d2=safeSpot(clamp(ai.waveDest.x+(srand()-.5)*5,2,G.map.N-3),clamp(ai.waveDest.y+(srand()-.5)*5,2,G.map.N-3));
+   orderMove(u,d2.x,d2.y,true);
+  }
+  const idles=readyArmy.filter(u=>u.state==='idle'&&!u.entrenched&&u.aiWave!==ai.waveId&&dhyp(u.x-ai.waveDest.x,u.y-ai.waveDest.y)>10);
+  /* the guard here reads the same contact dial the launch does - recomputed
+     because the launch's consts are block-scoped, kept identical on purpose */
+  const foeF99=foes.reduce((n,q)=>n+q.units.filter(u2=>u2.t.dm&&!u2.garrisoned).length,0);
+  const gF99=pr.defendFrac*(((G.tick-ai.defend>1350)&&(readyArmy.length>=foeF99*2+4))?0.25:((G.tick-ai.defend>1350)||(readyArmy.length>=foeF99*2+4))?0.5:1);
+  const guardN=Math.ceil(readyArmy.length*gF99);
+  if(idles.length>guardN){
+   idles.sort((a,b2)=>dhyp(a.x-p.start.x,a.y-p.start.y)-dhyp(b2.x-p.start.x,b2.y-p.start.y)); // closest-to-home stay as the guard
+   for(const u of idles.slice(guardN)){
+    u.aiWave=ai.waveId;
+    const d2=safeSpot(clamp(ai.waveDest.x+(srand()-.5)*5,2,G.map.N-3),clamp(ai.waveDest.y+(srand()-.5)*5,2,G.map.N-3));
+    orderMove(u,d2.x,d2.y,true);
+   }
   }
  }
  // ---- TACTICAL RETREAT (v22): a committed wave that walks into locally superior
