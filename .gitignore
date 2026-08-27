@@ -27,6 +27,7 @@ harness/tri.js
 harness/sim.js
 harness/simrep.js
 harness/probev89.js
+harness/pv99.js
 
 # Battle-report runs (harness/sim.sh). Every match re-runs from its seed, so the
 # results are reproducible rather than worth committing.

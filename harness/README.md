@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v98)
+# Plastic Warfare headless test harness (updated at v99)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -1079,6 +1079,136 @@ error a reader would see as anything but an odd blank report. `sim_report.js` no
 compiles the page's script block with `new Function` before writing (compiles, does
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
+
+## v99: the AI order-discipline pass - the army stops twitching
+
+Not part of a roadmap. The owner watched the bots and named the symptom
+exactly: every CPU unit not in a fight would "make brief and abrupt movements
+in the same direction before backtracking to the prior direction of travel."
+Nothing about any unit, price, building or map changed in this release; it is
+entirely a change to how the bots COMMAND what they already have
+(`tail_v99.js`, T76; `probe_v99.sh` is the measurement tool and stays in the
+harness the way `probe_v89.sh` did).
+
+### The finding: the wave push was a standing condition, not an event
+
+`aiTick`'s offense block launched a wave when the army was big enough
+(`sizeReady`) OR a timer rang (`timeReady`) - and launching never made the
+army smaller, because the committed units stay in `readyArmy`. So the moment
+an army outgrew its capped `pushSize`, the block fired on EVERY aiTick.
+Measured with orderMove/orderAttack wrapped (the sim_dm.js wrapper idiom):
+**one bot launched 174 "waves" in a ten-minute match, 94% of them one aiTick
+(0.6 s) apart**, against a design cadence of 34-155 aiTicks in `pr.repeat`.
+The other three bots in the same match pushed 3-4 times at sane 30-80 s
+gaps - their armies never outgrew `pushSize`, which is why the bug read as
+intermittent.
+
+Each spurious relaunch re-ordered the whole committed army AND re-rolled the
+target: the `rivalIdx%3` rotation aimed two of every three pushes at one foe
+and the third at another, `scoreFoes` carries an `srand()*200` noise term, and
+koth/ctf modes roll fresh dice per push. That is the jitter, mechanically: the
+entire army re-aimed every 0.6 s, at a destination that rhythmically flapped.
+The tactical retreat made it worse - it pulled the wave home and raised
+`nextPush`, and `sizeReady` re-pushed the same men at the same enemy on the
+very next tick, overriding the retreat it had just ordered.
+
+The second half was the defend recall: one enemy unit within 14 tiles of ANY
+building made every idle or marching unit the bot owned - from anywhere on the
+map - turn toward it, and when the intruder died or left, the wave logic
+turned them all back. Measured at 26 units diverting on a single tick.
+
+### What changed, all in `aiTick`
+
+- **A push is an event.** The trigger is gated on wave-liveness: while three
+  units of the current wave survive and two are still moving or fighting, no
+  new wave launches and nobody already marching is ever re-aimed. When the
+  wave falls under that, the remnant is released (`aiWave=0`, the stage drift
+  regroups it), the phase machine returns to `build`, and the next push
+  re-arms on `pr.repeat`'s clock - which is what the comment above the trigger
+  always claimed happened. The gate reads the WAVE and not the phase flag,
+  because the threat response flips phase to `defend` mid-march and the push
+  must not relaunch through that door either.
+- **Reinforcement replaces relaunching.** The old spam had one virtue: fresh
+  production was swept toward the fight continuously. That job is done
+  honestly now - while a wave is live, an IDLE ready unit marches to the
+  standing aim point (`ai.waveDest`, written at launch; plain data on the
+  brain, `_encAi` serializes it for free) and joins the wave. Only idle units
+  are ordered, once each, with the home guard's `defendFrac` share held back,
+  closest-to-home first.
+- **The defend recall is a picket: local, capped, and it hands the march
+  back.** A unit answers an intrusion only from within `AI_DEF_R` (24) tiles
+  of the intruder, at most `AI_DEF_N` (5) respond per intruder, closest
+  first - and a marcher that does respond writes `u.savedDest` first (the
+  applyDmg help-response idiom), so when the intruder dies the attack state
+  hands it straight back to the march it was on. A real assault is met by the
+  layers that always met it: the per-unit amove auto-acquire, the applyDmg
+  help response, garrisons and towers. This block is the early warning, not
+  the army.
+- **A defend interrupt hands back to the wave.** `defendHold` expiring now
+  returns the phase to `attack` while the wave still lives, so its retreat
+  watch and reinforcement resume, instead of dropping to `build` and orphaning
+  the offensive.
+- **Size launches the opening; the clock paces the rest.** Even with the
+  liveness gate, `sizeReady` stayed armed after a wave ended, so a tactical
+  retreat's pull-back was relaunched at the same superior force one aiTick
+  later - the army turned for home and turned straight back. `sizeReady` now
+  fires only before the FIRST wave (its job: let a fast-growing army attack
+  before `firstPush`'s long fuse); every later wave waits for `nextPush`,
+  which the launch sets to `pr.repeat`'s cadence and the retreat deliberately
+  raises. That is the pacing `pr.repeat`'s own doc comment always described.
+
+### Measured, before and after (probe_v99.sh, three seed/map combos)
+
+| metric | v98 | v99 |
+|---|---|---|
+| pushes, one 10-min match, worst bot | 174, median gap 0.6 s | 1-4 per bot, minutes apart |
+| back-to-back pushes | 94% | zero |
+| combat orders issued (backyard:101) | 11,065 | 5,649 |
+| divert-and-return flips | 1,268 | 547, nearly all picket fight-then-resume |
+| worst same-tick diversions | 26 units | 10, quota-bounded |
+
+The A/B on strength: 16 matches, SEED0=900, identical seeds both sides. Army
+wins Tan 8→7, Green 3→5, Gray 2→3, Blue 3→1; total kills 12,698 → 12,515.
+Doctrine wins reshuffled between the two attacking profiles (aggressive 2→5,
+harasser 5→2, balanced 5→7 on top both sides) - every movement inside the
+batch noise the v90 section warns about ("6 wins under one map pairing and 4
+under another", on identical seeds). The release does not measurably weaken or
+strengthen the bots on this read, which is the intended outcome: the army
+fights the same, it just stops wasting the walking.
+
+### What was deliberately NOT changed
+
+- **The target rotation survives** (`rivalIdx`, the grudge, `scoreFoes`
+  noise) - it now rotates across OFFENSIVES, where it was designed to spread
+  attention, instead of across aiTicks, where it thrashed one army.
+- **The tactical retreat's pacing is untouched** - and it actually works now:
+  its `phase='build'` used to be overridden by a fresh push 0.6 s later; today
+  the pull-back completes and `nextPush` governs the next attempt.
+- **The feint** still bluffs, the transport doctrine still ferries (`aiCarry`
+  keys on its own `wid`, unaffected), and the survival recall, harass parties
+  and scouts keep their own order streams.
+
+### v99: a nine-release-old test needed a conscious edit, and got a rewrite
+
+`T40.G` (tail_v61) watched three minutes of live bot play and asserted that no
+PAIR of placements made during the window violates `BUILD_GAP`. Its own prose
+claims "the standing layout honours it" - but the scan paired every placement
+against every other with no notion of death, and v99's differently-unfolding
+match was the first to raze and rebuild a base inside the window: a supply
+yard legally re-placed on its dead predecessor's EXACT tiles was flagged
+against that predecessor. The sibling check (`illegal===0`, every placement
+legal at call time) proved the rule held at every call. Rewritten to the claim
+it was making - both parties of a violating pair must still be STANDING - on
+the T50.A/T35.E pattern, never loosened to get green.
+
+### v99 trap for the next fixture author
+
+A fixture that "kills" units by writing `hp=0` without calling `kill()` leaves
+corpses in `p.units`, and the army census counts them - the first cut of
+T76.B relaunched a wave off six dead grunts. Kill through `kill()`, the way
+the sim does. And the wave commits the bot's STARTING squad along with
+whatever the fixture spawned, so wave-size claims are memberships, never exact
+counts.
 
 ## v98: four owner asks - a re-price, a stamp, the number row, and menu chrome
 
@@ -3613,6 +3743,16 @@ now runs each table from its own cfg and asserts both the equality that should h
 (the two tan tables) and the inequality that must (tan vs green).
 
 ## Contents
+
+v99 adds tail_v99.js (T76), riding segment 3 and listed last in tails.txt.
+Sections A-F: the push launched once and never re-aimed while it lives (both
+triggers held TRUE for five ticks, zero relaunches, zero re-aims), the wave's
+death re-arming the trigger with a mutation arm that erases the wave and
+demands an immediate relaunch, reinforcement joining idles to the live wave
+exactly once with the guard fraction held home, the defend picket's radius,
+quota and savedDest handoff each driven through real intrusions, the phase
+machine surviving a defend interrupt mid-wave, and waveDest surviving a
+save/load. v99 also carries probe_v99.sh/.js, the order-churn measurement.
 
 v98 adds tail_v98.js (T75), riding segment 3 and listed last in tails.txt. The
 suite stands at 5,500 checks (5,395 at v97).

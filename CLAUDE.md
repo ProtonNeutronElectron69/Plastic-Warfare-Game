@@ -34,12 +34,12 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v98, and what a fresh session does)
+## Where the game stands (v99, and what a fresh session does)
 
-The game is at **v98**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v99**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
-(v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 is a
-standalone owner pass (below). There is no release in flight.
+(v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 and v99
+are standalone owner passes (below). There is no release in flight.
 
 **Known open fronts, none started:**
 
@@ -92,7 +92,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,500 checks at v98.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,526 checks at v99.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -254,6 +254,55 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v99 — the AI order-discipline pass (not part of a roadmap)
+
+**The bots stop "jittering": the army-wide twitch-and-backtrack the owner saw
+was measured to its causes and both are fixed** (`tail_v99.js` T76, and
+`harness/probe_v99.sh` is the measurement tool the numbers come from). Nothing
+about any unit, price, building or map changed — the release only changes how
+the bots COMMAND what they already have. Full evidence in the v99 section of
+`harness/README.md`.
+
+- **The wave push was a standing condition, not an event.** Its size trigger
+  stayed true once the army outgrew its capped `pushSize` — launching a wave
+  never made `readyArmy` smaller — so the block re-fired every aiTick: one bot
+  measured **174 "waves" in a ten-minute match, 94% of them 0.6 s apart**,
+  each one re-ordering the whole army at a target that rhythmically flapped
+  (the `rivalIdx%3` rotation plus `scoreFoes`' srand noise). The push is now
+  gated on **wave-liveness**: while the current wave lives, nothing already
+  marching is ever re-aimed; when it dies, the remnant is released and the
+  next push re-arms on `pr.repeat`'s clock, which is what the code always
+  claimed it did.
+- **Idle units reinforce; waves are never relaunched at marchers.** The spam's
+  one virtue — fresh production swept into the fight — is done honestly now:
+  idle ready units march to the standing aim point (`ai.waveDest`) and join
+  the wave, ordered once each, with the `defendFrac` home guard held back.
+- **The defend recall is a picket now: local, capped, and it hands the march
+  back.** One enemy near any building used to turn every non-fighting unit on
+  the map toward it (26 at once, measured). A unit now answers only from
+  within `AI_DEF_R` (24) tiles of the intruder, at most `AI_DEF_N` (5) per
+  intruder, closest first — and a diverted marcher writes `u.savedDest` first,
+  so the attack state hands it straight back to its march when the intruder
+  dies. A real assault is still met by the auto-acquire, the help response,
+  garrisons and towers — the picket is early warning, not the army.
+- **Waves pace on the profile's clock.** `sizeReady` launches only the FIRST
+  wave now; every later one waits for `pr.repeat`'s cadence — which is what
+  that field's doc comment always said, and what stops a tactical retreat from
+  being relaunched at the same superior force 0.6 s after it pulled back.
+- **Strength is unchanged, measured:** a 16-match A/B on identical seeds moved
+  every doctrine and army inside the batch noise the v90 baseline warns about.
+  Orders issued fell 49%; the worst same-tick mass diversion fell 26 → 10.
+
+**The v89/v90 trail lesson held again:** the trails moved because the defend
+picket reaches the OPENING (first scout contact inside thirty seconds), not
+because the push gate does — an opening army hasn't outgrown `pushSize` yet.
+And the desk trail held because its one CPU is an ALLY: no foes, no threats,
+nothing for v99 to reach (`repin_v99.py` names that in `UNMOVED_OK`).
+
+**Fixture trap, recorded in the README too:** "killing" a unit with `hp=0`
+without `kill()` leaves it in the army census — the first cut of T76.B
+relaunched a wave off six corpses.
 
 ## v98 — four owner asks (not part of a roadmap)
 

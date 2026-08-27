@@ -1,42 +1,27 @@
-/* recut_v98.js - regenerate the hash-trail baselines that v98 moved.
+/* recut_v99.js - regenerate the hash-trail baselines that v99 moved.
  *
- *   cat shim_head.js game.js recut_v98.js > rc98.js && node rc98.js > cut_v98.json
- *   python3 repin_v98.py cut_v98.json
+ *   cat shim_head.js game.js recut_v99.js > rc99.js && node rc99.js > cut_v99.json
+ *   python3 repin_v99.py cut_v99.json
  *
- * v98 is four owner asks: the Heavy Barricade re-priced 60 -> 40 with its mine
- * roll raised 0.10 -> 0.15, a version stamp in the menu corner, number hotkeys
- * on the unit ability buttons (with the control groups moved to F1-F9), and a
- * hover/click sound pair for the menu and the Field Manual. Three of the four
- * are interface and cannot reach the simulation at all.
+ * v99 is the AI order-discipline pass: the wave push became an event (gated on
+ * wave-liveness instead of refiring every aiTick once the army outgrew its
+ * capped pushSize), idle units now reinforce a live wave instead of the wave
+ * being relaunched at them, and the defend recall became a local, capped picket
+ * (AI_DEF_R / AI_DEF_N) that writes savedDest so a diverted march resumes.
+ * Nothing about any unit, price, building or map changed - this is entirely a
+ * change to how the bots COMMAND what they already have.
  *
- * THE ONE THAT DOES IS THE RE-PRICE, AND HOW IT REACHES THESE TRAILS IS THE
- * THING WORTH WRITING DOWN. The Heavy Barricade is GRAY-EXCLUSIVE, and the
- * trails that moved are a TAN trail, a GREEN trail and two AI-only trails -
- * none of which can lay one. The path is RESEARCH.b_hbarricade, whose price is
- * DERIVED from B.hbarricade.cp (rscale(cp*0.85 + ce*0.5), 71 -> 64) and whose
- * research TIME is derived from cp+ce (10.1s -> 9.7s). Every COMBOS trail boots
- * three real CPU opponents, one of them Gray, and in the backyard:koth match
- * that Gray bot starts b_hbarricade at TICK 627 - inside the 900-tick window.
- * Its bank and its lab therefore differ from tick 627 on, and hashState covers
- * every army in the match, not just the one the config names.
- *
- * Measured, not assumed: the four dm:777001 combos held because their Gray bot
- * never reaches that research inside thirty seconds, and desk:surv held for a
- * stronger reason still - that match is tan and blue only, so nothing in it can
- * research a Gray building at all. Two of seven trail combos and two of four
- * AI-only combos moved.
- *
- * The lesson generalises: "no army in this match can BUILD it" is not the same
- * claim as "nothing in this match reads its PRICE". A cost is an input to the
- * research table, and the research table is an input to every bot that owns a
- * lab. tail_v98 T75.A pins that derivation so the next re-price is told.
- *
- * Nothing in this release touches the mine ROLL inside a trail either, and that
- * is worth stating because HBARR_MINE_P did change: buryHBMine draws for every
- * completed heavy wall, and no heavy wall is completed in any trail window (the
- * research above never finishes). The draw is taken whether it succeeds or not,
- * so even a completed wall would not fork the stream on the outcome - only on
- * the mine's existence.
+ * WHY THE TRAILS MOVED, and which ones: every COMBOS trail boots three live CPU
+ * opponents and runs 900 ticks - thirty seconds - so a trail moves exactly when
+ * an AI change reaches the OPENING (the v89/v90 lesson). The defend picket does:
+ * first scout contact near a base happens inside thirty seconds on some seeds,
+ * and where the old code answered with every idle unit in the yard, the picket
+ * answers with at most AI_DEF_N - different orders, different srand draws,
+ * different hashes from there on. The push gate itself rarely bites this early
+ * (an opening army has not outgrown pushSize), which is why the set of moved
+ * combos differs from v98's: the four dm:777001 trails held at v98 and two of
+ * them move now, while the koth/ctf pair that moved at v98 is simply moved
+ * again for the same reason as everything else.
  *
  * What must NOT move is the map. Nothing in this release touches a prop, a node,
  * a nest or anything that fills M.pass.
@@ -129,7 +114,7 @@ if (moved.length) {
   console.error('LAYOUT GATE FAILED - ' + moved.length + ' of 42 pins moved. Nothing cut.');
   for (const l of moved) console.error('  ' + l);
   console.error('A moved layout hash means this release touched map generation, which is');
-  console.error('not what v98 claims to do. Fix that before repinning any trail.');
+  console.error('not what v99 claims to do. Fix that before repinning any trail.');
   process.exit(1);
 }
 console.error('layout gate: all 42 pins hold. Cutting trails.\n');

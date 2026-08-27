@@ -181,7 +181,7 @@ section('T75.B the version and date, stamped in the menu\'s corner');
      the NEXT release has to come here and say which version it is. Bump
      GAME_VER and GAME_DATE in 01-constants.js and this line with them. */
   ok('T75.B the release constants name THIS version - bump them together',
-    GAME_VER === 'v98' && /^v\d+(\.\d+)?$/.test(GAME_VER));
+    GAME_VER === 'v99' && /^v\d+(\.\d+)?$/.test(GAME_VER)); // v99: bumped with the constants, as this line's comment demands
   ok('T75.B the date is ISO, which is the form a repository can check',
     /^\d{4}-\d{2}-\d{2}$/.test(GAME_DATE));
   ok('T75.B the save-snapshot tag is DERIVED from the version, not typed twice',
@@ -216,7 +216,7 @@ section('T75.B the version and date, stamped in the menu\'s corner');
     const t = menuStamp();
     const el = document.getElementById('verStamp');
     ok('T75.B menuStamp writes the version and the date into the stamp',
-      typeof t === 'string' && t.indexOf('V98') === 0 && t.indexOf(stampDate(GAME_DATE)) > 0);
+      typeof t === 'string' && t.indexOf(String(GAME_VER).toUpperCase()) === 0 && t.indexOf(stampDate(GAME_DATE)) > 0); // v99: derived - the literal 'V98' was this check's own second copy of the version
     ok('T75.B ...into the element itself, not just as a return value', el.textContent === t);
     ok('T75.B ...and it names BOTH things the owner asked for',
       t.indexOf(String(GAME_VER).toUpperCase()) >= 0 && /UPDATED/.test(t));
