@@ -76,16 +76,16 @@ host/join mode for playing against another person.
 | `assets/snd/` | The sound effects as playable mp3 files — they also ride inside the game file, so it stays self-contained. |
 | `assets/img/` | The sprite textures as viewable webp images — same deal: they also ride inside the game file. |
 | `assets/nrm/` | The textures' normal maps — the per-pixel surface directions the lighting uses. |
-| `harness/` | The automated test suite: 60+ test files that play the game headlessly and check nothing broke. |
+| `harness/` | The automated test suite: 80+ test files that play the game headlessly and check nothing broke. |
 | `harness/README.md` | The full development record — the design decisions, the balance measurements, and the traps learned at every version. |
-| `tools/` | The scripts used to build one version from the previous one. |
+| `tools/` | The offline pipelines that make the art and sound: the sound renderer, and the four steps that turn the game's own painters into textures and normal maps. |
 
 ### A note on the test suite
 
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v97 it makes **5,395
+that the results come out identical every time. As of v100 it makes **5,587
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -115,7 +115,34 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 97**.
+The game is at **version 100**.
+
+**v100 — three fixes from playing.** Bailing the Observation Balloon's crew out
+now floats the four men down under parachutes, where before they simply appeared
+on the ground the instant you pressed the button. Wildlife can be selected and
+read like anything else — clicking a creature used to break the selection panel
+silently. And Green's Supply Drop crates come down under canopies of their own,
+drawn twice the size with a soft green pulse so you can actually find them.
+
+**v99 — the bots stop twitching, and they finish the job.** Whole enemy armies
+used to jerk in one direction and back again: a bot was re-ordering every unit it
+owned about twice a second, at a target that kept changing its mind. An attack is
+launched once now and left to fight it out; new production reinforces the attack
+already under way instead of starting another one; and a single enemy scout near
+a building calls a handful of nearby defenders rather than turning the entire map
+around. A second pass fixed what that exposed — the bot that was winning would
+idle most of its army while three or four units mopped up. It now commits harder
+or holds more back depending on how much enemy contact it is actually under, and
+walks an assault through a base one objective at a time.
+
+**v98 — four small changes.** Gray's **Heavy Barricade** costs 40 plastic instead
+of 60 and buries a mine 15% of the time instead of 10% — and that mine is now
+visible to its owner alone. The main menu carries a small version-and-date stamp
+in the bottom-right corner. The number keys **1–9** fire the ability buttons on
+the selection panel, which meant control groups moved to **F1–F9** (Ctrl+F1–F9 to
+save one) and pause moved to **F10**. And the setup screen and Field Manual answer
+with a light tick as the mouse crosses a button and a firmer click when you press
+one.
 
 **v97 — the detail & resolution pass.** The game renders at your display's
 real pixel density now (high-DPI screens used to get an upscaled, soft

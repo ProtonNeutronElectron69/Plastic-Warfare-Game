@@ -2,15 +2,25 @@
 
 Read this first. It is the orientation; `harness/README.md` is the detail.
 
+**Map of this file.** The first six sections are the ones you need before you
+touch anything — what the project is, where it stands, how to build, how to
+test, how to watch the bots, and the rules that are load-bearing. Everything
+after that is the record: the roadmap chapter, then one section per standalone
+release NEWEST FIRST (v100 down to v89), then the balance baseline, then the
+patterns worth copying. Read the record when you are about to touch the
+subsystem it describes; do not read it front to back.
+
 ## The shape of the project
 
 The game is **assembled from `source/`** into one file, `plastic-warfare.html`
 (~6.7MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
 audio, UI, netcode — is still one `<script>` block in the shipped file; it is
 written as 34 files listed in `source/order.txt`. There are no dependencies.
-The recorded sound set (33 mp3 takes, `assets/snd/`, since v92), the full
-sprite texture set (218 WebP files, `assets/img/`, since v95) and their normal
-maps (`assets/nrm/`, since v96) all ride inside the script as base64 — the
+The recorded sound set (25 voices in 35 mp3 takes, `assets/snd/`, since v92 —
+the voices that repeat fastest carry alternates, which is why takes outnumber
+voices), the full sprite texture set (218 WebP files, `assets/img/`, since v95)
+and their normal maps (218 more, `assets/nrm/`, since v96) all ride inside the
+script as base64 — the
 double-clicked file stays self-contained. `tools/embed_snd.py` and
 `tools/embed_img.py` pack them; the suite asserts the committed files and the
 embedded copies stay byte-identical.
@@ -47,12 +57,29 @@ v100 are standalone owner passes (below). There is no release in flight.
   pass ("maps/map art will be handled separately"). Terrain (`G.terr`), props
   and ground art are the one visual layer still fully procedural at base
   resolution.
-- **Balance.** The v90 baseline below still stands: Green likely overshoots via
-  the plastic-threshold reserves, Blue is last and untouched, `turtle` has
-  responded to nothing. Measure with `probe_v89.sh` before re-pricing anything.
-  v98 re-priced ONE building on the owner's instruction (the Heavy Barricade,
-  60 → 40) and did not touch any of the three findings above.
+- **Balance.** The v90 baseline below still stands as the set of open leads:
+  Green likely overshoots via the plastic-threshold reserves, Blue is last and
+  untouched, `turtle` has responded to nothing. Nothing since has been aimed at
+  any of the three — v98 re-priced ONE building on the owner's instruction (the
+  Heavy Barricade, 60 → 40), v99 changed only how bots COMMAND what they already
+  have, and v100 changed no unit, price, building or map. **Its percentages are
+  ten releases old and v99 moved individual cells hard; re-measure before
+  quoting one.** `probe_v89.sh` for why a bot bought what it bought,
+  `probe_v99.sh` for how it gives orders — reach for the probe before the price.
 - `T26.C`'s air-value question is still open.
+
+**What a fresh session actually does first.** Nothing here is in flight, so there
+is no handover state to reconstruct — start from a clean read:
+
+```sh
+cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
+QUIET=1 ./seg.sh all                        # ~320s: 5,587 checks, expect 0 failures
+```
+
+If those are green the repository is exactly as the last release left it, and
+whatever the owner asks for next is a fresh vNN starting from `origin/main`. If
+they are NOT green, stop and read the failure before touching anything: every
+check in this suite was put there by a release that paid for it.
 
 **How a release ships.** One version per PR. Start a fresh branch from
 `origin/main`, work it as vNN (or vNN.N for a feedback/repair pass), **bump
@@ -60,7 +87,16 @@ v100 are standalone owner passes (below). There is no release in flight.
 prints them and the save tag derives from them — one place, both numbers), add a
 `tail_vNN.js` with the release's pins (register it in `harness/seg.sh` line ~49
 AND `harness/tails.txt`), record the release in `harness/README.md` and update
-this file, then push and open a **draft** PR into `main`. The owner reviews —
+this file, then push and open a **draft** PR into `main`.
+
+**Four documents move with a release and the fourth is the one that gets
+forgotten**: `source/js/01-constants.js` (the two numbers), `harness/README.md`
+(the evidence), this file (the orientation), and **`README.md` at the repo root
+— the page a PLAYER reads**. It carries the version number, the suite's check
+count and a plain-language paragraph per release, and it sat three releases
+behind (still saying "version 97") until the post-v100 documentation pass. It is
+written for someone with no coding experience: say what changed in the game, not
+what changed in the code. The owner reviews —
 usually by playing — and says "merge" explicitly. Owner feedback after a
 release becomes a vNN.N pass where every finding lands as a change AND a check
 (v92.1, v96.1 and v97 are the pattern).
@@ -115,6 +151,25 @@ matches on the same seeds gave one army 6 wins under one map pairing and 4 under
 another. Read a batch as a hint about a direction, and re-run with a different
 `SEED0` before believing anything.
 
+**Two probes answer WHY, where `sim.sh` only reports WHAT.**
+
+```sh
+./probe_v89.sh           # why a bot bought what it bought: every production decision
+./probe_v89.sh 16        # bucketed by the first clause that refused it. 8 matches by
+SEED0=2000 ./probe_v89.sh 16      # default, on sim.sh's own seed/map/faction deal
+./probe_v99.sh           # order churn: wave cadence, divert-and-return flips, the worst
+SEEDS="7 8" MAP=kitchen ./probe_v99.sh   # same-tick mass diversion, and the endgame
+                         # duel readout. 3 matches, ~4min
+```
+
+Both stand on `sim.sh`'s footing — nothing they print is pinned, and neither is
+part of `seg.sh`. Reach for `probe_v89.sh` before re-pricing anything on a bot's
+behalf and `probe_v99.sh` before touching how bots give orders. Each exists
+because the release that added it could NOT answer its question from `sim.sh`'s
+outcomes: a class share is an outcome, and an outcome is consistent with a dozen
+causes. That is the single most reusable lesson in the AI passes — measure the
+mechanism, not the outcome.
+
 **Start with `triage.sh`.** It re-runs the pinned hash trails and tells you
 whether the simulation actually moved, then ranks the test files by how rare the
 identifiers you touched are. Reading the diff is not a substitute: v83's
@@ -126,9 +181,32 @@ five baseline tables behind the 42-pin layout gate. Copy the current
 `recut_vNN.js` / `repin_vNN.py` pair forward to the new version and delete the
 old one; only the current release's one-shots ship.
 
+**The pair in the tree is `recut_v99` / `repin_v99`, and that is correct at
+v100** — the pair is carried forward by the release that MOVES the trails, not
+by every release. v100 left them untouched (nothing it changed reaches a
+900-tick window), so it added no pair of its own. Do not read the version on
+those two files as the version of the game; read it as "the last release that
+had to repin".
+
+**Recut ONCE, on the final bytes.** If you repin, then keep editing the sim, the
+tables you wrote are already stale. v99 hit this: a later pacing change moved one
+AI trail after the repin, and the clean fix was to restore the five pinned tails
+to their previous state (`git checkout origin/main -- tail_v43.js tail_v44.js
+tail_v45.js tail_v49.js tail_v62.js`) and cut once against the finished
+release.
+
 **The layout gate is not optional.** If any of the 42 map-layout pins move, stop
 — that means map generation changed, and repinning trails on top of that hides
 the real problem instead of recording it.
+
+**Two pin counts, both correct, and they will look like a contradiction.**
+`triage.sh` prints "all 30 pins hold"; the recut gate in `recut_vNN.js` asserts
+42 and refuses to cut a trail otherwise. 30 is the FAST SUBSET (`tail_v43`'s and
+`tail_v62`'s tables, five maps × three seeds each); 42 is every pin, adding
+`tail_v28`'s third table of 12, whose config differs (always deathmatch, always
+three opponents, no desk). Both gates COUNT their own walk and hard-fail on a
+short one — a map quietly dropped from either loop used to print "all pins hold"
+having walked fewer, and clean is the answer that stops an investigation.
 
 ## Rules that are load-bearing
 
@@ -157,6 +235,18 @@ the real problem instead of recording it.
 6. **Record what you measured, including when it contradicts the plan.** The
    harness README is full of findings that went the other way from the scope
    estimate. That is the point of it.
+7. **A drawing bug cannot fail the suite, so a frame nobody looked at is a frame
+   nobody checked.** `renderGuard` wraps `renderCore` precisely so a render
+   throw cannot crash a live match — which also means it cannot go red in
+   `seg.sh`. If you touched anything that draws, open the shipped file in a real
+   Chromium and READ the screenshot; the recipe (no npm, no server) is in the
+   Running section of `harness/README.md`. v100 paid for this rule twice in one
+   release.
+8. **Measure the mechanism, not the outcome.** Every AI pass that got this wrong
+   drew the wrong conclusion: a class share, a win rate and a mean unit cost are
+   all outcomes, and each is consistent with a dozen causes. The probes exist
+   because `sim.sh`'s outcomes could not distinguish "never chose air" from
+   "chose air and could not pay for it".
 
 ## Roadmap 3 — real art and real sound (COMPLETE, v91–v97)
 
@@ -489,6 +579,46 @@ line added to `aiTick` sits behind a plain scan of `p.blds` that touches no seed
 number while an HQ stands, and no HQ dies inside a 900-tick trail. `tail_v90_1`
 T64.F asserts that guard functionally rather than in prose.
 
+## v90 — the AI personality pass (not part of a roadmap)
+
+**The five behaviour profiles now differ in what they BUILD, not just in when they
+attack.** Through v89 the construction wish list was almost identical for all five:
+a profile could bend it in only three small ways, and three of the five wanted the
+same number of guard towers. Four changes:
+
+- **`towers`, a declared trait spanning 1..5** (aggressive 1 → turtle 5), replacing
+  a two-branch guess off `defendFrac` and `aggro` that could only return 2, 3 or 4.
+  A faction whose STACKING exclusive is defensive follows the same ladder, so Gray's
+  Bunker is now a turtle's ring and a rusher's single. "Is it defensive" reads the
+  table's own `tower` / `gar` flags — never a key name, per the v88 lesson.
+- **`buyTilt`, the pacing half of `armyTilt`** (aggressive 0.00 → turtle 0.60). While
+  the bank is short of the priciest unit a producer can currently build, a profile
+  with a tilt leaves that share of the gap unspent rather than filling the slot with
+  the cheapest thing. `armyTilt` could never do this: it biases the CHOICE among
+  options already affordable, and the cheap one is affordable first.
+- **`firstPush` +15% on the three non-defensive profiles** (48 / 81 / 98; defensive
+  120 and turtle 150 untouched), narrowing the opening gap that makes the two slow
+  doctrines lose.
+- **A vestigial rolled `aggro` deleted from `makeAIBrain`** — written every match,
+  read nowhere — and the stale "(also scales economy push)" note removed from the
+  profile doc comment. The income assist reads DIFFICULTY and never read `aggro`.
+
+Two things worth carrying forward:
+
+- **Measure the mechanism, not the outcome — again.** `buyTilt`'s effect on mean unit
+  cost is inside the noise of a 16-match batch, because the class mix dominates that
+  number (a harasser wanting 38% air out-costs a turtle wanting 50% infantry no
+  matter how either shops). What is NOT noisy is how often the tilt actually refuses
+  a cheap unit, which `probe_v89.sh` reports per profile: 0% / 5.1% / 10.7% / 15.7% /
+  17.6%, monotonic in exactly the profile order. Reach for that before re-tuning it.
+- **The first cut of `buyTilt` was inert and the tests said so before the sim did.**
+  It was gated on the bank reaching half the top price, borrowed from the faction
+  floor's own idiom — but the bank at a production decision runs near 100 plastic, so
+  the gate switched the tilt off precisely where it was meant to bite. The real
+  anti-stall guard is not a bank threshold at all: it is that a bot **under its
+  faction quota never holds out**, because the floor already outranks both reserves
+  and stacking a savings tilt on it is the stall `T42.D` exists to catch.
+
 ## v89 — the AI air pass (not part of a roadmap)
 
 **The bots now build roughly twice the air and AA they did**, measured on two seed
@@ -540,53 +670,26 @@ Three notes for whoever goes next:
   Measured again at v90 over 64 matches, defensive recovered to 14.6% and turtle did
   not move (14.5%). See the v90 balance baseline below.
 
-## v90 — the AI personality pass (not part of a roadmap)
-
-**The five behaviour profiles now differ in what they BUILD, not just in when they
-attack.** Through v89 the construction wish list was almost identical for all five:
-a profile could bend it in only three small ways, and three of the five wanted the
-same number of guard towers. Four changes:
-
-- **`towers`, a declared trait spanning 1..5** (aggressive 1 → turtle 5), replacing
-  a two-branch guess off `defendFrac` and `aggro` that could only return 2, 3 or 4.
-  A faction whose STACKING exclusive is defensive follows the same ladder, so Gray's
-  Bunker is now a turtle's ring and a rusher's single. "Is it defensive" reads the
-  table's own `tower` / `gar` flags — never a key name, per the v88 lesson.
-- **`buyTilt`, the pacing half of `armyTilt`** (aggressive 0.00 → turtle 0.60). While
-  the bank is short of the priciest unit a producer can currently build, a profile
-  with a tilt leaves that share of the gap unspent rather than filling the slot with
-  the cheapest thing. `armyTilt` could never do this: it biases the CHOICE among
-  options already affordable, and the cheap one is affordable first.
-- **`firstPush` +15% on the three non-defensive profiles** (48 / 81 / 98; defensive
-  120 and turtle 150 untouched), narrowing the opening gap that makes the two slow
-  doctrines lose.
-- **A vestigial rolled `aggro` deleted from `makeAIBrain`** — written every match,
-  read nowhere — and the stale "(also scales economy push)" note removed from the
-  profile doc comment. The income assist reads DIFFICULTY and never read `aggro`.
-
-Two things worth carrying forward:
-
-- **Measure the mechanism, not the outcome — again.** `buyTilt`'s effect on mean unit
-  cost is inside the noise of a 16-match batch, because the class mix dominates that
-  number (a harasser wanting 38% air out-costs a turtle wanting 50% infantry no
-  matter how either shops). What is NOT noisy is how often the tilt actually refuses
-  a cheap unit, which `probe_v89.sh` reports per profile: 0% / 5.1% / 10.7% / 15.7% /
-  17.6%, monotonic in exactly the profile order. Reach for that before re-tuning it.
-- **The first cut of `buyTilt` was inert and the tests said so before the sim did.**
-  It was gated on the bank reaching half the top price, borrowed from the faction
-  floor's own idiom — but the bank at a production decision runs near 100 plastic, so
-  the gate switched the tilt off precisely where it was meant to bite. The real
-  anti-stall guard is not a bank threshold at all: it is that a bot **under its
-  faction quota never holds out**, because the floor already outranks both reserves
-  and stacking a savings tilt on it is the stall `T42.D` exists to catch.
-
 ## Where the balance actually stands (64 matches, measured at v90)
 
 **Read this before acting on any faction claim elsewhere in this file or in the
 harness README.** Everything written before it came from a 24-match read at v88.1.
 This is 64 matches on v90 as merged, four seed sets, 64 distinct seeds. The full
 table, the reproduction recipe and the reasoning are in the v90 balance section of
-`harness/README.md`. (v91–v97 were render/audio-only and cannot have moved it.)
+`harness/README.md`.
+
+**How much of it survives to v100, stated release by release, because the four
+findings below are now ten releases old.** v91–v97 were render/audio-only and
+cannot have moved it. v98 re-priced ONE Gray building. v100 changed nothing that
+touches it. **v99 is the one to be careful with**: it did not touch a unit, a
+price or a map, but it rewrote how every bot COMMANDS its army, and its own
+16-match A/B on identical seeds moved individual cells hard (army wins Tan 8→4,
+Green 3→8) while every doctrine kept its baseline RANK — harasser still tops the
+table at 8 of 16, turtle still takes 1 — and total kills held. So: **the four
+findings below are still the standing leads and nothing has been aimed at them —
+but any specific PERCENTAGE in them predates v99's command model.** Re-measure
+before quoting a number at the owner; the 64-match recipe is in the README, and
+`probe_v99.sh` now prints the endgame readout alongside the churn metrics.
 
 Four things a new session should know before touching balance:
 
@@ -713,6 +816,25 @@ When adding a faction exclusive, the v85 work is the closest model:
   nothing. Splash needed a third line of its own, and the direction is
   counter-intuitive — every rocket in the file lands its damage AS splash, so
   the rule is "skip it unless this burst is an AA missile's".
+- **An action that fires "once" must be gated on what it PRODUCES, not on the
+  condition that motivated it.** v99's wave trigger was `readyArmy >= pushSize`,
+  and launching a wave never made `readyArmy` smaller — so it was a standing
+  condition re-firing every tick, 174 times in a ten-minute match. The fix is
+  always the same shape: gate on the product's liveness (is the wave still
+  alive), and give the product a definition of alive that SCALES, because an
+  absolute floor on a group whose size spans two orders of magnitude is a stall
+  waiting to happen.
+- **A delayed arrival is a strike, not a spawn — and reuse the machinery that
+  already delays one.** v100's balloon bail-out made four men on the tick the
+  button was pressed; it now rides the Paradrop's strike-and-delay path, so one
+  canopy routine draws all four kinds of thing that falls. The catch worth
+  carrying: a strike whose owner DIES before it lands cannot resolve its army
+  through `owner`, so `drawStrikes`' fog gate falls back to `pi` — without it a
+  bail-out would have been the one call-down visible through fog.
+- **An additive effect adds against whatever layer it is drawn into.** A glow
+  inside the depth-sorted sprite band brightens band content, not the terrain
+  under it. Pick the layer deliberately, and remember rule 7: it looks wrong in
+  a screenshot and passes every assertion.
 
 ## Git
 

@@ -4,7 +4,27 @@ This is the development record: every release, what it was told to build, what i
 actually cost, and the traps learned. If you are new to the project, read
 `../CLAUDE.md` first — it is the short orientation and points back here.
 
-## THE FACTION ABILITY ROADMAP (read this first if you are picking up mid-project)
+**How to read this file, because it is not in release order and it is long.**
+It grew by prepending, so the newest release sits in the MIDDLE rather than at
+the top, and the roadmap chapters below are HISTORY, not work in flight — the
+last of the three landed at v97 and nothing is outstanding. Practical route:
+
+- **What shipped recently:** the `## v100`, `## v99` and `## v98` sections (search
+  for `## v100`). Each one is the finding, the change, and what it measured.
+- **How to build and run the suite:** `## Assembly` and `## Running`, about a
+  fifth of the way down. `../CLAUDE.md` has the two commands; these have the why.
+- **Where the balance stands:** `## v90 BALANCE BASELINE`, read together with the
+  staleness note in `../CLAUDE.md` — the percentages predate v99's command model.
+- **What each release's tail covers:** `## Contents`, near the foot of the file.
+- **The roadmap chapters (immediately below):** the record of what each phase was
+  told to build and what it cost. Useful when you touch a subsystem one of them
+  built; not a to-do list.
+
+Everything in here is written as a claim someone paid for. When a section and a
+heading disagree, the section is usually the one that was updated - and both are
+worth fixing, because a heading is what a new session reads first.
+
+## THE FACTION ABILITY ROADMAPS — ALL THREE COMPLETE (kept as the build record)
 
 ### Roadmap 3 (COMPLETE: v91–v96, follow-ups v92.1 / v96.1 / v97): real art and real sound.
 
@@ -631,7 +651,7 @@ front, so the phases below are DECIDED, not proposals - build them as written
 unless the owner says otherwise. Nothing below is outstanding; it is kept as the
 record of what each phase was told to build and what each one actually cost.
 
-### Roadmap 2 (v85-v88): every army fields a full exclusive set. IN PROGRESS.
+### Roadmap 2 (v85-v88.1): every army fields a full exclusive set. COMPLETE.
 
 The owner's target state, approved in full before v85 began: **all four armies
 have two unique buildings (each with an ability), at least one unique unit out of
@@ -639,10 +659,19 @@ the Barracks, the Garage AND the Helipad (each with a passive and an ability),
 and one unique Radio Tower call-in.** Same cadence as roadmap 1 - ONE FACTION PER
 VERSION, so trail divergence stays attributable (rule 7a below still governs).
 
-**Blue landed at v85, Green at v86 and Tan at v87.** Gray is v88 and is the last.
-The full specification for it is in "Roadmap 2: the remaining three armies" below;
-it is DECIDED, not proposed. The v86 and v87 entries there are left in place as the
-record of what each was told to build, exactly as the roadmap-1 phases are.
+**Blue landed at v85, Green at v86, Tan at v87 and Gray at v88**, which finished
+the roadmap; v88.1 closed the roster question behind it. Everything below is the
+record of what each phase was told to build and what it cost, exactly as the
+roadmap-1 phases are - nothing in it is outstanding. `tail_v88.js` T62.J states
+the completion claim DERIVED off `FAC` rather than transcribed, so an army that
+grew or lost an exclusive structure fires there rather than here.
+
+(This header read "IN PROGRESS ... Gray is v88 and is the last" until the
+post-v100 documentation pass - twelve releases after Gray landed, and directly
+contradicted by "Roadmap 2: all four armies (COMPLETE at v88)" further down this
+same file. A new session opening this chapter was being told, in its heading,
+that there was work in flight. The lesson is small and cheap: when a roadmap
+phase lands, the heading that announced it is part of the release.)
 
 Rule 1a below was OVERRIDDEN BY THE OWNER for roadmap 2: cooldown abilities on
 units are now in scope, and the `u.abCool` machinery they need is to be built
@@ -858,6 +887,30 @@ both from one file makes that particular silence impossible.
 The real-canvas dependency is not preinstalled in a fresh container:
     npm i @napi-rs/canvas
 
+**Looking at a real frame, with no npm at all.** The counts above are stale by
+design (they are dated where they stand); `../CLAUDE.md` carries the current
+ones. What is NOT written anywhere else is how to SEE the game, and v100 paid
+twice for that: `renderGuard` means a drawing bug cannot crash the game and
+cannot fail a test either, so a frame nobody looked at is a frame nobody
+checked. A container that has Playwright's browsers has a Chromium binary at
+`/opt/pw-browsers/chromium`, and it takes a screenshot straight off the shipped
+file without puppeteer, without a node package, and without a server:
+
+    /opt/pw-browsers/chromium --headless=new --no-sandbox --disable-gpu \
+      --window-size=1600,900 --virtual-time-budget=20000 \
+      --screenshot=/tmp/frame.png "file:///abs/path/to/plastic-warfare.html"
+
+Then READ the png. Two things it catches that the suite structurally cannot:
+the "A drawing error was suppressed" toast (a throw inside `renderCore` that
+`renderGuard` swallowed into a black board), and anything about LAYER - an
+additive glow drawn inside the depth-sorted sprite band adds against band
+content rather than against the terrain, and looks wrong while every assertion
+passes. Add `--dump-dom` instead of `--screenshot` when you want the page's own
+state rather than its pixels. Boot state can be driven the way `sim_dm.js` does
+it, by reassigning the global `update` binding from an injected script; vision
+needs a few manual `update(1/30)` calls before anything is visible, because fog
+is computed inside the tick.
+
 The tail load order lives in `tails.txt` and nowhere else. Adding a version means
 adding ONE line there; run.sh appends the soak tail and tail_end.js itself. If you
 need the raw command, run.sh prints nothing magic:
@@ -868,6 +921,32 @@ need the raw command, run.sh prints nothing magic:
 coverage check and the dead-markup check), so run from this directory.
 
 ## What is NOT in this bundle, deliberately (v62, still true at v72)
+
+**Read this section as history, and read the rule out of it.** It was written
+when releases were delivered as a tar of hand-edited files, so it talks about
+`splice_*.py` and `fixup_*.py` one-shots and about what "the bundle" carries.
+That delivery model is gone: the project is a git repo built from `source/`, no
+`fixup_*.py` survives anywhere, and a splice - which rewrote
+`plastic-warfare.html` in place - cannot even run against the current tree,
+because v91 made that file GENERATED and moved every edit into `source/`.
+
+**The rule it states did NOT go away and still governs**: a one-shot is spent
+the moment it runs, and only the CURRENT release's one-shots ship. In `harness/`
+that is honoured exactly - one pair, `recut_v99.js` / `repin_v99.py`, carried
+forward by the release that MOVES the trails rather than by every release, which
+is why the pair is a version behind the game (see `../CLAUDE.md`).
+
+**Two leftovers sit outside that discipline and are recorded here rather than
+quietly removed**: `tools/splice_v79.py` and `tools/splice_v82.py`, spent at v79
+and v82, both of them pre-split scripts that edit the shipped file directly.
+Nothing reads them, no test names them, and neither can run. They are dead
+weight rather than a trap - but a new session should know they were spent long
+before the v91 source split, and should not read `tools/` as a list of things
+that still work. The six scripts beside them (the audio renderer and the
+four-step texture pipeline) DO work and are documented in `../CLAUDE.md`.
+
+The original text follows.
+
 Spent one-shots are not carried forward. A repin is spent the moment its trails are
 cut, and an old splice only applies to a build that no longer exists. Only the
 CURRENT release's splice ships here (`splice_v76.py`); every prior one was delivered
@@ -3915,6 +3994,19 @@ exactly once with the guard fraction held home, the defend picket's radius,
 quota and savedDest handoff each driven through real intrusions, the phase
 machine surviving a defend interrupt mid-wave, and waveDest surviving a
 save/load. v99 also carries probe_v99.sh/.js, the order-churn measurement.
+
+**The gap between v98 and v90.2 below is real and this is what fills it.** The
+roadmap-3 releases each added a tail and not one of them was written up here, so
+this list jumped straight from v98 to v90.2 and skipped nine releases. In
+segment 3, in load order: **tail_v91** (T66, the source split proved
+byte-identical), **tail_v92** (T67, the recorded takes and their manifest),
+**tail_v92_1** (T68, the audio feedback pass), **tail_v93** (T69) and
+**tail_v94** (T70, the WebGL stage and the isolated sprite band), **tail_v95**
+(T71, the whole roster textured, roster DERIVED from U/B/FAC), **tail_v96**
+(T72, normal maps and per-pixel lighting), **tail_v96_1** (T73, the graphics
+feedback pass) and **tail_v97** (T74, device pixels, SS=4 and the molded-detail
+kit). Each is written up in the roadmap-3 chapter at the top of this file; the
+one-line version of what each pins is in `../CLAUDE.md`.
 
 v98 adds tail_v98.js (T75), riding segment 3 and listed last in tails.txt. The
 suite stands at 5,500 checks (5,395 at v97).
