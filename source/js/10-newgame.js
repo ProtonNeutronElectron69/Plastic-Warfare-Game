@@ -62,7 +62,7 @@ function newGame(s){
  document.getElementById('hud').style.display='block';
  document.getElementById('overlayCenter').style.display='none';
  EID=1;
- G={tick:0,over:false,paused:false,mode:s.mode,diff:DIFFS[s.diff]||DIFFS.normal,units:[],blds:[],parts:[],projs:[],players:[],flags:[],pings:[],atkPings:[],lastEvent:null,strikes:[],crates:[],radioTargeting:null,timers:[],cmdQ:[],spectate:false,net:null,hazAcc:0,
+ G={tick:0,over:false,paused:false,mode:s.mode,diff:DIFFS[s.diff]||DIFFS.normal,units:[],blds:[],parts:[],projs:[],players:[],flags:[],pings:[],atkPings:[],lastEvent:null,strikes:[],crates:[],radioTargeting:null,timers:[],cmdQ:[],spectate:false,net:null,hazAcc:0,dayOff:0,
     cam:{x:0,y:0},zoom:1,shake:0,sel:[],placing:null,barrDrag:null,amove:false,groups:{},msgT:0,humanSeen:new Set(),
     test:!!s.test,watch:!!s.watch}; // v50: the sandbox flag, set before makeMap so every downstream branch sees it. v55: watch = spectate mode
  // v55: a spectate match is ALWAYS WATCH_ARMIES armies. survivalSetup(s) below
@@ -170,6 +170,15 @@ function newGame(s){
  // King of the Hill: one contested zone at map centre
  if(G.mode==='koth'){G.hill={x:G.map.N/2+0.5,y:G.map.N/2+0.5,r:KOTH_R,holder:null};}
  if(G.mode==='surv'){G.surv={no:0,t:SURV_BUILD,done:false,fx:G.map.N/2+0.5,fy:G.map.N/2+0.5};} // v33
+ /* v101: every match starts at a random point in the day/night cycle. One
+    srand() draw, APPENDED as the last consumer in newGame on the v59 rule -
+    every draw before this point keeps its position, everything after moves by
+    one, which is what repin_v101 absorbed. In ticks, not seconds, so dayPhase
+    stays pure integer arithmetic off G.tick. Hashed and serialized (the v-rule
+    for new sim state); testing mode never reads it - dayPhase pins the sandbox
+    to noon - but the draw is taken there too, so the stream never forks on the
+    mode. */
+ G.dayOff=Math.floor(srand()*DAY_CYCLE_T*30);
  // camera on human base
  const hs=G.human.start;
  G.cam.x=isoX(hs.x,hs.y)-vpW()/2/G.zoom;G.cam.y=isoY(hs.x,hs.y)-vpH()/2/G.zoom;

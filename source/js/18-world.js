@@ -7,7 +7,7 @@ function updateFog(){
  for(const pl of G.players){ // v29: allied vision is shared
   if(!allied(pl,G.human))continue;
   for(const u of pl.units)if(!u.garrisoned)stamp(u.x,u.y,viOf(u)); // v66: no code-1 vision clamp; tall grass is gone. v79: the uplink widens the fog reveal too, or the player could not see what the extra range bought
-  for(const b of pl.blds)stamp(b.x,b.y,b.t.vi);
+  for(const b of pl.blds)stamp(b.x,b.y,bviOf(b)); // v101: the fog reveal follows the same night cut viOf just applied to the units
  }
  ghostRefresh();flushStamps(); // v26: freeze last-seen snapshots, paint deferred decals now in vision
  const c=G.fogCv.getContext('2d');

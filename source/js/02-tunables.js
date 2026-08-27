@@ -407,6 +407,48 @@ const PAINT_AI_N=3;      // Paint: enemy ground units inside the box before a bo
    map - the map-wide recall was half of the jitter the release fixes. */
 const AI_DEF_R=24;       // defend recall: tiles from the intruder inside which a unit responds
 const AI_DEF_N=5;        // ...and how many respond per intruder, closest first - the picket, not the army
+/* ---------------- DAY / NIGHT CYCLE ----------------
+   v101: the battlefield clock. A full cycle takes DAY_CYCLE_T sim-seconds and every
+   match starts at a random point in it (G.dayOff, drawn from srand() in newGame,
+   hashed and serialized like any other sim state). The cycle is a HANDFUL OF
+   DISCRETE STATES the game flips between, by the owner's design - no continuous
+   gradient. DAY_PHASES is the whole table: contiguous, in cycle order, each row
+   owning the stretch from its t0 (sim-seconds from cycle start) to the next
+   row's. `ni:1` marks the one phase that bends the SIMULATION: at night every
+   unit's and structure's vision is cut to NIGHT_VI_MUL through nightVi(), which
+   viOf and bviOf apply - fog reveal, auto-acquisition, the balloon's High
+   Ground, the Choktaw's spotting and the call-down vision test all follow,
+   because every sim-side vision read already goes through those two doors.
+   Weapon RANGE is deliberately untouched: a unit ordered onto a target it
+   cannot see for itself still shoots at full reach, exactly as attacking into
+   fog has always worked.
+   tint/tintA are RENDER-ONLY (the same way CREATURE rows carry `col`): the one
+   multiply fill renderCore lays over the finished world canvas, which both the
+   WebGL compositor and the 2d fallback then consume - one site, both paths.
+   Phase lookup is derived from (G.tick + G.dayOff) alone: pure integer math,
+   nothing stored, so two lockstep clients and a loaded save agree for free.
+   Testing mode pins the clock to the first row (permanent day) on the same rule
+   that gives the sandbox full vision and free buildings. */
+const DAY_CYCLE_T=600;   // sim-seconds for one full day/night cycle (10 minutes)
+const NIGHT_VI_MUL=0.5;  // vision multiplier for every unit and structure at night
+const DAY_PHASES=[
+ {key:'day',  n:'Day',  icon:'☀️', t0:0,  ni:0, tint:'#ffffff',tintA:0},
+ /* the two transition tints were first cut at ~.3 alpha and were invisible in a
+    real frame next to Day - rule 7's screenshot pass is where these numbers
+    come from, not arithmetic */
+ {key:'dusk', n:'Dusk', icon:'🌆', t0:240,ni:0, tint:'#e07840',tintA:.55},
+ {key:'night',n:'Night',icon:'🌙', t0:300,ni:1, tint:'#31497e',tintA:.86},
+ {key:'dawn', n:'Dawn', icon:'🌅', t0:540,ni:0, tint:'#c9a0c0',tintA:.55}
+];
+function dayPhase(){
+ if(!G||G.test)return DAY_PHASES[0]; // the sandbox is permanent noon, like its permanent full vision
+ const s=((G.tick+(G.dayOff||0))/30)%DAY_CYCLE_T;
+ let ph=DAY_PHASES[0];
+ for(const p of DAY_PHASES)if(s>=p.t0)ph=p;
+ return ph;
+}
+function nightNow(){return dayPhase().ni===1}
+function nightVi(v){return nightNow()?v*NIGHT_VI_MUL:v}
 /* Help-panel slots. The static help markup carries <span data-tune="key"> holes;
    applyHelpTune fills them once at boot. Pure UI: nothing here is hashed. */
 const HELP_TUNE={
@@ -500,7 +542,10 @@ const HELP_TUNE={
  hbarrHp:()=>HBARR_HP, hbarrRed:()=>Math.round(HBARR_RED*100), hbarrCap:()=>Math.round(HBARR_CAP*100),
  hbarrMineP:()=>Math.round(HBARR_MINE_P*100), hbarrMineD:()=>HBARR_MINE_D,
  scrBox:()=>SMOKESCR_BOX, scrRed:()=>Math.round(SMOKESCR_RED*100), scrT:()=>SMOKESCR_T,
- plateRow:()=>wcRoster('b')
+ plateRow:()=>wcRoster('b'),
+ /* v101: the day/night figures, on the rule every slot above was added under -
+    the manual states them in prose and prose drifts the moment one is tuned. */
+ cycleMin:()=>Math.round(DAY_CYCLE_T/60), nightViPct:()=>Math.round(NIGHT_VI_MUL*100)
 };
 function helpTuneValue(k){const f=HELP_TUNE[k];return f?f():null}
 function applyHelpTune(){ // returns how many slots were filled (0 under the headless shim)

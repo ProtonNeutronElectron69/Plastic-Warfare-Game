@@ -181,7 +181,7 @@ function mkCr52(sp,x,y){
 
 /* ---------- E: SIMULTANEITY ---------- */
 {
- G=null;newGame(cfg52('backyard','dm',52004,1));quiet52();
+ G=null;newGame(cfg52('backyard','dm',52004,1));G.dayOff=0; /* v101: this fixture asserts daytime vision facts - pin the clock to noon */quiet52();
  const A=arena44(3,3,0,16),foe=foe52();
  const bull=makeUnit('bulltank',G.human,A.x,A.y);
  const gr=makeUnit('grunt',foe,A.x+1.5,A.y);            // inside 2.6, flamer

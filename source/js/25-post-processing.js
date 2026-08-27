@@ -468,6 +468,18 @@ function renderCore(){
  c.restore();
  c.setTransform(HW*z,HH*z,-HW*z,HH*z,(G.orgX-cx)*z,-cy*z);c.imageSmoothingEnabled=true;c.drawImage(G.fogCv,0,0);
  c.setTransform(1,0,0,1,0,0);
+ /* v101 DAY/NIGHT LIGHT. One multiply fill over the FINISHED world canvas -
+    after the fog, before the present - because worldCv is the one thing both
+    compositors consume: the WebGL stage uploads it and the 2d fallback draws
+    it, so a single site keeps the two looks identical the way POSTV does for
+    the grade. Drawn from DAY_PHASES (render-only fields on the sim's own phase
+    table) and never from srand: rule 2 holds. The screen-space overlays (drag
+    box, placement ghost, minimap, HUD) are painted after the present and stay
+    at full brightness on purpose - the night darkens the battlefield, not the
+    controls. globalAlpha under 'multiply' mixes toward dst*tint, so tintA is
+    "how far into this phase's light", and the day row's 0 is the identity. */
+ const ph101=dayPhase();
+ if(ph101.tintA>0){c.save();c.globalCompositeOperation='multiply';c.globalAlpha=ph101.tintA;c.fillStyle=ph101.tint;c.fillRect(0,0,view.width,view.height);c.restore();}
  if(worldCv&&!glComposite())compositePost();
  v71Fills();
  if(G.placing)drawGhost(vc,G.cam.x,G.cam.y);

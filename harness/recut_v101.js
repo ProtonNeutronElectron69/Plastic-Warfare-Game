@@ -1,30 +1,30 @@
-/* recut_v99.js - regenerate the hash-trail baselines that v99 moved.
+/* recut_v101.js - regenerate the hash-trail baselines that v101 moved.
  *
- *   cat shim_head.js game.js recut_v99.js > rc99.js && node rc99.js > cut_v99.json
- *   python3 repin_v99.py cut_v99.json
+ *   cat shim_head.js game.js recut_v101.js > rc101.js && node rc101.js > cut_v101.json
+ *   python3 repin_v101.py cut_v101.json
  *
- * v99 is the AI order-discipline pass: the wave push became an event (gated on
- * wave-liveness instead of refiring every aiTick once the army outgrew its
- * capped pushSize), idle units now reinforce a live wave instead of the wave
- * being relaunched at them, and the defend recall became a local, capped picket
- * (AI_DEF_R / AI_DEF_N) that writes savedDest so a diverted march resumes.
- * Nothing about any unit, price, building or map changed - this is entirely a
- * change to how the bots COMMAND what they already have.
+ * v101 is the day/night cycle: a DAY_CYCLE_T-second clock every match enters at
+ * a random point (G.dayOff), discrete lighting states, and vision halved for
+ * every unit and structure at night. Nothing about any unit's price, damage,
+ * hull or any map changed.
  *
- * WHY THE TRAILS MOVED, and which ones: every COMBOS trail boots three live CPU
- * opponents and runs 900 ticks - thirty seconds - so a trail moves exactly when
- * an AI change reaches the OPENING (the v89/v90 lesson). The defend picket does:
- * first scout contact near a base happens inside thirty seconds on some seeds,
- * and where the old code answered with every idle unit in the yard, the picket
- * answers with at most AI_DEF_N - different orders, different srand draws,
- * different hashes from there on. The push gate itself rarely bites this early
- * (an opening army has not outgrown pushSize), which is why the set of moved
- * combos differs from v98's: the four dm:777001 trails held at v98 and two of
- * them move now, while the koth/ctf pair that moved at v98 is simply moved
- * again for the same reason as everything else.
+ * WHY EVERY TRAIL MOVED - and this time it is BY CONSTRUCTION, not by behavior:
+ * two of v101's edits each move all seven combos on their own.
+ *   1. hashState gained a field (G.dayOff rides the first line), so every hash
+ *      in every table is a different number even for an identical simulation.
+ *   2. newGame gained one srand() draw, appended last per the v59 rule - every
+ *      draw before it keeps its position, and everything drawn DURING the match
+ *      (bot jitter clocks, wave spawns, mine rolls) shifts by one.
+ * On top of those, a seed whose dayOff lands the 900-tick opening inside night
+ * halves every acquisition sweep in it - real behavioral divergence, present on
+ * some seeds and absent on others, but unobservable behind 1 and 2. That is why
+ * repin_v101 expects ALL FIVE tables to move, the desk trail included: the v99
+ * pass could argue the desk match was unreachable by its change; a new hash
+ * FIELD reaches every table that stores a hash.
  *
- * What must NOT move is the map. Nothing in this release touches a prop, a node,
- * a nest or anything that fills M.pass.
+ * What must NOT move is the map. The dayOff draw sits after makeMap and after
+ * every layout decision; nothing in this release touches a prop, a node, a nest
+ * or anything that fills M.pass.
  *
  * THE GATE RUNS FIRST AND EMITS NOTHING IF IT FAILS. All 42 layout pins
  * (12 in tail_v28, 15 in tail_v43, 15 in tail_v62) are recomputed and compared
@@ -114,7 +114,7 @@ if (moved.length) {
   console.error('LAYOUT GATE FAILED - ' + moved.length + ' of 42 pins moved. Nothing cut.');
   for (const l of moved) console.error('  ' + l);
   console.error('A moved layout hash means this release touched map generation, which is');
-  console.error('not what v99 claims to do. Fix that before repinning any trail.');
+  console.error('not what v101 claims to do. Fix that before repinning any trail.');
   process.exit(1);
 }
 console.error('layout gate: all 42 pins hold. Cutting trails.\n');

@@ -85,7 +85,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v100 it makes **5,587
+that the results come out identical every time. As of v101 it makes **5,636
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -115,7 +115,19 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 100**.
+The game is at **version 101**.
+
+**v101 — day and night come to the battlefield.** Every match now runs a full
+day/night cycle: ten minutes takes you through daylight, an orange dusk, a long
+blue night and a pale dawn, and every battle starts at a random time of day. At
+night, every unit and structure on the board — yours and the enemy's alike —
+sees only half as far: the lit circle around your army closes in, guns stop
+picking up targets they can no longer see, and scouting before you attack
+matters twice as much. Weapons shoot exactly as far as they always did, so a
+target you can point at is still a target you can hit. The top bar shows the
+current phase, and a message tells you when night falls and when dawn breaks.
+Testing Mode stays at permanent noon so nothing surprises you while you
+experiment.
 
 **v100 — three fixes from playing.** Bailing the Observation Balloon's crew out
 now floats the four men down under parachutes, where before they simply appeared

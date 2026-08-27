@@ -164,7 +164,13 @@ function cpostOn(u){
    these two. A zero base stays zero, so an unarmed hull cannot be handed a
    weapon range and a sightless entity cannot be handed vision. */
 function rgOf(u,tgt){let r=(u.t.rg||0);if(r>0&&u.t.valve&&u.valve)r+=VALVE_RG;if(r>0&&highOn(u))r+=HIGH_RG;if(r>0&&fobOn(u,tgt))r+=FOB_RG;return r>0&&upOn(u.p)?r+UPLINK_RG:r;} // v86: High Ground rides the same door Pressure Valve and the uplink already use. v88: and Forward Observer, which is the first of them that needs to know WHAT is being shot at
-function viOf(u){let v=(u.t.vi||0);if(v>0&&u.t.flat&&u.flat)v+=FLAT_VI;if(v>0&&rnetOn(u))v+=RNET_VI;return v>0&&upOn(u.p)?v+UPLINK_VI:v;}
+function viOf(u){let v=(u.t.vi||0);if(v>0&&u.t.flat&&u.flat)v+=FLAT_VI;if(v>0&&rnetOn(u))v+=RNET_VI;return nightVi(v>0&&upOn(u.p)?v+UPLINK_VI:v);} // v101: night halves it, bonuses included - the dark shortens what an uplinked eye sees exactly as it shortens a plain one
+/* v101 bviOf - the building half of the same door. Structure vision was read
+   raw off b.t.vi at three sites (the fog stamp, pVision, the HQ placement
+   gate), which was fine while the row was the whole answer; the night cut
+   makes it a derived figure, so the read gets a name and every site goes
+   through it. Same zero-stays-zero rule as viOf. */
+function bviOf(b){return nightVi(b.t.vi||0)}
 /* v80: effective ground speed. u.sp is the baked per-unit figure (type row x
    faction modifier x production buff) and stays the base; this is the one place
    a sustained mode may bend it. A unit with no throttle capability returns u.sp
@@ -636,7 +642,7 @@ function pVision(p,x,y){
  for(const q of G.players){
   if(!q.alive||!allied(q,p))continue;
   for(const u of q.units){if(u.garrisoned)continue;const vi=viOf(u);if((u.x-x)**2+(u.y-y)**2<=vi*vi)return true;}
-  for(const b of q.blds){if(b.prog<1)continue;const vi=b.t.vi||0;if(!vi)continue;
+  for(const b of q.blds){if(b.prog<1)continue;const vi=bviOf(b);if(!vi)continue; // v101: night halves structure vision here too
    const dx=Math.max(0,Math.abs(x-b.x)-b.sz*.5),dy=Math.max(0,Math.abs(y-b.y)-b.sz*.5);
    if(dx*dx+dy*dy<=vi*vi)return true;}
  }
