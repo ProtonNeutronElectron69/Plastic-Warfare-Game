@@ -185,16 +185,21 @@ function renderCore(){
  }
  /* ---- v88: THE BURIED MINES ONLY THEIR OWNER CAN SEE ----
     The map's own scattered mines are drawn by nobody and stay that way. A wall's
-    mine is drawn for the army that buried it and for its allies alone, which is
-    the whole of "only Gray can see it" - a client-local read of G.human, exactly
-    like the fog it sits under, so the sim never learns who is looking. A
-    spectator sees none of them, on the same rule that gives a spectator no army.
-    Deliberately small and dull: it is a reminder of where your own field is, not
-    a beacon. */
+    mine is drawn for the army that buried it and for NOBODY else - a
+    client-local read of G.human, exactly like the fog it sits under, so the sim
+    never learns who is looking. A spectator sees none of them, on the same rule
+    that gives a spectator no army. Deliberately small and dull: it is a reminder
+    of where your own field is, not a beacon.
+    v98: an ALLY no longer sees it either, by the owner's decision - "visible to
+    the owner only" is now the identity `ow===G.human` rather than allied(). The
+    ARMING rule is untouched and deliberately still allied(): mineArms keeps the
+    mine asleep under an ally's men, so a teammate walking the line is safe
+    without being shown where the line is. Sight and safety are two claims here,
+    and only the first one moved. */
  if(G.human&&G.map.mines)for(const mn of G.map.mines){
   if(!mn.live||!mn.gray)continue;
   const ow=G.players[mn.pi];
-  if(!ow||!allied(ow,G.human))continue;
+  if(ow!==G.human)continue;
   if(fogAt(mn.x,mn.y)===0)continue;
   const mx2=isoX(mn.x,mn.y),my2=isoY(mn.x,mn.y),pf=.45+.25*Math.sin(G.tick*.05+mn.x);
   c.save();c.globalAlpha=pf;

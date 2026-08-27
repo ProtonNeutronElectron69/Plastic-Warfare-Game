@@ -255,7 +255,10 @@ addEventListener('keydown',e=>{
   if(ids.length){G.patrolAim={pts:[],ids};msg('Patrol: click the FIRST waypoint (Esc cancels).');}
  }
  else if(k==='Tab'&&(G.test||G.watch)){e.preventDefault();switchArmy((G.human.i+1)%G.players.length);} // v50: cycle armies. v55: in a watch match the same cycle follows an army instead of commanding it
- else if(k==='F9')togglePause(); // v29: pause moved from P
+ /* v29: pause moved from P. v98: F9 -> F10, because the control groups landed on
+    F1-F9 when the abilities took the number row, and F9 cannot mean two things.
+    The pause BUTTON in the top bar is untouched and is still the primary. */
+ else if(k==='F10'){e.preventDefault();togglePause()}
  else if(k==='j'||k==='J'){if(G.lastEvent){G.cam.x=isoX(G.lastEvent.x,G.lastEvent.y)-vpW()/2/G.zoom;G.cam.y=isoY(G.lastEvent.x,G.lastEvent.y)-vpH()/2/G.zoom;pingEvent(G.lastEvent.x,G.lastEvent.y,'#ffe34d');}} // v29: jump-to-event moved from Space
  else if((k==='['||k===']')&&G.watch){watchSpeedStep(k===']'?1:-1);} // v56: step the spectator speed (works with the box hidden)
  else if((k==='v'||k==='V')&&G.watch){watchToggle();} // v55: hide/show the spectator box
@@ -272,9 +275,24 @@ addEventListener('keydown',e=>{
  else if(k==='+'||k==='='){setZoom(G.zoom*1.2,vpW()/2,vpH()/2)}
  else if(k==='-'||k==='_'){setZoom(G.zoom/1.2,vpW()/2,vpH()/2)}
  else if(k==='0'){setZoom(1,vpW()/2,vpH()/2)}
- else if(/^[1-9]$/.test(k)){
-  if(e.ctrlKey||e.metaKey){G.groups[k]=G.sel.filter(s=>s.kind==='unit'&&s.p===G.human);e.preventDefault();msg('Group '+k+' set ('+G.groups[k].length+' units)')}
-  else{const g=(G.groups[k]||[]).filter(u=>u.hp>0&&G.units.includes(u));if(g.length)setSel(g)}
+ /* v98: THE NUMBER ROW FIRES ABILITIES, AND THE CONTROL GROUPS MOVED TO F1-F9.
+    The owner asked for number hotkeys on the unit ability buttons, and 1-9 were
+    the control groups, so one of the two had to move. Shadowing was refused for
+    the reason MENU_KEYS is the alphabet it is: no key in this file means two
+    things at once, and eleven units carry a toggle, so "abilities win while
+    something with an ability is selected" would have taken group recall away
+    most of the time you wanted it.
+    ABIL_HOT is empty unless the panel is showing ability buttons, so this branch
+    is context-gated by the registry exactly as the build-menu letters are - and
+    it FALLS THROUGH when nothing is registered rather than swallowing the key.
+    G.groups is untouched in shape: still keyed by the digit, so a save written
+    before this release restores its groups unchanged, and switchArmy still
+    clears them the same way. Client-local, hashed nowhere. */
+ else if(/^[1-9]$/.test(k)&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&abilHotkey(k)){/* an ability fired */}
+ else if(/^F[1-9]$/.test(k)){
+  e.preventDefault();const gk=k.slice(1);
+  if(e.ctrlKey||e.metaKey){G.groups[gk]=G.sel.filter(s=>s.kind==='unit'&&s.p===G.human);msg('Group '+gk+' set ('+G.groups[gk].length+' units)')}
+  else{const g=(G.groups[gk]||[]).filter(u=>u.hp>0&&G.units.includes(u));if(g.length)setSel(g)}
  }
 });
 addEventListener('keyup',e=>{const k=e.key.toLowerCase();KEY[e.key]=false;KEY[k]=false;if(k==='s')KEY.s2=false});

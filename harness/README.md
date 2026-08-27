@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v97)
+# Plastic Warfare headless test harness (updated at v98)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -1079,6 +1079,158 @@ error a reader would see as anything but an odd blank report. `sim_report.js` no
 compiles the page's script block with `new Function` before writing (compiles, does
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
+
+## v98: four owner asks - a re-price, a stamp, the number row, and menu chrome
+
+Not part of a roadmap. Four things the owner asked for, each landing as a change
+AND a check (`tail_v98.js`, T75). Three of the four are interface and cannot
+reach the simulation; the fourth is a balance change, and it moved the trails by
+a route worth writing down.
+
+**1. The Heavy Barricade: 60 plastic to 40, its mine roll 10% to 15%, and the
+mine now visible to its owner ALONE.** The 60 was chosen at v88 so HP-per-plastic
+came out flat against the ordinary wall and what the extra bought was the aura
+and the mine; at 40 the wall is deliberately better plastic-for-HP, which is the
+whole point of a re-price, and the comment on the constant now says so rather
+than still claiming the old argument. Sight dropped the ally share (`allied(ow,
+G.human)` became `ow!==G.human`); **the ARMING rule was deliberately left alone**,
+so a teammate is still not blown up by a wall he cannot see. Two claims, one
+moved.
+
+**2. A release stamp in the menu's bottom-right corner**, `V98 · UPDATED 26 AUG
+2026`, written by `menuStamp()` off `GAME_VER` / `GAME_DATE`.
+
+**3. Number hotkeys on the unit ability buttons**, 1-9 down the row, with the
+control groups moved to F1-F9 and pause moved F9 to F10.
+
+**4. A hover tick and a stronger click** across the setup screen and the Field
+Manual (`sTick`, `sMenuClick`), delegated per host.
+
+### v98 finding: a GRAY-EXCLUSIVE re-price moved a green trail and a tan trail
+
+The four dm trails held. `backyard:koth:424243` and `kitchen:ctf:424243` moved on
+BOTH the tan and the green tables, and two of the four AI-only trails moved with
+them - none of which is a match anybody can lay a Heavy Barricade in.
+
+The path is not the building. It is `RESEARCH.b_hbarricade`, whose price is
+DERIVED from `B.hbarricade.cp` (`rscale(cp*0.85 + ce*0.5)`, 71 to 64) and whose
+research time is derived from `cp+ce` (10.1s to 9.7s). Every COMBOS trail boots
+three real CPU opponents, one of them Gray, and `hashState` covers every army in
+the match rather than the one the config names. Measured with a probe over the
+900-tick window: **the Gray bot starts `b_hbarricade` at tick 627** in the koth
+match, so its bank and its lab differ from tick 627 on. The dm combos held
+because their Gray never gets that far in thirty seconds, and `desk:surv` held
+for a stronger reason still - that match is **tan against one blue ally, with no
+Gray army in it at all**, which is what `repin_v98.py` names in `UNMOVED_OK`
+instead of the Gunner-fixture reason it inherited.
+
+**The lesson generalises past this release: "no army in this match can BUILD it"
+is not the same claim as "nothing in this match reads its PRICE".** A building
+cost is an input to the research table, and the research table is an input to
+every bot that owns a Lab. T75.A pins the derivation itself rather than the two
+numbers, so the next re-price is told where its blast radius is.
+
+The mine roll, which also changed, reaches no trail at all: `buryHBMine` draws on
+wall COMPLETION and the research above never finishes inside a window. The draw
+is taken whether or not it succeeds, so even a completed wall could only fork the
+stream on the mine's existence, never on the outcome of the roll - which T75.A
+re-checks, because raising a probability is a natural place to break it.
+
+### v98 finding: the Field Manual's mine sentence was right only by coincidence
+
+The manual said "One in `<span data-tune="hbarrMineP">`" and the slot returns
+`Math.round(HBARR_MINE_P*100)`. At 10% that prints "One in 10", which is correct.
+At 15% it would have printed "One in 15", which is wrong by better than a factor
+of two - the honest figure is one in seven. The number always read off the
+constant, exactly as rule 3 requires; **the SENTENCE around it was doing
+arithmetic of its own**, and rule 3 does not check sentences. Both the manual and
+`B.hbarricade.d` now state a percentage, which is what the slot actually holds.
+
+Worth carrying forward: a `data-tune` slot proves the number is not a second
+copy. It proves nothing about the words on either side of it.
+
+### v98 note: the re-price is a HUMAN lever - the bot builds exactly one
+
+Read off the tables rather than guessed. `aiTick`'s structure wish list pushes a
+faction exclusive as `[ub, 1]` unless the row carries `mult`, and only a `mult`
+row is ever asked for a second or third time (`bunker` and `turbine` have it; the
+Heavy Barricade does not). `aiBarricades`, the bot's only other wall path, names
+`'barricade'` at all four of its sites and never the heavy one. So a Gray bot
+puts up **one** Heavy Barricade, ever, and 60 to 40 changes when rather than how
+many.
+
+That is worth stating because it bounds what this release can have done to the
+balance table: on the bot's side the re-price is a small timing change plus the
+research-price shift above, and on the player's side it is the whole point. It
+also means `sim.sh` cannot measure this change - eight matches of one wall each
+is noise, and the v90 note about reading a batch as a hint applies twice over. No
+batch was run, and none is claimed.
+
+### v98 decision: the number row is a REBINDING, and pause had to move for it
+
+1-9 were the control groups (Ctrl+1-9 to save, 1-9 to recall) and the Field
+Manual has documented that since v29. Eleven units carry a toggle, so "abilities
+win while something with an ability is selected" would have taken group recall
+away most of the time you actually want it - and shadowing is refused here on the
+rule `MENU_KEYS` was chosen under in the first place: **no key in this file means
+two things at once.** The owner chose, from three options put to them, to move the
+groups to F1-F9 outright.
+
+That collided with pause, which was F9, so pause is **F10** now. The ⏸ button in
+the top bar is untouched and is still the primary. This is the same kind of move
+v29 made three times over (pause off P, stop off H, jump off Space) and it is
+recorded here for the same reason.
+
+`ABIL_HOT` is `MENU_HOT`'s design pointed at the other half of the panel: the
+registry is rebuilt by `hotReset()` with the panel and only with the panel, so a
+digit means something only while its button is on screen and no mode gate is
+needed. Numbering is APPEND order through one function, `abilAdd`, which every
+unit-ability site calls instead of `pb.appendChild` - so a button added in a new
+place cannot ship without a key, and the numbering cannot disagree with the order
+the player sees. Building ability buttons are deliberately NOT numbered: a
+structure's panel already hands its Construct/Train/Research tiles the MENU_KEYS
+letters, and numbering the two or three buttons above them is a separate decision
+nobody has asked for.
+
+`G.groups` keeps its shape - still keyed by the digit - so a save written before
+this release restores its groups unchanged and `switchArmy` still clears them the
+same way.
+
+### v98 decision: the menu's sounds are DELEGATED, and the per-site calls are gone
+
+`sTick` (a hover tick, the quietest voice in the file) and `sMenuClick` (roughly
+twice `sClick`, with a body under the transient) are bound once per host by
+`menuAudioBind`, on `#setup` and on `#infoPanel`. Not a line in every handler:
+the setup screen builds its faction cards, its map cards and the whole online
+lobby at runtime and the manual rebuilds its gallery on every tab, so a per-site
+call would have to be remembered into each of them - which is the v90.1 trap
+(a painter grew a new argument and the fifteenth caller was missed for a whole
+release). A delegated listener cannot be forgotten by a button that has not been
+written yet.
+
+Two consequences worth stating. The seventeen `sClick()` calls in the setup
+screen and the three in the Field Manual are **deleted**, or a click would make
+two sounds; `#manualBtn` keeps its own because it lives in the HUD, whose voice
+did not change. And `mouseover` BUBBLES and fires again for every child inside a
+card, so the tick is gated on the closest interactive ancestor actually CHANGING
+- otherwise sliding across a card's three lines of text ticks three times. That
+gate is driven in T75.D against the shim's own event dispatch rather than read
+out of the source.
+
+### v98 note: the stamp exposed a version that had gone twelve releases stale
+
+`saveState` carried a hand-typed `v:86` and T49.E only ever asserted `S.v >= 72`,
+so nothing noticed. With `GAME_VER` now existing, the tag reads `GAME_VER_N`
+(derived, `parseInt` off the same string) and there is one version in the file
+instead of two. Nothing reads the tag back - `loadState` ignores it and it is not
+hashed - which is exactly why it could rot unseen, so T75.B pins both halves: a
+fresh save carries this build's number, and a save carrying the old one still
+loads to the identical hash.
+
+`GAME_DATE` is ISO because that is the form a repository can check; `stampDate`
+turns it into "26 AUG 2026" with a **regex and not a Date**. `new
+Date('2026-08-26')` parses as UTC midnight and `getDate()` reads back local, so
+every player west of Greenwich would have been shown the 25th.
 
 ## v90.2: the HUD legibility pass, and a top edge that never scrolled
 
@@ -3461,6 +3613,17 @@ now runs each table from its own cfg and asserts both the equality that should h
 (the two tan tables) and the inequality that must (tan vs green).
 
 ## Contents
+
+v98 adds tail_v98.js (T75), riding segment 3 and listed last in tails.txt. The
+suite stands at 5,500 checks (5,395 at v97).
+Sections A-D: the Heavy Barricade's price stated as a SHAPE (twice BARR_COST for
+three times BARR_HP) plus the research derivation that carried a Gray re-price
+into a green trail, the release stamp and the save tag now derived from it, the
+ability registry driven through real panels (single, mixed group, a structure
+that is deliberately unnumbered, and a greyed-out button that refuses the key)
+with the rebinding read out of the shipped keydown chain, and the menu's two new
+voices measured against sClick and its delegation driven through the shim's own
+event dispatch.
 
 v90.2 adds tail_v90_2.js (T65), riding segment 3 and listed last in tails.txt.
 Sections A-D: the toasts at the top centre and clear of the survival banner by

@@ -757,6 +757,57 @@ function sfxWhoosh(x,y){
 // pure:1 keeps the humanisation off these: a click that wanders in pitch reads as a fault.
 function sClick(){if(muted||!ac())return;ptone({ft:'sine',f0:900,dur:.05,gain:.04,pure:1});}
 function sUiTone(){if(muted||!ac())return;ptone({ft:'sine',f0:600,dur:.06,gain:.05,pure:1});}
+/* --- the menu's own chrome, added at v98 ---
+   A tick under the cursor and a clack under the click. Both are `pure`, on
+   sClick's own rule: an interface sound that wanders in pitch reads as a fault
+   rather than as feedback.
+   sTick is deliberately the quietest voice in the file - it fires on every
+   button the cursor crosses, and a hover sound you NOTICE is a hover sound you
+   will hate by the third menu. sMenuClick is the answer to it and is the
+   stronger of the pair by design: a bright transient for the contact and a
+   short falling body under it, roughly twice sClick's level. sClick is
+   unchanged and still owns every in-match button; these two own the setup
+   screen and the Field Manual. */
+function sTick(){if(muted||!ac())return;ptone({ft:'sine',f0:1650,dur:.022,gain:.020,pure:1});}
+function sMenuClick(){
+ if(muted||!ac())return;
+ ptone({ft:'sine',f0:1250,dur:.032,gain:.052,pure:1});
+ ptone({ft:'triangle',f0:520,f1:300,sweep:.05,dur:.085,gain:.075,pure:1});
+}
+/* THE MENU'S HOVER/CLICK DELEGATION, bound once per host.
+   One delegated pair per host and NOT a line inside every handler: the setup
+   screen builds its faction cards, map cards and whole online-lobby panel at
+   runtime, and the Field Manual rebuilds its gallery on every tab - a per-site
+   call would have to be remembered into each of them, which is the v90.1 trap
+   (a painter grew a new argument and the fifteenth caller was missed for a
+   whole release). A delegated listener cannot be forgotten by a button that has
+   not been written yet.
+   mouseover BUBBLES and fires again for every child inside a card, so the tick
+   is gated on the closest interactive ancestor actually CHANGING - otherwise
+   sliding across a card's three lines of text ticks three times. A move onto
+   dead space inside the host clears the memory (so returning to the same button
+   ticks again) and mouseleave clears it on the way out. mouseenter would not
+   bubble at all and could not be delegated.
+   The click sound REPLACES the sClick() the menu's own handlers used to make
+   one by one; those calls are gone in this release, so a click still makes
+   exactly one sound. Everything inside the HUD keeps sClick(). */
+const MENU_HIT='button,.card,.icell';
+let menuHoverEl=null;
+function menuAudioBind(host){
+ if(!host||!host.addEventListener)return false;
+ host.addEventListener('mouseover',e=>{
+  const el=(e&&e.target&&e.target.closest)?e.target.closest(MENU_HIT):null;
+  if(el===menuHoverEl)return;
+  menuHoverEl=el;
+  if(el&&!el.disabled)sTick();
+ });
+ host.addEventListener('mouseleave',()=>{menuHoverEl=null});
+ host.addEventListener('click',e=>{
+  const el=(e&&e.target&&e.target.closest)?e.target.closest(MENU_HIT):null;
+  if(el&&!el.disabled)sMenuClick();
+ });
+ return true;
+}
 /* v27.1: soft two-tone nudge when a fresh attack blip lands on the minimap.
    Non-positional UI sound, quiet, and throttled hard: one nudge every few
    seconds no matter how hot the battle gets. */

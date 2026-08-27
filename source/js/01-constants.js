@@ -1,4 +1,21 @@
 /* ---------------- CONSTANTS & MATH HELPERS ---------------- */
+/* v98: the release stamp the main menu prints in its corner. TWO constants and
+   not one string, because the menu prints them apart and a test reads them
+   apart. GAME_DATE is ISO on purpose - it is what the repository can check
+   against a commit, and menuStamp() is the only place it is ever rewritten for
+   a human to read. Neither is sim state: nothing here is hashed, serialized or
+   sent over the wire, and a peer on a different build is caught by the protocol
+   check that already exists rather than by this. Bump BOTH every release. */
+const GAME_VER='v98';
+const GAME_DATE='2026-08-26';
+/* the same version as a NUMBER, for the save-snapshot tag. That tag was a
+   hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
+   the version that nothing tied back to the first, which is the trap this whole
+   pair exists to close. Derived rather than declared: a vNN.N release keeps the
+   integer of its NN, which is what a snapshot tag has always meant. Nothing
+   reads it back (loadState ignores it and it is not hashed); it is a label on
+   the blob, and T49.E pins both of those. */
+const GAME_VER_N=parseInt(String(GAME_VER).slice(1),10)||0;
 const TW=64, TH=32, HW=TW/2, HH=TH/2;
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 // Fisher-Yates shuffle (returns the same array, shuffled in place).

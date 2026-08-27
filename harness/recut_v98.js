@@ -1,29 +1,42 @@
-/* recut_v90.js - regenerate the hash-trail baselines that v90 moved.
+/* recut_v98.js - regenerate the hash-trail baselines that v98 moved.
  *
- *   cat shim_head.js game.js recut_v90.js > rc90.js && node rc90.js > cut_v90.json
- *   python3 repin_v90.py cut_v90.json
+ *   cat shim_head.js game.js recut_v98.js > rc98.js && node rc98.js > cut_v98.json
+ *   python3 repin_v98.py cut_v98.json
  *
- * v90 is an AI-personality pass and touches NO unit, no building and no cost:
- * firstPush +15% on the three non-defensive profiles, two new profile fields
- * (towers 1..5, buyTilt 0..0.6), a vestigial rolled `aggro` deleted from
- * makeAIBrain, and the defensive stacking exclusive following the tower ladder.
+ * v98 is four owner asks: the Heavy Barricade re-priced 60 -> 40 with its mine
+ * roll raised 0.10 -> 0.15, a version stamp in the menu corner, number hotkeys
+ * on the unit ability buttons (with the control groups moved to F1-F9), and a
+ * hover/click sound pair for the menu and the Field Manual. Three of the four
+ * are interface and cannot reach the simulation at all.
  *
- * WHY THIS MOVES TRAILS WHEN v89'S AI PASS DID NOT, which is the thing worth
- * writing down. The COMBOS trails are not testing-mode matches - cfgTan and
- * cfgGreen never set test:true, so every one of them boots three real CPU
- * opponents and the AI is live. They run 900 ticks: THIRTY SECONDS. At thirty
- * seconds a bot owns a barracks and perhaps a garage, has no helipad, and is
- * still on its opening build. So v89's pass - target mixes, the AA floor and the
- * class reserve, all of which need a helipad or a mid-game bank to bite - changed
- * nothing inside that window and the trails held. firstPush lands squarely inside
- * it: aggressive was 42 AI-ticks, about 25 seconds, so moving it to 48 decides
- * whether the first wave launches before the trail stops sampling.
+ * THE ONE THAT DOES IS THE RE-PRICE, AND HOW IT REACHES THESE TRAILS IS THE
+ * THING WORTH WRITING DOWN. The Heavy Barricade is GRAY-EXCLUSIVE, and the
+ * trails that moved are a TAN trail, a GREEN trail and two AI-only trails -
+ * none of which can lay one. The path is RESEARCH.b_hbarricade, whose price is
+ * DERIVED from B.hbarricade.cp (rscale(cp*0.85 + ce*0.5), 71 -> 64) and whose
+ * research TIME is derived from cp+ce (10.1s -> 9.7s). Every COMBOS trail boots
+ * three real CPU opponents, one of them Gray, and in the backyard:koth match
+ * that Gray bot starts b_hbarricade at TICK 627 - inside the 900-tick window.
+ * Its bank and its lab therefore differ from tick 627 on, and hashState covers
+ * every army in the match, not just the one the config names.
  *
- * The lesson generalises past this release: these trails cover the AI's OPENING
- * and nothing after it. An AI change that moves them is an opening change; an AI
- * change that does not is not thereby proven harmless, only proven not to have
- * touched the first thirty seconds. CLAUDE.md said the trails never fire aiTick
- * at all, which is wrong, and v90 corrects it there.
+ * Measured, not assumed: the four dm:777001 combos held because their Gray bot
+ * never reaches that research inside thirty seconds, and desk:surv held for a
+ * stronger reason still - that match is tan and blue only, so nothing in it can
+ * research a Gray building at all. Two of seven trail combos and two of four
+ * AI-only combos moved.
+ *
+ * The lesson generalises: "no army in this match can BUILD it" is not the same
+ * claim as "nothing in this match reads its PRICE". A cost is an input to the
+ * research table, and the research table is an input to every bot that owns a
+ * lab. tail_v98 T75.A pins that derivation so the next re-price is told.
+ *
+ * Nothing in this release touches the mine ROLL inside a trail either, and that
+ * is worth stating because HBARR_MINE_P did change: buryHBMine draws for every
+ * completed heavy wall, and no heavy wall is completed in any trail window (the
+ * research above never finishes). The draw is taken whether it succeeds or not,
+ * so even a completed wall would not fork the stream on the outcome - only on
+ * the mine's existence.
  *
  * What must NOT move is the map. Nothing in this release touches a prop, a node,
  * a nest or anything that fills M.pass.
@@ -116,7 +129,7 @@ if (moved.length) {
   console.error('LAYOUT GATE FAILED - ' + moved.length + ' of 42 pins moved. Nothing cut.');
   for (const l of moved) console.error('  ' + l);
   console.error('A moved layout hash means this release touched map generation, which is');
-  console.error('not what v88 claims to do. Fix that before repinning any trail.');
+  console.error('not what v98 claims to do. Fix that before repinning any trail.');
   process.exit(1);
 }
 console.error('layout gate: all 42 pins hold. Cutting trails.\n');

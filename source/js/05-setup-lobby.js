@@ -1,22 +1,48 @@
 /* ---------------- SETUP SCREEN ---------------- */
+/* v98: the release stamp in the menu's corner. The DATE is reformatted for a
+   human here and nowhere else - GAME_DATE stays ISO so it can be checked
+   against the repository, and this is the one function that turns it into
+   "26 AUG 2026". Parsed with a regex rather than through Date, deliberately:
+   `new Date('2026-08-26')` is parsed as UTC MIDNIGHT and getDate() reads back
+   local, so every player west of Greenwich would have been shown the 25th. A
+   string that does not match the ISO shape is printed verbatim rather than
+   silently becoming NaN. */
+const STAMP_MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+function stampDate(iso){
+ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||''));
+ if(!m)return String(iso||'');
+ return (+m[3])+' '+(STAMP_MON[+m[2]-1]||m[2])+' '+m[1];
+}
+function menuStamp(){
+ const el=document.getElementById('verStamp');
+ if(!el)return '';
+ const t=String(GAME_VER).toUpperCase()+' \u00b7 UPDATED '+stampDate(GAME_DATE);
+ el.textContent=t;
+ return t;
+}
+menuStamp();
+/* v98: the setup screen's hover tick and click clack, bound once on the host.
+   #netPanel and both card rows are built at runtime and are inside #setup, so
+   one binding here covers every button the menu will ever grow. */
+menuAudioBind(document.getElementById('setup'));
 let SETUP={fac:'green',mode:'dm',map:'backyard',opp:1,diff:'normal',test:0,watch:0}; // v50: test = the sandbox toggle. v55: watch = spectate mode
 const facRow=document.getElementById('facRow');
 for(const k in FAC){if(k==='bug')continue;const f=FAC[k];const c=document.createElement('div');c.className='card'+(k==='green'?' sel':'');c.innerHTML=`<div class="cname"><div class="dot" style="background:${f.color}"></div>${f.name}</div><div class="cdesc">${f.desc}</div><div class="uq">★ ${f.uu.map(k=>U[k].n).join(' • ')}<br>★ ${f.ub.map(k=>B[k].n).join(' • ')}</div>`;
- c.onclick=()=>{document.querySelectorAll('#facRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');SETUP.fac=k;sClick()};facRow.appendChild(c)}
+ c.onclick=()=>{document.querySelectorAll('#facRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');SETUP.fac=k};facRow.appendChild(c)}
 const mapRow=document.getElementById('mapRow');
 for(const k in MAPS){const m=MAPS[k];const c=document.createElement('div');c.className='card mcard'+(k==='backyard'?' sel':'');c.dataset.map=k;if(m.survOnly){c.dataset.survonly='1';c.style.display='none';} /* v35: survival-only maps hidden outside Wave Survival */ c.innerHTML=`<div class="cname">${m.n}</div><div class="cdesc">${m.d}</div>`;
- c.onclick=()=>{document.querySelectorAll('#mapRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');SETUP.map=k;sClick()};mapRow.appendChild(c)}
-document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.mode=b.dataset.mode;refreshTeamRow();sClick()}); // v33
-document.querySelectorAll('[data-opp]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-opp]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.opp=+b.dataset.opp;sClick()});
-document.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-diff]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.diff=b.dataset.diff;sClick()});
+ c.onclick=()=>{document.querySelectorAll('#mapRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');SETUP.map=k};mapRow.appendChild(c)}
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.mode=b.dataset.mode;refreshTeamRow()}); // v33
+document.querySelectorAll('[data-opp]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-opp]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.opp=+b.dataset.opp});
+document.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-diff]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.diff=b.dataset.diff});
 // v50: testing mode. refreshTeamRow relabels the army-count row and the team chips off SETUP.test.
-document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-test]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.test=+b.dataset.test;if(SETUP.test)setWatchMode(0);refreshTeamRow();sClick()});
+document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-test]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.test=+b.dataset.test;if(SETUP.test)setWatchMode(0);refreshTeamRow()});
 // v55: SPECTATE MODE. The opposite sandbox: testing mode hands you every army,
 // spectate mode hands you none. Selecting either clears the other through these
 // two setters, which repaint their own row so the screen never shows both lit.
 function setWatchMode(v){SETUP.watch=v?1:0;document.querySelectorAll('[data-watch]').forEach(x=>x.classList.toggle('sel',+x.dataset.watch===SETUP.watch));}
 function setTestMode(v){SETUP.test=v?1:0;document.querySelectorAll('[data-test]').forEach(x=>x.classList.toggle('sel',+x.dataset.test===SETUP.test));}
-document.querySelectorAll('[data-watch]').forEach(b=>b.onclick=()=>{setWatchMode(+b.dataset.watch);if(SETUP.watch)setTestMode(0);refreshTeamRow();sClick()});
+document.querySelectorAll('[data-watch]').forEach(b=>b.onclick=()=>{setWatchMode(+b.dataset.watch);if(SETUP.watch)setTestMode(0);refreshTeamRow()});
 // v29: per-slot team pickers. Clicking a chip cycles its team 1-4; matching numbers
 // ally (shared vision, no friendly fire, joint victory). Chips beyond the current
 // opponent count hide themselves; an all-one-team pick falls back to FFA in newGame.
@@ -48,7 +74,7 @@ function refreshTeamRow(){
   b.textContent=`${watch?'CPU '+(i+1):test?'Army '+(i+1):TSLOT_NAMES[i]} — Team ${SETUP.teams[i]}`;
  });
 }
-document.querySelectorAll('[data-tslot]').forEach(b=>b.onclick=()=>{const i=+b.dataset.tslot;SETUP.teams[i]=SETUP.teams[i]%4+1;refreshTeamRow();sClick()});
+document.querySelectorAll('[data-tslot]').forEach(b=>b.onclick=()=>{const i=+b.dataset.tslot;SETUP.teams[i]=SETUP.teams[i]%4+1;refreshTeamRow()});
 document.querySelectorAll('[data-opp]').forEach(b=>b.addEventListener('click',refreshTeamRow));
 refreshTeamRow();
 /* v91: the load is kicked off when the page opens (below) and merely AWAITED
@@ -408,11 +434,11 @@ function lobOpenHost(){
  P.appendChild(lobEl('div','nsub','📨 <b>Invite</b> — one code covers every open seat, and every reply comes back to one box'));
  const invRow=lobEl('div','nrow');
  const mintB=lobEl('button','opt','📨 Create lobby code');mintB.id='lobMint';
- mintB.onclick=()=>{sClick();lobMintInvites()};
+ mintB.onclick=()=>{lobMintInvites()};
  invRow.appendChild(mintB);
  const copyB=lobEl('button','opt','📋 Copy');
  copyB.onclick=()=>{const t=document.getElementById('lobCode');if(!t||!t.value)return;
-  if(t.select)t.select();lobCopy(t.value);lobHostStat('Lobby code copied — paste it to your friends.');sClick()};
+  if(t.select)t.select();lobCopy(t.value);lobHostStat('Lobby code copied — paste it to your friends.')};
  invRow.appendChild(copyB);P.appendChild(invRow);
  const codeTa=lobEl('textarea','ncode nwide');codeTa.id='lobCode';codeTa.readOnly=true;
  codeTa.placeholder='Set a slot to Open (friend), then press Create lobby code…';
@@ -452,12 +478,12 @@ function lobRenderSlots(){
    const ni=(roleIdx+1)%LOB_ROLES.length;
    r.role=LOB_ROLES[ni][0];r.diff=LOB_ROLES[ni][1]||'normal';
    if(r.role!=='open'&&r.pc){try{r.pc.close()}catch(e){};r.pc=null;r.ch=null;r.state='idle';r.blob=null;r.ready=false}
-   lobRefresh();sClick();
+   lobRefresh();
   };
   row.appendChild(roleB);
   if(r.role==='cpu'){
    const facB=lobEl('button','opt','⚑ '+FAC[r.fac].name);
-   facB.onclick=()=>{r.fac=fk[(fk.indexOf(r.fac)+1)%fk.length];lobRefresh();sClick()};
+   facB.onclick=()=>{r.fac=fk[(fk.indexOf(r.fac)+1)%fk.length];lobRefresh()};
    row.appendChild(facB);
   }
   if(r.role==='open'){
@@ -543,7 +569,7 @@ function lobOpenJoin(){
  outRow.appendChild(outTa);
  const cpB=lobEl('button','opt','📋 Copy');
  cpB.onclick=()=>{if(!outTa.value)return;if(outTa.select)outTa.select();
-  lobCopy(outTa.value);lobJoinStat('Reply copied — send it to the host.');sClick()};
+  lobCopy(outTa.value);lobJoinStat('Reply copied — send it to the host.')};
  outRow.appendChild(cpB);
  outRow.style.display='none';P.appendChild(outRow);
  const goRow=lobEl('div','nrow');
@@ -552,7 +578,7 @@ function lobOpenJoin(){
  lobSetRosBlock(P);
  const rdyRow=lobEl('div','nrow');
  const rdyB=lobEl('button','opt','⏳ Click when ready');rdyB.id='lobReady';rdyB.disabled=true;
- rdyB.onclick=()=>{if(!LOBBY||LOBBY.mode!=='join'||!LOBBY.join.ch)return;LOBBY.ready=!LOBBY.ready;lobJoinReadyLabel();lobJoinSendPick();sClick()};
+ rdyB.onclick=()=>{if(!LOBBY||LOBBY.mode!=='join'||!LOBBY.join.ch)return;LOBBY.ready=!LOBBY.ready;lobJoinReadyLabel();lobJoinSendPick()};
  rdyRow.appendChild(rdyB);P.appendChild(rdyRow);
  P.appendChild(lobChatBlock());
  const st=lobEl('div','nstat','');st.id='lobJoinStat';P.appendChild(st);
@@ -586,7 +612,7 @@ function lobJoinSeats(){
  el.appendChild(lobEl('span','nlab','Take a seat:'));
  for(const it of inv.items){
   const b=lobEl('button','opt'+(it.seat===LOBBY.seat?' nseaton':''),lobSeatName(it.seat));
-  b.onclick=()=>{if(!LOBBY||LOBBY.seat===it.seat)return;LOBBY.seat=it.seat;lobJoinSeats();lobJoinAnswer();sClick()};
+  b.onclick=()=>{if(!LOBBY||LOBBY.seat===it.seat)return;LOBBY.seat=it.seat;lobJoinSeats();lobJoinAnswer()};
   el.appendChild(b);
  }
 }
@@ -640,8 +666,8 @@ function lobJoinChanOpen(ch){
  };
  ch.onclose=()=>{if(LOBBY&&LOBBY.mode==='join'){LOBBY.join.ch=null;LOBBY.ready=false;lobJoinStat('⚠ The host closed the connection.');lobRefresh()}};
 }
-document.getElementById('hostOnlineBtn').onclick=()=>{sClick();lobOpenHost()};
-document.getElementById('joinOnlineBtn').onclick=()=>{sClick();lobOpenJoin()};
+document.getElementById('hostOnlineBtn').onclick=()=>{lobOpenHost()};
+document.getElementById('joinOnlineBtn').onclick=()=>{lobOpenJoin()};
 /* v47: ONE delegated listener per setup row, registered once for the session.
    lobOpenJoin used to add its own facRow listener on every open, so backing out
    and rejoining N times sent N duplicate picks per army click. Clicks bubble here

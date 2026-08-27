@@ -535,7 +535,7 @@ function saveState(){
  return JSON.stringify({
   // v50: `test` is match config like mode/diff - serialized so a resync cannot
   // silently restore costs, and NOT folded into hashState.
-  v:86,test:!!G.test,watch:!!G.watch,seed:G.seed,rngS:G.rngS,tick:G.tick,EID:EID,hazAcc:G.hazAcc||0,mode:G.mode,mapKey:G.matchCfg?G.matchCfg.map:'backyard',
+  v:GAME_VER_N,test:!!G.test,watch:!!G.watch,seed:G.seed,rngS:G.rngS,tick:G.tick,EID:EID,hazAcc:G.hazAcc||0,mode:G.mode,mapKey:G.matchCfg?G.matchCfg.map:'backyard',
   over:G.over,
   players:G.players.map(p=>({i:p.i,fac:p.fac,team:p.team,human:p.human,name:p.name||null,diff:_diffKey(p.diff),
    res:{p:p.res.p,e:p.res.e},alive:p.alive,score:p.score,kothScore:p.kothScore,stats:p.stats,start:p.start,

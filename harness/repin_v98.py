@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""repin_v90.py - write the recut_v90 tables into the tails that pin them.
+"""repin_v98.py - write the recut_v98 tables into the tails that pin them.
 
-    cat shim_head.js game.js recut_v90.js > rc90.js && node rc90.js > cut_v90.json
-    python3 repin_v90.py cut_v90.json
+    cat shim_head.js game.js recut_v98.js > rc98.js && node rc98.js > cut_v98.json
+    python3 repin_v98.py cut_v98.json
 
 Five tables across four files:
 
@@ -20,14 +20,14 @@ only then written out, so a failure part-way leaves every tail untouched.
 The v76 repin cut two of five tables wrong because the recut assumed every table
 is captured by "boot a match and hash it" - BASE43_DESK is not, it needs the
 Gunner-at-90 fixture, and BASE45_AI needs the human seat handed to the AI first.
-recut_v83 reproduces both, and this script verifies the shape of what it was
+recut_v98 reproduces both, and this script verifies the shape of what it was
 handed (key sets and sample counts) before writing a byte.
 """
 import json
 import re
 import sys
 
-CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v90.json'
+CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v98.json'
 cut = json.load(open(CUT, encoding='utf-8'))
 
 # ---- shape gate: refuse a cut that does not look like the tables it replaces --
@@ -52,7 +52,7 @@ if any(len(v) != 3 for v in cut['BASE45_AI'].values()):
 if len(cut['BASE43_DESK']) != 26:
     sys.exit('BASE43_DESK should hold 26 samples (2400/90), got %d' % len(cut['BASE43_DESK']))
 if cut['BASE45_TRAILS'] != cut['BASE62_TRAILS']:
-    sys.exit('the two tan tables disagree - recut_v90 should have caught this')
+    sys.exit('the two tan tables disagree - recut_v98 should have caught this')
 
 
 def obj(table, indent):
@@ -75,7 +75,13 @@ EDITS = [
 # Tables this release is EXPECTED to leave alone, with the reason. Anything not
 # listed here that comes back unchanged is treated as a failed recut, not a no-op.
 UNMOVED_OK = {
-    'BASE43_DESK': 'cut with U.gunner.cp forced to 90, so the shipped price cannot reach it',
+    # MEASURED, not assumed. The one simulation change in v98 is the Heavy
+    # Barricade's price, which reaches a trail only through RESEARCH.b_hbarricade
+    # and only when a GRAY bot is in the match and gets that far. The desk:surv
+    # trail is tan (the human seat) against ONE blue ally - no Gray army exists
+    # in it, so no army in it can research a Gray building at all. Its numbers
+    # are expected to come back identical.
+    'BASE43_DESK': 'desk:surv is tan vs blue - no Gray army, so the re-priced Gray research cannot reach it',
 }
 
 pending = []

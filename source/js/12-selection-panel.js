@@ -112,13 +112,73 @@ function v71Fills(){
    tail_v86 pins the premise rather than leaving it as prose here. */
 const MENU_KEYS=['c','e','g','i','k','l','m','n','o','r','t','v','y','z'];
 let MENU_HOT=Object.create(null),MENU_HOT_N=0;
-function hotReset(){MENU_HOT=Object.create(null);MENU_HOT_N=0}
+/* v98: the ABILITY registry is declared here, beside the menu's, rather than
+   down beside the functions that use it. hotReset clears both, and a `let`
+   assigned before its own declaration has been evaluated is a temporal-dead-zone
+   fault waiting for the first caller that runs during the parse - the trap the
+   v86 note records from the other direction. The block that explains it is
+   further down, above abilAdd. */
+const ABIL_KEYS=['1','2','3','4','5','6','7','8','9'];
+let ABIL_HOT=Object.create(null),ABIL_HOT_N=0;
+function hotReset(){MENU_HOT=Object.create(null);MENU_HOT_N=0;ABIL_HOT=Object.create(null);ABIL_HOT_N=0}
 function hotNext(){return MENU_HOT_N<MENU_KEYS.length?MENU_KEYS[MENU_HOT_N++]:null}
 /* Fires the tile's OWN onclick, dimmed or not, so a key and a click are one code
    path. Every one of those handlers already validates downstream. */
 function menuHotkey(k){
  const b=MENU_HOT[String(k).toLowerCase()];
  if(!b||typeof b.onclick!=='function')return false;
+ b.onclick();return true;
+}
+/* --- ability hotkeys, added at v98 ---
+   The number row fires the selection panel's ABILITY buttons: 1 is the first
+   button the panel put in the row, 2 the second, and so on down the row you are
+   looking at. This is MENU_HOT's design applied to the other half of the panel -
+   the registry is rebuilt by hotReset() with the panel and only with the panel,
+   so a digit means something only while its button is on screen and nothing
+   needs a mode gate around it.
+   The numbers were free to take because the control groups moved OFF them in
+   this same release, to F1-F9 (23-net-input.js records why, and the Field Manual
+   says so). A digit therefore still means exactly one thing, which is the rule
+   MENU_KEYS was picked under and the reason this could not simply shadow them.
+   Order is APPEND order, in both the single-unit panel and the mixed-group one.
+   That is what makes the owner's rule - "for a group of mixed units, 1, 2, and
+   so on" - hold with no second list to keep in step: whatever goes into the row
+   first is 1. It also means BUILDING abilities are deliberately not in here.
+   A structure's panel already hands its Construct, Train and Research tiles the
+   MENU_KEYS letters; numbering the two or three ability buttons above them is a
+   separate decision and has not been asked for.
+   ABIL_KEYS and ABIL_HOT are declared up beside MENU_HOT, for the reason the
+   note there gives.
+   Client-local: nothing here is hashed, serialized or visible to the sim. */
+function abilNext(){return ABIL_HOT_N<ABIL_KEYS.length?ABIL_KEYS[ABIL_HOT_N++]:null}
+/* Takes the next number, stamps the badge, registers the button and hosts it.
+   Every unit-ability site calls THIS instead of pb.appendChild, which is what
+   stops a button from shipping without a key by being added somewhere new, and
+   what stops the numbering from disagreeing with the order the player sees.
+   The badge is prefixed onto innerHTML rather than inserted as a node: `.bb`
+   buttons carry no live child references (the V71FILL wash/edge pairs live on
+   `.tl` tiles and `.qc` queue chips), so a re-parse costs nothing, and a plain
+   property write is the one form the headless shim also implements.
+   Past the ninth a button carries no key rather than reusing one, exactly as
+   hotNext does; no selection in the game reaches nine ability buttons today. */
+function abilAdd(host,bt){
+ const k=abilNext();
+ if(k){
+  ABIL_HOT[k]=bt;
+  bt.innerHTML='<span class="ak">'+k+'</span>'+bt.innerHTML;
+  bt.title=(bt.title?bt.title+'\n':'')+'Hotkey: '+k;
+ }
+ host.appendChild(bt);
+ return bt;
+}
+/* Fires the button's OWN onclick, so a key and a click are one code path - and
+   REFUSES a disabled one, so they stay one code path when it is greyed out: a
+   browser swallows the click on a disabled button and calling onclick() by hand
+   would not. Every handler behind these validates downstream anyway; this is
+   about the two surfaces agreeing, not about safety. */
+function abilHotkey(k){
+ const b=ABIL_HOT[String(k)];
+ if(!b||b.disabled||typeof b.onclick!=='function')return false;
  b.onclick();return true;
 }
 /* o = {kind,art,fac,name,c:[[glyph,val,cls,short]],dis,locked,mark,up,fill,tip,hk,onclick} */
@@ -518,7 +578,7 @@ function refreshSelPanel(){
     if(e.entrenched){submitCmd('unentrench',{ids:[e.id]});sClick();}
     else{G.radioTargeting={unit:e,mode:'entrench'};msg('Click to aim the entrench cone.');sClick();}
    };
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v79 SARGE: the "On Me!" broadcast ---
      Every number in the label reads the constants, so a tuning pass moves one
@@ -528,7 +588,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.onMe?'Stand Down':'On Me!'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(SARGE_AURA*100)}% damage to infantry within ${SARGE_AURA_R}, −${Math.round((1-SARGE_SELF)*100)}% his own</span>`;
    bt.title=`Allied infantry within ${SARGE_AURA_R} tiles hit ${Math.round(SARGE_AURA*100)}% harder while Sarge broadcasts. His own damage is cut ${Math.round((1-SARGE_SELF)*100)}% for as long as it runs.`;
    bt.onclick=()=>{submitCmd('onme',{ids:[e.id],on:!e.onMe});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   // --- v79 MORTAR: ammunition select ---
   if(e.kind==='unit'&&e.p===G.human&&e.t.smokeCap){
@@ -536,7 +596,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.smoke?'High Explosive':'Smoke Rounds'}</b><br><span style="font-size:10px;opacity:.75">−${Math.round(SMOKE_RED*100)}% damage taken under a ${SMOKE_R}-tile cloud, ${SMOKE_T}s</span>`;
    bt.title=`Smoke rounds do no damage. The tube shells whichever friendly unit near it is under fire, and anything of yours inside the cloud takes ${Math.round(SMOKE_RED*100)}% less for ${SMOKE_T} seconds.`;
    bt.onclick=()=>{submitCmd('smoke',{ids:[e.id],on:!e.smoke});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v80 FLAMETHROWER: the pressure valve --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.valve){
@@ -544,7 +604,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.valve?'Close Valve':'Pressure Valve'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(VALVE_DMG*100)}% damage, +${VALVE_RG} range, ${Math.round(VALVE_BACK*100)}% of it back on him</span>`;
    bt.title=`Open the valve: ${Math.round(VALVE_DMG*100)}% more damage and ${VALVE_RG} tile more reach, but ${Math.round(VALVE_BACK*100)}% of every point he deals is taken by the flamethrower himself.`;
    bt.onclick=()=>{submitCmd('valve',{ids:[e.id],on:!e.valve});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v80 BULL: full throttle --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.throttle){
@@ -552,7 +612,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.thr?'Throttle Down':'Full Throttle'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(THROTTLE_SPD*100)}% speed, crushes infantry & barricades, cannot fire</span>`;
    bt.title=`Charge: ${Math.round(THROTTLE_SPD*100)}% faster, and enemy infantry and barricades under the tracks are crushed outright. Both weapons are silent for as long as it runs.`;
    bt.onclick=()=>{submitCmd('throttle',{ids:[e.id],on:!e.thr});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v81 SNIPER: called shot --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.cshot){
@@ -560,7 +620,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.cs?'Free Fire':'Called Shot'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(CS_DMG*100)}% damage, infantry only</span>`;
    bt.title=`Take only infantry targets, and hit them ${Math.round(CS_DMG*100)}% harder. He will not fire on vehicles, aircraft or structures while it runs.`;
    bt.onclick=()=>{submitCmd('cshot',{ids:[e.id],on:!e.cs});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v81 ROCKET ARTILLERY: ripple fire --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.ripple){
@@ -568,7 +628,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.rip?'Single Fire':'Ripple Fire'}</b><br><span style="font-size:10px;opacity:.75">${RIPPLE_N} rockets at ${Math.round(RIPPLE_DM*100)}% each, +${Math.round((RIPPLE_RT-1)*100)}% reload</span>`;
    bt.title=`Fire a ${RIPPLE_N}-rocket salvo scattered across a wider box, each rocket carrying ${Math.round(RIPPLE_DM*100)}% of a full shell, then reload ${Math.round((RIPPLE_RT-1)*100)}% longer.`;
    bt.onclick=()=>{submitCmd('ripple',{ids:[e.id],on:!e.rip});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v82 SCOUT BIKE: flat out --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.flat){
@@ -576,7 +636,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.flat?'Slow Down':'Flat Out'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(FLAT_SPD*100)}% speed, +${FLAT_VI} sight, no guns</span>`;
    bt.title=`Run flat out: ${Math.round(FLAT_SPD*100)}% faster and ${FLAT_VI} tiles more sight, but he will not fire and cannot be sent at a target while it runs.`;
    bt.onclick=()=>{submitCmd('flat',{ids:[e.id],on:!e.flat});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- v82 CHINOOK: air assault --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.assault){
@@ -584,7 +644,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.aslt?'Cease Fire':'Air Assault'}</b><br><span style="font-size:10px;opacity:.75">the squad fires out; the aircraft cannot move</span>`;
    bt.title='Open the hold: every man aboard fires on what he can reach, and can be answered by it. The Chinook is pinned in place for as long as it runs.';
    bt.onclick=()=>{submitCmd('assault',{ids:[e.id],on:!e.aslt});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- Signal Runner: sprint, added at v85 --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.sprint){
@@ -592,7 +652,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.spr?'Slow Down':'Sprint'}</b><br><span style="font-size:10px;opacity:.75">+${Math.round(SPRINT_SPD*100)}% speed to infantry within ${SPRINT_R}, none of them may fire</span>`;
    bt.title=`Sound the whistle: every friendly infantryman within ${SPRINT_R} tiles moves ${Math.round(SPRINT_SPD*100)}% faster, the Runner included. Nobody inside the radius will fire, take an attack order, or acquire a target while it runs.`;
    bt.onclick=()=>{submitCmd('sprint',{ids:[e.id],on:!e.spr});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- Firebomb Heli: napalm blast, added at v87 ---
      The first unit button in the file with a cooldown on it, so it is also the
@@ -606,7 +666,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>🔥 Napalm Blast</b><br><span style="font-size:10px;opacity:.75">${ready?`${FB_N} firebombs within ${FB_R}; the fire burns your men too`:Math.ceil(e.abCool)+'s cooldown'}</span>`;
    bt.title=`Empty the racks: ${FB_N} firebombs on random tiles within ${FB_R} of the helicopter, each leaving ${FB_BURN} seconds of fire that burns FRIENDLY units and structures as readily as enemy ones. ${FB_CD}-second cooldown.`;
    bt.onclick=()=>{if(!ready)return;submitCmd('napalmblast',{ids:[e.id]});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- Choktaw: paint, added at v88 ---
      Shaped like the Napalm Blast above it - the same cooldown readout on the same
@@ -625,7 +685,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>🎯 Paint</b><br><span style="font-size:10px;opacity:.75">${ready?`${PAINT_BOX}×${PAINT_BOX} area, +${Math.round(PAINT_DMG*100)}% damage taken for ${PAINT_T}s`:Math.ceil(e.abCool)+'s cooldown'}</span>`;
    bt.title=`Mark a ${PAINT_BOX}×${PAINT_BOX} area: every enemy unit inside it takes +${Math.round(PAINT_DMG*100)}% damage from EVERY source for ${PAINT_T} seconds. Click to place the box. ${PAINT_CD}-second cooldown.`;
    bt.onclick=()=>{if(!ready)return;G.radioTargeting={unit:e,mode:'paint'};msg('Click to place the paint box.');sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- Command Truck: broadcast, added at v86 --- */
   if(e.kind==='unit'&&e.p===G.human&&e.t.bcast){
@@ -633,7 +693,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>${e.bcast?'Close Net':'Broadcast'}</b><br><span style="font-size:10px;opacity:.75">allies within ${BCAST_R} reload ${Math.round(BCAST_RT*100)}% faster; the truck cannot move</span>`;
    bt.title=`Open the net: every allied unit within ${BCAST_R} tiles reloads ${Math.round(BCAST_RT*100)}% faster. The Command Truck is pinned where it stands for as long as it runs.`;
    bt.onclick=()=>{submitCmd('bcast',{ids:[e.id],on:!e.bcast});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* --- Observation Balloon: bail out, added at v86 ---
      Destructive on one click, on the same argument the Munitions Dump's Scuttle
@@ -647,7 +707,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>🪂 Bail</b><br><span style="font-size:10px;opacity:.75">${BAIL_CREW.length} men out, balloon destroyed — ${left}s of gas left</span>`;
    bt.title=`Put ${BAIL_CREW.map(k=>U[k].n).join(', ')} on the ground beneath the balloon and destroy it. Let the gas run out instead and the crew goes down with it.`;
    bt.onclick=()=>{submitCmd('bail',{ids:[e.id]});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   // ---- v30 APC: troop bay readout + unload ----
   if(e.kind==='unit'&&e.p.human&&e.t.cap){
@@ -657,7 +717,7 @@ function refreshSelPanel(){
    bt.title=`Drop the squad here. Right-click the ${e.t.n} with infantry selected to load them aboard.`;
    if(!n2)bt.classList.add('dis');
    bt.onclick=()=>{if(!(e.garrison||[]).length)return;if(!dropOk(e)){msg('No clear ground below.');return}submitCmd('unloadu',{ids:[e.id]});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
  } else {
   const counts={};for(const e of G.sel)counts[e.t.n]=(counts[e.t.n]||0)+1;
@@ -700,7 +760,7 @@ function refreshSelPanel(){
     }
     submitCmd(a.c,{ids:list.map(g=>g.id),on:!any});sClick();
    };
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
   /* v87: Firebombs are the one group button that is NOT a toggle, so they stay
      hand-written below the loop. Only the ones actually off cooldown are counted
@@ -712,7 +772,7 @@ function refreshSelPanel(){
    bt.innerHTML=`<b>🔥 Napalm Blast (${fbs.length})</b><br><span style="font-size:10px;opacity:.75">${FB_N} firebombs each, and the fire burns your men too</span>`;
    bt.title='Empty the racks on every selected Firebomb Heli that is off cooldown.';
    bt.onclick=()=>{submitCmd('napalmblast',{ids:fbs.map(g=>g.id)});sClick();};
-   pb.appendChild(bt);
+   abilAdd(pb,bt);
   }
  }
 }
