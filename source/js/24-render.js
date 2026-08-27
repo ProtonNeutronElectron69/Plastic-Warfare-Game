@@ -55,12 +55,17 @@ function drawGhost(c,cx,cy){
 function drawStrikes(c){
  if(!G.strikes)return;
  for(const s of G.strikes){
-  // v26: enemy strike FX only render where the player has live vision (own strikes exempt)
-  if(s.owner&&s.owner.p&&s.owner.p!==G.human){
+  /* v26: enemy strike FX only render where the player has live vision (own strikes exempt)
+     v100: the owning army is read through a helper now, because the bailout
+     strike carries a pi and no owner - its balloon is destroyed before the crew
+     lands, so there is no entity left to hang the strike off. Without this an
+     enemy bail-out would have been the one call-down visible through fog. */
+  const sp100=s.owner&&s.owner.p?s.owner.p:(s.pi!=null?G.players[s.pi]:null);
+  if(sp100&&sp100!==G.human){
    let rx=s.x||0,ry=s.y||0;
    if(s.kind==='napalm'&&s.cells.length){const cme=s.cells[Math.max(0,Math.min(s.i,s.cells.length-1))];rx=cme.x;ry=cme.y}
    else if(s.kind==='barrage'){rx=s.cx;ry=s.cy}
-   else if((s.kind==='paradrop'||s.kind==='lift')&&s.drops.length){rx=s.drops[0].x;ry=s.drops[0].y} // v85: a hostile redeploy is hidden by fog on the same rule as a hostile paradrop
+   else if(s.drops&&s.drops.length){rx=s.drops[0].x;ry=s.drops[0].y} // v85: a hostile redeploy is hidden by fog on the same rule as a hostile paradrop. v100: and so are a bail-out and a supply drop, on the same one
    if(fogAt(rx,ry)!==2)continue;
   }
   if(s.kind==='smokescr'){
@@ -136,18 +141,40 @@ function drawStrikes(c){
     c.fillStyle=g2;c.beginPath();c.ellipse(px,py,7*TW,3.5*TW,0,0,7);c.fill();
     c.restore();
    }
-  } else if(s.kind==='paradrop'||s.kind==='lift'){
+  } else if(s.kind==='paradrop'||s.kind==='lift'||s.kind==='bailout'||s.kind==='supply'){
    /* v85: one canopy routine for both call-downs, which is the owner's brief -
       a redeployed squad is meant to READ as a paradrop. The only difference is
-      whose men they are, and that is already in s.owner. */
+      whose men they are, and that is already in s.owner.
+      v100: FOUR things fall under silk now, on the same argument extended. The
+      balloon's bailed crew and Green's supply crates were both landing with no
+      fall at all - the crew blinked onto the ground, the crates simply appeared
+      - and both are things dropped from the air, so both get the canopy. What
+      differs between them is only what hangs underneath, which is the `slung`
+      switch below; a strike carrying a pi rather than an owner (the bailout,
+      whose balloon is destroyed before the men land) reads its colour from that
+      instead. */
+   const fac=s.owner?s.owner.p.fac:(G.players[s.pi]&&G.players[s.pi].fac);
+   const col=FAC[fac]?FAC[fac].color:'#cccccc';
+   const crate=s.kind==='supply';
    for(const d of s.drops){if(d.done)continue;const fall=clamp((d.delay-s.t)/0.8,0,1);const z=60*fall;
     const px=isoX(d.x,d.y),py=isoY(d.x,d.y)-z;
     c.save();
-    // canopy
-    c.fillStyle='rgba(225,225,210,.95)';c.beginPath();c.ellipse(px,py-14,9,6,0,Math.PI,0);c.fill();
-    c.strokeStyle='rgba(120,120,110,.8)';c.lineWidth=1;c.beginPath();c.moveTo(px-8,py-13);c.lineTo(px,py-2);c.moveTo(px+8,py-13);c.lineTo(px,py-2);c.stroke();
-    // a little crate/figure
-    c.fillStyle=FAC[s.owner.p.fac].color;c.fillRect(px-2,py-3,4,4);
+    // canopy - a crate hangs under a bigger one, because the crate itself is bigger
+    const cw=crate?13:9,ch=crate?8:6;
+    c.fillStyle='rgba(225,225,210,.95)';c.beginPath();c.ellipse(px,py-14,cw,ch,0,Math.PI,0);c.fill();
+    c.strokeStyle='rgba(120,120,110,.8)';c.lineWidth=1;c.beginPath();c.moveTo(px-cw+1,py-13);c.lineTo(px,py-2);c.moveTo(px+cw-1,py-13);c.lineTo(px,py-2);c.stroke();
+    if(crate){
+     /* the slung crate, drawn as the ground one reads: the resource's colour on
+        the band, the army's nowhere - which crate is which is what matters in
+        the air exactly as it does on the ground. */
+     const w2=5.5*CRATE_SC,h2=4.2*CRATE_SC;
+     c.fillStyle='#4f7a37';rr(c,px-w2,py-h2,w2*2,h2*2,2);c.fill();
+     c.fillStyle=d.kind==='e'?'#7fe3ff':'#ffb95e';rr(c,px-w2,py-h2*0.28,w2*2,h2*0.56,1);c.fill();
+     c.strokeStyle='rgba(24,34,20,.55)';c.lineWidth=1;c.strokeRect(px-w2*.72,py-h2*.72,w2*1.44,h2*1.44);
+    } else {
+     // a little figure, in the army's colour
+     c.fillStyle=col;c.fillRect(px-2,py-3,4,4);
+    }
     c.restore();
    }
   }

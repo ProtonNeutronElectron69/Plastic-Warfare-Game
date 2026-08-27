@@ -235,6 +235,20 @@ function renderCore(){
     player currently SEES them - a crate under fog is not drawn, and unlike a
     resource pile it leaves no last-seen ghost, because it is a thing that can be
     taken rather than a feature of the map. */
+ /* v100: the supply crates' halos. Drawn HERE - on the ground layer, straight
+    onto `c` - and not inside drawCrate, because an additive glow inside the
+    depth-sorted sprite band adds against band content rather than against the
+    terrain (the cost the v94 record names for the heal glow and the rally
+    pulse). It sits below `inView`'s declaration on purpose: the first cut put
+    it up with the heal rings and threw a temporal-dead-zone error on every
+    frame, which renderGuard swallowed into a black board and one toast.
+    Gated on live vision exactly as the crate sprite below is - a crate under
+    fog glows no more than it draws - and on ownership, because a supply drop is
+    "yours alone" by the ability's own rule and lighting an enemy's crate would
+    hand away the one thing the drop exists to tell its owner. */
+ if(G.human&&G.crates)for(const cr of G.crates){
+  if(cr.pi===G.human.i&&inView(cr.x,cr.y)&&fogAt(cr.x,cr.y)===2)drawCrateGlow(c,cr);
+ }
  for(const cr of (G.crates||[]))if(inView(cr.x,cr.y)&&fogAt(cr.x,cr.y)===2)items.push([cr.x+cr.y,0,cr,'crate']);
  if(G.mode==='ctf')for(const f of G.flags)if(!f.carrier&&!f.home)items.push([f.x+f.y,3,f,'flag']);
  items.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);

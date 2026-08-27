@@ -362,6 +362,28 @@ function refreshSelPanel(){
    info.innerHTML=`<b style="color:${cc}">${nm}</b> — ${Math.ceil(e.amt)} / ${Math.round(e.max)} ${ic} remaining`;
    return;
   }
+  /* v100: WILDLIFE READS LIKE ANYTHING ELSE. A creature carries `species` where
+     every other entity carries `key`, and its CREATURE row has no `.d`, so the
+     shared readout below cannot serve it: it is answered here and returns. What
+     it shows is what the owner asked for - the name, the army it belongs to
+     (Wildlife), and its health - plus the same two counter lines every unit
+     gets, so "what hurts this thing" is answerable for a Mouse exactly as it is
+     for a Tank. No ability buttons follow, and that is the whole point: it is
+     not yours to command, only to read. */
+  if(e.kind==='creature'){
+   const ct=e.t,cf=FAC.bug;
+   const traits=[];
+   if(ct.fly)traits.push('flies');
+   if(ct.burn)traits.push('its bite sets you alight');
+   if(ct.aoe)traits.push('hits everything around what it bites');
+   if(ct.boss)traits.push('a nest-boss');
+   const cl2=counterLine('creature',e.species);
+   info.innerHTML=`<b style="color:${cf.color}">${ct.n}</b> (${cf.name}) — ${Math.ceil(e.hp)}/${e.mhp} HP`
+    +`<br><span style="color:#9fb88c">Neutral wildlife: ${traits.length?traits.join(', '):'no special tricks'}. `
+    +`Sight ${ct.vi}, speed ${ct.sp}. It answers to no army and attacks whatever comes near${e.nest?' its nest':''}.</span>`
+    +`<br><span style="color:#8fa8c8;font-size:11px">${cl2[0]}<br>${cl2[1]}</span>`;
+   return;
+  }
   const fc=FAC[e.p.fac];
   let extra='';
   if(e.kind==='bld'&&e.prog<1)extra=` — constructing ${Math.round(e.prog*100)}%`;

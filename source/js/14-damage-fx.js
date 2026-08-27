@@ -93,6 +93,24 @@ function cMul(v){return (Math.round(v*100)/100).toString()}
 function cJoin(list,lbl,cap){return list.slice(0,cap).map(e=>lbl[e[0]]+' \u00d7'+cMul(e[1])).join(', ')}
 // two lines, each list capped so a tooltip stays glanceable
 function counterLine(kind,key){
+ /* v100: WILDLIFE HAS NO KEY. A creature is keyed by `species` into CREATURE,
+    not by `key` into U or B, so every call that arrived here with kind
+    'creature' dereferenced B[undefined] and threw on `.aaOnly` - which is what
+    made a bug unselectable: pickAt returned it correctly and setSel stored it,
+    then refreshSelPanel threw before drawing a single line, on that tick and
+    on every tick after. Answered here rather than guarded at the call site
+    because this function is the ONE place that turns an entity into its two
+    counter lines, and the panel, the tooltip and the Field Manual all reach it.
+    A creature's armor really is 'bug' (armorOf pins it) and its bite really is
+    class 'x' (wcOf answers that for every creature), so both lines below are
+    the same derivation every other entity gets, from the creature's own row. */
+ if(kind==='creature'){
+  const ct=CREATURE[key];
+  if(!ct)return ['Unarmed','Armor '+ARMOR_SHORT.bug];
+  const hurt=cJoin(armorScan('bug',true),WC_LABEL,2),res=cJoin(armorScan('bug',false),WC_LABEL,2);
+  return [ct.dm?'Bites for '+Math.round(ct.dm)+' at '+ct.rg+' tiles'+(ct.burn?', and the bite BURNS':'')+(ct.aoe?', catching everything within '+ct.aoe+' tiles':''):'Unarmed',
+          'Armor '+ARMOR_SHORT.bug+' \u2014 hurt by '+(hurt||'nothing in particular')+'; resists '+(res||'nothing')];
+ }
  const t=kind==='unit'?U[key]:B[key];
  const ar=kind==='unit'?armorOf({kind:'unit',t}):'bldg';
  const wc=kind==='unit'?t.w:WC_BLD[key];

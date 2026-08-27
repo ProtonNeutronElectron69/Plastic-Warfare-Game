@@ -34,12 +34,12 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v99, and what a fresh session does)
+## Where the game stands (v100, and what a fresh session does)
 
-The game is at **v99**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v100**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
-(v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 and v99
-are standalone owner passes (below). There is no release in flight.
+(v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98, v99 and
+v100 are standalone owner passes (below). There is no release in flight.
 
 **Known open fronts, none started:**
 
@@ -92,7 +92,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,538 checks at v99.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,587 checks at v100.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -254,6 +254,46 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v100 — three owner bug fixes (not part of a roadmap)
+
+Three things the owner found playing v99 (`tail_v100.js`, T77). No unit, price,
+building or map changed. Evidence in the v100 section of `harness/README.md`.
+
+- **Bail drops the crew under parachutes.** `balloonDown` used to create all
+  four `BAIL_CREW` men on the tick the button was pressed — four soldiers
+  teleporting out of an exploding balloon. It now rides the Paradrop's own
+  strike-and-delay machinery (`bailSpot` picks the landing tiles at launch, a
+  `kind:'bailout'` strike carries them for `BAIL_FALL_T`, `landBailed` makes
+  each man as his canopy touches down) and the SAME canopy routine draws it.
+  The strike carries `pi` and no `owner` — the balloon is destroyed before the
+  men land — which is why `drawStrikes`' fog gate now resolves the army through
+  `pi` as a fallback; without it a bail-out would have been the one call-down
+  visible through fog.
+- **Wildlife was selectable all along — the panel was throwing.** `pickAt` has
+  always returned creatures and `setSel` stored them; `refreshSelPanel` then
+  threw on every tick, because a creature is keyed by `species` into `CREATURE`
+  and `counterLine` dereferenced `B[undefined].aaOnly`. Fixed at `counterLine`
+  (the one place that makes an entity's counter lines) plus a creature branch in
+  the panel, and `drawBug` gained the selection ring and a health bar.
+  **It exposed a latent bug:** nothing removed a dead creature from `G.sel` —
+  `kill()` does that for units and buildings, `updateNeutrals` never did — which
+  was unreachable while nothing could select one.
+- **Supply crates fall on canopies and can be found.** `DROP_T`'s comment
+  already said "under canopy" and nothing drew one. The canopy routine now
+  serves four kinds with one switch for what hangs underneath, and the ground
+  crate is drawn at `CRATE_SC` (2×) with a `CRATE_GLOW` pulse. `CRATE_R` is
+  untouched — a bigger crate is not an easier one to collect, and T77.C drives
+  a man to either side of the radius to prove it.
+
+**The trap worth carrying forward, and it cost this release twice.** Both
+rendering bugs were caught by looking at ONE real Chromium frame, and neither
+would ever fail `seg.sh`: an additive glow drawn inside the sprite band adds
+against band content rather than the terrain (the v94 cost), and calling it
+above `renderCore`'s own `const inView` threw a temporal-dead-zone error every
+frame that `renderGuard` swallowed into a black board and a single toast.
+**`renderGuard` means a drawing bug cannot crash the game — and cannot fail a
+test either. Run a frame and look at it.**
 
 ## v99 — the AI order-discipline pass (not part of a roadmap)
 

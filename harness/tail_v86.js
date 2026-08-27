@@ -287,12 +287,20 @@ function bld86(k, p, tx, ty) { const b = makeBuilding(k, p, tx, ty, true); b.pro
     const b3 = put86('balloon', p3, 40, 40);
     const before = p3.units.length, was = new Set(p3.units.map(u => u.id));
     execCmd({ op: 'bail', pi: p3.i, a: { ids: [b3.id] } });
+    /* v100: THE CREW COMES DOWN UNDER CANOPIES NOW, so the men exist a beat
+       after the button rather than on the same tick. A conscious edit, which is
+       the point of a check like this: the claim - exactly the four named men,
+       on passable ground beneath the balloon, and the balloon destroyed - is
+       unchanged and still asserted; only the moment it becomes true moved. The
+       balloon still dies on the button (asserted before the fall, below), so
+       what v100 delays is the arrival and nothing else. */
+    ok('T59.C ...and destroys the balloon it came out of, at once',
+      !G.units.includes(b3) && p3.units.length === before - 1);
+    for (let i = 0; i < Math.ceil(BAIL_FALL_T * 30) + 20; i++) update(DT86);
     const crew = p3.units.filter(u => !was.has(u.id));
     ok('T59.C Bail puts exactly the four named men on the ground',
       crew.length === BAIL_CREW.length &&
       BAIL_CREW.every(k => crew.filter(u => u.key === k).length === 1));
-    ok('T59.C ...and destroys the balloon it came out of',
-      !G.units.includes(b3) && p3.units.length === before - 1 + BAIL_CREW.length);
     ok('T59.C ...on passable ground beneath it',
       crew.every(u => passable(Math.floor(u.x), Math.floor(u.y)) && dhyp(u.x - 40, u.y - 40) < 6));
     ok('T59.C a Grunt cannot be told to bail out of himself',
@@ -589,9 +597,15 @@ function bld86(k, p, tx, ty) { const b = makeBuilding(k, p, tx, ty, true); b.pro
     aiTick(p);
     ok('T59.H a bot leaves a balloon with gas in it alone', G.units.includes(b));
     b.fuel = BAIL_AI_T - 1;
+    const had = new Set(p.units.map(u => u.id));
     aiTick(p);
-    ok('T59.H ...and gets the crew out before it falls',
-      !G.units.includes(b) && BAIL_CREW.every(k => p.units.some(u => u.key === k)));
+    /* v100: the bot still pulls the handle on the same tick - what moved is when
+       its men arrive, because the crew rides canopies down now. The balloon
+       going is checked at once; the crew is checked after the fall. */
+    ok('T59.H ...and gets the crew out before it falls', !G.units.includes(b));
+    for (let i = 0; i < Math.ceil(BAIL_FALL_T * 30) + 20; i++) update(DT86);
+    ok('T59.H ...and the four of them are on the ground a canopy later',
+      BAIL_CREW.every(k => p.units.some(u => u.key === k && !had.has(u.id))));
   }
   /* SUPPLY DROP: called when the bank is empty, not as a standing habit. */
   {

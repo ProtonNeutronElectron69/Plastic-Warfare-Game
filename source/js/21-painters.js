@@ -1506,8 +1506,15 @@ function drawBug(c,cr){
  }
  if(hit){c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.5)';c.beginPath();c.arc(0,0,6,0,7);c.fill();c.restore();}
  c.restore();
- // tiny HP pip when hurt
- if(cr.hp<cr.mhp||cr.t.boss){const bw=cr.t.boss?26:14,bh=cr.t.boss?4:3,by=sy-gz-(cr.t.boss?18:9);c.fillStyle='rgba(0,0,0,.5)';rr(c,sx-bw/2,by,bw,bh,1.5);c.fill();c.fillStyle=cr.t.boss?'#ff3b3b':'#ff6e4d';rr(c,sx-bw/2+.6,by+.6,(bw-1.2)*clamp(cr.hp/cr.mhp,0,1),bh-1.4,1);c.fill();}
+ /* v100: a SELECTED creature wears the ring every other selected thing wears -
+    same yellow, same dash, same march - sized off the species' own model scale
+    so a Mouse gets a mouse-sized ring. Selecting a bug and seeing nothing on
+    the field was the other half of "wildlife is not selectable": the panel
+    throwing was why it never read, and this is why it never LOOKED selected. */
+ if(cr.sel){c.save();c.strokeStyle='#ffec6e';c.lineWidth=2.2;c.setLineDash([4,3]);c.lineDashOffset=-G.tick*1.5;
+  c.beginPath();c.ellipse(sx,sy-gz,10*ms,5*ms,0,0,7);c.stroke();c.restore();}
+ // tiny HP pip when hurt - or whenever it is selected, so the bar you came to read is there
+ if(cr.hp<cr.mhp||cr.t.boss||cr.sel){const bw=cr.t.boss?26:14,bh=cr.t.boss?4:3,by=sy-gz-(cr.t.boss?18:9);c.fillStyle='rgba(0,0,0,.5)';rr(c,sx-bw/2,by,bw,bh,1.5);c.fill();c.fillStyle=cr.t.boss?'#ff3b3b':'#ff6e4d';rr(c,sx-bw/2+.6,by+.6,(bw-1.2)*clamp(cr.hp/cr.mhp,0,1),bh-1.4,1);c.fill();}
 }
 
 /* pulsing "actively mining" highlight */
@@ -1529,8 +1536,14 @@ function drawMineFX(c,sx,sy,s,n){
 function drawCrate(c,cr){
  const sx=isoX(cr.x,cr.y),sy=isoY(cr.x,cr.y);
  const bob=Math.sin(G.tick*.09+cr.x*3+cr.y*5)*.8;
- plShadow(c,sx,sy+2,9,4.6,.3);
- c.save();c.translate(sx,sy-6+bob);
+ /* v100: the crate is drawn at CRATE_SC - at life size it read as scenery on
+    textured ground and the owner could not find his own supplies. Its pulsing
+    halo is NOT here: an additive glow inside the depth-sorted sprite band adds
+    against band content rather than against the terrain (the v94 note), so it
+    is drawn by drawCrateGlow from renderCore, on the ground layer where the
+    heal rings and the buried-mine markers live. */
+ plShadow(c,sx,sy+2,9*CRATE_SC,4.6*CRATE_SC,.3);
+ c.save();c.translate(sx,sy-6*CRATE_SC+bob);c.scale(CRATE_SC,CRATE_SC);
  const body='#4f7a37';
  (function(){const g=c.createLinearGradient(-9,-8,7,8);
   g.addColorStop(0,shade(body,1.35));g.addColorStop(.55,body);g.addColorStop(1,shade(body,.62));
@@ -1543,6 +1556,24 @@ function drawCrate(c,cr){
  c.fillStyle='#0e1a0c';c.font='bold 8px sans-serif';c.textAlign='center';c.textBaseline='middle';
  c.fillText(cr.kind==='e'?'⚡':'⬢',0,-.4);
  c.textAlign='left';c.textBaseline='alphabetic';
+ c.restore();
+}
+/* v100: the supply crate's halo, drawn on the GROUND layer rather than inside
+   the sprite band - additive compositing inside the band adds against band
+   content instead of the terrain, which is exactly the cost the v94 record
+   names for the heal glow and the rally pulse. Green because a crate is a
+   crate whoever dropped it: the resource's colour is already on its band and
+   the owner is already the only army that can collect it. It breathes on a
+   plain G.tick read and never touches srand - rule 2. */
+function drawCrateGlow(c,cr){
+ const sx=isoX(cr.x,cr.y),sy=isoY(cr.x,cr.y);
+ const pul=CRATE_GLOW*(0.72+0.28*Math.sin(G.tick*.11+cr.x*2+cr.y*3));
+ c.save();c.globalCompositeOperation='lighter';
+ const g=c.createRadialGradient(sx,sy-4,2,sx,sy-4,24*CRATE_SC);
+ g.addColorStop(0,`rgba(150,255,110,${pul})`);
+ g.addColorStop(.45,`rgba(90,220,80,${pul*.42})`);
+ g.addColorStop(1,'rgba(60,180,60,0)');
+ c.fillStyle=g;c.beginPath();c.ellipse(sx,sy-4,24*CRATE_SC,12*CRATE_SC,0,0,7);c.fill();
  c.restore();
 }
 function drawNode(c,n){
