@@ -46,7 +46,7 @@ seg_files() {
       tail_v60.js tail_v61.js tail_v62.js tail_v63.js tail_end.js" ;;
    3) echo "shim_head.js game.js preamble.js helpers.js \
       tail_v64.js tail_v65.js tail_v66.js tail_v67.js tail_v68.js tail_v69.js \
-      tail_v72.js tail_v73.js tail_v74.js tail_v75.js tail_v76.js tail_v77.js tail_v79.js tail_v80.js tail_v81.js tail_v82.js tail_v84.js tail_v85.js tail_v86.js tail_v87.js tail_v87_1.js tail_v88.js tail_v88_1.js tail_v90_1.js tail_v90_2.js tail_v91.js tail_v92.js tail_v92_1.js tail_v93.js tail_v94.js tail_v95.js tail_v96.js tail_v96_1.js tail_v97.js tail_v98.js tail_v99.js \
+      tail_v72.js tail_v73.js tail_v74.js tail_v75.js tail_v76.js tail_v77.js tail_v79.js tail_v80.js tail_v81.js tail_v82.js tail_v84.js tail_v85.js tail_v86.js tail_v87.js tail_v87_1.js tail_v88.js tail_v88_1.js tail_v90_1.js tail_v90_2.js tail_v91.js tail_v92.js tail_v92_1.js tail_v93.js tail_v94.js tail_v95.js tail_v96.js tail_v96_1.js tail_v97.js tail_v98.js tail_v99.js tail_v100.js \
       tail_end.js" ;;
    *) return 1 ;;
   esac

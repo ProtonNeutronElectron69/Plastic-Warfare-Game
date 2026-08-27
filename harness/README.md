@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v99)
+# Plastic Warfare headless test harness (updated at v100)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -1079,6 +1079,102 @@ error a reader would see as anything but an odd blank report. `sim_report.js` no
 compiles the page's script block with `new Function` before writing (compiles, does
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
+
+## v100: three owner bug fixes, and what a real frame caught that the suite could not
+
+Not part of a roadmap. Three things the owner reported after playing v99
+(`tail_v100.js`, T77). No unit, price, building or map changed; two of the three
+are pure presentation and the third moves WHEN four men are created, not whether.
+
+### The Bail crew comes down under canopies
+
+`balloonDown` created all four `BAIL_CREW` men on the tick the button was
+pressed, so a bail-out read as four soldiers teleporting out of an exploding
+balloon. It rides the strike-and-delay machinery the Paradrop and the Rapid
+Redeploy already use: `bailSpot` (the old `bailMan`'s placement half, split out)
+chooses each landing tile at LAUNCH exactly as `radioParadrop` does, a
+`kind:'bailout'` strike carries them for `BAIL_FALL_T`, and `landBailed` makes
+each man as his canopy touches down. The fall time is 0.8s because that is the
+canopy renderer's own fall divisor, so the two call-downs read alike.
+
+**It carries `pi` and no `owner`**, because the balloon is destroyed before the
+men land - there is no entity left to hang the strike off. That is why
+`drawStrikes`' fog gate now resolves the owning army through
+`s.owner&&s.owner.p ? ... : G.players[s.pi]`: without it, a bail-out would have
+been the one call-down visible through fog. The strike is serialized like every
+other, so a snapshot cut mid-fall lands the crew on schedule instead of losing
+four men - the Rapid Redeploy's guarantee, inherited.
+
+**The trails did not move**, and the reason is stated rather than assumed: a
+COMBOS trail is 900 ticks and no bot owns a balloon, let alone bails one, inside
+thirty seconds.
+
+### Wildlife was selectable all along - the panel was throwing
+
+The owner reported that wildlife could not be selected to read its name and
+health. It could: `pickAt` has had a creature branch since the creatures
+shipped, and `setSel` stored it. What happened next is that `refreshSelPanel`
+**threw**, on that tick and every tick after, because a creature is keyed by
+`species` into `CREATURE` and never by `key` into `U`/`B` - so
+`counterLine('creature', undefined)` dereferenced `B[undefined].aaOnly`. The
+selection existed; the panel was simply never drawn.
+
+Fixed at `counterLine`, which is the ONE function that turns an entity into its
+two counter lines and is reached by the panel, the tooltips and the manual
+alike, plus a creature branch in the panel that prints what the owner asked for
+(name, army, health) off the creature's own row. `drawBug` gained the selection
+ring every other selected thing wears and shows its health bar while selected.
+
+**And it exposed a latent bug one layer down:** nothing removed a dead creature
+from `G.sel`. `kill()` does that for units and buildings; `updateNeutrals`
+splices its dead straight out of `G.neutrals` and never touched the selection -
+unreachable while nothing could select a creature, and a corpse's stats standing
+in the panel forever the moment one could. `G.sel`/`lastSelSig` are client-local
+and hashed nowhere, which is why sim code may touch them there on `kill()`'s own
+precedent.
+
+### The supply crates fall, and can be found
+
+`radioSupply`'s `DROP_T` comment already said "how long the pair are under
+canopy" - but nothing drew a canopy, so the crates appeared out of nothing after
+a beat. The canopy routine now serves four kinds (`paradrop`, `lift`, `bailout`,
+`supply`), with one `slung` switch deciding whether a figure or a crate hangs
+underneath. On the ground the crate is drawn at `CRATE_SC` (2) with a pulsing
+green halo at `CRATE_GLOW` - the owner could not find his own supplies on
+textured ground at life size. `CRATE_R` is untouched: a bigger crate is not an
+easier one to collect, and T77.C drives a man to just outside and just inside
+the radius to prove it.
+
+### v100 finding: two rendering traps, neither reachable from the headless suite
+
+Both were caught by looking at a real Chromium frame, and both are the kind of
+bug that shows as *nothing wrong in any test*:
+
+1. **An additive glow inside the sprite band adds against BAND CONTENT, not the
+   terrain.** The halo was first written into `drawCrate`, which draws on the
+   depth-sorted band canvas - exactly the cost the v94 record names for the heal
+   glow and the rally pulse. It belongs on the ground layer in `renderCore`,
+   where the heal rings and the buried-mine markers already live.
+2. **`renderCore`'s `inView` is a `const` declared halfway down it.** Moving the
+   halo call up beside the heal rings put it ABOVE that declaration, so every
+   frame threw a temporal-dead-zone error - which `renderGuard` caught,
+   suppressed, and turned into a black board plus one toast. A suppressed render
+   error is not a silent one, but it is silent to `seg.sh`.
+
+T77.C therefore checks the ORDER of the declaration and the call in the shipped
+script, not only the effect. **The lesson for the next render change: run one
+real frame and look at it.** `renderGuard` exists so a drawing bug cannot crash
+the game, and the price of that is that a drawing bug does not fail anything
+either.
+
+### v100 note: a test that fails itself is not a passing test
+
+The first cut of "only your own crates glow" searched the whole script for
+`drawCrateGlow(c,cr)` and landed on `function drawCrateGlow(c,cr){` - the
+definition, which carries no gate at all - and failed. Scanning from
+`renderCore`'s own offset is what makes it read the CALL. The same shape as the
+v87.1 comment-stripping lesson: a source-text check has to be pointed at the
+code it means.
 
 ## v99: the AI order-discipline pass - the army stops twitching
 
@@ -3795,6 +3891,16 @@ now runs each table from its own cfg and asserts both the equality that should h
 (the two tan tables) and the inequality that must (tan vs green).
 
 ## Contents
+
+v100 adds tail_v100.js (T77), riding segment 3 and listed last in tails.txt.
+The suite stands at 5,587 checks (5,538 at v99).
+Sections A-C: the Bail crew falling under canopies (including the snapshot cut
+mid-fall, and the fog gate for a strike that has a pi and no owner), wildlife
+selection driven end to end from pickAt through the panel to the dead
+creature leaving G.sel, and the supply drop's canopies plus the crate's size
+and halo - with the halo's LAYER and its position relative to inView's own
+declaration both pinned in the shipped source, because neither trap is
+reachable from a headless run.
 
 v99 adds tail_v99.js (T76), riding segment 3 and listed last in tails.txt.
 Sections G-I are the owner-feedback pass on the same release: the rolling

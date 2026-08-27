@@ -275,6 +275,12 @@ const BALLOON_FUEL=180;    // ...seconds of gas, after which it crashes and ever
 const BALLOON_AA=1/3;      // ...the share of an AA missile it takes; every other weapon row does nothing at all
 const HIGH_RG=1;           // High Ground: the range allies inside its vision gain
 const BAIL_CREW=['grunt','gunner','grenadier','bazooka']; // Bail: the four men who step out, and the balloon is destroyed
+/* v100: how long the crew hangs under silk before their boots hit. 0.8s is the
+   paradrop canopy's own fall time (the renderer's one hard-coded 0.8 divisor),
+   so a bail-out reads as a paradrop - which is the whole of the owner's brief.
+   The men are created on landing, not on the button, so this is a real delay in
+   the simulation and not a decoration over an instant spawn. */
+const BAIL_FALL_T=0.8;   // ...and how long they spend under the canopy on the way down
 const CPOST_R=8;           // Command Post: the radius of both halves - the veterancy aura and Regroup
 const CPOST_VET=0.7;       // ...the share of the usual kills a promotion costs inside it
 const REGROUP_HP=0.25;     // Regroup: the share of its own maximum HP each unit is handed back
@@ -283,6 +289,14 @@ const DROP_P=500;          // Supply Drop: what the plastic crate carries...
 const DROP_E=500;          // ...and what the electricity crate carries
 const DROP_T=1.2;          // ...how long the pair are under canopy before they touch down
 const CRATE_R=0.9;         // ...and how close one of YOUR units must come to collect one
+/* v100: the crate was drawn at roughly a man's footprint and read as scenery on
+   a busy field - the owner could not find his own supplies. CRATE_SC scales the
+   whole painter, canopy included, and the pulse is a glow the crate wears on the
+   ground so the eye catches it from across the map. Pure presentation: the
+   collection radius is still CRATE_R, so a bigger crate is not an easier one to
+   pick up, and nothing about the drop is hashed. */
+const CRATE_SC=2;          // ...how much bigger than life the crate is drawn
+const CRATE_GLOW=0.30;     // ...and the amplitude of the green pulse around it
 /* The four BOT thresholds. Named here with the abilities they spend rather than
    buried in aiTick, on the same rule as LOCK_AI_FLOOR and VALVE_AI_INF_P. */
 const BCAST_AI_N=3;        // Broadcast: allies under fire inside the radius before a bot pins its truck

@@ -926,6 +926,10 @@ function updateStrikes(dt){
    // v85: same schedule as the paradrop, but the men already exist - this puts them back
    for(const d of s.drops){if(!d.done && s.t>=d.delay){d.done=true;landLifted(d);}}
    if(s.drops.every(d=>d.done))G.strikes.splice(i,1);
+  } else if(s.kind==='bailout'){
+   // v100: the balloon's crew, on the paradrop's schedule and its canopy
+   for(const d of s.drops){if(!d.done && s.t>=d.delay){d.done=true;landBailed(s.pi,d);}}
+   if(s.drops.every(d=>d.done))G.strikes.splice(i,1);
   } else if(s.kind==='fbomb'){
    /* v87: the same cadence the tower's napalm drops on. A scorch entry carries no
       cells at all, so this loop does nothing for it and the burn list alone keeps
@@ -1241,24 +1245,51 @@ function fireOut82(u,dt){
    balloon rule there answers zero for every class but 'a', so a crash would deal
    no damage to the thing crashing; and nobody should score the kill, earn
    veterancy off it or have the retaliation sweep sent at them for it. */
-function bailMan(k,p,x,y,i){
+/* v100: THE CREW COMES DOWN ON CANOPIES. The men used to appear on the ground on
+   the tick Bail was pressed, which read as four soldiers teleporting out of an
+   exploding balloon. They now ride the same strike-and-delay machinery the
+   Paradrop and the Rapid Redeploy use, and the SAME canopy routine draws them -
+   which is the owner's brief: a bail-out should read as a paradrop.
+   bailSpot is the old bailMan's placement half, split out so the landing tile is
+   computed at LAUNCH and carried on the drop, exactly as radioParadrop and
+   radioLift precompute theirs. It consumes no RNG - the scatter is the same
+   deterministic sunflower arithmetic those two use - so nothing about the seeded
+   stream moves whether or not anybody bails. */
+function bailSpot(k,x,y,i){
  const a=i*2.39996,r=.6+.5*Math.sqrt(i);
  let lx=clamp(x+dcos(a)*r,2,G.map.N-3),ly=clamp(y+dsin(a)*r,2,G.map.N-3);
  if(!passableR(lx,ly,unitRad({t:U[k]}))){
   outer:for(let rr=1;rr<=4;rr++)for(let oy=-rr;oy<=rr;oy++)for(let ox=-rr;ox<=rr;ox++){const nx=lx+ox,ny=ly+oy;if(passable(Math.floor(nx),Math.floor(ny))){lx=nx;ly=ny;break outer;}}
  }
+ return {x:lx,y:ly};
+}
+function bailMan(k,p,lx,ly){
  const g=makeUnit(k,p,lx,ly);g.state='idle';g.anchor={x:lx,y:ly};
  spawnSmoke(lx,ly,3);spawnShrapnel(lx,ly,'#d9cf8f',3,.5);
  return g;
 }
+// put one bailed crewman on the ground when his canopy reaches it
+function landBailed(pi,d){
+ const p=G.players[pi];
+ if(!p||!p.alive)return;   // the army died while its crew was in the air
+ bailMan(d.k,p,d.x,d.y);
+}
 function balloonDown(u,bail){
  const x=u.x,y=u.y,p=u.p,men=[];
- /* the crew is put on the ground BEFORE the balloon dies, so a Bail into a tight
-    pocket still finds the ground under the aircraft rather than the ground under
-    whatever moves into the gap on the next tick. The supply cap is deliberately
-    not consulted: these four were paid for when the balloon was, exactly as a
-    Paratrooper is fielded past the cap by the call-down that brought him. */
- if(bail)BAIL_CREW.forEach((k,i)=>men.push(bailMan(k,p,x,y,i)));
+ /* the crew's landing tiles are chosen BEFORE the balloon dies, so a Bail into a
+    tight pocket still measures the ground under the aircraft rather than the
+    ground under whatever moves into the gap while they fall. The supply cap is
+    deliberately not consulted: these four were paid for when the balloon was,
+    exactly as a Paratrooper is fielded past the cap by the call-down that
+    brought him.
+    v100: the men are no longer created here - the strike creates each one as his
+    canopy touches down. A snapshot taken mid-fall carries the strike, so they
+    land on schedule after a reload, which is the same guarantee the Rapid
+    Redeploy's men in the air already had. */
+ if(bail){
+  const drops=BAIL_CREW.map((k,i)=>{const sp=bailSpot(k,x,y,i);return{k,x:sp.x,y:sp.y,delay:BAIL_FALL_T+i*0.1,done:false}});
+  G.strikes.push({kind:'bailout',pi:p.i,drops,t:0});
+ }
  u.hp=0;kill(u,null);
  spawnExplosion(x,y,1.5);
  spawnSmoke(x,y,12,{rise:10,grow:9,life:2.8,r:6,col:'#4a4640'});

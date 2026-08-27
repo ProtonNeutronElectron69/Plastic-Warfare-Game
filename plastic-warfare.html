@@ -646,7 +646,7 @@ canvas{display:block}
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v99';
+const GAME_VER='v100';
 const GAME_DATE='2026-08-27';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
@@ -1086,6 +1086,12 @@ const BALLOON_FUEL=180;    // ...seconds of gas, after which it crashes and ever
 const BALLOON_AA=1/3;      // ...the share of an AA missile it takes; every other weapon row does nothing at all
 const HIGH_RG=1;           // High Ground: the range allies inside its vision gain
 const BAIL_CREW=['grunt','gunner','grenadier','bazooka']; // Bail: the four men who step out, and the balloon is destroyed
+/* v100: how long the crew hangs under silk before their boots hit. 0.8s is the
+   paradrop canopy's own fall time (the renderer's one hard-coded 0.8 divisor),
+   so a bail-out reads as a paradrop - which is the whole of the owner's brief.
+   The men are created on landing, not on the button, so this is a real delay in
+   the simulation and not a decoration over an instant spawn. */
+const BAIL_FALL_T=0.8;   // ...and how long they spend under the canopy on the way down
 const CPOST_R=8;           // Command Post: the radius of both halves - the veterancy aura and Regroup
 const CPOST_VET=0.7;       // ...the share of the usual kills a promotion costs inside it
 const REGROUP_HP=0.25;     // Regroup: the share of its own maximum HP each unit is handed back
@@ -1094,6 +1100,14 @@ const DROP_P=500;          // Supply Drop: what the plastic crate carries...
 const DROP_E=500;          // ...and what the electricity crate carries
 const DROP_T=1.2;          // ...how long the pair are under canopy before they touch down
 const CRATE_R=0.9;         // ...and how close one of YOUR units must come to collect one
+/* v100: the crate was drawn at roughly a man's footprint and read as scenery on
+   a busy field - the owner could not find his own supplies. CRATE_SC scales the
+   whole painter, canopy included, and the pulse is a glow the crate wears on the
+   ground so the eye catches it from across the map. Pure presentation: the
+   collection radius is still CRATE_R, so a bigger crate is not an easier one to
+   pick up, and nothing about the drop is hashed. */
+const CRATE_SC=2;          // ...how much bigger than life the crate is drawn
+const CRATE_GLOW=0.30;     // ...and the amplitude of the green pulse around it
 /* The four BOT thresholds. Named here with the abilities they spend rather than
    buried in aiTick, on the same rule as LOCK_AI_FLOOR and VALVE_AI_INF_P. */
 const BCAST_AI_N=3;        // Broadcast: allies under fire inside the radius before a bot pins its truck
@@ -7405,6 +7419,28 @@ function refreshSelPanel(){
    info.innerHTML=`<b style="color:${cc}">${nm}</b> — ${Math.ceil(e.amt)} / ${Math.round(e.max)} ${ic} remaining`;
    return;
   }
+  /* v100: WILDLIFE READS LIKE ANYTHING ELSE. A creature carries `species` where
+     every other entity carries `key`, and its CREATURE row has no `.d`, so the
+     shared readout below cannot serve it: it is answered here and returns. What
+     it shows is what the owner asked for - the name, the army it belongs to
+     (Wildlife), and its health - plus the same two counter lines every unit
+     gets, so "what hurts this thing" is answerable for a Mouse exactly as it is
+     for a Tank. No ability buttons follow, and that is the whole point: it is
+     not yours to command, only to read. */
+  if(e.kind==='creature'){
+   const ct=e.t,cf=FAC.bug;
+   const traits=[];
+   if(ct.fly)traits.push('flies');
+   if(ct.burn)traits.push('its bite sets you alight');
+   if(ct.aoe)traits.push('hits everything around what it bites');
+   if(ct.boss)traits.push('a nest-boss');
+   const cl2=counterLine('creature',e.species);
+   info.innerHTML=`<b style="color:${cf.color}">${ct.n}</b> (${cf.name}) — ${Math.ceil(e.hp)}/${e.mhp} HP`
+    +`<br><span style="color:#9fb88c">Neutral wildlife: ${traits.length?traits.join(', '):'no special tricks'}. `
+    +`Sight ${ct.vi}, speed ${ct.sp}. It answers to no army and attacks whatever comes near${e.nest?' its nest':''}.</span>`
+    +`<br><span style="color:#8fa8c8;font-size:11px">${cl2[0]}<br>${cl2[1]}</span>`;
+   return;
+  }
   const fc=FAC[e.p.fac];
   let extra='';
   if(e.kind==='bld'&&e.prog<1)extra=` — constructing ${Math.round(e.prog*100)}%`;
@@ -8219,6 +8255,24 @@ function cMul(v){return (Math.round(v*100)/100).toString()}
 function cJoin(list,lbl,cap){return list.slice(0,cap).map(e=>lbl[e[0]]+' \u00d7'+cMul(e[1])).join(', ')}
 // two lines, each list capped so a tooltip stays glanceable
 function counterLine(kind,key){
+ /* v100: WILDLIFE HAS NO KEY. A creature is keyed by `species` into CREATURE,
+    not by `key` into U or B, so every call that arrived here with kind
+    'creature' dereferenced B[undefined] and threw on `.aaOnly` - which is what
+    made a bug unselectable: pickAt returned it correctly and setSel stored it,
+    then refreshSelPanel threw before drawing a single line, on that tick and
+    on every tick after. Answered here rather than guarded at the call site
+    because this function is the ONE place that turns an entity into its two
+    counter lines, and the panel, the tooltip and the Field Manual all reach it.
+    A creature's armor really is 'bug' (armorOf pins it) and its bite really is
+    class 'x' (wcOf answers that for every creature), so both lines below are
+    the same derivation every other entity gets, from the creature's own row. */
+ if(kind==='creature'){
+  const ct=CREATURE[key];
+  if(!ct)return ['Unarmed','Armor '+ARMOR_SHORT.bug];
+  const hurt=cJoin(armorScan('bug',true),WC_LABEL,2),res=cJoin(armorScan('bug',false),WC_LABEL,2);
+  return [ct.dm?'Bites for '+Math.round(ct.dm)+' at '+ct.rg+' tiles'+(ct.burn?', and the bite BURNS':'')+(ct.aoe?', catching everything within '+ct.aoe+' tiles':''):'Unarmed',
+          'Armor '+ARMOR_SHORT.bug+' \u2014 hurt by '+(hurt||'nothing in particular')+'; resists '+(res||'nothing')];
+ }
  const t=kind==='unit'?U[key]:B[key];
  const ar=kind==='unit'?armorOf({kind:'unit',t}):'bldg';
  const wc=kind==='unit'?t.w:WC_BLD[key];
@@ -9841,6 +9895,10 @@ function updateStrikes(dt){
    // v85: same schedule as the paradrop, but the men already exist - this puts them back
    for(const d of s.drops){if(!d.done && s.t>=d.delay){d.done=true;landLifted(d);}}
    if(s.drops.every(d=>d.done))G.strikes.splice(i,1);
+  } else if(s.kind==='bailout'){
+   // v100: the balloon's crew, on the paradrop's schedule and its canopy
+   for(const d of s.drops){if(!d.done && s.t>=d.delay){d.done=true;landBailed(s.pi,d);}}
+   if(s.drops.every(d=>d.done))G.strikes.splice(i,1);
   } else if(s.kind==='fbomb'){
    /* v87: the same cadence the tower's napalm drops on. A scorch entry carries no
       cells at all, so this loop does nothing for it and the burn list alone keeps
@@ -10156,24 +10214,51 @@ function fireOut82(u,dt){
    balloon rule there answers zero for every class but 'a', so a crash would deal
    no damage to the thing crashing; and nobody should score the kill, earn
    veterancy off it or have the retaliation sweep sent at them for it. */
-function bailMan(k,p,x,y,i){
+/* v100: THE CREW COMES DOWN ON CANOPIES. The men used to appear on the ground on
+   the tick Bail was pressed, which read as four soldiers teleporting out of an
+   exploding balloon. They now ride the same strike-and-delay machinery the
+   Paradrop and the Rapid Redeploy use, and the SAME canopy routine draws them -
+   which is the owner's brief: a bail-out should read as a paradrop.
+   bailSpot is the old bailMan's placement half, split out so the landing tile is
+   computed at LAUNCH and carried on the drop, exactly as radioParadrop and
+   radioLift precompute theirs. It consumes no RNG - the scatter is the same
+   deterministic sunflower arithmetic those two use - so nothing about the seeded
+   stream moves whether or not anybody bails. */
+function bailSpot(k,x,y,i){
  const a=i*2.39996,r=.6+.5*Math.sqrt(i);
  let lx=clamp(x+dcos(a)*r,2,G.map.N-3),ly=clamp(y+dsin(a)*r,2,G.map.N-3);
  if(!passableR(lx,ly,unitRad({t:U[k]}))){
   outer:for(let rr=1;rr<=4;rr++)for(let oy=-rr;oy<=rr;oy++)for(let ox=-rr;ox<=rr;ox++){const nx=lx+ox,ny=ly+oy;if(passable(Math.floor(nx),Math.floor(ny))){lx=nx;ly=ny;break outer;}}
  }
+ return {x:lx,y:ly};
+}
+function bailMan(k,p,lx,ly){
  const g=makeUnit(k,p,lx,ly);g.state='idle';g.anchor={x:lx,y:ly};
  spawnSmoke(lx,ly,3);spawnShrapnel(lx,ly,'#d9cf8f',3,.5);
  return g;
 }
+// put one bailed crewman on the ground when his canopy reaches it
+function landBailed(pi,d){
+ const p=G.players[pi];
+ if(!p||!p.alive)return;   // the army died while its crew was in the air
+ bailMan(d.k,p,d.x,d.y);
+}
 function balloonDown(u,bail){
  const x=u.x,y=u.y,p=u.p,men=[];
- /* the crew is put on the ground BEFORE the balloon dies, so a Bail into a tight
-    pocket still finds the ground under the aircraft rather than the ground under
-    whatever moves into the gap on the next tick. The supply cap is deliberately
-    not consulted: these four were paid for when the balloon was, exactly as a
-    Paratrooper is fielded past the cap by the call-down that brought him. */
- if(bail)BAIL_CREW.forEach((k,i)=>men.push(bailMan(k,p,x,y,i)));
+ /* the crew's landing tiles are chosen BEFORE the balloon dies, so a Bail into a
+    tight pocket still measures the ground under the aircraft rather than the
+    ground under whatever moves into the gap while they fall. The supply cap is
+    deliberately not consulted: these four were paid for when the balloon was,
+    exactly as a Paratrooper is fielded past the cap by the call-down that
+    brought him.
+    v100: the men are no longer created here - the strike creates each one as his
+    canopy touches down. A snapshot taken mid-fall carries the strike, so they
+    land on schedule after a reload, which is the same guarantee the Rapid
+    Redeploy's men in the air already had. */
+ if(bail){
+  const drops=BAIL_CREW.map((k,i)=>{const sp=bailSpot(k,x,y,i);return{k,x:sp.x,y:sp.y,delay:BAIL_FALL_T+i*0.1,done:false}});
+  G.strikes.push({kind:'bailout',pi:p.i,drops,t:0});
+ }
  u.hp=0;kill(u,null);
  spawnExplosion(x,y,1.5);
  spawnSmoke(x,y,12,{rise:10,grow:9,life:2.8,r:6,col:'#4a4640'});
@@ -12633,6 +12718,12 @@ function updateNeutrals(dt){
    // creature died: shrink its nest's reserve a touch and burst into bits
    if(cr.nest&&cr.nest.alive>0)cr.nest.alive=Math.max(0,cr.nest.alive-1);
    spawnShrapnel(cr.x,cr.y,cr.t.col,5,.9);sfxBoom(cr.x,cr.y,'small');
+   /* v100: and it leaves the selection, exactly as kill() drops a dead unit or
+      building from it. Unreachable until this release - nothing could select a
+      creature - and it would have left a corpse's stats standing in the panel
+      forever. G.sel and lastSelSig are client-local and hashed nowhere, which
+      is why sim code may touch them here on kill()'s own precedent. */
+   if(G.sel.includes(cr)){G.sel.splice(G.sel.indexOf(cr),1);lastSelSig=''}
    G.neutrals.splice(i,1);continue;
   }
   if(cr.cool>0)cr.cool-=dt;
@@ -16133,8 +16224,15 @@ function drawBug(c,cr){
  }
  if(hit){c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.5)';c.beginPath();c.arc(0,0,6,0,7);c.fill();c.restore();}
  c.restore();
- // tiny HP pip when hurt
- if(cr.hp<cr.mhp||cr.t.boss){const bw=cr.t.boss?26:14,bh=cr.t.boss?4:3,by=sy-gz-(cr.t.boss?18:9);c.fillStyle='rgba(0,0,0,.5)';rr(c,sx-bw/2,by,bw,bh,1.5);c.fill();c.fillStyle=cr.t.boss?'#ff3b3b':'#ff6e4d';rr(c,sx-bw/2+.6,by+.6,(bw-1.2)*clamp(cr.hp/cr.mhp,0,1),bh-1.4,1);c.fill();}
+ /* v100: a SELECTED creature wears the ring every other selected thing wears -
+    same yellow, same dash, same march - sized off the species' own model scale
+    so a Mouse gets a mouse-sized ring. Selecting a bug and seeing nothing on
+    the field was the other half of "wildlife is not selectable": the panel
+    throwing was why it never read, and this is why it never LOOKED selected. */
+ if(cr.sel){c.save();c.strokeStyle='#ffec6e';c.lineWidth=2.2;c.setLineDash([4,3]);c.lineDashOffset=-G.tick*1.5;
+  c.beginPath();c.ellipse(sx,sy-gz,10*ms,5*ms,0,0,7);c.stroke();c.restore();}
+ // tiny HP pip when hurt - or whenever it is selected, so the bar you came to read is there
+ if(cr.hp<cr.mhp||cr.t.boss||cr.sel){const bw=cr.t.boss?26:14,bh=cr.t.boss?4:3,by=sy-gz-(cr.t.boss?18:9);c.fillStyle='rgba(0,0,0,.5)';rr(c,sx-bw/2,by,bw,bh,1.5);c.fill();c.fillStyle=cr.t.boss?'#ff3b3b':'#ff6e4d';rr(c,sx-bw/2+.6,by+.6,(bw-1.2)*clamp(cr.hp/cr.mhp,0,1),bh-1.4,1);c.fill();}
 }
 
 /* pulsing "actively mining" highlight */
@@ -16156,8 +16254,14 @@ function drawMineFX(c,sx,sy,s,n){
 function drawCrate(c,cr){
  const sx=isoX(cr.x,cr.y),sy=isoY(cr.x,cr.y);
  const bob=Math.sin(G.tick*.09+cr.x*3+cr.y*5)*.8;
- plShadow(c,sx,sy+2,9,4.6,.3);
- c.save();c.translate(sx,sy-6+bob);
+ /* v100: the crate is drawn at CRATE_SC - at life size it read as scenery on
+    textured ground and the owner could not find his own supplies. Its pulsing
+    halo is NOT here: an additive glow inside the depth-sorted sprite band adds
+    against band content rather than against the terrain (the v94 note), so it
+    is drawn by drawCrateGlow from renderCore, on the ground layer where the
+    heal rings and the buried-mine markers live. */
+ plShadow(c,sx,sy+2,9*CRATE_SC,4.6*CRATE_SC,.3);
+ c.save();c.translate(sx,sy-6*CRATE_SC+bob);c.scale(CRATE_SC,CRATE_SC);
  const body='#4f7a37';
  (function(){const g=c.createLinearGradient(-9,-8,7,8);
   g.addColorStop(0,shade(body,1.35));g.addColorStop(.55,body);g.addColorStop(1,shade(body,.62));
@@ -16170,6 +16274,24 @@ function drawCrate(c,cr){
  c.fillStyle='#0e1a0c';c.font='bold 8px sans-serif';c.textAlign='center';c.textBaseline='middle';
  c.fillText(cr.kind==='e'?'⚡':'⬢',0,-.4);
  c.textAlign='left';c.textBaseline='alphabetic';
+ c.restore();
+}
+/* v100: the supply crate's halo, drawn on the GROUND layer rather than inside
+   the sprite band - additive compositing inside the band adds against band
+   content instead of the terrain, which is exactly the cost the v94 record
+   names for the heal glow and the rally pulse. Green because a crate is a
+   crate whoever dropped it: the resource's colour is already on its band and
+   the owner is already the only army that can collect it. It breathes on a
+   plain G.tick read and never touches srand - rule 2. */
+function drawCrateGlow(c,cr){
+ const sx=isoX(cr.x,cr.y),sy=isoY(cr.x,cr.y);
+ const pul=CRATE_GLOW*(0.72+0.28*Math.sin(G.tick*.11+cr.x*2+cr.y*3));
+ c.save();c.globalCompositeOperation='lighter';
+ const g=c.createRadialGradient(sx,sy-4,2,sx,sy-4,24*CRATE_SC);
+ g.addColorStop(0,`rgba(150,255,110,${pul})`);
+ g.addColorStop(.45,`rgba(90,220,80,${pul*.42})`);
+ g.addColorStop(1,'rgba(60,180,60,0)');
+ c.fillStyle=g;c.beginPath();c.ellipse(sx,sy-4,24*CRATE_SC,12*CRATE_SC,0,0,7);c.fill();
  c.restore();
 }
 function drawNode(c,n){
@@ -17603,12 +17725,17 @@ function drawGhost(c,cx,cy){
 function drawStrikes(c){
  if(!G.strikes)return;
  for(const s of G.strikes){
-  // v26: enemy strike FX only render where the player has live vision (own strikes exempt)
-  if(s.owner&&s.owner.p&&s.owner.p!==G.human){
+  /* v26: enemy strike FX only render where the player has live vision (own strikes exempt)
+     v100: the owning army is read through a helper now, because the bailout
+     strike carries a pi and no owner - its balloon is destroyed before the crew
+     lands, so there is no entity left to hang the strike off. Without this an
+     enemy bail-out would have been the one call-down visible through fog. */
+  const sp100=s.owner&&s.owner.p?s.owner.p:(s.pi!=null?G.players[s.pi]:null);
+  if(sp100&&sp100!==G.human){
    let rx=s.x||0,ry=s.y||0;
    if(s.kind==='napalm'&&s.cells.length){const cme=s.cells[Math.max(0,Math.min(s.i,s.cells.length-1))];rx=cme.x;ry=cme.y}
    else if(s.kind==='barrage'){rx=s.cx;ry=s.cy}
-   else if((s.kind==='paradrop'||s.kind==='lift')&&s.drops.length){rx=s.drops[0].x;ry=s.drops[0].y} // v85: a hostile redeploy is hidden by fog on the same rule as a hostile paradrop
+   else if(s.drops&&s.drops.length){rx=s.drops[0].x;ry=s.drops[0].y} // v85: a hostile redeploy is hidden by fog on the same rule as a hostile paradrop. v100: and so are a bail-out and a supply drop, on the same one
    if(fogAt(rx,ry)!==2)continue;
   }
   if(s.kind==='smokescr'){
@@ -17684,18 +17811,40 @@ function drawStrikes(c){
     c.fillStyle=g2;c.beginPath();c.ellipse(px,py,7*TW,3.5*TW,0,0,7);c.fill();
     c.restore();
    }
-  } else if(s.kind==='paradrop'||s.kind==='lift'){
+  } else if(s.kind==='paradrop'||s.kind==='lift'||s.kind==='bailout'||s.kind==='supply'){
    /* v85: one canopy routine for both call-downs, which is the owner's brief -
       a redeployed squad is meant to READ as a paradrop. The only difference is
-      whose men they are, and that is already in s.owner. */
+      whose men they are, and that is already in s.owner.
+      v100: FOUR things fall under silk now, on the same argument extended. The
+      balloon's bailed crew and Green's supply crates were both landing with no
+      fall at all - the crew blinked onto the ground, the crates simply appeared
+      - and both are things dropped from the air, so both get the canopy. What
+      differs between them is only what hangs underneath, which is the `slung`
+      switch below; a strike carrying a pi rather than an owner (the bailout,
+      whose balloon is destroyed before the men land) reads its colour from that
+      instead. */
+   const fac=s.owner?s.owner.p.fac:(G.players[s.pi]&&G.players[s.pi].fac);
+   const col=FAC[fac]?FAC[fac].color:'#cccccc';
+   const crate=s.kind==='supply';
    for(const d of s.drops){if(d.done)continue;const fall=clamp((d.delay-s.t)/0.8,0,1);const z=60*fall;
     const px=isoX(d.x,d.y),py=isoY(d.x,d.y)-z;
     c.save();
-    // canopy
-    c.fillStyle='rgba(225,225,210,.95)';c.beginPath();c.ellipse(px,py-14,9,6,0,Math.PI,0);c.fill();
-    c.strokeStyle='rgba(120,120,110,.8)';c.lineWidth=1;c.beginPath();c.moveTo(px-8,py-13);c.lineTo(px,py-2);c.moveTo(px+8,py-13);c.lineTo(px,py-2);c.stroke();
-    // a little crate/figure
-    c.fillStyle=FAC[s.owner.p.fac].color;c.fillRect(px-2,py-3,4,4);
+    // canopy - a crate hangs under a bigger one, because the crate itself is bigger
+    const cw=crate?13:9,ch=crate?8:6;
+    c.fillStyle='rgba(225,225,210,.95)';c.beginPath();c.ellipse(px,py-14,cw,ch,0,Math.PI,0);c.fill();
+    c.strokeStyle='rgba(120,120,110,.8)';c.lineWidth=1;c.beginPath();c.moveTo(px-cw+1,py-13);c.lineTo(px,py-2);c.moveTo(px+cw-1,py-13);c.lineTo(px,py-2);c.stroke();
+    if(crate){
+     /* the slung crate, drawn as the ground one reads: the resource's colour on
+        the band, the army's nowhere - which crate is which is what matters in
+        the air exactly as it does on the ground. */
+     const w2=5.5*CRATE_SC,h2=4.2*CRATE_SC;
+     c.fillStyle='#4f7a37';rr(c,px-w2,py-h2,w2*2,h2*2,2);c.fill();
+     c.fillStyle=d.kind==='e'?'#7fe3ff':'#ffb95e';rr(c,px-w2,py-h2*0.28,w2*2,h2*0.56,1);c.fill();
+     c.strokeStyle='rgba(24,34,20,.55)';c.lineWidth=1;c.strokeRect(px-w2*.72,py-h2*.72,w2*1.44,h2*1.44);
+    } else {
+     // a little figure, in the army's colour
+     c.fillStyle=col;c.fillRect(px-2,py-3,4,4);
+    }
     c.restore();
    }
   }
@@ -17995,6 +18144,20 @@ function renderCore(){
     player currently SEES them - a crate under fog is not drawn, and unlike a
     resource pile it leaves no last-seen ghost, because it is a thing that can be
     taken rather than a feature of the map. */
+ /* v100: the supply crates' halos. Drawn HERE - on the ground layer, straight
+    onto `c` - and not inside drawCrate, because an additive glow inside the
+    depth-sorted sprite band adds against band content rather than against the
+    terrain (the cost the v94 record names for the heal glow and the rally
+    pulse). It sits below `inView`'s declaration on purpose: the first cut put
+    it up with the heal rings and threw a temporal-dead-zone error on every
+    frame, which renderGuard swallowed into a black board and one toast.
+    Gated on live vision exactly as the crate sprite below is - a crate under
+    fog glows no more than it draws - and on ownership, because a supply drop is
+    "yours alone" by the ability's own rule and lighting an enemy's crate would
+    hand away the one thing the drop exists to tell its owner. */
+ if(G.human&&G.crates)for(const cr of G.crates){
+  if(cr.pi===G.human.i&&inView(cr.x,cr.y)&&fogAt(cr.x,cr.y)===2)drawCrateGlow(c,cr);
+ }
  for(const cr of (G.crates||[]))if(inView(cr.x,cr.y)&&fogAt(cr.x,cr.y)===2)items.push([cr.x+cr.y,0,cr,'crate']);
  if(G.mode==='ctf')for(const f of G.flags)if(!f.carrier&&!f.home)items.push([f.x+f.y,3,f,'flag']);
  items.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);

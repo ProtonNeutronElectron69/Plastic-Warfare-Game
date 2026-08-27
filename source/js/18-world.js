@@ -121,6 +121,12 @@ function updateNeutrals(dt){
    // creature died: shrink its nest's reserve a touch and burst into bits
    if(cr.nest&&cr.nest.alive>0)cr.nest.alive=Math.max(0,cr.nest.alive-1);
    spawnShrapnel(cr.x,cr.y,cr.t.col,5,.9);sfxBoom(cr.x,cr.y,'small');
+   /* v100: and it leaves the selection, exactly as kill() drops a dead unit or
+      building from it. Unreachable until this release - nothing could select a
+      creature - and it would have left a corpse's stats standing in the panel
+      forever. G.sel and lastSelSig are client-local and hashed nowhere, which
+      is why sim code may touch them here on kill()'s own precedent. */
+   if(G.sel.includes(cr)){G.sel.splice(G.sel.indexOf(cr),1);lastSelSig=''}
    G.neutrals.splice(i,1);continue;
   }
   if(cr.cool>0)cr.cool-=dt;
