@@ -74,7 +74,7 @@ function put85(k, p, x, y) { const u = makeUnit(k, p, x, y); u.state = 'idle'; u
   ok('T58.B the pistol is the small-arms row at shorter reach, not a tenth row',
     U.runner.w === 'b' && Object.keys(WVA).length === 10 && U.runner.rg < U.grunt.rg);
 
-  G = null; newGame(cfg85('blue', 850101));
+  G = null; newGame(cfg85('blue', 850101)); G.dayOff=0; /* v101: this fixture asserts daytime vision facts - pin the clock to noon */
   const me = G.human;
   const run = put85('runner', me, 20, 20);
   const near = put85('grunt', me, 21, 20);

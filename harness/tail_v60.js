@@ -124,7 +124,12 @@ ok('T31.A AI_RICH_P is 1200',typeof AI_RICH_P==='number'&&AI_RICH_P===1200);
     already have a pair makes the section say what it means, and a future trail move
     that leaves fewer than two such bots fails the count below loudly instead of
     quietly proving nothing again. */
- G=null;newGame(cfg60('backyard','dm',600305,3));
+ /* v101: and that count DID fail loudly, exactly as designed - the v101 trail
+    move (the appended dayOff draw shifts every in-match srand position) left
+    600305 with one eligible bot at tick 1800. Moved to 600307 (three eligible),
+    on the same rule as the v85 move this comment records. The noon pin stays:
+    the section reasons about producers and banks, not about the dark. */
+ G=null;newGame(cfg60('backyard','dm',600307,3));G.dayOff=0;
  for(let i=0;i<1800;i++)update(DT60);
  const nb0=k=>p=>p.blds.filter(b=>b.key===k).length;
  const eligible=G.players.filter(p=>p.ai&&p.alive&&nb0('barracks')(p)<2&&nb0('garage')(p)<2);

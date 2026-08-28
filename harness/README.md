@@ -1176,6 +1176,92 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v101: the day/night cycle - discrete light, half vision at night
+
+Not part of a roadmap; the owner's ask, verbatim: a day/night cycle that
+affects the lighting, a full cycle in 10 minutes, vision of all units and
+structures cut in half at night, "a handful of discrete lighting conditions
+that the game flips to at certain times" rather than a gradient, and every
+match starting at a random point in the cycle. No unit, price, building or map
+changed. `tail_v101.js` (T78) carries the checks.
+
+### The clock is one table and one derivation
+
+`DAY_PHASES` (02-tunables) is the whole cycle: day 0-240s, dusk 240-300s,
+night 300-540s, dawn 540-600s, `DAY_CYCLE_T=600`. Each row carries the sim
+half (`ni` - is this night) and the render half (`tint`/`tintA`), on the
+precedent of CREATURE rows carrying `col` beside their combat stats.
+`dayPhase()` is pure integer arithmetic off `(G.tick + G.dayOff)` - nothing
+stored, nothing ticked, so lockstep clients and loaded saves agree for free.
+`G.dayOff` is the random start: ONE srand() draw, appended as the LAST consumer
+in `newGame` per the v59 rule, hashed on `hashState`'s first line and
+serialized with a `||0` default for pre-v101 saves. Testing mode is pinned to
+permanent noon inside `dayPhase` itself, on the same rule that gives the
+sandbox full vision and free buildings.
+
+### Vision has exactly two doors, and night is a multiplier on both
+
+Every sim-side unit-vision read already went through `viOf`; night multiplies
+its RESULT by `NIGHT_VI_MUL` (0.5), bonuses included - an uplinked eye at night
+is half of (base + bonus), not base/2 + bonus. Structure vision had NO door: it
+was read raw off `b.t.vi` at three sites (the fog stamp in `updateFog`,
+`pVision`, and the HQ-placement gate `bldVisionAt`), which was fine while the
+row was the whole answer. The night cut makes it a derived figure, so the read
+got a name - `bviOf` - and all three sites go through it. Everything downstream
+follows without an edit of its own: fog reveal, idle acquisition sweeps, the
+balloon's High Ground radius, the Choktaw's Paint spotting, the AI's call-down
+vision test. Weapon RANGE (`rgOf`) is deliberately untouched, and so is
+wildlife - a creature's `vi` is an aggro leash, not battlefield vision, and
+T78.B asserts `nearestIntruder` never reads the clock.
+
+### The light is one multiply fill at the seam both compositors share
+
+The tint is drawn in `renderCore`, on the finished world canvas, after the fog
+blit and before the present - because `worldCv` is the one surface the WebGL
+stage uploads AND the 2d fallback draws, so a single site keeps the two looks
+identical the way POSTV does for the grade. `globalAlpha` under `multiply`
+mixes toward `dst*tint`, so the day row's `tintA:0` is the identity and noon is
+byte-for-byte the pre-v101 frame. The HUD, minimap and screen-space overlays
+render after the present and stay at full brightness: the night darkens the
+battlefield, not the controls. The top bar prints the phase beside the mode
+line, and the two flips that change what everyone can SEE - into night, out of
+night - each raise one toast (`G.dayPhaseUI`, client-local like `msgT`).
+
+**Rule 7 earned its keep again: the first transition tints were invisible.**
+Dusk and dawn were first cut at ~0.3 alpha, and in a real Chromium frame next
+to Day they read as... Day. The suite can never see this (the tint is pixels),
+so the shipped numbers (.55 on both, `#e07840` dusk, `#c9a0c0` dawn) come from
+the screenshot pass, not from arithmetic. All four phases were READ as frames:
+Day full-bright, Dusk golden-hour, Night dark blue with a visibly halved fog
+circle, Dawn pale rose. The no-npm recipe in the Running section is how.
+
+### Every trail moved, and for once it is by construction
+
+Two edits each move all seven combos on their own: `hashState` gained a field
+(different numbers for an identical simulation), and `newGame` gained a srand()
+draw (every in-match draw shifts one position). Real behavioral divergence
+rides underneath - a seed whose offset lands the 900-tick opening inside night
+halves every acquisition sweep in it - but it is unobservable behind the first
+two. So `recut_v101`/`repin_v101` (the carried-forward pair; the v99 pair is
+deleted per the one-shot rule) expects ALL FIVE tables to move, `UNMOVED_OK`
+empty - the desk trail included, which under v99 could legitimately hold
+still. The layout gate held all 42 pins: the draw sits after `makeMap` and
+after every layout decision.
+
+### The fixture fallout was 16 checks, and it sorted into exactly three kinds
+
+- **Daytime-arithmetic fixtures whose seeds now land at night** (T11's napalm
+  call refused for want of vision, T29.E's bot unable to see the clump it
+  should shell, T33.E's dual-weapon acquisition, T58.B's exact
+  `viOf === vi + RNET_VI` sums). Each got a one-line noon pin
+  (`G.dayOff=0`) after its boot: the fixture asserts daytime facts, so it
+  states its clock now.
+- **T31.E's eligibility count**, which is the designed loud failure its own
+  v85 comment promises when a trail move leaves fewer than two bots without a
+  producer pair. The seed moved 600305 -> 600307 (three eligible), the same
+  remedy v85 records for the same event.
+- **T75.B's transcribed version pin**, the conscious edit every release owes.
+
 ## v100: three owner bug fixes, and what a real frame caught that the suite could not
 
 Not part of a roadmap. Three things the owner reported after playing v99

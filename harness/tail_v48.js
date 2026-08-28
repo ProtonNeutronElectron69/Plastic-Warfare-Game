@@ -148,7 +148,7 @@ function drop48(u){const i=G.units.indexOf(u);if(i>=0)G.units.splice(i,1);const 
 /* ---------- E: call-downs ---------- */
 {
  // napalm: a dense visible clump, none of ours underneath
- G=null;newGame(cfg48('backyard','dm',480004,3));
+ G=null;newGame(cfg48('backyard','dm',480004,3));G.dayOff=0; /* v101: this fixture asserts daytime vision facts - pin the clock to noon */
  const p=bot48(), q=foe48(p);
  bld48('radiotower',p,6,0);
  const M={x:G.map.N/2,y:G.map.N/2};
@@ -180,7 +180,7 @@ function drop48(u){const i=G.units.indexOf(u);if(i>=0)G.units.splice(i,1);const 
   put48('truck',bot,M.x-4,M.y);
   aiTick(bot);
  };
- G=null;newGame(cfg48('backyard','dm',480004,3));
+ G=null;newGame(cfg48('backyard','dm',480004,3));G.dayOff=0; /* v101: this fixture asserts daytime vision facts - pin the clock to noon */
  const p9=bot48f('tan');
  if(!p9)ok('T29.E a Tan bot was fielded to test the napalm branch against',false);
  else{
@@ -188,7 +188,7 @@ function drop48(u){const i=G.units.indexOf(u);if(i>=0)G.units.splice(i,1);const 
   ok('T29.E a soft clump still draws napalm',
      !!G.strikes.find(s=>s.kind==='napalm')&&!G.strikes.find(s=>s.kind==='barrage'));
  }
- G=null;newGame(cfg48('backyard','dm',480004,3));
+ G=null;newGame(cfg48('backyard','dm',480004,3));G.dayOff=0; /* v101: this fixture asserts daytime vision facts - pin the clock to noon */
  const p10=bot48f('gray');
  if(!p10)ok('T29.E a Gray bot was fielded to test the fallback against',false);
  else{
@@ -199,7 +199,7 @@ function drop48(u){const i=G.units.indexOf(u);if(i>=0)G.units.splice(i,1);const 
  }
 
  // paradrop: nothing napalm-grade in sight, patience expired -> hit the economy
- G=null;newGame(cfg48('backyard','dm',480005,3));
+ G=null;newGame(cfg48('backyard','dm',480005,3));G.dayOff=0; /* v101: this fixture asserts daytime vision facts - pin the clock to noon */
  const p2=bot48();
  bld48('radiotower',p2,6,0);
  p2.ai.radioReadyT=p2.ai.t-26;

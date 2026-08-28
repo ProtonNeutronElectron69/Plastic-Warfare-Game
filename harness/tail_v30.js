@@ -60,7 +60,7 @@ ok('T11 sprite scale entries live',uScale({key:'apache'})===1.18&&uScale({key:'a
    the block reads the faction. The refusal itself is asserted on its own, just
    below, so the reason this fixture changed army is a checked fact rather than a
    note in a comment. */
-G=null;newGame(cfg('backyard','dm','normal','tan',3,909001));
+G=null;newGame(cfg('backyard','dm','normal','tan',3,909001));G.dayOff=0; /* v101: this fixture asserts daytime vision facts - pin the clock to noon */
 const hu=G.human;
 const rt2=makeBuilding('radiotower',hu,Math.floor(hu.blds[0].tx)+5,Math.floor(hu.blds[0].ty),true);
 ok('T11 tower builds at 293 HP (tan mods hp x1, as green\'s was)',rt2.prog>=1&&rt2.mhp===293&&rt2.abilityCool===0);

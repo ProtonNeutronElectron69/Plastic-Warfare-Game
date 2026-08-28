@@ -459,7 +459,7 @@ function hF(h,v){_hF64[0]=v;h=hI(h,_hU32[0]);return hI(h,_hU32[1])}
 function hS(h,s){if(!s)return hI(h,0);for(let i=0;i<s.length;i++)h=hI(h,s.charCodeAt(i));return h}
 function hashState(){
  let h=2166136261;
- h=hI(h,G.tick);h=hI(h,G.rngS);h=hI(h,EID);h=hF(h,G.hazAcc||0);
+ h=hI(h,G.tick);h=hI(h,G.rngS);h=hI(h,EID);h=hF(h,G.hazAcc||0);h=hI(h,G.dayOff||0); // v101: the cycle offset decides when night halves vision, so two clients must agree on it
  for(const p of G.players){
   h=hF(h,p.res.p);h=hF(h,p.res.e);h=hI(h,p.alive?1:0);h=hI(h,p.score);h=hF(h,p.kothScore);
   h=hI(h,p.tech.size);h=hI(h,p.techDone.size);h=hI(h,p.units.length);h=hI(h,p.blds.length);h=hI(h,p.team||0);
@@ -535,7 +535,7 @@ function saveState(){
  return JSON.stringify({
   // v50: `test` is match config like mode/diff - serialized so a resync cannot
   // silently restore costs, and NOT folded into hashState.
-  v:GAME_VER_N,test:!!G.test,watch:!!G.watch,seed:G.seed,rngS:G.rngS,tick:G.tick,EID:EID,hazAcc:G.hazAcc||0,mode:G.mode,mapKey:G.matchCfg?G.matchCfg.map:'backyard',
+  v:GAME_VER_N,test:!!G.test,watch:!!G.watch,seed:G.seed,rngS:G.rngS,tick:G.tick,EID:EID,hazAcc:G.hazAcc||0,dayOff:G.dayOff||0,mode:G.mode,mapKey:G.matchCfg?G.matchCfg.map:'backyard', // v101: the day/night offset rides the snapshot
   over:G.over,
   players:G.players.map(p=>({i:p.i,fac:p.fac,team:p.team,human:p.human,name:p.name||null,diff:_diffKey(p.diff),
    res:{p:p.res.p,e:p.res.e},alive:p.alive,score:p.score,kothScore:p.kothScore,stats:p.stats,start:p.start,
@@ -565,6 +565,7 @@ function loadState(json){
  // static world regenerates from the seed; same seed = identical terrain, so the
  // already-baked terrain canvases stay valid and are NOT re-rendered.
  G.seed=S.seed;G.rngS=S.rngS;G.tick=S.tick;EID=S.EID;G.over=S.over;G.hazAcc=S.hazAcc||0;
+ G.dayOff=S.dayOff||0; // v101: a pre-v101 save carries none; 0 keeps its clock running off the tick alone, which is the honest default
  G.test=!!S.test; // v50: before makeMap, so anything downstream that reads it agrees with the save (pre-v50 saves load as a normal match)
  G.watch=!!S.watch; // v55: match config like `test` (pre-v55 saves load as a normal match)
  G.map=makeMap(S.mapKey,S.seed);

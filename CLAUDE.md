@@ -6,7 +6,7 @@ Read this first. It is the orientation; `harness/README.md` is the detail.
 touch anything — what the project is, where it stands, how to build, how to
 test, how to watch the bots, and the rules that are load-bearing. Everything
 after that is the record: the roadmap chapter, then one section per standalone
-release NEWEST FIRST (v100 down to v89), then the balance baseline, then the
+release NEWEST FIRST (v101 down to v89), then the balance baseline, then the
 patterns worth copying. Read the record when you are about to touch the
 subsystem it describes; do not read it front to back.
 
@@ -44,12 +44,12 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v100, and what a fresh session does)
+## Where the game stands (v101, and what a fresh session does)
 
-The game is at **v100**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v101**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
-(v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98, v99 and
-v100 are standalone owner passes (below). There is no release in flight.
+(v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
+v101 are standalone owner passes (below). There is no release in flight.
 
 **Known open fronts, none started:**
 
@@ -62,8 +62,10 @@ v100 are standalone owner passes (below). There is no release in flight.
   untouched, `turtle` has responded to nothing. Nothing since has been aimed at
   any of the three — v98 re-priced ONE building on the owner's instruction (the
   Heavy Barricade, 60 → 40), v99 changed only how bots COMMAND what they already
-  have, and v100 changed no unit, price, building or map. **Its percentages are
-  ten releases old and v99 moved individual cells hard; re-measure before
+  have, v100 changed no unit, price, building or map, and v101's night (below)
+  bends every army's VISION identically and nobody's stats. **Its percentages
+  are eleven releases old, v99 moved individual cells hard, and v101 reshuffled
+  every match's srand stream besides; re-measure before
   quoting one.** `probe_v89.sh` for why a bot bought what it bought,
   `probe_v99.sh` for how it gives orders — reach for the probe before the price.
 - `T26.C`'s air-value question is still open.
@@ -73,7 +75,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 5,587 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 5,636 checks, expect 0 failures
 ```
 
 If those are green the repository is exactly as the last release left it, and
@@ -128,7 +130,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,587 checks at v100.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,636 checks at v101.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -181,10 +183,11 @@ five baseline tables behind the 42-pin layout gate. Copy the current
 `recut_vNN.js` / `repin_vNN.py` pair forward to the new version and delete the
 old one; only the current release's one-shots ship.
 
-**The pair in the tree is `recut_v99` / `repin_v99`, and that is correct at
-v100** — the pair is carried forward by the release that MOVES the trails, not
-by every release. v100 left them untouched (nothing it changed reaches a
-900-tick window), so it added no pair of its own. Do not read the version on
+**The pair in the tree is `recut_v101` / `repin_v101`** — the pair is carried
+forward by the release that MOVES the trails, not by every release. v101 moved
+every trail by construction (hashState gained the `G.dayOff` field and newGame
+gained a srand draw), so its pair expects all five tables to move and its
+`UNMOVED_OK` is empty. Do not read the version on
 those two files as the version of the game; read it as "the last release that
 had to repin".
 
@@ -345,6 +348,48 @@ landed with the trails untouched; a render change that moves a trail has a bug.
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
 
+## v101 — the day/night cycle (not part of a roadmap)
+
+The owner's ask, delivered whole: a **10-minute day/night cycle** (`DAY_CYCLE_T`)
+of **discrete lighting states** — day, dusk, night, dawn, no gradient, by
+explicit instruction — with **every unit's and structure's vision halved at
+night** (`NIGHT_VI_MUL`) and **every match starting at a random point in the
+cycle** (`G.dayOff`, one srand draw appended LAST in `newGame` on the v59 rule,
+hashed and serialized). No unit, price, building or map changed. `tail_v101.js`
+(T78); full evidence in the v101 section of `harness/README.md`.
+
+- **One table, one derivation.** `DAY_PHASES` in `02-tunables.js` carries the
+  sim half (`ni`) and the render half (`tint`/`tintA`) per row; `dayPhase()` is
+  pure arithmetic off `(G.tick + G.dayOff)`, storing and ticking nothing.
+  Testing mode is pinned to permanent noon inside `dayPhase` itself, like its
+  permanent full vision.
+- **Vision has exactly two doors and night multiplies at the doors.** `viOf`
+  already carried every unit-vision read; buildings read `b.t.vi` raw at three
+  sites, so those got a named door too (`bviOf`) and the fog stamp, `pVision`
+  and the HQ placement gate all go through it. Fog reveal, acquisition sweeps,
+  High Ground, Forward Observer and AI call-down vision all follow with no edit
+  of their own. Weapon range (`rgOf`) and wildlife aggro (`cr.t.vi`) are
+  deliberately untouched — night shortens eyes, not guns, and a bug has no fog.
+- **The light is ONE multiply fill over the finished world canvas** in
+  `renderCore`, after the fog and before the present — the seam both the WebGL
+  compositor and the 2d fallback consume, so one site keeps both looks
+  identical (the POSTV argument, reused). Day's `tintA:0` is the identity: noon
+  is byte-for-byte the pre-v101 frame. HUD, minimap and overlays stay at full
+  brightness. The top bar prints the phase; entering and leaving night each
+  raise one toast.
+- **Every hash trail moved by construction** — a new hashState field plus the
+  appended draw — so the carried-forward `recut_v101`/`repin_v101` expects all
+  five tables to move (`UNMOVED_OK` empty), and the 42 layout pins held. Six
+  old fixtures asserting daytime facts took a one-line noon pin
+  (`G.dayOff=0`), T31.E's designed eligibility gate fired and moved its seed
+  (600305 → 600307, the v85 remedy), and T75.B took its conscious version bump.
+
+**The rule-7 payment this time: the first dusk/dawn tints were invisible.** At
+~0.3 multiply alpha, both transitions read as Day in a real frame, and no test
+can see pixels. The shipped alphas (.55) come from READING all four phases as
+Chromium screenshots — night also proved the halved fog circle visibly. Tune
+`DAY_PHASES` tints only with a screenshot open.
+
 ## v100 — three owner bug fixes (not part of a roadmap)
 
 Three things the owner found playing v99 (`tail_v100.js`, T77). No unit, price,
@@ -428,7 +473,8 @@ the bots COMMAND what they already have. Full evidence in the v99 section of
 picket reaches the OPENING (first scout contact inside thirty seconds), not
 because the push gate does — an opening army hasn't outgrown `pushSize` yet.
 And the desk trail held because its one CPU is an ALLY: no foes, no threats,
-nothing for v99 to reach (`repin_v99.py` names that in `UNMOVED_OK`).
+nothing for v99 to reach (the v99 repin script named that in its `UNMOVED_OK`;
+the pair itself has since been carried forward to v101, per the one-shot rule).
 
 **The owner's feedback pass on the same release (played before merge):** with
 the jitter gone, the winning bot idled 39–80% of its army through the endgame
@@ -678,16 +724,20 @@ This is 64 matches on v90 as merged, four seed sets, 64 distinct seeds. The full
 table, the reproduction recipe and the reasoning are in the v90 balance section of
 `harness/README.md`.
 
-**How much of it survives to v100, stated release by release, because the four
-findings below are now ten releases old.** v91–v97 were render/audio-only and
+**How much of it survives to v101, stated release by release, because the four
+findings below are now eleven releases old.** v91–v97 were render/audio-only and
 cannot have moved it. v98 re-priced ONE Gray building. v100 changed nothing that
 touches it. **v99 is the one to be careful with**: it did not touch a unit, a
 price or a map, but it rewrote how every bot COMMANDS its army, and its own
 16-match A/B on identical seeds moved individual cells hard (army wins Tan 8→4,
 Green 3→8) while every doctrine kept its baseline RANK — harasser still tops the
-table at 8 of 16, turtle still takes 1 — and total kills held. So: **the four
+table at 8 of 16, turtle still takes 1 — and total kills held. v101 touches no
+stat either, but night halves EVERY army's vision for 40% of each match and its
+appended srand draw reshuffles every seeded match, so a same-seed A/B against
+any pre-v101 build measures the shuffle, not the mechanic. So: **the four
 findings below are still the standing leads and nothing has been aimed at them —
-but any specific PERCENTAGE in them predates v99's command model.** Re-measure
+but any specific PERCENTAGE in them predates v99's command model and v101's
+night.** Re-measure
 before quoting a number at the owner; the 64-match recipe is in the README, and
 `probe_v99.sh` now prints the endgame readout alongside the churn metrics.
 
@@ -835,6 +885,13 @@ When adding a faction exclusive, the v85 work is the closest model:
   inside the depth-sorted sprite band brightens band content, not the terrain
   under it. Pick the layer deliberately, and remember rule 7: it looks wrong in
   a screenshot and passes every assertion.
+- **When a global condition scales an existing figure, multiply at the figure's
+  own door — and if a read has no door, give it one first.** v101's night
+  halves vision inside `viOf`, so fog, acquisition, auras and AI targeting all
+  followed from one edit; building vision was read raw off `b.t.vi` at three
+  sites, so the release's first move was to name that read (`bviOf`) and route
+  the sites through it. Scaling at the call sites instead would have been three
+  edits that drift apart the day a fourth reader appears.
 
 ## Git
 

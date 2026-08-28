@@ -15,6 +15,21 @@ function updateTopbar(){
  else if(G.mode==='surv'&&G.surv){const alive=(G.neutrals||[]).filter(cr=>cr.wave&&cr.hp>0).length;mi.textContent=`🛡️ Wave ${G.surv.no}/${SURV_WAVE_N} · enemies ${alive}`;}
  else if(G.mode==='dm'&&DM_TIME>0&&!G.test)mi.textContent='💥 Deathmatch · ⏱ '+dmMMSS(dmLeft()); // v69
  else mi.textContent='💥 Deathmatch';
+ /* v101: the battlefield clock, appended to whatever the mode line says. The
+    sandbox is pinned to noon (dayPhase answers Day there), so its line stays as
+    it was. The toast fires only on the two flips that change what everyone can
+    SEE - into night and out of it - and on a match that BOOTS at night, because
+    a player dropped into the dark deserves to be told why. G.dayPhaseUI is
+    client-local like msgT: never hashed, never serialized. */
+ if(!G.test){
+  const ph=dayPhase();
+  mi.textContent+=' · '+ph.icon+' '+ph.n;
+  if(G.dayPhaseUI!==ph.key){
+   if(ph.key==='night')msg('🌙 Night falls — every unit and structure sees half as far until dawn.');
+   else if(G.dayPhaseUI==='night')msg('🌅 Dawn breaks — full sight returns.');
+   G.dayPhaseUI=ph.key;
+  }
+ }
  refreshSurvBanner(); // v33
  refreshHqBtn();      /* v73: chrome, not a panel - deliberately NOT a sixth entry in the ten-tick pump */
  refreshHqPlaceBtn(); // v90.1: the same, and it rides the same pump for the same reason
@@ -215,7 +230,7 @@ function canPlace(p,key,tx,ty){return placeDeny(p,key,tx,ty)===''}
 function bldVisionAt(gx,gy){
  for(const b of G.human.blds){
   if(b.hp<=0||b.prog<1)continue;
-  const vi=b.t.vi||0;if(vi<=0)continue;
+  const vi=bviOf(b);if(vi<=0)continue; // v101: the placement gate matches what the fog actually shows at night
   if(dhyp(b.x-(gx+0.5),b.y-(gy+0.5))<=vi)return true;
  }
  return false;
