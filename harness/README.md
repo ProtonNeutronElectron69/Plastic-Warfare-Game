@@ -1260,6 +1260,23 @@ air-only shapes, the title/card exclusivity on tiles, that a building keeps its
 v46 counter lines and wildlife still reads (v100's fix, unregressed), and that
 building every card in the game moves neither `G.rngS` nor `hashState`.
 
+### Two contracts this release had to update deliberately, not loosen
+
+`T27.G` (v46) asserted that a unit's counter lines appear on its train button
+and under its description in the selection panel. The card replaces BOTH of
+those surfaces, so the old assertions were testing a mechanism the game no
+longer uses. They are REWRITTEN to the claim they were always making - the
+surface still carries the counter facts, still derived from the same tables -
+and the structure half is untouched, which is why a building tile is still
+checked through `title` and a unit tile through its card. Rule 5: a test that
+needs a conscious edit is doing its job.
+
+`T41.F` caught the card's own comment. It opened with a `============` rule,
+which is the FILE MAP's banner syntax, so the lint demanded a map entry for it.
+It is a block inside the selection panel rather than a new section of the file,
+so it takes the `/* --- ... --- */` sub-feature style the file already uses for
+the Forward Observer and the Heavy Barricade's mine.
+
 ### The fixture trap this release re-paid
 
 T79.C's daylight baseline was silently a NIGHT one: since v101 every match opens

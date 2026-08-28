@@ -76,7 +76,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 5,636 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 5,694 checks, expect 0 failures
 ```
 
 If those are green the repository is exactly as the last release left it, and
@@ -131,7 +131,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,636 checks at v101.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,694 checks at v102.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```

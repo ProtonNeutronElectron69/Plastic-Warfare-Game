@@ -309,9 +309,23 @@ function drop46(u){const i=G.units.indexOf(u);if(i>=0)G.units.splice(i,1);const 
 
   const bar=makeBuilding('barracks',me,Math.floor(hq.x)+4,Math.floor(hq.y)+4);bar.prog=1;
   setSel([bar]);wipe71();lastSelSig='';refreshSelPanel();
-  const ptips=walk71(document.getElementById('prodBtns'),[]).map(c=>c.title||'')
-    .filter(t=>t.indexOf('Armor ')>0);
-  ok('T27.G every unit a building trains carries them on its train button',ptips.length>0);
+  /* v102 REWRITTEN, not loosened. Through v101 a train tile carried its counter
+     facts as two lines inside the native `title` string, and this read them there.
+     The stat card replaced that surface outright - a tile with a card sets NO
+     title, because a native tooltip firing under a custom one is two tooltips for
+     one hover - so the old assertion was testing a mechanism the game no longer
+     uses. The CLAIM is unchanged and is what is checked here: every unit a
+     building trains still carries its counter facts, and they are still derived
+     from the same two tables rather than written out. Structure tiles keep their
+     titles and their own check above, which is why that one still reads `title`. */
+  const ptiles=walk71(document.getElementById('prodBtns'),[]).filter(c=>c.dataset&&c.dataset.card==='1');
+  ok('T27.G every unit a building trains carries them on its train button - as the v102 card',
+     ptiles.length>0&&fullRoster(me,'barracks').every(k=>{
+       const h=unitCard(k,{p:me});
+       return h.indexOf('ucp ucd')>0&&h.indexOf('ucp uct')>0;
+     }));
+  ok('T27.G ...and the tile drops the title rather than carrying both',
+     ptiles.every(c=>!c.title));
   ok('T27.G a research card explains what it unlocks in the same terms',
      techTip('u_bazooka').indexOf('Armor Infantry')>0&&techTip('u_chinook').indexOf('Unarmed')>0&&
      techTip('b_guardtower').indexOf('Armor Buildings')>0&&techTip('b_generator')==='');
@@ -321,8 +335,16 @@ function drop46(u){const i=G.units.indexOf(u);if(i>=0)G.units.splice(i,1);const 
   const g=put46('grunt',me,Math.floor(hq.x)+6,Math.floor(hq.y)+6);
   setSel([g]);lastSelSig='';refreshSelPanel();
   const info=document.getElementById('selInfo').innerHTML||'';
-  ok('T27.G a selected unit prints them under its description',
-     info.indexOf('Armor Infantry')>0&&info.indexOf(U.grunt.d)>0);
+  /* v102: same rewrite, same reason - the two text lines under a unit's
+     description became the card. The facts are asserted through the card's own
+     numbers: what a Grunt does to heavy armour, and the weapon that beats his. */
+  ok('T27.G a selected unit prints them under its description - as the v102 card',
+     info.indexOf(U.grunt.d)>0&&info.indexOf('ucp ucd')>0&&info.indexOf('ucp uct')>0&&
+     info.indexOf('×'+dmgMulFor('grunt','b','heavy').toFixed(2))>0&&
+     info.indexOf(WC_LABEL[armorScan('inf',true)[0][0]])>0);
+  ok('T27.G ...while a BUILDING still prints the two lines, which is why they stay',
+     (()=>{setSel([hq]);lastSelSig='';refreshSelPanel();
+       return (document.getElementById('selInfo').innerHTML||'').indexOf('Armor Buildings')>0})());
  }
  ok('T27.G the info card still reads the same lookup, and states the transport rules',
     counterList('bazooka','r',true).indexOf(ARMOR_LABEL.heavy)>=0&&
