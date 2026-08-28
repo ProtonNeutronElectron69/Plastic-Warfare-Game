@@ -6,7 +6,7 @@ Read this first. It is the orientation; `harness/README.md` is the detail.
 touch anything — what the project is, where it stands, how to build, how to
 test, how to watch the bots, and the rules that are load-bearing. Everything
 after that is the record: the roadmap chapter, then one section per standalone
-release NEWEST FIRST (v101 down to v89), then the balance baseline, then the
+release NEWEST FIRST (v102 down to v89), then the balance baseline, then the
 patterns worth copying. Read the record when you are about to touch the
 subsystem it describes; do not read it front to back.
 
@@ -44,12 +44,12 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v101, and what a fresh session does)
+## Where the game stands (v102, and what a fresh session does)
 
-The game is at **v101**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v102**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
-v101 are standalone owner passes (below). There is no release in flight.
+v102 are standalone owner passes (below). There is no release in flight.
 
 **Known open fronts, none started:**
 
@@ -62,8 +62,9 @@ v101 are standalone owner passes (below). There is no release in flight.
   untouched, `turtle` has responded to nothing. Nothing since has been aimed at
   any of the three — v98 re-priced ONE building on the owner's instruction (the
   Heavy Barricade, 60 → 40), v99 changed only how bots COMMAND what they already
-  have, v100 changed no unit, price, building or map, and v101's night (below)
-  bends every army's VISION identically and nobody's stats. **Its percentages
+  have, v100 changed no unit, price, building or map, v101's night (below)
+  bends every army's VISION identically and nobody's stats, and v102 only draws
+  panels. **Its percentages
   are eleven releases old, v99 moved individual cells hard, and v101 reshuffled
   every match's srand stream besides; re-measure before
   quoting one.** `probe_v89.sh` for why a bot bought what it bought,
@@ -75,7 +76,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 5,636 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 5,694 checks, expect 0 failures
 ```
 
 If those are green the repository is exactly as the last release left it, and
@@ -130,7 +131,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,636 checks at v101.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,694 checks at v102.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -347,6 +348,43 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v102 — the unit stat card (not part of a roadmap)
+
+The owner asked for clearer unit descriptions in two places, as an icon grid:
+the **hover popup inside a production building** and the **panel when one unit
+is selected**. ONE builder serves both (`unitCard` in `12-selection-panel.js`),
+`tail_v102.js` (T79). Nothing simulated changed and **no trail moved**.
+
+- **Three rows, one block.** Stats (❤️ health, 🔫 DPS, 🎯 range, 👁️ sight) in a
+  2-column grid; **damage dealt** in gold, pinned to THREE columns so it always
+  reads as two rows of six classes; and a **red "Weak to" row** naming the
+  weapon classes that beat this unit's armour. Description under the grid, price
+  under that — the owner's stated order.
+- **The red row is EXACT, and that is why it is weapon classes.** It is
+  `armorScan(armor,true)` verbatim: worst first, with the multiplier, and the
+  units carrying that weapon in the pill's tooltip. The first mockup tried a
+  per-unit-type "damage received" figure and there is no honest single number
+  for it — a class like Infantry carries six weapons. Ask the owner rather than
+  averaging; here the answer removed the question.
+- **Two readings, on purpose.** `{p}` is the SHOP (type row through that
+  faction's mods — Gray buys a 58hp Grunt against Green's 48 — and daylight
+  sight, because you are buying it); `{u}` is the FIELD (live health, `rgOf`,
+  `viOf`, so night halves the sight cell by itself).
+- **The popup is real HTML now.** A `title` attribute cannot carry an icon or a
+  colour, so a tile with a card sets no title at all and drives `cardPopShow` /
+  `cardPopHide` (named functions, per the v73 rule, because the shim's
+  `addEventListener` is a no-op). Structure and research tiles keep their v43
+  titles — `tile()` branches on `o.card`, not on what the tile shows.
+
+**The rule-7 payment: DPS was hand-rolled as `dm/rt` and both halves were wrong.**
+A live unit carries `dm` but NO `rt` (the reload lives on the type row and
+`rtOf` bends it), so every selected unit read **0.0 dps**; and a hand ratio
+knows nothing about salvos, so the AA truck read 5.5 against its real 18.0. Both
+were caught by looking at one Chromium frame, and neither could ever fail
+`seg.sh` — a wrong number is still a number. `unitDPS` and `rtOf` already
+existed. **Before deriving a figure for a panel, grep for the function that
+already derives it.**
 
 ## v101 — the day/night cycle (not part of a roadmap)
 

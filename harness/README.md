@@ -1176,6 +1176,116 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v102: the unit stat card, and the DPS bug a real frame caught
+
+Not part of a roadmap. The owner asked for clearer unit descriptions in two
+places - the hover popup inside a production building, and the panel when a
+single unit is selected - as an icon grid: health, DPS, range and sight, with
+damage multipliers beside them. Delivered as ONE builder used by both surfaces
+(`unitCard`), `tail_v102.js` (T79). No unit, price, building or map changed and
+no hash trail moved: this release draws, it does not simulate.
+
+### It went through two mockups, and the second one is the shipped design
+
+The first mockup carried two numbers per target class - damage dealt in yellow
+and damage RECEIVED in orange - and the received figure had no exact answer in
+the data, because a class like "Infantry" is ten units carrying six weapons and
+any single number for it is an average. The mockup put that choice to the owner
+(hardest-hitter vs mean) rather than picking silently, and the answer retired
+the question instead of settling it: keep yellow, drop orange, and **name what
+actually beats this unit in red**.
+
+That is strictly better than either option, because it is EXACT. `armorScan`
+already scores every weapon class against every armour class, so the red row is
+that list, worst first, with the multiplier and - in the pill's tooltip - the
+units that carry the weapon. No average, no judgement call, nothing to re-tune
+when the roster grows.
+
+### The two surfaces answer two different questions
+
+Deliberately, and the card takes an argument that says which:
+
+- **the shop shows the TYPE** (`unitCard(key,{p})`) - what you would GET if you
+  bought one, so the buying faction's own hull and damage modifiers are applied
+  (Gray really does buy a tougher Grunt: 58 against Green's 48) and sight is the
+  daylight figure, because you are buying the unit rather than fielding it.
+- **the field shows the MAN** (`unitCard(key,{u})`) - the live entity: health
+  remaining, its own buffed damage, `rgOf` and `viOf` for reach and sight. After
+  dark that sight cell halves on its own, because v101's night lives inside
+  `viOf` and the card reads through the door rather than around it.
+
+### The popup had to become real, and that is the release's one structural change
+
+Through v101 a build tile's tooltip was the browser's own `title` attribute,
+which cannot carry an icon, a colour or a grid. A tile that has a card now gets
+an HTML panel the game positions itself and sets **no title at all** - a native
+tooltip firing under a custom one is two tooltips for one hover. Structure and
+research tiles are untouched and keep the `title` they have had since v43, which
+is why `tile()` branches on `o.card` rather than on the kind of thing the tile
+shows.
+
+The popup body lives in named functions (`cardPopShow` / `cardPopHide`) for the
+v73 reason: the headless shim's `addEventListener` is a no-op, so a fixture can
+drive the popup only if its body is not buried inside a listener.
+
+### THE BUG, and it is the rule-7 lesson again
+
+The first cut computed DPS by hand as `dm/rt`. Two things were wrong with it and
+the suite could see neither:
+
+1. **A live entity has no `rt`.** `makeUnit` bakes `dm` onto the unit and leaves
+   the reload on the type row, where `rtOf` bends it (Ripple Fire lengthens it,
+   Broadcast shortens it). So `u.rt` was `undefined` and **every selected unit
+   read 0.0 dps**.
+2. **A hand-rolled ratio does not know about salvos.** `unitDPS` already exists
+   and already handles `t.sal` / `t.srt`; the AA Missile Truck's four-missile
+   burst read 5.5 instead of 18.0 - a third of its real output.
+
+Both were caught by looking at ONE real Chromium frame with a Grunt selected.
+Neither would ever have failed `seg.sh`, because a wrong number is still a
+number. The fix is not arithmetic, it is deletion: the card calls `unitDPS`
+through `rtOf` and re-derives nothing. **Two functions already existed for this
+and the card had no business writing a third.** T79.C pins all three - the live
+reading, the salvo, and an entrenched Gunner reading the faster rate the fire
+site really gives him (9.7 -> 14.5).
+
+### What T79 actually asserts
+
+Not "does it print 1.35" - a transcribed card passes that. The checks walk
+**every unit in the game** and demand the yellow row equals `dmgMulFor` and the
+red row equals `armorScan` term for term and in order; then they MUTATE `WVA`
+and demand the card moves with it, which only a derived card can do. Plus: the
+faction split between the two readings, the night interaction, unarmed and
+air-only shapes, the title/card exclusivity on tiles, that a building keeps its
+v46 counter lines and wildlife still reads (v100's fix, unregressed), and that
+building every card in the game moves neither `G.rngS` nor `hashState`.
+
+### Two contracts this release had to update deliberately, not loosen
+
+`T27.G` (v46) asserted that a unit's counter lines appear on its train button
+and under its description in the selection panel. The card replaces BOTH of
+those surfaces, so the old assertions were testing a mechanism the game no
+longer uses. They are REWRITTEN to the claim they were always making - the
+surface still carries the counter facts, still derived from the same tables -
+and the structure half is untouched, which is why a building tile is still
+checked through `title` and a unit tile through its card. Rule 5: a test that
+needs a conscious edit is doing its job.
+
+`T41.F` caught the card's own comment. It opened with a `============` rule,
+which is the FILE MAP's banner syntax, so the lint demanded a map entry for it.
+It is a block inside the selection panel rather than a new section of the file,
+so it takes the `/* --- ... --- */` sub-feature style the file already uses for
+the Forward Observer and the Heavy Barricade's mine.
+
+### The fixture trap this release re-paid
+
+T79.C's daylight baseline was silently a NIGHT one: since v101 every match opens
+at a random point in the cycle, and seed 1020301 happens to open after dark, so
+"halve the day figure and compare" was comparing 3 against 3. The fixture pins
+the clock to noon before it measures. **v101's own lesson, and the first release
+after it walked straight into it** - any fixture that asserts a daytime fact has
+to say so now.
+
 ## v101: the day/night cycle - discrete light, half vision at night
 
 Not part of a roadmap; the owner's ask, verbatim: a day/night cycle that
