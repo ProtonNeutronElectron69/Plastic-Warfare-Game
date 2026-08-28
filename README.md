@@ -115,7 +115,17 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 101**.
+The game is at **version 102**.
+
+**v102 — you can finally see what a unit is good at.** Hovering a unit inside a
+Barracks, Garage or Helipad now opens a proper card instead of a line of plain
+text: health, damage per second, weapon range and sight as icons, then a row of
+six icons showing how hard that unit hits infantry, light vehicles, medium and
+heavy armour, aircraft and buildings — in gold. Under that, in red, is the thing
+the card is really for: **what beats this unit**, named outright. A Grunt reads
+"Flame ×1.35, Grenades ×1.20, Arcing shells ×1.15", so you know what not to walk
+him into. Selecting a single unit on the battlefield shows the same card, with
+the health it has left and — after dark — the shorter sight it currently has.
 
 **v101 — day and night come to the battlefield.** Every match now runs a full
 day/night cycle: ten minutes takes you through daylight, an orange dusk, a long

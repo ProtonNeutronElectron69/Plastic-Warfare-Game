@@ -300,6 +300,44 @@ canvas{display:block}
 #endBox{background:linear-gradient(170deg,#2c4a1e,#16240f);border:4px solid rgba(255,255,255,.25);border-radius:18px;padding:34px 50px;text-align:center;color:#fff}
 #endBox h2{font-size:40px;margin-bottom:8px;text-shadow:0 3px 0 rgba(0,0,0,.5)}
 #endBox .stats{color:#cfe6b8;font-size:14px;margin-bottom:18px;line-height:1.7}
+/* ---------- v102: the unit stat card, and the popup that carries it ----------
+   Two surfaces share these classes: the production hover popup (#cardPop) and
+   the selection panel, which is why nothing here is scoped to either one. The
+   pills hug their contents (no fixed widths) so the block stays as small as the
+   data in it, and the damage-dealt grid is pinned to THREE columns so it always
+   reads as two rows of three wherever it is drawn. */
+.uc{margin-top:6px}
+.ucrow{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.uch{font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:#7e937a;margin-bottom:3px}
+.ucstats{display:grid;grid-template-columns:repeat(2,auto);gap:3px 5px;justify-content:start}
+.ucdeal{display:grid;grid-template-columns:repeat(3,auto);gap:3px 5px;justify-content:start}
+.ucweak{margin-top:7px}
+.ucwl{display:flex;flex-wrap:wrap;gap:3px 5px}
+.ucp{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);
+  border-radius:5px;padding:2px 6px;line-height:1.35;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ucp .uci{font-size:11.5px;line-height:1;flex:none}
+.ucp .ucv{font-weight:700;font-size:12px;color:#fff}
+.ucp .ucu{font-size:9px;color:#8fa08a}
+.ucp .ucl{font-size:10px;color:#e8b6ae}
+.ucp.ucd .ucv{color:#ffd24d}                    /* damage dealt - the ★ UPGRADED gold */
+.ucp.uct{background:rgba(255,106,90,.12);border:1px solid rgba(255,106,90,.3)}
+.ucp.uct .ucv{color:#ff6a5a}                    /* what beats it - the attack-order red */
+.ucp.ucnil .ucv{color:#5f6b5c;font-weight:400}
+.cardPop{position:fixed;z-index:60;width:404px;max-width:calc(100vw - 16px);
+  /* OPAQUE, not the .95 the help box uses: this box is drawn OVER the selection
+     panel's own text, and at 97% the panel's counter lines read through it. */
+  background:#0e140a;border:2px solid rgba(255,255,255,.2);border-radius:12px;
+  padding:11px 12px 12px;color:#fff;font-size:12.5px;pointer-events:none;
+  box-shadow:0 10px 30px rgba(0,0,0,.55)}
+.cardPop .uctitle{font-weight:700;color:#fff;font-size:13.5px}
+.cardPop .ucsub{color:#8fa8c8;font-size:11px;margin-left:6px;font-weight:400}
+.cardPop .ucdesc{color:#9fb88c;margin-top:9px;font-size:11.5px;line-height:1.4}
+.cardPop .ucextra{color:#8fa8c8;margin-top:5px;font-size:11px;line-height:1.35}
+.cardPop .ucfoot{margin-top:7px;border-top:1px solid rgba(255,255,255,.1);padding-top:6px;
+  font-size:10.5px;display:flex;gap:12px}
+.cardPop .ucfoot .cp{color:#ffb95e;font-weight:700} /* plastic is plastic-yellow everywhere */
+.cardPop .ucfoot .ce{color:#7fe3ff} .cardPop .ucfoot .cs{color:#cfe6b8}
+.cardPop .uchk{margin-top:6px;font-size:10px;color:#8fa8c8}
 #helpBox{position:absolute;top:calc(var(--topbarH) + 10px);right:12px;width:330px;background:rgba(14,20,10,.95);border:2px solid rgba(255,255,255,.2);border-radius:12px;color:#ddd;padding:14px;font-size:12.5px;line-height:1.55;display:none;z-index:25;pointer-events:auto}
 #helpBox h3{color:#ffe9a8;margin-bottom:6px}
 #helpBox b{color:#fff}
@@ -648,8 +686,8 @@ canvas{display:block}
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v101';
-const GAME_DATE='2026-08-27';
+const GAME_VER='v102';
+const GAME_DATE='2026-08-28';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
    the version that nothing tied back to the first, which is the trap this whole
@@ -7309,6 +7347,149 @@ function abilHotkey(k){
  if(!b||b.disabled||typeof b.onclick!=='function')return false;
  b.onclick();return true;
 }
+/* ============ THE UNIT STAT CARD, ADDED AT v102 ============
+   ONE builder, two surfaces: the hover popup inside a production building and
+   the selection panel when a single unit is selected. That is the whole point of
+   it being a function rather than two blocks of markup - the owner asked for the
+   same block in both places, and two copies would drift the first time either
+   moved.
+
+   NOTHING HERE IS A SECOND COPY OF A NUMBER. Health, range and sight read the
+   unit's own row or the live entity; the yellow figures come from dmgMulFor and
+   the red ones from armorScan - the same two functions the SIMULATION uses to
+   resolve a shot and the Field Manual uses for its prose. Re-price or re-arm a
+   unit and every card follows, with no edit here.
+
+   THE TWO SURFACES ANSWER TWO DIFFERENT QUESTIONS, which is why the figures are
+   not identical:
+     the shop shows the TYPE  - what you would get if you bought one, so the
+                                faction's own hull and damage modifiers are
+                                applied (Gray really does buy a tougher Grunt)
+                                and sight is the daytime figure, because you are
+                                buying the unit rather than fielding it.
+     the field shows the MAN  - the live entity: health remaining, its veterancy
+                                and buffs baked in, rgOf/viOf for reach and sight,
+                                so after dark it reads the halved v101 sight.
+
+   WHY THE RED ROW IS WEAPON TYPES AND NOT UNIT TYPES: "what does extra damage to
+   this" has an exact answer in WVA - the weapon classes that beat this unit's
+   armor - and no exact answer at all in unit types, because a class like Infantry
+   carries six different weapons and any single number for it is an average that
+   buries the one that kills you. The pills name the weapon and carry the units
+   that field it in their tooltip, so the player gets the exact multiplier AND the
+   list of what to watch for. */
+const CARD_CAT=[['inf','🪖'],['light','🚙'],['medium','🚚'],
+                ['heavy','🛡️'],['air','🚁'],['bldg','🏭']];
+const CARD_WC={b:'🔫',g:'💣',r:'🚀',s:'💥',
+               m:'☄️',f:'🔥',d:'🧨',a:'🛰️',q:'🎆'};
+function cardMul(v){return '×'+v.toFixed(2)}
+/* DPS through the game's OWN definition rather than a fresh dm/rt, for two
+   reasons the first cut got wrong. unitDPS knows about SALVO weapons (t.sal /
+   t.srt), so an AA truck's four-missile burst is not read as one missile per
+   reload; and a live entity carries `dm` but no `rt` at all - the reload lives
+   on the type row and is bent by rtOf (Ripple Fire lengthens it, Broadcast
+   shortens it), so `u.rt` was undefined and every selected unit read 0.0 dps
+   until a real frame showed it. Entrenchment is mirrored from the fire site in
+   updateUnit, which is the one other place that divides a reload. */
+function cardDPS(t,u,dmM){
+ if(!t.dm||!t.rt)return 0;
+ const rt=u?(u.entrenched?rtOf(u)/ENTRENCH_RATE:rtOf(u)):t.rt;
+ return unitDPS({dm:(u?u.dm:t.dm*(dmM||1)),rt,sal:t.sal,srt:t.srt});
+}
+function cardPill(cls,ic,label,val,unit,tip){
+ return '<span class="ucp'+(cls?' '+cls:'')+'"'+(tip?' title="'+tip.replace(/"/g,'&quot;')+'"':'')+'>'
+  +'<span class="uci">'+ic+'</span>'
+  +(label?'<span class="ucl">'+label+'</span>':'')
+  +'<span class="ucv">'+val+'</span>'
+  +(unit?'<span class="ucu">'+unit+'</span>':'')+'</span>';
+}
+/* opt.u  a live unit  -> the field reading (current hp, rgOf/viOf, its own dm)
+   opt.p  a player     -> the shop reading (type row through that faction's mods) */
+function unitCard(key,opt){
+ const t=U[key];if(!t)return '';
+ const o=opt||{},u=o.u||null;
+ const mods=(u?FAC[u.p.fac]:(o.p?FAC[o.p.fac]:null));
+ const hpM=mods?mods.mods.hp:1, dmM=mods?mods.mods.dmg:1;
+ const hp=u?(Math.ceil(u.hp)+'/'+Math.round(u.mhp)):String(Math.round(t.hp*hpM));
+ const dps=cardDPS(t,u,dmM);
+ const rg=u?rgOf(u):t.rg, vi=u?viOf(u):t.vi;
+ const armed=!!(t.dm&&t.w);
+ let h='<div class="uc"><div class="ucrow">';
+ h+='<div class="ucg"><div class="uch">Stats</div><div class="ucstats">'
+  +cardPill('','❤️','',hp,'',u?'Health remaining':'Maximum health')
+  +cardPill('','🔫','',armed?dps.toFixed(1):'—',armed?'dps':'','Damage per second')
+  +cardPill('','🎯','',armed?rg:'—',armed?'tiles':'','Weapon range')
+  +cardPill('','👁️','',vi,'tiles',u?'Sight range right now':'Sight range in daylight')
+  +'</div></div>';
+ h+='<div class="ucg"><div class="uch">Damage dealt</div><div class="ucdeal">';
+ for(const [c,ic] of CARD_CAT){
+  const m=armed?dmgMulFor(key,t.w,c):null;
+  h+=cardPill('ucd'+(m?'':' ucnil'),ic,'',m==null?'—':cardMul(m),'',
+    ARMOR_SHORT[c]+(m==null?' — unarmed':(m===0?' — cannot fire on them at all':' — '+cardMul(m))));
+ }
+ h+='</div></div></div>';
+ const weak=armorScan(armorOf({kind:'unit',t}),true);
+ h+='<div class="ucweak"><div class="uch">Weak to</div><div class="ucwl">';
+ if(!weak.length)h+='<span class="ucp ucnil"><span class="ucv">Nothing hits it especially hard</span></span>';
+ else for(const [wc,m] of weak){
+  h+=cardPill('uct',CARD_WC[wc]||'❗',WC_LABEL[wc]||wc,cardMul(m),'',
+    WC_LABEL[wc]+' hit it for '+cardMul(m)+' — carried by: '+wcRoster(wc));
+ }
+ h+='</div></div></div>';
+ return h;
+}
+/* The production popup's own body: the card, then the description UNDER it, then
+   the price - the order the owner specified. The plastic figure carries the
+   plastic colour here exactly as it does on the tile itself and in the top bar;
+   it is the same resource and it reads yellow everywhere. */
+function unitCardPop(key,p,desc,extra){
+ const c=ucost(p,key);
+ let h='<div class="uctitle">'+U[key].n+'<span class="ucsub">'+ARMOR_SHORT[armorOf({kind:'unit',t:U[key]})]
+   +(U[key].w?' · '+WC_LABEL[U[key].w]:' · Unarmed')+'</span></div>';
+ h+=unitCard(key,{p});
+ if(desc)h+='<div class="ucdesc">'+desc+'</div>';
+ if(extra)h+='<div class="ucextra">'+extra+'</div>';
+ h+='<div class="ucfoot"><span class="cp">⬢ '+c.p+'</span>'
+   +(c.e?'<span class="ce">⚡ '+c.e+'</span>':'')
+   +'<span class="cs">🪖 '+supOf(key)+' supply</span></div>';
+ return h;
+}
+/* THE POPUP. The build tile's tooltip was the browser's own `title` text through
+   v101, which cannot carry an icon, a colour or a grid - so a tile that has a
+   card gets this instead and sets NO title, because a native tooltip firing
+   under a custom one is two tooltips for one hover.
+   Client-local to its bones: one element, reused, never hashed, never
+   serialized, and it draws from the tables rather than from any entity. The
+   headless shim's addEventListener is a no-op, so the fixtures drive
+   cardPopShow / cardPopHide directly - the same reason v73's HQ button put its
+   body in a named function rather than inside a listener. */
+let CARDPOP=null;
+function cardPopEl(){
+ if(CARDPOP&&CARDPOP.parentNode)return CARDPOP;
+ const d=document.createElement('div');d.id='cardPop';d.className='cardPop';
+ d.style.display='none';
+ document.body.appendChild(d);CARDPOP=d;return d;
+}
+function cardPopShow(html,anchorEl){
+ const d=cardPopEl();
+ d.innerHTML=html;d.style.display='block';
+ /* place it ABOVE the tile - the production panel lives along the bottom edge -
+    and clamp inside the window. getBoundingClientRect is absent on the headless
+    shim, so a missing rect simply leaves the box where it is: the CONTENT is
+    what the fixtures read, and the geometry is what a real frame checks. */
+ try{
+  const r=anchorEl&&anchorEl.getBoundingClientRect?anchorEl.getBoundingClientRect():null;
+  if(r){
+   const w=d.offsetWidth||404,h=d.offsetHeight||160;
+   let x=r.left+r.width/2-w/2, y=r.top-h-10;
+   x=Math.max(8,Math.min(x,innerWidth-w-8));
+   if(y<TOPBAR_H+8)y=Math.min(r.bottom+10,innerHeight-h-8);
+   d.style.left=Math.round(x)+'px';d.style.top=Math.round(y)+'px';
+  }
+ }catch(e){}
+ return d;
+}
+function cardPopHide(){if(CARDPOP)CARDPOP.style.display='none'}
 /* o = {kind,art,fac,name,c:[[glyph,val,cls,short]],dis,locked,mark,up,fill,tip,hk,onclick} */
 function tile(o){
  const b=document.createElement('button');
@@ -7328,7 +7509,19 @@ function tile(o){
  h+='<div class="t">'+o.c.map(x=>'<span class="'+x[2]+(x[3]?' short':'')+'">'+x[0]+x[1]+'</span>').join('')+'</div>';
  h+='<div class="b"><span>'+o.name+'</span></div></div>';
  b.innerHTML=h;
- if(o.tip)b.title=o.tip+(o.hk?'\nHotkey: '+o.hk.toUpperCase():'');
+ /* v102: a tile carrying a CARD shows the rich popup and sets no title at all -
+    a native tooltip under a custom one is two tooltips for one hover. Every other
+    tile (structures, research) keeps the title it has had since v43. */
+ if(o.card){
+  b.dataset&&(b.dataset.card='1');
+  const show=()=>cardPopShow(o.card+(o.hk?'<div class="uchk">Hotkey: '+o.hk.toUpperCase()+'</div>':''),b);
+  b.addEventListener('mouseenter',show);
+  b.addEventListener('focus',show);
+  b.addEventListener('mouseleave',cardPopHide);
+  b.addEventListener('blur',cardPopHide);
+  b.addEventListener('mousedown',cardPopHide);
+ }
+ else if(o.tip)b.title=o.tip+(o.hk?'\nHotkey: '+o.hk.toUpperCase():'');
  else if(o.hk)b.title='Hotkey: '+o.hk.toUpperCase();
  if(o.onclick)b.onclick=o.onclick;
  if(o.hk)MENU_HOT[o.hk]=b; // v73: the registry IS the context gate
@@ -7479,6 +7672,11 @@ function refreshSelPanel(){
  // any selected building: re-render as its research project (lab or production) progresses / tech set grows
  if(G.sel.length===1){const e=G.sel[0];if(e.kind==='bld'&&(e.t.lab||e.t.prod)){sig+='|res'+(e.techCur||'-')+':'+Math.round(e.techT*4)+':'+e.p.tech.size+':'+Math.floor(e.p.res.p)+'_'+Math.floor(e.p.res.e);}}
  if(sig===lastSelSig)return;lastSelSig=sig;
+ /* v102: the rebuild below REPLACES every tile, so a tile the mouse is currently
+    over is destroyed without ever firing its own mouseleave - and its popup would
+    hang on screen for the rest of the match. Hide it here, at the one place the
+    panel is torn down, rather than trying to chase the node. */
+ cardPopHide();
  hotReset(); // v73: rebuilt with the panel, and only when the panel really rebuilds
  pb.innerHTML='';qr.innerHTML='';
  if(!G.sel.length){info.textContent='Nothing selected.';return}
@@ -7524,10 +7722,16 @@ function refreshSelPanel(){
   if(e.kind==='unit'&&e.hold)extra+=' — HOLDING POSITION'; // v29
   if(e.kind==='unit'&&e.vr)extra+=` — ⭐ Rank ${e.vr} (${e.kl} kills)`; // v29
   const upTag=(e.kind==='bld'&&e.upg)?' <span style="color:#ffd24d">★ UPGRADED</span>':'';
-  // v46: the counter lines ride under the description, generated from WVA/UVA
+  /* v46: the counter lines ride under the description, generated from WVA/UVA.
+     v102: for a UNIT they are superseded by the stat card, which states the same
+     two facts as an icon grid and states them per target class rather than as a
+     capped list. A BUILDING keeps the two lines - the card is a unit card, and a
+     structure has neither a DPS-per-second reading nor a sight worth a pill. */
   const cl=counterLine(e.kind,e.key);
-  info.innerHTML=`<b style="color:${fc.color}">${e.t.n}</b> (${fc.name}) — ${Math.ceil(e.hp)}/${e.mhp} HP${extra}${upTag}<br><span style="color:#9fb88c">${e.t.d||''}</span>`
-   +`<br><span style="color:#8fa8c8;font-size:11px">${cl[0]}<br>${cl[1]}</span>`;
+  const head=`<b style="color:${fc.color}">${e.t.n}</b> (${fc.name}) — ${Math.ceil(e.hp)}/${e.mhp} HP${extra}${upTag}<br><span style="color:#9fb88c">${e.t.d||''}</span>`;
+  info.innerHTML=head+(e.kind==='unit'
+   ? unitCard(e.key,{u:e})
+   : `<br><span style="color:#8fa8c8;font-size:11px">${cl[0]}<br>${cl[1]}</span>`);
   /* --- v79 RADAR TENT: Target Uplink ---
      Sits in the selection panel rather than the Radio Tower's fixed side panel:
      that panel is the call-down rig and is keyed to t.radio, and a second
@@ -7655,7 +7859,7 @@ function refreshSelPanel(){
       gTrain.add(tile({kind:'unit',art:k,fac:e.p.fac,name:U[k].n,dis:!ok,hk:hotNext(),
        c:[['⬢',c.p,tz(c.p,'cp'),poorP],['⚡',c.e,tz(c.e,'ce'),poorE],
           ['🪖',supOf(k),'cs',poorS]],
-       tip:U[k].d+'\n'+counterLine('unit',k).join('\n'),
+       card:unitCardPop(k,e.p,U[k].d),
        onclick:()=>{submitCmd('train',{bid:e.id,k});sClick()}}));
      }else{
       const rc=rcost(e.p,tk),busy=(e.techCur===tk);
@@ -7666,8 +7870,7 @@ function refreshSelPanel(){
        c:[['⬢',rc.p,'cp',poorP&&!busy],['⚡',rc.e,'ce',poorE&&!busy],
           ['⏱',(researchTime(e,tk)|0)+'s','ctm',false]],
        fill:busy?(()=>e.techT/researchTime(e,tk)):null,
-       tip:U[k].d+`\nUnlock: ${RESEARCH[tk].name} — ~${researchTime(e,tk)|0}s, runs while you keep producing`
-          +'\n'+counterLine('unit',k).join('\n'),
+       card:unitCardPop(k,e.p,U[k].d,`Unlock: ${RESEARCH[tk].name} — ~${researchTime(e,tk)|0}s, runs while you keep producing`),
        onclick:()=>{if(!busy&&!e.techCur&&!elsewhere){submitCmd('research',{bid:e.id,key:tk});sClick()}}}));
      }
     }
