@@ -426,3 +426,89 @@ try{SRC103=require('fs').readFileSync('pw.html','utf8')}catch(e){SRC103=null}
     U.grunt.cp===36 && U.tank.cp===220 && B.barracks.cp===160 && B.hbarricade.cp===40);
  ok('T80.J the hazard scale is where v67 left it - this release moved WHERE a\n   hazard goes, never how big it is', HAZ_SC===0.80);
 }
+
+/* ---------- K: the owner's pass on this release, played before merge ---------- */
+{
+ section('T80.K the Kitchen\'s whites, and the Backyard\'s barricade arcs');
+ /* Two findings from playing the branch. Both are about how a map READS, so both
+    were judged from real Chromium frames and both are bounded here by the
+    property that caused them rather than by a transcribed colour.
+
+    THE PALETTES ARE LOCAL CONSTS INSIDE renderTerrain, which is why these are
+    source-text checks and not value checks: GOO and LIQ are declared inside that
+    function and nothing outside it can see them. Reading the shipped file is the
+    only way to make a claim about them at all. */
+ const hexMax=h=>Math.max(parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16));
+ const hexMin=h=>Math.min(parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16));
+ const milk=SRC103&&/milk:\{rim:'[^']*',g0:'(#[0-9a-f]{6})',g1:'(#[0-9a-f]{6})',g2:'(#[0-9a-f]{6})',ring:'[^']*',sheen:'rgba\(255,255,255,\.(\d+)\)'\}/.exec(SRC103);
+ ok('T80.K the milk field\'s palette is readable out of the shipped file', !SRC103 || !!milk);
+ if(milk){
+  /* WHY IT WASHED OUT: g0 was #ffffff, which clips - a spill whose brightest
+     point is pure white has no surface left to shade, and on a #d6dde1 tile floor
+     it reads as a hole rather than as milk. */
+  ok('T80.K the milk spill no longer clips to pure white ('+milk[1]+')', hexMax(milk[1])<248);
+  ok('T80.K ...and its ramp still has enough range to show a surface',
+     hexMax(milk[1])-hexMin(milk[3])>=40);
+  ok('T80.K ...with the ramp running light to dark, so the blob reads as recessed',
+     hexMax(milk[1])>hexMax(milk[2]) && hexMax(milk[2])>hexMax(milk[3]));
+  /* the second half of the wash-out: a half-opacity WHITE sheen laid on top of a
+     white body. It is a streak now, not a wash. */
+  ok('T80.K ...and the white sheen over it is a streak, not a wash (.'+milk[4]+')', +('0.'+milk[4])<=0.3);
+ }
+ /* the finding was about the KITCHEN. Juice and coffee are the Living Room's and
+    the Desk's, and this pass must not have reached them. */
+ ok('T80.K the juice and coffee palettes are untouched',
+    !SRC103 || (SRC103.indexOf("juice:{rim:'rgba(38,10,42,.6)',g0:'#a84fc0'")>0 &&
+                SRC103.indexOf("coffee:{rim:'rgba(26,14,6,.6)',g0:'#7a4a26'")>0));
+ ok('T80.K the cosmetic milk puddle came down with the field it matches',
+    !SRC103 || (SRC103.indexOf("p.col==='milk'")>0 && !/p\.col==='milk'\)\{edge='[^']*';body1='#ffffff'/.test(SRC103)));
+ ok('T80.K the sheet of paper is no longer near-white on a light grey floor',
+    !SRC103 || (SRC103.indexOf("fill:'rgba(250,250,252,.9)'")<0 && SRC103.indexOf("fill:'rgba(238,236,230,.92)'")>0));
+
+ /* ---- the Backyard's barricades: fewer, and spread ---- */
+ /* MEASURED, not transcribed: the owner's words were "reduce and spread out", so
+    the checks are a count and a spacing. Before this pass the lawn carried 100.6
+    barricade tiles per seed in 25.9 clumps with a mean nearest-clump distance of
+    5.9 tiles - which is what read as long arcs of hedgehogs. */
+ function clumps103(M){
+  const set=new Set(M.barricades.map(b=>b.x+','+b.y)),seen=new Set(),out=[];
+  for(const b of M.barricades){const k=b.x+','+b.y;if(seen.has(k))continue;
+   const st=[b],cl=[];seen.add(k);
+   while(st.length){const q=st.pop();cl.push(q);
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+     const k2=(q.x+dx)+','+(q.y+dy);
+     if(set.has(k2)&&!seen.has(k2)){seen.add(k2);const a=k2.split(',');st.push({x:+a[0],y:+a[1]})}}}
+   out.push(cl);}
+  return out;
+ }
+ const stat=(key)=>{let tiles=0,cl=0,near=0,nc=0,n=0;
+  for(const s of SEEDS103){const M=makeMap(key,s);n++;tiles+=M.barricades.length;
+   const C=clumps103(M);cl+=C.length;
+   const ctr=C.map(c=>({x:c.reduce((a,q)=>a+q.x,0)/c.length,y:c.reduce((a,q)=>a+q.y,0)/c.length}));
+   for(let i=0;i<ctr.length;i++){let d=1e9;
+    for(let j=0;j<ctr.length;j++)if(i!==j)d=Math.min(d,dhyp(ctr[i].x-ctr[j].x,ctr[i].y-ctr[j].y));
+    if(d<1e8){near+=d;nc++}}}
+  return {tiles:tiles/n,clumps:cl/n,near:near/nc}};
+ const lawn=stat('backyard'),tile=stat('kitchen');
+ ok('T80.K the lawn carries far fewer barricade tiles ('+lawn.tiles.toFixed(1)+'/seed, was 100.6)', lawn.tiles<75);
+ ok('T80.K ...in fewer clumps ('+lawn.clumps.toFixed(1)+'/seed, was 25.9)', lawn.clumps<21);
+ ok('T80.K ...and they sit further apart ('+lawn.near.toFixed(1)+' tiles, was 5.9)', lawn.near>6.8);
+ /* the reduction is the LAWN'S. The owner named that map, and it is the one where
+    dark hedgehogs sit on bright grass; the other three keep their density. */
+ ok('T80.K the other maps keep the density they had ('+tile.tiles.toFixed(1)+'/seed)', tile.tiles>90);
+ ok('T80.K ...so the cut is the lawn\'s alone', lawn.tiles < tile.tiles*0.8);
+ /* and the ROADBLOCKS survive: the lane pass has a job (neither side beelines
+    down an open lane) and only its count per lane changed, from three to two. */
+ let laneless=[];
+ for(const s of SEEDS103){const M=makeMap('backyard',s);
+  const c=M.N/2;let mid=0;
+  for(const b of M.barricades)if(dhyp(b.x+.5-c,b.y+.5-c)<c*0.62)mid++;
+  if(mid<8)laneless.push(s+':'+mid);}
+ ok('T80.K the lane roadblocks are still laid on the lawn'+(laneless.length?' ['+laneless.slice(0,3).join('; ')+']':''),
+    laneless.length===0);
+ /* BARR_SEP is the "spread" half and it is global - no map is worse for its
+    random clusters not landing on each other. It is a REFUSAL with no fallback,
+    which is what makes it reduce as well as spread. */
+ ok('T80.K BARR_SEP is a real separation and the cluster pass has no fallback',
+    !SRC103 || (/const BARR_SEP=\d/.test(SRC103) && /BARR_SEP\)\)sp=s2;\}\s*if\(!sp\)continue;/.test(SRC103)));
+}

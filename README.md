@@ -85,7 +85,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v103 it makes **5,751
+that the results come out identical every time. As of v103 it makes **5,766
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -134,6 +134,17 @@ grass are no longer scattered across the living-room carpet — they are dust
 bunnies now, which is what they were always meant to be. And *Backyard Brawl*'s
 pair of terracotta pots is finally a pair: one of the two used to go missing on
 most maps.
+
+Two more came out of playing the release before it shipped. The white spills on
+*Kitchen Counter* were washing out — a puddle of milk whose brightest point is
+pure white has no surface left to shade, so it read as a flat hole in the counter
+rather than as a spill; it has its rim, its ripples and its body back, and the
+sheet of paper on the counter came down a shade with it. And *Backyard Brawl* had
+too many wire barricades, bunched into long arcs: the lawn now lays about **40%
+fewer** of them and they keep their distance from each other, so they read as
+scattered cover instead of clutter. The roadblocks across the lanes are still
+there — that is what they are for. The other three maps keep the barricades they
+had; it is the lawn where dark wire on bright grass stood out.
 
 Two smaller things came in the same release: the **Artillery Barrage** now drops
 its seven shells 1.5 seconds apart instead of 2, so the whole walk lands in

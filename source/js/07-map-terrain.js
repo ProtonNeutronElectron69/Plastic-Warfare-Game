@@ -517,9 +517,22 @@ function makeMap(key,seed){
   if(M.barricades.some(b=>b.x===tx&&b.y===ty))return;
   M.barricades.push({x:tx,y:ty});
  };
+ /* v103 owner pass: barrCluster scattered with no memory of ITSELF, so a cluster
+    routinely landed two tiles from one already down and the pair read as a single
+    long arc of hedgehogs - "reduce and spread out the random arcs". BARR_SEP is
+    how far a new cluster must start from every barricade already placed, and there
+    is deliberately NO fallback: a cluster that cannot find clear ground is simply
+    not laid, because fewer is half the ask. The lane roadblocks (laneBarr, below)
+    are exempt - they are laid ACROSS a lane on purpose and their position is their
+    whole job. */
+ const BARR_SEP=8;
  const barrCluster=(pairs)=>{
   for(let i=0;i<pairs;i++){
-   const sp=pickSpot(7,N*0.42,3,12);if(!sp)continue;
+   let sp=null;
+   for(let a3=0;a3<10&&!sp;a3++){const s2=pickSpot(7,N*0.42,3,12);
+    if(s2&&M.barricades.every(b=>dhyp(b.x+.5-s2.x,b.y+.5-s2.y)>=BARR_SEP)&&
+           M.barricades.every(b=>dhyp(b.x+.5-(N-s2.x),b.y+.5-(N-s2.y))>=BARR_SEP))sp=s2;}
+   if(!sp)continue;
    const ang=rnd()*Math.PI,len=3+Math.floor(rnd()*3),dx=dcos(ang),dy=dsin(ang);
    for(let s=0;s<len;s++){
     const tx=Math.round(sp.x+dx*s),ty=Math.round(sp.y+dy*s);
@@ -542,12 +555,17 @@ function makeMap(key,seed){
    barrTile(N-1-tx,N-1-ty); // mirror
   }
  };
- const laneBarr=()=>{
+ /* v103 owner pass: `at` is where along a lane the roadblocks go. Backyard Brawl
+    gets two instead of three - one near each end of the lane rather than one in
+    the middle as well. The roadblock's JOB survives (neither side beelines down an
+    open lane), and it is the one map where the dark hedgehogs sit on bright grass,
+    which is what made the same density read as clutter there. */
+ const laneBarr=(at)=>{
   // angle of the vector perpendicular to a->b
   const across=(a,b)=>datan2(b.x-a.x,-(b.y-a.y));
   for(const pair of [[M.starts[0],M.starts[2]],[M.starts[0],M.starts[3]]]){
    const a=pair[0],b=pair[1];
-   for(const t of [0.30,0.50,0.70]){
+   for(const t of at){
     const p=edgePoint(a,b,t,(rnd()*2-1)*3);
     barrLine(p.x,p.y,across(a,b)+(rnd()-.5),4+Math.floor(rnd()*3));
    }
@@ -639,7 +657,10 @@ function makeMap(key,seed){
   // spill puddles (cosmetic) at random spots
   {const a=pickSpot(10,22,4,14);if(a)puddle(a.x,a.y,2.2+rnd()*.6,'milk');const b=pickSpot(10,22,4,14);if(b)puddle(b.x,b.y,1.6+rnd()*.6,'juice');}
   M.board=reg({x:c-12,y:c+2,w:24,h:12});      // v103: fixed, so it is declared before the sheet of paper
-  patchAt(()=>({x:8+rnd()*(N-22),y:8+rnd()*(N-20),w:11+rnd()*4,h:9+rnd()*3,fill:'rgba(250,250,252,.9)',stroke:'rgba(175,180,190,.85)',inset:1}));
+  /* v103 owner pass: the sheet of paper was near-white at .9 over a light grey
+     tile, so it read as a hole in the floor rather than as paper. Warmer, a shade
+     down, and a firmer edge so the rectangle still reads as a sheet. */
+  patchAt(()=>({x:8+rnd()*(N-22),y:8+rnd()*(N-20),w:11+rnd()*4,h:9+rnd()*3,fill:'rgba(238,236,230,.92)',stroke:'rgba(158,160,166,.9)',inset:1}));
   if(M.bowlAt)for(let i=0;i<26;i++)M.deco.push({t:'cereal',x:M.bowlAt.x+(rnd()-.5)*16,y:M.bowlAt.y+(rnd()-.3)*14,s:.5+rnd()*.4,hue:35+rnd()*20});
   scatter('crumb',22,{x0:8,x1:N-8,y0:8,y1:N-8,s0:.5,sr:.7});
   // v25: counter clutter — a dish rack, plate stacks, mugs, toasters & salt shakers
@@ -844,7 +865,12 @@ function makeMap(key,seed){
  // v35: Desk keeps only its curated hazards & nests (survivalSetup carves its own
  // arena). v66: the lane passes are PvP-only for the same reason - the Desk's
  // starts are rebuilt in the middle of the map, so its corner lanes mean nothing.
- if(key!=='desk'){edgeClutter();mineField();barrCluster(7);laneBarr();}
+ /* v103 owner pass: Backyard Brawl lays fewer random clusters. It is the one map
+    where the dark hedgehogs sit on bright grass, so the same density that reads as
+    scattered cover on tile, carpet and sand read as clutter there - the owner's
+    note names that map. The other three keep the count they have always had. */
+ if(key!=='desk'){const lawn=key==='backyard';
+  edgeClutter();mineField();barrCluster(lawn?3:7);laneBarr(lawn?[0.32,0.68]:[0.30,0.50,0.70]);}
  // never block starts (clear passability AND any field hazards in a wide ring)
  for(const s of M.starts)for(let y=-5;y<=5;y++)for(let x=-5;x<=5;x++){const tx=s.x+x,ty=s.y+y;if(tx>=0&&ty>=0&&tx<N&&ty<N){M.pass[ty*N+tx]=1;M.fld[ty*N+tx]=0;}}
  // drop any field/nest objects that overlap a start so the visuals match the cleared tiles
@@ -1280,7 +1306,7 @@ function renderTerrain(){
  for(const p of (G.map.puddles||[])){
   const sx=isoX(p.x,p.y),sy=isoY(p.x,p.y),a=p.r*1.42*HW,b2=p.r*1.42*HH;
   let edge,body1,body2,spec;
-  if(p.col==='milk'){edge='rgba(195,198,205,.85)';body1='#ffffff';body2='#dde2e8';spec='rgba(255,255,255,.7)';}
+  if(p.col==='milk'){edge='rgba(168,173,182,.85)';body1='#edeff3';body2='#c9cfd9';spec='rgba(255,255,255,.34)';}   // v103 owner pass: as the milk FIELD above - it was pure white with a 70% white specular
   else if(p.col==='juice'){edge='rgba(150,80,10,.5)';body1='#ffb14e';body2='#e07c1a';spec='rgba(255,240,200,.6)';}
   else{edge='rgba(36,66,40,.55)';body1='#7fd0ee';body2='#3a7a9c';spec='rgba(220,250,255,.7)';}
   // damp halo
@@ -1314,7 +1340,14 @@ function renderTerrain(){
  const GOO={soda:{rim:'rgba(58,30,16,.5)',g0:'#37190d',g1:'#5c2f16',g2:'#8a4e22',fleck:'rgba(220,180,130,.5)',sheen:'rgba(255,208,150,.3)'},
             grease:{rim:'rgba(64,48,14,.5)',g0:'#5a4a12',g1:'#8a7220',g2:'#c2a63c',fleck:'rgba(255,238,178,.45)',sheen:'rgba(255,244,190,.34)'},
             glue:{rim:'rgba(46,54,66,.45)',g0:'#d8dee6',g1:'#eef2f6',g2:'#fbfdff',fleck:'rgba(150,170,195,.4)',sheen:'rgba(255,255,255,.42)'}};
- const LIQ={milk:{rim:'rgba(120,124,132,.5)',g0:'#ffffff',g1:'#f2f4f7',g2:'#d3d8e0',ring:'rgba(150,158,170,.3)',sheen:'rgba(255,255,255,.5)'},
+ /* v103 owner pass: the milk spill was PURE WHITE at the top of its ramp with a
+    50% white sheen on top of that, on a #d6dde1 tile floor - so it clipped to a
+    flat shape with no surface on it at all, brighter than anything else on the
+    board. Read in a real frame beside the grease slick, which shows its gradient,
+    its rim and its flecks. The ramp comes down to a cream, the rim darkens enough
+    to draw the edge, and the sheen is a streak rather than a wash. Milk is the
+    Kitchen's alone - juice and coffee are untouched. */
+ const LIQ={milk:{rim:'rgba(104,110,120,.62)',g0:'#eef0f4',g1:'#dde1e8',g2:'#bcc3cf',ring:'rgba(132,140,154,.34)',sheen:'rgba(255,255,255,.26)'},
             juice:{rim:'rgba(38,10,42,.6)',g0:'#a84fc0',g1:'#7a2a92',g2:'#4c1560',ring:'rgba(226,170,240,.22)',sheen:'rgba(240,190,250,.42)'},
             coffee:{rim:'rgba(26,14,6,.6)',g0:'#7a4a26',g1:'#4e2c14',g2:'#2a170a',ring:'rgba(196,150,104,.22)',sheen:'rgba(224,186,140,.34)'}};
  for(const fl of (G.map.fields||[])){

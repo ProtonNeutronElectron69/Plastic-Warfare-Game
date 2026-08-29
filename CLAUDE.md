@@ -77,7 +77,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 5,751 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 5,766 checks, expect 0 failures
 ```
 
 If those are green the repository is exactly as the last release left it, and
@@ -139,7 +139,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,751 checks at v103.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,766 checks at v103.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -386,7 +386,7 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 ## v103 — the map layout audit (not part of a roadmap)
 
 Three owner asks. Two are one-liners; the third is the release. `tail_v103.js`
-(T80, 56 checks), and **`harness/audit_maps.js` + `harness/map_shot.sh` are the
+(T80, 71 checks), and **`harness/audit_maps.js` + `harness/map_shot.sh` are the
 two tools it added** — the numeric half and the looking half. Full evidence in
 the v103 section of `harness/README.md`.
 
@@ -437,12 +437,35 @@ the v103 section of `harness/README.md`.
   table legitimately held — `BASE43_DESK`'s board generates identically, verified
   by hash — and `UNMOVED_OK` carries that reason rather than assuming it.
 
-**Four older checks were EDITED, not repinned** (rule 5 in both directions):
+**The owner's feedback pass on the same release (played before merge):** two
+findings, both about how a map READS rather than about geometry, both judged from
+real Chromium frames.
+
+- **The Kitchen's whites washed out.** The milk spill's gradient started at
+  `#ffffff` with a 50% WHITE sheen over it, on a `#d6dde1` tile floor — a spill
+  whose brightest point is pure white has no surface left to shade, so it clipped
+  to a flat shape with no rim, no ripple rings and no body. The ramp comes down to
+  a cream, the rim darkens, the sheen drops to .26, and the cosmetic puddle and
+  the sheet-of-paper patch came down with it. Juice and coffee are untouched.
+- **The lawn's barricade arcs.** Measured first: 100.6 tiles/seed in 25.9 clumps,
+  mean nearest clump 5.9, clumps as close as 2.0 — long arcs, not scattered cover.
+  `BARR_SEP` (8) is how far a NEW random cluster must start from every barricade
+  already down, mirror included, **with no fallback** — which is what makes it
+  reduce as well as spread, and it is global. The lawn also lays three random
+  clusters instead of seven and two lane roadblocks per lane instead of three,
+  because it is the one map where dark hedgehogs sit on bright grass. After:
+  **60.9 tiles/seed in 17.1 clumps, mean nearest clump 7.5.** `laneBarr` is exempt
+  from `BARR_SEP` on purpose: it is laid ACROSS a lane and its position is its job.
+
+**Six older checks were EDITED, not repinned** (rule 5 in both directions):
 `T51.B` and `T52.A` carry the barrage cadence and had to be re-stated; `T51.F`
 pinned "the collision table does not move a single prop" and v103 makes it drive
 placement deliberately, so it was **rewritten to the stronger opposite claim**;
 `T40.F`'s hedgehog scan accepted any tile that was not `terrain` and picked one
-denied by a wildlife nest once the map moved.
+denied by a wildlife nest once the map moved. The owner pass added two more:
+`T45.C` detects a hazard painter by watching for its RIM colour, so a palette
+change has to be declared there, and `T46.E` carried ONE barricade band for every
+map — the lawn has its own (36-90) now and the other three keep the v74 band.
 
 ## v102 — the unit stat card (not part of a roadmap)
 

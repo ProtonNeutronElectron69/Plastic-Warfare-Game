@@ -1178,7 +1178,7 @@ exact bug: exit 2, and the message names the block.
 
 ## v103: the map layout audit, a faster barrage, and a louder rotor
 
-Three owner asks, and the third one is the release. `tail_v103.js` (T80, 56
+Three owner asks, and the third one is the release. `tail_v103.js` (T80, 71
 checks) and `harness/audit_maps.js` — the measuring tool the numbers below come
 from. **This is the first release since the layout pins existed that changes map
 generation on purpose**, so the 42-pin gate runs as its own inverse (see the
@@ -1300,6 +1300,50 @@ answers "how much ground does this COVER". A bookshelf blocks .70 of a tile and 
 drawn over .82, which is exactly how a neutral barricade ended up standing inside
 one on 65 of 40 Living Room seeds: `barrTile` had always refused a BLOCKED tile,
 and the art is wider than the block.
+
+### The owner's pass on the same release, played before merge
+
+Two findings, and both are about how a map READS rather than about geometry, so
+both were judged from real Chromium frames.
+
+**"Some of the white features on Kitchen Counter are too white and exposed."**
+Measured by looking: the milk spill's gradient started at `#ffffff` with a 50%
+WHITE sheen laid over it, on a `#d6dde1` tile floor. A spill whose brightest point
+is pure white has no surface left to shade, so it clipped to a flat shape with no
+rim, no ripple rings and no body - a hole in the counter, and the brightest thing
+on the board. The grease slick beside it, which shows all three, is what made the
+comparison obvious. The ramp comes down to a cream (`#eef0f4` → `#bcc3cf`), the
+rim darkens enough to draw the edge, the sheen drops to .26, and the cosmetic milk
+puddle and the sheet-of-paper patch came down with it. **Juice and coffee are
+untouched** - the finding was about the Kitchen, and milk is the Kitchen's alone.
+
+**"Reduce and spread out the random arcs of green barricades on Backyard Brawl."**
+Measured before touching it: 100.6 barricade tiles per seed in 25.9 clumps, mean
+nearest-clump distance 5.9 tiles and clumps landing as close as 2.0 - which is why
+they read as long arcs rather than as scattered cover. Two changes, and the word
+RANDOM in the note picked which:
+
+- `barrCluster` scattered with no memory of ITSELF. `BARR_SEP` (8 tiles) is how
+  far a new cluster must start from every barricade already down, tested for the
+  mirror too, **with no fallback** - a cluster that cannot find clear ground is
+  simply not laid, which is what makes it reduce as well as spread. Global: no
+  map is worse for its random clusters not landing on each other.
+- The lawn lays three random clusters instead of seven, and two lane roadblocks
+  per lane instead of three. It is the one map where dark hedgehogs sit on bright
+  grass, which is why the same density reads as clutter there and as cover
+  elsewhere; the other three keep what they had.
+
+Measured after: **60.9 tiles per seed in 17.1 clumps, mean nearest clump 7.5.**
+The roadblocks' job survives - `laneBarr` is exempt from `BARR_SEP` because it is
+laid ACROSS a lane on purpose and its position is its whole job, and T80.K checks
+the lawn still carries them.
+
+Two older pins fired and were re-stated rather than loosened. `T45.C` detects a
+hazard painter by watching for its RIM colour being assigned to `fillStyle`, so a
+palette change has to be declared there. `T46.E` carried one barricade band for
+every map; the lawn has its own now (36-90), the other three keep the v74 band
+(50-140), and the split is what makes this an intended cut on one map rather than
+a drift on all of them.
 
 ### The layout gate, run as its own inverse
 
@@ -4368,7 +4412,7 @@ now runs each table from its own cfg and asserts both the equality that should h
 ## Contents
 
 v103 adds tail_v103.js (T80), riding segment 3 and listed last in tails.txt.
-**The suite stands at 5,751 checks** (5,694 at v102, 5,638 at v101, 5,587 at
+**The suite stands at 5,766 checks** (5,694 at v102, 5,638 at v101, 5,587 at
 v100). Sections A-B are the barrage's cadence and the rotor's level, both
 transcribed on the rule that a number the owner set has to be re-stated by the
 next release that moves it. C-J are the map audit and they GENERATE MAPS rather
@@ -4381,13 +4425,21 @@ dust instead of grass, the three banding passes anchored on the right axis, and
 the containment claim - a map generates on the map's own mulberry stream and
 consumes nothing from `srand()`.
 
-Four checks in older tails were EDITED rather than repinned, each deliberately:
+Section K is the owner's pass on the same release: the Kitchen's whites bounded
+by the PROPERTY that caused the wash-out (nothing clips, the ramp keeps range, the
+sheen is a streak) rather than by a transcribed colour, and the lawn's barricades
+bounded by a count and a spacing, because "reduce and spread out" is what was
+asked. Those palettes are local consts inside `renderTerrain`, so reading the
+shipped file is the only way to make a claim about them at all.
+
+Six checks in older tails were EDITED rather than repinned, each deliberately:
 `T51.B` and `T52.A` carry the barrage's cadence and had to be re-stated; `T51.F`
 pinned "the collision table does not move a single prop" and v103 makes it drive
 placement on purpose, so the assertion was rewritten to the stronger opposite
 claim; and `T40.F`'s hedgehog scan accepted any tile that was not `terrain`, so
 once the map moved it picked one whose spacing denial came from a wildlife nest -
-the scan now says what its own comment always described.
+the scan now says what its own comment always described. `T45.C`'s rim table and
+`T46.E`'s barricade band are the owner pass's two, described above.
 
 v100 adds tail_v100.js (T77), riding segment 3 and listed last in tails.txt.
 The suite stood at 5,587 checks at that release (5,538 at v99).
