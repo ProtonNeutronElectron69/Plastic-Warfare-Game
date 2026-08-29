@@ -109,3 +109,15 @@ const PROP_BLK={
 /* collision radius for one placed prop: the table when it has an opinion, the
    call-site radius otherwise, scaled the same way the art is */
 function propBlkR(t,r,sc){const b=PROP_BLK[t];return (b==null?r:b)*(sc||1)}
+/* v103 ART radius, read back out of the SAME table rather than measured twice.
+   PROP_BLK's own header says every entry is 0.85x the sprite radius the type was
+   baked at, and that 0 means "art smaller than a unit's own radius" - so the two
+   constants below are that header restated as numbers, and the art can never
+   drift from the collision it was derived from.
+   propBlkR answers "what does this take away"; propArtR answers "how much ground
+   does this COVER". Placement asks the second one: a bookshelf blocks .70 of a
+   tile and is drawn over .82, which is how a neutral barricade ended up standing
+   inside one. */
+const PROP_ART_K=0.85;    // PROP_BLK entry / this = the measured sprite radius
+const PROP_ART_MIN=0.45;  // what a 0 entry means: about one unit's own radius
+function propArtR(t,r,sc){const b=propBlkR(t,r,sc);return b>0?b/PROP_ART_K:PROP_ART_MIN*(sc||1)}

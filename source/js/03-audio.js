@@ -827,10 +827,15 @@ function sAtkAlert(){
    apart is the rotor itself: chop and blade rates, the filter, and the
    Chinook's tandem beat. T43.L pins all of that, so the differentiation is a
    checked claim rather than a hope. */
+/* v103: every rotor's level DOUBLED on the owner's instruction - the answer was
+   too quiet against the ground fleet's diesels. Only `g` moved: chop and blade
+   rates, the filter and the Chinook's tandem beat are what tell the three apart
+   and T43.L pins those, so the three stay exactly as distinguishable as they
+   were and stay in the same loudness ORDER as each other. */
 const ROTORV={
- heli:{chop:11,blade:22,lp:320,dur:.45,g:.26},
- apache:{chop:14,blade:28,lp:280,dur:.48,g:.24},
- chinook:{chop:8.5,blade:9.3,lp:240,dur:.60,g:.30}
+ heli:{chop:11,blade:22,lp:320,dur:.45,g:.52},
+ apache:{chop:14,blade:28,lp:280,dur:.48,g:.48},
+ chinook:{chop:8.5,blade:9.3,lp:240,dur:.60,g:.60}
 };
 function sRotor(kind){
  if(muted||!ac()||!voxOk())return;const buf=noiseBuf();if(!buf)return;

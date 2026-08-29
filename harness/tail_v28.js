@@ -14,7 +14,7 @@ section('T9 v28: cleanup invariants, cross-version layout + trail equality');
 // v36: backyard/kitchen/sandbox rebaselined — the v36 blockLine fix intentionally changed
 // line-prop collision on those maps. livingroom has no line-props, so it stays byte-identical
 // to v27.1 below, which proves the change is localized to line-prop passability.
-const V271_LAYOUTS={"backyard:11":1255837022,"backyard:22":1262884325,"backyard:33":3816844854,"kitchen:11":2736043710,"kitchen:22":317751797,"kitchen:33":3447831333,"sandbox:11":3903799714,"sandbox:22":2051225923,"sandbox:33":1330770731,"livingroom:11":859166094,"livingroom:22":3229224006,"livingroom:33":3594163030};
+const V271_LAYOUTS={"backyard:11":3173483240,"backyard:22":4054463607,"backyard:33":603485934,"kitchen:11":2251838869,"kitchen:22":55276541,"kitchen:33":3629368049,"sandbox:11":807755444,"sandbox:22":677939027,"sandbox:33":1262535446,"livingroom:11":3778324468,"livingroom:22":1773968724,"livingroom:33":3165985799};
 const DT9=1/30;
 function cfg9(map,seed){return{map,mode:'dm',diff:'normal',fac:'tan',opp:3,seed}}
 function layoutHash9(){

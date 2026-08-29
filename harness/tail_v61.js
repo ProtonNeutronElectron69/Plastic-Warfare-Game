@@ -226,6 +226,13 @@ function roundTrip61(seed,type){
    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
     const tx=b.tx+dx,ty=b.ty+dy;
     if(placeDeny(p,'guardtower',tx,ty)==='terrain')continue;
+    /* v103: and NOTHING BUT HEDGEHOGS may stand near it. The scan used to accept
+       any tile that was not 'terrain', so when map generation moved it picked a
+       tile whose spacing denial came from a wildlife nest one square up rather
+       than from the hedgehog beside it - and then failed a claim this block never
+       meant to make. This is the condition the comment above always described,
+       written down. */
+    if(G.blds.some(o=>o.key!=='barricade'&&Math.abs(o.tx-tx)<=o.sz+2&&Math.abs(o.ty-ty)<=o.sz+2))continue;
     hedge=b;ht={tx,ty};break;
    }
    if(hedge)break;

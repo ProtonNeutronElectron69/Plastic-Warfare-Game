@@ -6,8 +6,8 @@
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v102';
-const GAME_DATE='2026-08-28';
+const GAME_VER='v103';
+const GAME_DATE='2026-08-29';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
    the version that nothing tied back to the first, which is the trap this whole
@@ -116,6 +116,15 @@ const MINE_KEEPOUT=14;              // v67: tiles of clear ground around EVERY s
    11.5-13.5 tiles out), so mines were being buried on the approach to your
    own second base. 14 still fills all 20 mines on every seed measured. */
 const HAZ_SC=0.80;                  // v67: linear scale on every terrain-hazard blob (0.80 linear = 0.64 area)
+/* v103: how far apart two hazards of DIFFERENT KINDS must sit, as a fraction of
+   the sum of their half-extents. 1.0 is rims touching; a blob's rim wobbles out
+   to 1.4x its base radius, so a little over 1 is what actually keeps two colours
+   from crossing. Every hazard pick that can retry reads this one number.
+   It is a PREFERENCE, not a rule: a pick that cannot satisfy it falls back to an
+   unconstrained one, because a map that LOST a hazard is worse than a map with a
+   hazard whose rim touches another. Same-kind lobes are exempt by construction -
+   the per-map clusters are deliberately built out of them. */
+const FLD_GAP=1.05;
 /* v76: 7.0 -> 4.9 (a 30% cut). Damage per SECOND a code-2 terrain hazard deals to
    any ground unit or wildlife standing in it. Named because updateHazards sweeps
    units and creatures separately and the two literals could drift apart. */

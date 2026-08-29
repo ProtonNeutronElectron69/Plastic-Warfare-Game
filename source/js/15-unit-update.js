@@ -572,12 +572,15 @@ function radioCD(){return (G&&G.test)?0:RADIO_CD;}
    places on every lockstep client and a snapshot taken mid-flight replays exactly.
    Damage runs weapon class q, which is 1.00 against everything except infantry.
    v77: 3 -> 7 shells at half damage each (210 -> 105). Two consequences were taken
-   deliberately and are NOT bugs: the walk now runs BARRAGE_FLY+(N-1)*GAP = 13.6s
+   deliberately and are NOT bugs: the walk runs BARRAGE_FLY+(N-1)*GAP seconds
    rather than 5.6s, and total damage rises 630 -> 735 because seven halves are more
    than three wholes. This block sits ABOVE the ability table on purpose - the table
    is built at load time and reads BARRAGE_N for its panel copy, and a const is in
-   the temporal dead zone until its own declaration runs. */
-const BARRAGE_N=7, BARRAGE_GAP=2.0, BARRAGE_FLY=1.6;
+   the temporal dead zone until its own declaration runs.
+   v103: GAP 2.0 -> 1.5 on the owner's instruction. The shells are unchanged in
+   number, damage and scatter; only the cadence tightens, so the walk closes from
+   13.6s to 10.6s and a target has less time to drive out from under it. */
+const BARRAGE_N=7, BARRAGE_GAP=1.5, BARRAGE_FLY=1.6;
 const BARRAGE_DMG=105, BARRAGE_R=3, BARRAGE_BOX=10;
 /* The barrage row below has always built its panel string out of BARRAGE_N and
    BARRAGE_BOX. Napalm and Paradrop were the two that still typed their figures

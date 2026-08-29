@@ -44,19 +44,20 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v102, and what a fresh session does)
+## Where the game stands (v103, and what a fresh session does)
 
-The game is at **v102**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v103**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
-v102 are standalone owner passes (below). There is no release in flight.
+v103 are standalone owner passes (below). There is no release in flight.
 
 **Known open fronts, none started:**
 
-- **Maps and map art.** The owner explicitly deferred these from v97's detail
-  pass ("maps/map art will be handled separately"). Terrain (`G.terr`), props
-  and ground art are the one visual layer still fully procedural at base
-  resolution.
+- **Map ART, as opposed to map LAYOUT.** The owner deferred map art from v97's
+  detail pass ("maps/map art will be handled separately") and v103 did NOT close
+  it: v103 fixed where things are PUT, not how they are drawn. Terrain
+  (`G.terr`), props and ground art are still the one visual layer fully
+  procedural at base resolution — no textures, no normal maps, no lighting.
 - **Balance.** The v90 baseline below still stands as the set of open leads:
   Green likely overshoots via the plastic-threshold reserves, Blue is last and
   untouched, `turtle` has responded to nothing. Nothing since has been aimed at
@@ -76,13 +77,20 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 5,694 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 5,751 checks, expect 0 failures
 ```
 
 If those are green the repository is exactly as the last release left it, and
 whatever the owner asks for next is a fresh vNN starting from `origin/main`. If
 they are NOT green, stop and read the failure before touching anything: every
 check in this suite was put there by a release that paid for it.
+
+**The map generator has just had an audit and is the cleanest it has ever been**
+(v103, below). If you touch `makeMap`, run `harness/audit_maps.js` before and
+after — it counts every defect class the audit found, and the residual it should
+report is: 3-4 decor-sized art grazes, 2 line props lying in a spill, and one
+sandbox seed in twenty sharing ten tiles between two hazards. Anything larger
+than that is a regression.
 
 **How a release ships.** One version per PR. Start a fresh branch from
 `origin/main`, work it as vNN (or vNN.N for a feedback/repair pass), **bump
@@ -131,7 +139,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,694 checks at v102.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,751 checks at v103.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -143,6 +151,29 @@ cd harness
 ./sim.sh                 # 8 all-AI deathmatches, 2 per map, ~2min. Writes a report page.
 ./sim.sh 16              # a bigger batch; SEED0=900 ./sim.sh for a different run
 ```
+
+## Looking at the maps (v103)
+
+```sh
+cd harness
+./map_shot.sh out 500000 0.42     # one whole-board PNG per map, then READ them
+cat shim_head.js game.js audit_maps.js > .audit.js && node .audit.js 40
+```
+
+`map_shot.sh` boots a real match per map in headless Chromium, paints the baked
+terrain canvas plus every prop into one canvas sized to the WHOLE board, outlines
+the board's own rim in magenta so anything drawn outside it is obvious, and leaves
+that canvas as the page. `audit_maps.js` is its numeric half: it generates every
+map over N seeds and counts each defect class. Neither is pinned and neither is
+part of `seg.sh` — like `sim.sh` and the probes, they answer "what does this
+actually look like", not "did I break anything". **A layout defect cannot fail the
+suite**, which is rule 7 with a whole subsystem behind it.
+
+Two traps in that recipe, both paid for: `plastic-warfare.html` ends with
+`</html>` and NO trailing newline, so `head -c -1` before appending a `<script>`
+eats the `>` and the injection silently never runs; and do not wait on the `load`
+event — on a 6.7MB page of `data:` URLs it sits behind every decode and Chromium's
+virtual clock expires first. Poll `ASSETS_STATE`, the gate the Start button uses.
 
 `sim.sh` runs whole matches with a CPU in every seat and builds
 `sim_out/battle-report.html` — winners, kills, and what every army produced. It is a
@@ -184,13 +215,13 @@ five baseline tables behind the 42-pin layout gate. Copy the current
 `recut_vNN.js` / `repin_vNN.py` pair forward to the new version and delete the
 old one; only the current release's one-shots ship.
 
-**The pair in the tree is `recut_v101` / `repin_v101`** — the pair is carried
-forward by the release that MOVES the trails, not by every release. v101 moved
-every trail by construction (hashState gained the `G.dayOff` field and newGame
-gained a srand draw), so its pair expects all five tables to move and its
-`UNMOVED_OK` is empty. Do not read the version on
-those two files as the version of the game; read it as "the last release that
-had to repin".
+**The pair in the tree is `recut_v103` / `repin_v103`** — the pair is carried
+forward by the release that MOVES the trails, not by every release. Do not read
+the version on those two files as the version of the game; read it as "the last
+release that had to repin". v103's pair is the unusual one and worth reading
+before you copy it forward: it recuts the LAYOUT pins as well as the trails, and
+it runs the 42-pin gate as its own inverse, because v103 changes map generation
+on purpose. Every other release wants that gate as a refusal.
 
 **Recut ONCE, on the final bytes.** If you repin, then keep editing the sim, the
 tables you wrote are already stale. v99 hit this: a later pacing change moved one
@@ -201,7 +232,10 @@ release.
 
 **The layout gate is not optional.** If any of the 42 map-layout pins move, stop
 — that means map generation changed, and repinning trails on top of that hides
-the real problem instead of recording it.
+the real problem instead of recording it. The one exception is a release whose
+SUBJECT is map generation, and there the gate is inverted rather than skipped:
+see `recut_v103.js`, which demands the pins moved and names the only board
+allowed to hold still.
 
 **Two pin counts, both correct, and they will look like a contradiction.**
 `triage.sh` prints "all 30 pins hold"; the recut gate in `recut_vNN.js` asserts
@@ -348,6 +382,67 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v103 — the map layout audit (not part of a roadmap)
+
+Three owner asks. Two are one-liners; the third is the release. `tail_v103.js`
+(T80, 56 checks), and **`harness/audit_maps.js` + `harness/map_shot.sh` are the
+two tools it added** — the numeric half and the looking half. Full evidence in
+the v103 section of `harness/README.md`.
+
+- **The artillery barrage walks at 1.5s between shells** (`BARRAGE_GAP`, was
+  2.0): the walk closes from 13.6s to 10.6s and nothing else about it moves. The
+  manual followed with no edit because the sentence already spent the constant
+  through `data-tune="barrGap"`.
+- **Every helicopter's selection voice is twice as loud** (`ROTORV` `g` only).
+  Chop rate, blade rate, filter, window and the Chinook's tandem beat are what
+  tell the three apart, T43.L pins them, and none of them moved.
+- **The map audit.** The owner listed six defects and invited a sweep. All six
+  reproduced and all six are fixed, plus four more found by sweeping. Measured
+  over 40 seeds × 5 maps, before → after: art off the board 162 → 0; blocking
+  props drowned in a liquid 379 → 2 (both line props, exempt on purpose); ground
+  cover on liquid or under a blocker 2,067 → 0; barricades inside a prop's art
+  119 → 0; seeds with two hazard kinds sharing tiles 88 → 2; art drawn through
+  art 165 → 4; flat ground regions overlapping → 0.
+
+**Five things worth carrying forward:**
+
+- **"Off colour tiles on one side" was ONE TYPO IN THREE PASSES.** The grass
+  mowed-stripes, the carpet vacuum banding and the kitchen's tile gloss all
+  anchored their band at `isoX(i,0)` and ran N tiles in +x — which in tile space
+  is a strip three tiles DEEP along one edge, so every band stacked into the same
+  three rows and layered into a pale wedge at the rim. `isoX(0,i)` is the fix.
+  **When a pass claims to sweep the board, check which axis it actually walks.**
+- **A pass that gives up takes its last roll blind.** Teaching the hazard picks
+  to REJECT a spot crossing another kind cut the clipping by two thirds and then
+  stopped, because the lane blob must sit on a lane and kept running out of
+  tries. Scoring the ladder and keeping the LEAST BAD roll took the rest to
+  nearly zero. That is why `fldGap` returns a MARGIN and `farField` is only its
+  yes/no reading.
+- **Measure before you "finish the job".** The drowning removal stops at
+  impassable LIQUID on purpose: a liquid is a hole in the ground, but quicksand,
+  thorns, glue, grease and soda are ground. The same rule over burn hazards would
+  have deleted 141 of the Sandbox's 1,150 props, **104 of them the bucket
+  fortress's own walls**. The answer there was `KEEP` — ground no hazard may be
+  laid over — not deleting the castle.
+- **`propArtR` is not a second measurement.** `PROP_BLK`'s header says every
+  entry is 0.85× the sprite radius, so the art reads back OUT of the collision
+  table. `propBlkR` answers "what does this take away"; `propArtR` answers "how
+  much does it COVER". A bookshelf blocks .70 and is drawn over .82, which is
+  exactly how a hedgehog ended up standing inside one.
+- **The layout gate ran as its own INVERSE, and that is allowed exactly once per
+  reason.** v103 changes map generation on purpose, so `recut_v103.js` demands
+  the pins MOVED (40 of 42 did; the two that held are `desk:22`, and only the
+  Desk may hold). It still refuses a walk of the wrong number of pins. One trail
+  table legitimately held — `BASE43_DESK`'s board generates identically, verified
+  by hash — and `UNMOVED_OK` carries that reason rather than assuming it.
+
+**Four older checks were EDITED, not repinned** (rule 5 in both directions):
+`T51.B` and `T52.A` carry the barrage cadence and had to be re-stated; `T51.F`
+pinned "the collision table does not move a single prop" and v103 makes it drive
+placement deliberately, so it was **rewritten to the stronger opposite claim**;
+`T40.F`'s hedgehog scan accepted any tile that was not `terrain` and picked one
+denied by a wildlife nest once the map moved.
 
 ## v102 — the unit stat card (not part of a roadmap)
 
