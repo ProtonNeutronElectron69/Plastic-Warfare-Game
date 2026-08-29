@@ -13,12 +13,16 @@ last of the three landed at v97 and nothing is outstanding. Practical route:
   (search for `## v103`). Each one is the finding, the change, and what it measured.
 - **How to build and run the suite:** `## Assembly` and `## Running`, about a
   fifth of the way down. `../CLAUDE.md` has the two commands; these have the why.
-- **Where the balance stands:** `## v90 BALANCE BASELINE`, read together with the
-  staleness note in `../CLAUDE.md` — the percentages predate v99's command model.
+- **Where the balance stands:** `## v103 POST-MERGE MEASUREMENT` — 32 matches on
+  the current build. `## v90 BALANCE BASELINE` below it keeps the reasoning.
 - **What each release's tail covers:** `## Contents`, near the foot of the file.
 - **The roadmap chapters (immediately below):** the record of what each phase was
   told to build and what it cost. Useful when you touch a subsystem one of them
   built; not a to-do list.
+- **What could come NEXT:** `## Roadmap 4` in `../CLAUDE.md` — a tentative,
+  unagreed shortlist written at v103, four of whose twelve items rest on the
+  measurement section below. It is the only forward-looking chapter either file
+  carries.
 
 Everything in here is written as a claim someone paid for. When a section and a
 heading disagree, the section is usually the one that was updated - and both are
@@ -1176,6 +1180,105 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v103 POST-MERGE MEASUREMENT: the balance re-measure and the AI ability audit
+
+**No code changed for this section.** It is a measurement pass taken against v103
+as merged (`5533a12`), when the owner asked for a whole-game review and a list of
+what to build next. The list itself is **Roadmap 4** in `../CLAUDE.md`; this is the
+evidence four of its twelve items rest on. Reproduce any of it in about ten
+minutes.
+
+### 1. The armies are two tiers (32 matches)
+
+The v90 baseline below had said, in its own words, that its percentages were
+stale and that anyone quoting one should re-measure first. This is that
+re-measure: two independent batches of 16 all-CPU matches, every army in every
+match, so an even game is 25% each.
+
+    cd harness && ./sim.sh 16              # batch 1
+    SEED0=4200 ./sim.sh 16                 # batch 2
+
+| army | batch 1 | batch 2 | combined | K/L per batch | units built |
+|---|---|---|---|---|---|
+| green | 6/16 | 9/16 | **47%** | 1.01 / 1.40 | 7,047 |
+| tan | 6/16 | 5/16 | **34%** | 1.36 / 1.12 | 6,316 |
+| gray | 2/16 | 1/16 | **9%** | 0.84 / 0.85 | 5,754 |
+| blue | 2/16 | 1/16 | **9%** | 0.69 / 0.51 | 7,005 |
+
+**Green +22 points over an even share, Blue and Gray −16 each.** Sixteen matches
+is a hint and not a verdict — that is this file's own standing rule — but the two
+batches agree on the ORDERING, and a 47/34/9/9 split is far outside the wobble
+recorded elsewhere in this README. The two-tier finding is safe to act on; any
+single percentage in it is not.
+
+**Blue's shape is the most diagnostic thing here.** It builds 7,005 units, more
+than every army except Green, and converts them at 0.69 and 0.51 kills per loss —
+worst in both batches by a clear margin. An army that out-produces the field and
+under-trades it is not losing to a bad unit; it is losing to the −10% hull that
+prices the whole roster. That is a hypothesis, not a measurement, and
+`probe_v89.sh` is the tool that would test it before anything is re-priced.
+
+**Gray at 9% is genuinely new.** The v90 baseline did not flag Gray at all.
+
+**Doctrines, pooled over both batches:** `turtle` 3 wins of 26, `defensive` 3 of
+27, `balanced` 8 of 28, `harasser` 9 of 24, `aggressive` 9 of 23. The defensive
+pair is at ~11% against ~38% for the aggressive pair. v90 recorded `defensive`
+recovering to 14.6% when `firstPush` moved; it has slipped back.
+
+**Two figures that did NOT look broken**, and are worth recording as such so a
+future pass does not go hunting there first. Production mix held across both
+batches at infantry 56-57%, vehicles 33-34%, air 7.2-7.5%, AA 2.1-2.3% - v89
+moved air from 3.6% to 8.6% and it has stayed near that. And match length ran to
+a median of 769-994 sim-seconds.
+
+**What DID show up in the match records: 6 of 32 matches ran out the clock.** The
+economy is finite by design (nodes deplete and `removeNode` drops them; wrecks
+pay back 50% of plastic) but nothing escalates once a map is stripped, so two
+dug-in armies can genuinely run out of ways to break each other. v99 fixed the
+bot-side version of this - the idle-wave stall - and what is left is structural.
+
+### 2. The AI drives 3 of the 11 unit abilities
+
+Read out of the AI's own source rather than inferred from watching matches:
+concatenate every `ai*` function and look for the field each toggle sets.
+
+| driven by `aiTick` | never touched |
+|---|---|
+| `entrench`, `rally`, `valve` | `smokeCap`, `cshot`, `ripple`, `throttle`, `flat`, `aslt`, `sprint`, `bcast` |
+
+The BUILDING side is in good shape by contrast — garrisons, Lockdown, Overdrive,
+Pour, Regroup, the Target Uplink, the balloon bail-out and every
+`RADIO_ABILITIES` call-down are all driven.
+
+**Why this matters more than it looks.** Eight of the eleven are unit abilities
+the player has and the computer never uses, and the faction-exclusive ones are
+almost all in that column: a CPU Gray never fires a Called Shot, a CPU Tan never
+charges with the Bull, a CPU Blue never sprints. So the abilities that give each
+army its character are exactly the ones a player never sees used against them,
+and the difficulty ceiling on Hard is lower than the design supports — the bots
+are playing a simpler game than the human is.
+
+Two of them are nearly free because they carry no downside to manage (Ripple Fire
+into a clump, Scramble on aircraft heading home). `throttle` is the one that
+needs real judgement, because Full Throttle silences BOTH of the Bull's guns and
+a bot that charges at the wrong moment throws away 391 plastic.
+
+**If this is ever built, measure the mechanism.** Rule 8, and the v89/v90 record
+behind it: a win-rate delta cannot tell you whether the bots are using Called
+Shot WELL. A per-ability usage count can, and `probe_v99.sh` is the shape to copy.
+
+### 3. Inventory, for the record
+
+Counted off the game's own tables at load rather than by hand: 25 trainable units,
+19 buildings (excluding the neutral nest), 4 armies with full exclusive sets, 45
+research entries, 11 unit toggles, 6 Radio Tower call-downs, a 9x6 weapon-vs-armour
+matrix, 4 modes, 4 PvP maps plus 1 survival-only, 15 survival waves over 6 species,
+5 AI doctrines, 9 building upgrades, 5,766 checks.
+
+**The thin columns in that list are the roadmap.** Four PvP maps and one survival
+board is the tightest content constraint the game has; zero music is the largest
+presentation gap; two of four armies at 9% is the largest play problem.
+
 ## v103: the map layout audit, a faster barrage, and a louder rotor
 
 Three owner asks, and the third one is the release. `tail_v103.js` (T80, 71
@@ -2219,7 +2322,13 @@ HQ dies inside them. T64.F asserts that guard functionally by counting
 `aiFindSpot` calls by key rather than leaving it as prose here, with a mutation arm
 that kills the HQ and shows the same probe firing on the very next tick.
 
-## v90 BALANCE BASELINE: 64 matches, and it supersedes the 24-match brief
+## v90 BALANCE BASELINE: 64 matches, superseded at v103 but kept for its reasoning
+
+**Superseded on the numbers by the v103 re-measure above** (32 matches on v103 as
+merged: Green 47%, Tan 34%, Gray 9%, Blue 9%). This section is kept because the
+MECHANISM each of its findings proposes is still the best available guess at why,
+and because the older figures show which way things have moved since. Read the
+v103 section for what is true now and this one for what might be causing it.
 
 Every faction conclusion in this repo before this section came from a **24-match**
 read taken at v88.1. This is **64 matches** on v90 as merged (`fc60077`), four seed
