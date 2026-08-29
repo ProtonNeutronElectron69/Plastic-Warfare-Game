@@ -268,11 +268,20 @@ function hazStats67(M) {
      was being hit exactly, and a wider seed sample puts even v73 at 118, so that
      bound was a twelve-seed snapshot rather than an invariant. Message names the
      band being TESTED; the observed range is reported alongside it. */
-  const BARR_LO = 50, BARR_HI = 140; // v74 band
+  /* v103 owner pass: the BACKYARD is deliberately below the v74 band now and has
+     its own. The owner asked for fewer, more spread-out hedgehog arcs on that map
+     - it is the one where dark barricades sit on bright grass - so it lays three
+     random clusters instead of seven and two lane roadblocks per lane instead of
+     three. The other three maps keep the v74 band untouched, which is what makes
+     this an intended cut on one map rather than a drift on all of them. The lower
+     bound still bites: it is not far below what was measured (44-66 over these
+     seeds), so a pass that started eating the lawn's cover fails here. */
+  const BARR_BAND = { backyard: [36, 90], _: [50, 140] };   // v74 band for everything else
   for (const key of PVP67) {
+    const [BARR_LO, BARR_HI] = BARR_BAND[key] || BARR_BAND._;
     let lo = 1e9, hi = 0;
     for (const sd of S67) { const n = makeMap(key, sd).barricades.length; lo = Math.min(lo, n); hi = Math.max(hi, n); }
-    ok(`T46.E ${key}: barricade totals inside the v74 band ${BARR_LO}-${BARR_HI} (saw ${lo}-${hi})`,
+    ok(`T46.E ${key}: barricade totals inside its band ${BARR_LO}-${BARR_HI} (saw ${lo}-${hi})`,
        lo >= BARR_LO && hi <= BARR_HI);
   }
 

@@ -24,6 +24,9 @@ harness/.seg*.out
 harness/rc.js
 harness/rc*.js
 harness/tri.js
+# The map audit's own bundle (harness/audit_maps.js). Same deal as the others:
+# concatenated on demand from shim_head.js + game.js + the tool.
+harness/.audit.js
 harness/sim.js
 harness/simrep.js
 harness/probev89.js

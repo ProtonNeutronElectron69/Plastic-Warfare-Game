@@ -686,8 +686,8 @@ canvas{display:block}
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v102';
-const GAME_DATE='2026-08-28';
+const GAME_VER='v103';
+const GAME_DATE='2026-08-29';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
    the version that nothing tied back to the first, which is the trap this whole
@@ -796,6 +796,15 @@ const MINE_KEEPOUT=14;              // v67: tiles of clear ground around EVERY s
    11.5-13.5 tiles out), so mines were being buried on the approach to your
    own second base. 14 still fills all 20 mines on every seed measured. */
 const HAZ_SC=0.80;                  // v67: linear scale on every terrain-hazard blob (0.80 linear = 0.64 area)
+/* v103: how far apart two hazards of DIFFERENT KINDS must sit, as a fraction of
+   the sum of their half-extents. 1.0 is rims touching; a blob's rim wobbles out
+   to 1.4x its base radius, so a little over 1 is what actually keeps two colours
+   from crossing. Every hazard pick that can retry reads this one number.
+   It is a PREFERENCE, not a rule: a pick that cannot satisfy it falls back to an
+   unconstrained one, because a map that LOST a hazard is worse than a map with a
+   hazard whose rim touches another. Same-kind lobes are exempt by construction -
+   the per-map clusters are deliberately built out of them. */
+const FLD_GAP=1.05;
 /* v76: 7.0 -> 4.9 (a 30% cut). Damage per SECOND a code-2 terrain hazard deals to
    any ground unit or wildlife standing in it. Named because updateHazards sweeps
    units and creatures separately and the two literals could drift apart. */
@@ -3310,10 +3319,15 @@ function sAtkAlert(){
    apart is the rotor itself: chop and blade rates, the filter, and the
    Chinook's tandem beat. T43.L pins all of that, so the differentiation is a
    checked claim rather than a hope. */
+/* v103: every rotor's level DOUBLED on the owner's instruction - the answer was
+   too quiet against the ground fleet's diesels. Only `g` moved: chop and blade
+   rates, the filter and the Chinook's tandem beat are what tell the three apart
+   and T43.L pins those, so the three stay exactly as distinguishable as they
+   were and stay in the same loudness ORDER as each other. */
 const ROTORV={
- heli:{chop:11,blade:22,lp:320,dur:.45,g:.26},
- apache:{chop:14,blade:28,lp:280,dur:.48,g:.24},
- chinook:{chop:8.5,blade:9.3,lp:240,dur:.60,g:.30}
+ heli:{chop:11,blade:22,lp:320,dur:.45,g:.52},
+ apache:{chop:14,blade:28,lp:280,dur:.48,g:.48},
+ chinook:{chop:8.5,blade:9.3,lp:240,dur:.60,g:.60}
 };
 function sRotor(kind){
  if(muted||!ac()||!voxOk())return;const buf=noiseBuf();if(!buf)return;
@@ -4816,6 +4830,18 @@ const PROP_BLK={
 /* collision radius for one placed prop: the table when it has an opinion, the
    call-site radius otherwise, scaled the same way the art is */
 function propBlkR(t,r,sc){const b=PROP_BLK[t];return (b==null?r:b)*(sc||1)}
+/* v103 ART radius, read back out of the SAME table rather than measured twice.
+   PROP_BLK's own header says every entry is 0.85x the sprite radius the type was
+   baked at, and that 0 means "art smaller than a unit's own radius" - so the two
+   constants below are that header restated as numbers, and the art can never
+   drift from the collision it was derived from.
+   propBlkR answers "what does this take away"; propArtR answers "how much ground
+   does this COVER". Placement asks the second one: a bookshelf blocks .70 of a
+   tile and is drawn over .82, which is how a neutral barricade ended up standing
+   inside one. */
+const PROP_ART_K=0.85;    // PROP_BLK entry / this = the measured sprite radius
+const PROP_ART_MIN=0.45;  // what a 0 entry means: about one unit's own radius
+function propArtR(t,r,sc){const b=propBlkR(t,r,sc);return b>0?b/PROP_ART_K:PROP_ART_MIN*(sc||1)}
 /* ---------------- MAP / TERRAIN ---------------- */
 function makeMap(key,seed){
  const def=MAPS[key],N=def.N;
@@ -4828,6 +4854,47 @@ function makeMap(key,seed){
  const block=(cx,cy,r)=>{for(let y=Math.floor(cy-r);y<=cy+r;y++)for(let x=Math.floor(cx-r);x<=cx+r;x++){if(x<0||y<0||x>=N||y>=N)continue;if(dhyp(x+.5-cx,y+.5-cy)<=r)M.pass[y*N+x]=0}};
  // v25: expansion pockets stay buildable — blocking props refuse to spawn inside one
  const nearExpo=(x,y,d)=>M.expos.some(e=>dhyp(e.x-x,e.y-y)<d);
+ /* v103 THE TWO CLEARANCE QUESTIONS THE PLACEMENT PASSES NEVER ASKED.
+    Everything below picks its spot against bases, nodes and expansion pockets and
+    against nothing else, which is why the map audit found a bookshelf drawn
+    through a console, a hedgehog standing inside a bookshelf, and a milk spill
+    and a grease slick sharing thirty tiles of the same kitchen.
+    farPropArt: is this ground already COVERED by a prop's art (propArtR, not the
+    collision radius - the art is the wider of the two and it is the one you see).
+    farField: is it already covered by a hazard of a DIFFERENT kind. Kind is part
+    of the question because the per-map clusters are deliberately built out of
+    overlapping lobes of ONE kind; two kinds crossing is the defect. */
+ const farPropArt=(x,y,pad)=>!M.props.some(p=>{const r=propArtR(p.t,p.r,p.sc);
+  return r>0&&dhyp(p.x-x,p.y-y)<r+(pad||0)});
+ /* fldGap: how much room to spare this spot has, in tiles, against the nearest
+    hazard of a different kind. Positive is clear; the more negative, the deeper
+    the two blobs cross. farField is the yes/no reading of it. Returning the
+    MARGIN rather than a boolean is what lets a pass that cannot find a clear spot
+    take the least bad one it saw instead of taking its last roll blind - which is
+    the difference between a rim that grazes and two colours crossing. */
+ /* v103: KEEP is ground no hazard may be laid over at all - the fixed centrepiece
+    a map is built around. The Sandbox's bucket fortress rings the middle at radius
+    8.6 and the quicksand annulus starts at 8, so the pits routinely swallowed it:
+    104 of the castle's own wall and tower props stood inside a quicksand pit over
+    40 seeds. It rides inside fldGap rather than being a guard of its own, so every
+    hazard pick that already scores its ladder gets it for free.
+    Five entries exist: that fortress, the sandcastle keep beside it, the paddling
+    pool, the Kitchen's cereal bowl, and the Living Room's coffee table with the
+    train ring around it. THE KEEP IS THE ONE THAT PROVES THE POINT - it is a
+    SINGLE prop, and the drowning pass at the foot of this function would
+    correctly delete it on 9 seeds in 40 for standing in a puddle. A rule that is
+    right for scattered clutter is wrong for the one prop a map is named for, and
+    the answer is to stop the puddle landing there, not to exempt the prop. */
+ const KEEP=[];
+ // v103: where a cluster's second lobe may sit, best-first. The first entry is
+ // the offset every one of these clusters used before this table existed.
+ const LOBE=[[3,2],[-3,2],[3,-2],[-3,-2],[4.5,0],[0,4.5],[-4.5,0],[0,-4.5]];
+ const fldGap=(x,y,kind,rx,ry)=>{let g=1e9;const R=Math.max(rx,ry)*HAZ_SC;
+  for(const f of M.fields){if(f.kind===kind)continue;
+   g=Math.min(g,dhyp(f.cx-x,f.cy-y)-(Math.max(f.rx,f.ry)+R)*FLD_GAP);}
+  for(const kp of KEEP)g=Math.min(g,dhyp(kp.x-x,kp.y-y)-(kp.r+R));
+  return g};
+ const farField=(x,y,kind,rx,ry)=>fldGap(x,y,kind,rx,ry)>=0;
  /* v74: r still decides placement (the expo rejection above) and art scale for
     the types that read p.r; what it no longer decides is how much ground the
     prop takes away. That comes from PROP_BLK, and 0 there means decor. */
@@ -4911,6 +4978,24 @@ function makeMap(key,seed){
  // v25: snapped to a tile centre & blocks exactly one tile — every nest is now a
  // destructible neutral structure (see initNeutrals) that frees its tile when smashed.
  const nest=(species,cx,cy,r,count)=>{const tx=Math.round(clamp(cx,4,N-5)),ty=Math.round(clamp(cy,4,N-5));if(M.nests.some(n2=>n2.x===tx+.5&&n2.y===ty+.5))return;M.nests.push({species,x:tx+.5,y:ty+.5,r,count,spawned:false});M.pass[ty*N+tx]=0;};
+ /* v103 FLAT GROUND REGIONS. A chopping board, a sheet of paper, a mouse pad, a
+    raked sand patch, a mulch patch and a picnic blanket are all axis-aligned
+    rectangles painted onto the deck, and each was dropped at a raw random spot
+    with no idea what was already lying there - so a sheet of paper routinely
+    landed half on the chopping board and the mulch went down over the raked sand.
+    Every region registers itself here; a rolled one retries against what is
+    already down and keeps its last roll if nothing clears.
+    The FIXED regions are declared BEFORE the rolled ones now. That costs no rnd()
+    draw - a hard-coded rectangle rolls nothing - and it is what gives the roll
+    something to avoid. */
+ const REGS=[];
+ const regOK=(r)=>!REGS.some(q=>r.x<q.x+q.w&&q.x<r.x+r.w&&r.y<q.y+q.h&&q.y<r.y+r.h);
+ /* reg also CLAMPS onto the board. Every rolled rectangle was sized off N and
+    positioned off N independently, so the widest roll of the widest patch hung a
+    tile or two past the east and south rims on all three of the maps that carry
+    one. A region is painted, not stamped, so nothing but the picture noticed. */
+ const reg=(r)=>{r.x=clamp(r.x,1,N-1-r.w);r.y=clamp(r.y,1,N-1-r.h);REGS.push(r);return r};
+ const patchAt=(mk)=>{let r=mk();for(let k2=0;k2<9&&!regOK(r);k2++)r=mk();M.patches.push(reg(r));};
  // scatter helper: place `n` small decorations of type t in a region, randomized
  const scatter=(t,n,o)=>{o=o||{};for(let i=0;i<n;i++){const x=(o.x0||0)+rnd()*((o.x1||N)-(o.x0||0)),y=(o.y0||0)+rnd()*((o.y1||N)-(o.y0||0));M.deco.push(Object.assign({t,x,y,s:(o.s0||.6)+rnd()*(o.sr||1)},o.extra?o.extra(rnd):{}));}};
  // ---- v25 EXPANSION SITES ----
@@ -4989,7 +5074,13 @@ function makeMap(key,seed){
  const farNode=(x,y,d)=>!M.nodes.some(nd=>dhyp(nd.x-x,nd.y-y)<(d||4));
  // pick a random point within an annulus around centre (rMin..rMax tiles), avoiding
  // bases and existing nodes. returns {x,y} or null after a few tries.
- const pickSpot=(rMin,rMax,clearNode,startD)=>{
+ /* v103: `opt` is how a caller asks the two clearance questions above, and it is
+    asked of the MIRROR too - every one of these picks is half of a symmetric pair,
+    so a spot that is clean here and dirty at N-x,N-y is not a clean spot.
+    A constrained pick that finds nothing is not a dropped feature: every caller
+    falls back to the unconstrained pick, because a hazard that clips slightly is
+    a smaller defect than a hazard the map lost. */
+ const pickSpot=(rMin,rMax,clearNode,startD,opt)=>{
   for(let k=0;k<40;k++){
    const a=rnd()*6.283,r=rMin+rnd()*(rMax-rMin);
    const x=c+dcos(a)*r,y=c+dsin(a)*r;
@@ -4997,15 +5088,35 @@ function makeMap(key,seed){
    if(tooCloseStart(x,y,startD||16))continue;
    if(nearExpo(x,y,7))continue;              // v25: keep expansion pockets clear
    if(clearNode&&!farNode(x,y,clearNode))continue;
+   if(opt&&opt.art!=null&&(!farPropArt(x,y,opt.art)||!farPropArt(N-x,N-y,opt.art)))continue;
+   if(opt&&opt.fld&&(!farField(x,y,opt.fld.k,opt.fld.rx,opt.fld.ry)||!farField(N-x,N-y,opt.fld.k,opt.fld.rx,opt.fld.ry)))continue;
    return{x,y};
   }
   return null;
  };
  // place a symmetric pair of fields (one + its mirror). count: how many pairs.
+ /* v103: the half-extents are rolled BEFORE the pick now, because the pick has to
+    know how much ground this blob will cover before it can ask whether another
+    kind already owns it. The rolls themselves are unchanged. */
  const fieldPairs=(kind,count,rMin,rMax,sx,sy,clearNode)=>{
-  for(let i=0;i<count;i++){const sp=pickSpot(rMin,rMax,clearNode||4.5,15);if(!sp)continue;
-   if(nearExpo(N-sp.x,N-sp.y,7))continue;    // v25: mirror must be clear too
+  for(let i=0;i<count;i++){
    const rx=sx*(.8+rnd()*.5),ry=sy*(.8+rnd()*.5);
+   /* v103: a WIDENING ladder before the unconstrained fallback, the shape
+      nestPairs has used since v66. A hazard that has to sit two tiles further out
+      to stop crossing another kind is still the hazard the map asked for; a
+      pick that gives up on the first refusal is how the clip survived. */
+   let sp=null;
+   for(let a3=0;a3<4&&!sp;a3++)sp=pickSpot(Math.max(6,rMin-a3*1.5),rMax+a3*2,clearNode||4.5,15,{fld:{k:kind,rx,ry}});
+   /* v103: and if the ladder finds nothing, take the LEAST BAD of a few free
+      picks rather than the first one going - the same rule the lane pass uses,
+      and the difference between a rim that grazes and a pit over the castle. */
+   if(!sp){let best=null,bg=-1e9;
+    for(let a3=0;a3<6;a3++){const q=pickSpot(rMin,rMax,clearNode||4.5,15);if(!q)continue;
+     const g=Math.min(fldGap(q.x,q.y,kind,rx,ry),fldGap(N-q.x,N-q.y,kind,rx,ry));
+     if(g>bg){bg=g;best=q}}
+    sp=best;}
+   if(!sp)continue;
+   if(nearExpo(N-sp.x,N-sp.y,7))continue;    // v25: mirror must be clear too
    field(kind,sp.x,sp.y,rx,ry);const m=mir(sp.x,sp.y);field(kind,m.x,m.y,rx,ry);}
  };
  // place a symmetric pair of wildlife nests guarding the mid-map lanes.
@@ -5048,13 +5159,52 @@ function makeMap(key,seed){
    if(!sp)continue;
    nest(species,sp.x,sp.y,r,cnt);const m=mir(sp.x,sp.y);nest(species,m.x,m.y,r,cnt);}
  };
+ /* v103: the loose cosmetic scatters - marbles, snails, sugar cubes - were each
+    dropped at a raw random point, and after the paired passes were taught to keep
+    their art clear they were the last source of art drawn through art. Same
+    question, same fallback rule: try a few points, take the first clear of a
+    prop's art, keep the last roll if none is. `o` may be a function so a
+    per-instance roll (a marble's hue) still happens once per marble. */
+ const looseProps=(t,n,lo,span,r,o)=>{
+  const art=propArtR(t,r,o&&o.sc);
+  for(let i=0;i<n;i++){
+   let px=0,py=0;   // all four call sites scatter over the same square band on both axes
+   for(let k2=0;k2<8;k2++){px=lo+rnd()*span;py=lo+rnd()*span;if(farPropArt(px,py,art))break;}
+   prop(t,px,py,r,typeof o==='function'?o():o);
+  }
+ };
+ /* v103: a fixed-corner mirrored pair, walked along a deterministic ladder until
+    BOTH ends clear the expansion pockets. prop() refuses anything inside a pocket
+    and these two were laid at hard-coded corners, so the natural expansion ate
+    one of them and left the map a SINGLE pot where its own comment promises a
+    mirrored pair - on 45 backyard seeds in 60, measured. The ladder consumes no
+    rnd(), so it cannot shift the stream for anything downstream. */
+ const cornerPair=(t,x0,y0,r)=>{
+  const art=propArtR(t,r),LAD=[0,3,-3,6,-6,9,-9,12,-12];
+  /* two passes down the same ladder: clear of the pockets AND of art already
+     standing, then clear of the pockets alone. A pot drawn tight against the
+     garden hose is a smaller defect than a map with one pot instead of two. */
+  for(const wantArt of [true,false])for(const d of LAD){
+   const x=x0+d,y=y0;
+   if(!inB(x,y)||nearExpo(x,y,3.6+r)||nearExpo(N-x,N-y,3.6+r))continue;
+   if(wantArt&&(!farPropArt(x,y,art)||!farPropArt(N-x,N-y,art)))continue;
+   prop(t,x,y,r);prop(t,N-x,N-y,r);return;
+  }
+  prop(t,x0,y0,r);prop(t,N-x0,N-y0,r);   // never expected: keep the classic spot
+ };
  // place a symmetric pair of small blocking props (rocks/cans/etc.).
  const propPairs=(t,count,r,rMin,rMax,o)=>{
+  const art=propArtR(t,r,o&&o.sc);   // v103: how much ground this one will COVER
   for(let i=0;i<count;i++){
    // v25.1: retry the pick when the MIRROR spot clips an expansion pocket instead
    // of silently dropping the whole pair (this cost some maps their themed props)
    let sp=null;
-   for(let a3=0;a3<12&&!sp;a3++){const s2=pickSpot(rMin,rMax,2.4,12);
+   for(let a3=0;a3<12&&!sp;a3++){const s2=pickSpot(rMin,rMax,2.4,12,{art});
+    if(s2&&!nearExpo(N-s2.x,N-s2.y,3.6+r))sp=s2;}
+   /* v103: same fallback rule as everywhere else - a prop drawn tight against a
+      neighbour beats a prop the map never got. This is the ladder that keeps the
+      Living Room's sofa set and the Desk's clutter at full count. */
+   for(let a3=0;a3<8&&!sp;a3++){const s2=pickSpot(rMin,rMax,2.4,12);
     if(s2&&!nearExpo(N-s2.x,N-s2.y,3.6+r))sp=s2;}
    if(!sp)continue;
    prop(t,sp.x,sp.y,r,o);const m=mir(sp.x,sp.y);prop(t,m.x,m.y,r,o);}
@@ -5066,12 +5216,23 @@ function makeMap(key,seed){
    // v25.1: retry the pick when the MIRROR spot clips an expansion pocket instead
    // of silently dropping the pair (the kitchen dish rack vanished on some seeds)
    let sp=null;
-   for(let a3=0;a3<12&&!sp;a3++){const s2=pickSpot(rMin,rMax,2,12);
+   for(let a3=0;a3<12&&!sp;a3++){const s2=pickSpot(rMin,rMax,2,12,{art:propArtR(t,r,sc)});
+    if(s2&&!nearExpo(N-s2.x,N-s2.y,7))sp=s2;}
+   for(let a3=0;a3<8&&!sp;a3++){const s2=pickSpot(rMin,rMax,2,12);   // v103 fallback, as propPairs
     if(s2&&!nearExpo(N-s2.x,N-s2.y,7))sp=s2;}
    if(!sp)continue;
    /* v74: the capsule radius is the drawn limb's half-thickness, via PROP_BLK */
    const br=propBlkR(t,r,sc);
-   const ang=rnd()*Math.PI,po=sc!==1?{len,ang,sc}:{len,ang};prop(t,sp.x,sp.y,0,po);if(br>0)blockLine(M,sp.x,sp.y,len*sc,ang,br);
+   /* v103: the pick only ever tested the prop's ORIGIN, and a line prop is drawn
+      len*sc tiles long from there - so a pencil picked near the rim was painted
+      out past the board's own edge, the garden hose's defect one layer down.
+      Rotate until the far end lands on the board too. The mirror sits at N-x,N-y
+      pointing back along ang+PI, so ITS far end is the point mirror of this one
+      and inB is symmetric about the centre: testing one end tests both. The walk
+      consumes no rnd(), so it shifts nothing downstream. */
+   let ang=rnd()*Math.PI;const L=len*sc;
+   for(let k2=0;k2<12&&!inB(sp.x+dcos(ang)*L,sp.y+dsin(ang)*L);k2++)ang+=Math.PI/6;
+   const po=sc!==1?{len,ang,sc}:{len,ang};prop(t,sp.x,sp.y,0,po);if(br>0)blockLine(M,sp.x,sp.y,len*sc,ang,br);
    const m=mir(sp.x,sp.y),po2=sc!==1?{len,ang:ang+Math.PI,sc}:{len,ang:ang+Math.PI};prop(t,m.x,m.y,0,po2);if(br>0)blockLine(M,m.x,m.y,len*sc,ang+Math.PI,br);}
  };
  // ---- LANE DISRUPTORS ----
@@ -5094,7 +5255,24 @@ function makeMap(key,seed){
       already stamped, and renderTerrain draws only from M.fields. The pass
       therefore rendered nothing on ~98% of seeds while leaving 65-97
       invisible impassable tiles per map for units to path around. */
-   {const a=lanePoint(base,0.46+rnd()*0.06,(rnd()*2-1)*3.5);field(H2,a.x,a.y,4.4+rnd()*1.2,3.0+rnd());const m=mir(a.x,a.y);field(H2,m.x,m.y,4.4+rnd()*1.2,3.0+rnd());}
+   /* v103: two changes here, both from the map audit. The pick now retries off a
+      hazard of a different kind (the lane blob and the per-map cluster were
+      landing on top of each other), and the mirrored half is stamped at the SAME
+      half-extents as its partner instead of rolling its own - a mirror that is a
+      different size is not a mirror, and point symmetry is the whole reason this
+      pass places in pairs. */
+   {const rx=4.4+rnd()*1.2,ry=3.0+rnd();let a=null,best=null,bg=-1e9;
+    /* v103: the ladder WIDENS. A lane blob has almost no freedom at the original
+       +/-3.5 sideways nudge, and the per-map liquid cluster is picked in the very
+       annulus these midpoints sit in - which is where every remaining hazard clip
+       was coming from. Later attempts step further off the lane rather than
+       giving up: still a lane hazard, just not laid through the milk. */
+    for(let k2=0;k2<8&&!a;k2++){const q=lanePoint(base,0.36+rnd()*(0.12+k2*.04),(rnd()*2-1)*(3.5+k2*1.1));
+     const g=Math.min(fldGap(q.x,q.y,H2,rx,ry),fldGap(N-q.x,N-q.y,H2,rx,ry));
+     if(g>bg){bg=g;best=q}
+     if(g>=0)a=q;}
+    if(!a)a=best;
+    field(H2,a.x,a.y,rx,ry);const m=mir(a.x,a.y);field(H2,m.x,m.y,rx,ry);}
    // a wildlife nest (ant hill or beehive) guarding the mid-lane
    {const sp=rnd()<.5?'ant':'bee';const a=lanePoint(base,0.38+rnd()*0.06,(rnd()*2-1)*2.5);
     if(!nearExpo(a.x,a.y,6.5)&&!nearExpo(N-a.x,N-a.y,6.5)){nest(sp,a.x,a.y,5.2,sp==='ant'?4:3);const m=mir(a.x,a.y);nest(sp,m.x,m.y,5.2,sp==='ant'?4:3);}}
@@ -5121,8 +5299,14 @@ function makeMap(key,seed){
  const edgeClutter=()=>{
   for(const pair of [[M.starts[0],M.starts[2]],[M.starts[0],M.starts[3]]]){
    const a=pair[0],b=pair[1];
-   {const p=edgePoint(a,b,0.34+rnd()*0.06,(rnd()*2-1)*3.5);
-    if(!nearExpo(p.x,p.y,6)&&!nearExpo(N-p.x,N-p.y,6)){field(H3,p.x,p.y,4.2+rnd()*1.2,3.0+rnd());const m=mir(p.x,p.y);field(H3,m.x,m.y,4.2+rnd()*1.2,3.0+rnd());}}
+   {const rx=4.2+rnd()*1.2,ry=3.0+rnd();let p=null,best=null,bg=-1e9;   // v103: as laneClutter above
+    for(let k2=0;k2<8&&!p;k2++){const q=edgePoint(a,b,0.26+rnd()*(0.12+k2*.04),(rnd()*2-1)*(3.5+k2*1.1));
+     if(nearExpo(q.x,q.y,6)||nearExpo(N-q.x,N-q.y,6))continue;
+     const g=Math.min(fldGap(q.x,q.y,H3,rx,ry),fldGap(N-q.x,N-q.y,H3,rx,ry));
+     if(g>bg){bg=g;best=q}
+     if(g>=0)p=q;}
+    if(!p)p=best;
+    if(p){field(H3,p.x,p.y,rx,ry);const m=mir(p.x,p.y);field(H3,m.x,m.y,rx,ry);}}
   }
  };
  // ---- HIDDEN LANDMINES ----
@@ -5170,12 +5354,29 @@ function makeMap(key,seed){
   if(tooCloseStart(tx+.5,ty+.5,10))return;
   if(nearExpo(tx+.5,ty+.5,5))return;        // v25: keep expansion pockets clear
   if(!farNode(tx+.5,ty+.5,2.4))return;
+  /* v103: pass===1 above only clears the prop's COLLISION radius, and a bookshelf
+     is drawn wider than it blocks - which is how hedgehogs ended up standing
+     inside one on 65 of 40 Living Room seeds. Ask the art. */
+  if(!farPropArt(tx+.5,ty+.5,0))return;
   if(M.barricades.some(b=>b.x===tx&&b.y===ty))return;
   M.barricades.push({x:tx,y:ty});
  };
+ /* v103 owner pass: barrCluster scattered with no memory of ITSELF, so a cluster
+    routinely landed two tiles from one already down and the pair read as a single
+    long arc of hedgehogs - "reduce and spread out the random arcs". BARR_SEP is
+    how far a new cluster must start from every barricade already placed, and there
+    is deliberately NO fallback: a cluster that cannot find clear ground is simply
+    not laid, because fewer is half the ask. The lane roadblocks (laneBarr, below)
+    are exempt - they are laid ACROSS a lane on purpose and their position is their
+    whole job. */
+ const BARR_SEP=8;
  const barrCluster=(pairs)=>{
   for(let i=0;i<pairs;i++){
-   const sp=pickSpot(7,N*0.42,3,12);if(!sp)continue;
+   let sp=null;
+   for(let a3=0;a3<10&&!sp;a3++){const s2=pickSpot(7,N*0.42,3,12);
+    if(s2&&M.barricades.every(b=>dhyp(b.x+.5-s2.x,b.y+.5-s2.y)>=BARR_SEP)&&
+           M.barricades.every(b=>dhyp(b.x+.5-(N-s2.x),b.y+.5-(N-s2.y))>=BARR_SEP))sp=s2;}
+   if(!sp)continue;
    const ang=rnd()*Math.PI,len=3+Math.floor(rnd()*3),dx=dcos(ang),dy=dsin(ang);
    for(let s=0;s<len;s++){
     const tx=Math.round(sp.x+dx*s),ty=Math.round(sp.y+dy*s);
@@ -5198,12 +5399,17 @@ function makeMap(key,seed){
    barrTile(N-1-tx,N-1-ty); // mirror
   }
  };
- const laneBarr=()=>{
+ /* v103 owner pass: `at` is where along a lane the roadblocks go. Backyard Brawl
+    gets two instead of three - one near each end of the lane rather than one in
+    the middle as well. The roadblock's JOB survives (neither side beelines down an
+    open lane), and it is the one map where the dark hedgehogs sit on bright grass,
+    which is what made the same density read as clutter there. */
+ const laneBarr=(at)=>{
   // angle of the vector perpendicular to a->b
   const across=(a,b)=>datan2(b.x-a.x,-(b.y-a.y));
   for(const pair of [[M.starts[0],M.starts[2]],[M.starts[0],M.starts[3]]]){
    const a=pair[0],b=pair[1];
-   for(const t of [0.30,0.50,0.70]){
+   for(const t of at){
     const p=edgePoint(a,b,t,(rnd()*2-1)*3);
     barrLine(p.x,p.y,across(a,b)+(rnd()-.5),4+Math.floor(rnd()*3));
    }
@@ -5216,41 +5422,53 @@ function makeMap(key,seed){
  };
  if(key==='backyard'){
   // garden hose snakes across the map with a randomized wave each game
-  {const hp=rnd()*6.28,ha=.9+rnd()*.9,amp=8+rnd()*8;for(let t=0;t<=1.001;t+=.05){const x=14+(N-28)*t,y=6+amp*dsin(t*Math.PI*ha+hp)+t*6;prop('hose',x,y,1.1)}}
+  /* v103: the wave was centred on a FIXED y of 6 while its amplitude rolls up to
+     16, so a third of every seed's hose was laid ten tiles off the north edge -
+     segments drawn out in the void past the board's own rim, and the single
+     loudest count in the map audit (162 off-board props over 40 seeds). Centring
+     the wave on its own amplitude is the whole fix: the trough now clears the
+     edge whatever the roll, and the hose keeps its shape and its length. */
+  {const hp=rnd()*6.28,ha=.9+rnd()*.9,amp=8+rnd()*8,yc=amp+5;
+   for(let t=0;t<=1.001;t+=.05){const x=14+(N-28)*t,y=yc+amp*dsin(t*Math.PI*ha+hp)+t*6;prop('hose',x,y,1.1)}}
   // two terracotta pots, mirrored corners (orientation randomized)
-  {const f=rnd()<.5?1:-1;prop('pot',16,(f>0?N-22:22),2.4);prop('pot',N-16,(f>0?22:N-22),2.4);}
+  {const f=rnd()<.5?1:-1;cornerPair('pot',16,(f>0?N-22:22),2.4);}
   // scattered cosmetic marbles
-  for(let i=0;i<7;i++)prop('marble',10+rnd()*(N-20),10+rnd()*(N-20),.9,{hue:rnd()*360});
+  looseProps('marble',7,10,N-20,.9,()=>({hue:rnd()*360}));
   // blocking geometry as balanced symmetric pairs: rocks, mushrooms, twigs
   propPairs('rock',2,1.2+rnd()*.4,14,24);
   propPairs('mushroom',2,.6+rnd()*.2,10,22);
   lineProps('stick',2,4.5+rnd()*1.5,.7,10,22);
   // a couple of small garden puddles (mirrored)
   {const sp=pickSpot(12,22,4,14);if(sp){puddle(sp.x,sp.y,1.8+rnd()*.8,'water');const m=mir(sp.x,sp.y);puddle(m.x,m.y,1.8+rnd()*.8,'water');}}
+  M.sandPatch=reg({x:c-6,y:N-18,w:13,h:9});   // v103: fixed, so it is declared before the rolled patches
   // mulch/dirt patches (cosmetic, random corners)
-  M.patches.push({x:8+rnd()*(N-26),y:8+rnd()*(N-22),w:8+rnd()*4,h:7+rnd()*4,fill:'rgba(120,84,50,.42)',stroke:'rgba(76,52,28,.4)'});
-  M.patches.push({x:8+rnd()*(N-26),y:8+rnd()*(N-22),w:8+rnd()*4,h:6+rnd()*4,fill:'rgba(120,84,50,.4)',stroke:'rgba(76,52,28,.35)'});
+  patchAt(()=>({x:8+rnd()*(N-26),y:8+rnd()*(N-22),w:8+rnd()*4,h:7+rnd()*4,fill:'rgba(120,84,50,.42)',stroke:'rgba(76,52,28,.4)'}));
+  patchAt(()=>({x:8+rnd()*(N-26),y:8+rnd()*(N-22),w:8+rnd()*4,h:6+rnd()*4,fill:'rgba(120,84,50,.4)',stroke:'rgba(76,52,28,.35)'}));
   // dense randomized ground cover
   scatter('tuft',110,{s0:.6,sr:1});
   scatter('clover',40,{s0:.7,sr:.6});
   scatter('flower',22,{s0:.7,sr:.6,extra:r=>({hue:[0,40,300,55,200][Math.floor(r()*5)]})});
   scatter('leaf',14,{x0:10,x1:N-10,y0:10,y1:N-10,s0:.7,sr:.7,extra:r=>({a:r()*6.28})});
-  M.sandPatch={x:c-6,y:N-18,w:13,h:9};
   // v25: a checkered picnic blanket somewhere off the beaten path (cosmetic)
-  {const bp=pickSpot(11,19,5,15);if(bp&&dhyp(bp.x-c,bp.y-c)>11)M.blanket={x:bp.x-4.5,y:bp.y-3.5,w:9,h:7,hue:rnd()<.5?4:210};}
+  {let bl=null;                                // v103: and the blanket is not laid over the mulch
+   for(let k2=0;k2<6&&!bl;k2++){const bp=pickSpot(11,19,5,15);
+    if(!bp||dhyp(bp.x-c,bp.y-c)<=11)continue;
+    const r={x:bp.x-4.5,y:bp.y-3.5,w:9,h:7,hue:rnd()<.5?4:210};
+    if(regOK(r)||k2===5)bl=reg(r);}
+   if(bl)M.blanket=bl;}
   // v25: toy & garden clutter — a soccer ball, garden gnomes & watering cans (mirrored)
   propPairs('soccer',1,1.6,10,22);
   propPairs('gnome',1,1.1,12,24);
   propPairs('wcan',1,1.7,12,24);
   // v25: garden snails inch across the lawn (cosmetic)
-  for(let i=0;i<3;i++)prop('snail',9+rnd()*(N-18),9+rnd()*(N-18),0);
+  looseProps('snail',3,9,N-18,0);
   scatter('dandy',26,{s0:.7,sr:.5});
   scatter('bone',3,{x0:10,x1:N-10,y0:10,y1:N-10,s0:.8,sr:.4,extra:r=>({a:r()*6.28})});
   // --- terrain hazards (organic, randomized, balanced) ---
   // v25: an inflatable kiddie pool is the garden's centrepiece water hazard (the
   // ring & water are painted by renderTerrain; the tiles under it are real water)
   {const pcx=c+(rnd()-.5)*4,pcy=c+(rnd()-.5)*4,pr2=3.8+rnd()*.5;
-   M.kpool={cx:pcx,cy:pcy,r:pr2,duckA:rnd()*6.28};
+   M.kpool={cx:pcx,cy:pcy,r:pr2,duckA:rnd()*6.28};KEEP.push({x:pcx,y:pcy,r:pr2+1.5});   // v103: no bramble over the paddling pool
    for(let y=Math.max(0,Math.floor(pcy-pr2-1));y<=Math.min(N-1,Math.ceil(pcy+pr2+1));y++)
    for(let x=Math.max(0,Math.floor(pcx-pr2-1));x<=Math.min(N-1,Math.ceil(pcx+pr2+1));x++){
     if(dhyp(x+.5-pcx,y+.5-pcy)>pr2)continue;
@@ -5277,15 +5495,18 @@ function makeMap(key,seed){
   lineProps('pencil',2,8+rnd()*2,.8,12,24);
   lineProps('fork',1,8,.8,14,24);
   // sugar cubes (cosmetic-ish small blockers), randomized
-  for(let i=0;i<4;i++){const x=8+rnd()*(N-16),y=8+rnd()*(N-16);prop('sugar',x,y,1);}
+  looseProps('sugar',4,8,N-16,1);
   // a cereal bowl somewhere off-centre
-  {const bp=pickSpot(8,16,4,14)||{x:c+2,y:c-12};prop('bowl',bp.x,bp.y,3.2);M.bowlAt={x:bp.x,y:bp.y};}
+  {const bp=pickSpot(8,16,4,14)||{x:c+2,y:c-12};prop('bowl',bp.x,bp.y,3.2);M.bowlAt={x:bp.x,y:bp.y};KEEP.push({x:bp.x,y:bp.y,r:3.6});}   // v103: no spill over the cereal bowl
   // spill puddles (cosmetic) at random spots
   {const a=pickSpot(10,22,4,14);if(a)puddle(a.x,a.y,2.2+rnd()*.6,'milk');const b=pickSpot(10,22,4,14);if(b)puddle(b.x,b.y,1.6+rnd()*.6,'juice');}
-  M.patches.push({x:8+rnd()*(N-22),y:8+rnd()*(N-20),w:11+rnd()*4,h:9+rnd()*3,fill:'rgba(250,250,252,.9)',stroke:'rgba(175,180,190,.85)',inset:1});
+  M.board=reg({x:c-12,y:c+2,w:24,h:12});      // v103: fixed, so it is declared before the sheet of paper
+  /* v103 owner pass: the sheet of paper was near-white at .9 over a light grey
+     tile, so it read as a hole in the floor rather than as paper. Warmer, a shade
+     down, and a firmer edge so the rectangle still reads as a sheet. */
+  patchAt(()=>({x:8+rnd()*(N-22),y:8+rnd()*(N-20),w:11+rnd()*4,h:9+rnd()*3,fill:'rgba(238,236,230,.92)',stroke:'rgba(158,160,166,.9)',inset:1}));
   if(M.bowlAt)for(let i=0;i<26;i++)M.deco.push({t:'cereal',x:M.bowlAt.x+(rnd()-.5)*16,y:M.bowlAt.y+(rnd()-.3)*14,s:.5+rnd()*.4,hue:35+rnd()*20});
   scatter('crumb',22,{x0:8,x1:N-8,y0:8,y1:N-8,s0:.5,sr:.7});
-  M.board={x:c-12,y:c+2,w:24,h:12};
   // v25: counter clutter — a dish rack, plate stacks, mugs, toasters & salt shakers
   lineProps('rack',1,4.5,1.1,12,22);
   propPairs('plate',1,1.5,10,22);
@@ -5296,9 +5517,16 @@ function makeMap(key,seed){
   scatter('cap',8,{x0:8,x1:N-8,y0:8,y1:N-8,s0:.7,sr:.5,extra:r=>({hue:r()*360})});
   // --- hazards (organic, randomized, balanced) ---
   // v66: the milk spill is its own kind now instead of blue pond water (impassable)
-  {const sp=pickSpot(8,16,5,14)||{x:26,y:34};
-   field('milk',sp.x,sp.y,6+rnd()*1.5,4+rnd());field('milk',sp.x+3+(rnd()-.5)*2,sp.y+3+(rnd()-.5)*2,3.8+rnd(),2.6+rnd());
-   const m=mir(sp.x,sp.y);field('milk',m.x,m.y,6+rnd()*1.5,4+rnd());field('milk',m.x-3,m.y-3,3.8+rnd(),2.6+rnd());}
+  {const sp=pickSpot(8,16,5,14,{fld:{k:'milk',rx:7,ry:5}})||pickSpot(8,16,5,14)||{x:26,y:34};   // v103: off the grease
+   /* v103: the second lobe picks its DIRECTION off the same clearance question
+      the first one asked, so a cluster cannot reach over a centrepiece with its
+      second half - which is how the Sandbox lost its sandcastle on 9 seeds in 40
+      before this line existed. The ladder consumes no rnd(). And the mirror lobe
+      uses the SAME offset: it used to sit at a fixed -3,-3 against a jittered
+      +3,+3, so the "mirrored" pair was never quite a mirror. */
+   const o2=LOBE.find(d=>farField(sp.x+d[0],sp.y+d[1],'milk',3.8,2.6))||LOBE[0];
+   field('milk',sp.x,sp.y,6+rnd()*1.5,4+rnd());field('milk',sp.x+o2[0],sp.y+o2[1],3.8+rnd(),2.6+rnd());
+   const m=mir(sp.x,sp.y);field('milk',m.x,m.y,6+rnd()*1.5,4+rnd());field('milk',m.x-o2[0],m.y-o2[1],3.8+rnd(),2.6+rnd());}
   // hot skillet grease: slows & burns (mirrored pair)
   fieldPairs('grease',1,9,16,5,3.5);
   // pantry ants swarm the crumb trails (mirrored pair)
@@ -5310,7 +5538,7 @@ function makeMap(key,seed){
   // a plush carpet battlefield: a sofa set & coffee table anchor the centre, two
   // toy-block forts give cover, houseplants and board-game marbles dot the floor.
   // an area rug under the coffee table (cosmetic region drawn by the renderer)
-  M.rug={x:c-15,y:c-11,w:30,h:22};
+  M.rug=reg({x:c-15,y:c-11,w:30,h:22});
   // sofa set: a long couch + two armchairs. block radii are kept compact (close to the
   // drawn footprint) and well spaced so they don't merge into maze-like walls.
   propPairs('couch',1,1.7,9,16);     // long sofas, one per side
@@ -5321,7 +5549,7 @@ function makeMap(key,seed){
   // floor lamps in two corners (mirrored) — thin, barely block
   propPairs('lamp',1,.5,20,28);
   // central coffee table on the rug (single, dead centre-ish)
-  {const tx=c+(rnd()-.5)*3,ty=c+(rnd()-.5)*3;prop('table',tx,ty,1.5);M.tableAt={x:tx,y:ty};}
+  {const tx=c+(rnd()-.5)*3,ty=c+(rnd()-.5)*3;prop('table',tx,ty,1.5);M.tableAt={x:tx,y:ty};KEEP.push({x:tx,y:ty,r:8.6});}   // v103: no spill over the coffee table or the train ring around it
   // v25: a wooden toy train loops the coffee table on the rug (track is painted by
   // renderTerrain; the engine & cars are real blocking cover on the ring)
   {const tc2=M.tableAt,trx=7.5,try2=4.8;M.track={cx:tc2.x,cy:tc2.y,rx:trx,ry:try2};
@@ -5341,9 +5569,16 @@ function makeMap(key,seed){
     a2+=.55;
    }}
   // two potted houseplants, mirrored corners
-  {const f=rnd()<.5?1:-1;prop('pot',15,(f>0?N-19:19),1.5);prop('pot',N-15,(f>0?19:N-19),1.5);}
+  {const f=rnd()<.5?1:-1;cornerPair('pot',15,(f>0?N-19:19),1.5);}
   // two toy-block forts: a short straight wall of 3 alphabet blocks (clean cover, open ends)
-  {const forts=[lanePoint(M.starts[0],0.34,6),lanePoint(M.starts[2],0.34,6)];
+  /* v103: a fort walks its sideways offset until all three blocks and their three
+     mirrors clear the art already standing. It used to be laid at one fixed point
+     on the lane and came down on top of a floor lamp on 30 seeds in 40. */
+  {const fortAt=(st)=>{const p0=lanePoint(st,0.34,6);
+    for(const off of [6,8,4,10,2,12,0,14,-2]){const q=lanePoint(st,0.34,off);
+     if(farPropArt(q.x,q.y,1.9)&&farPropArt(N-q.x,N-q.y,1.9))return q;}
+    return p0};
+   const forts=[fortAt(M.starts[0]),fortAt(M.starts[2])];
    for(const fo of forts){
     const ang=rnd()*Math.PI,dx=dcos(ang),dy=dsin(ang);
     for(let i=-1;i<=1;i++)prop('blocks',fo.x+dx*i*1.4,fo.y+dy*i*1.4,0.7,{hue:[0,40,210][i+1],rot:rnd()*0.6});
@@ -5351,7 +5586,7 @@ function makeMap(key,seed){
     for(let i=-1;i<=1;i++)prop('blocks',m.x+dx*i*1.4,m.y+dy*i*1.4,0.7,{hue:[0,40,210][i+1],rot:rnd()*0.6});
    }}
   // scattered board-game marbles (cosmetic only — they don't block movement)
-  for(let i=0;i<9;i++)prop('marble',10+rnd()*(N-20),10+rnd()*(N-20),0,{hue:rnd()*360});
+  looseProps('marble',9,10,N-20,0,()=>({hue:rnd()*360}));
   // v25: household clutter — a slipper, the TV remote & stacks of picture books (mirrored)
   propPairs('slipper',1,1.6,12,24);
   propPairs('remote',1,1.1,10,22);
@@ -5361,14 +5596,19 @@ function makeMap(key,seed){
   scatter('dice',6,{x0:10,x1:N-10,y0:10,y1:N-10,s0:.8,sr:.4,extra:r=>({a:r()*6.28})});
   scatter('crayon',10,{x0:10,x1:N-10,y0:10,y1:N-10,s0:.8,sr:.4,extra:r=>({a:r()*6.28,hue:r()*360})});
   scatter('puzzle',8,{x0:10,x1:N-10,y0:10,y1:N-10,s0:.8,sr:.4,extra:r=>({a:r()*6.28,hue:r()*360})});
-  // soft dust-bunny ground cover & a few stray crumbs
-  scatter('tuft',60,{s0:.4,sr:.6});
+  /* v103: this line has said "dust-bunny" since v25 and has been scattering
+     'tuft' - a clump of bright green GRASS BLADES, the backyard's ground cover -
+     across a living-room carpet the whole time. The owner named it. 'dust' is the
+     decoration the comment always described; the grass tuft is untouched and
+     still the backyard's. */
+  scatter('dust',60,{s0:.4,sr:.6});
   scatter('crumb',16,{x0:10,x1:N-10,y0:10,y1:N-10,s0:.4,sr:.5});
   // --- hazards (themed as living-room messes) ---
   // v66: spilled grape juice soaks the carpet (impassable), overlapping lobes, mirrored
-  {const sp=pickSpot(9,16,5,14)||{x:c+7,y:c+8};
-   field('juice',sp.x,sp.y,5.5+rnd(),3.6+rnd());field('juice',sp.x+3,sp.y+2,3.2+rnd(),2.3+rnd());
-   const m=mir(sp.x,sp.y);field('juice',m.x,m.y,5.5+rnd(),3.6+rnd());field('juice',m.x-3,m.y-2,3.2+rnd(),2.3+rnd());}
+  {const sp=pickSpot(9,16,5,14,{fld:{k:'juice',rx:6.5,ry:4.6}})||pickSpot(9,16,5,14)||{x:c+7,y:c+8};   // v103: off the glue
+   const o2=LOBE.find(d=>farField(sp.x+d[0],sp.y+d[1],'juice',3.2,2.3))||LOBE[0];   // v103, as the kitchen's milk
+   field('juice',sp.x,sp.y,5.5+rnd(),3.6+rnd());field('juice',sp.x+o2[0],sp.y+o2[1],3.2+rnd(),2.3+rnd());
+   const m=mir(sp.x,sp.y);field('juice',m.x,m.y,5.5+rnd(),3.6+rnd());field('juice',m.x-o2[0],m.y-o2[1],3.2+rnd(),2.3+rnd());}
   // v66: a tipped-over bottle of craft glue bogs & stings (mirrored pair)
   fieldPairs('glue',1,9,16,4.6,3.2);
   // ants raid a dropped snack (mirrored pair)
@@ -5383,7 +5623,7 @@ function makeMap(key,seed){
    const nearTwr=a2=>{for(let k2=0;k2<4;k2++){let d2=Math.abs(a2-(Math.PI/4+k2*Math.PI/2));d2=Math.min(d2,Math.PI*2-d2);if(d2<.15)return true}return false};
    for(let a=off;a<Math.PI*2+off;a+=.15){const aa=a%(Math.PI*2);if(gate(aa)||nearTwr(aa))continue;prop('wall',c+dcos(aa)*R,c+dsin(aa)*R,1)}
    for(let k2=0;k2<4;k2++){const a2=Math.PI/4+k2*Math.PI/2;prop('tower',c+dcos(a2)*R,c+dsin(a2)*R,1.7)}
-   M.moat={cx:c,cy:c,r:R+2.1};}
+   M.moat={cx:c,cy:c,r:R+2.1};KEEP.push({x:c,y:c,r:M.moat.r});}   // v103: no pit over the fortress
   // v25.1: the keep centrepiece walks a deterministic candidate ring; its old fixed
   // north spot always sat inside the north mid-expansion clearance, so it NEVER
   // placed. Diagonal spots are tried first (mid expos live on the cardinal lanes).
@@ -5392,7 +5632,7 @@ function makeMap(key,seed){
     for(const kA of [5,7,3,1,6,4,2,0]){ // NW,NE,SW,SE first, then cardinals
      const a2=kA*Math.PI/4,kx=c+dcos(a2)*kRad,ky=c+dsin(a2)*kRad;
      if(!inB(kx,ky)||tooCloseStart(kx,ky,10)||nearExpo(kx,ky,6.6))continue;
-     prop('keep',kx,ky,3);kOk=true;break;
+     prop('keep',kx,ky,3);KEEP.push({x:kx,y:ky,r:3.4});kOk=true;break;   // v103: and no pit over the keep
     }
     if(kOk)break;
    }
@@ -5409,7 +5649,7 @@ function makeMap(key,seed){
   propPairs('shellp',1,.8,8,22);
   // a buried dino somewhere off to one side
   {const dp=pickSpot(10,20,3,14)||{x:18,y:28};prop('dino',dp.x,dp.y,2.2);}
-  M.patches.push({x:8+rnd()*(N-22),y:8+rnd()*(N-20),w:11+rnd()*4,h:8+rnd()*3,fill:'rgba(186,142,82,.5)',stroke:'rgba(130,96,52,.4)'});
+  patchAt(()=>({x:8+rnd()*(N-22),y:8+rnd()*(N-20),w:11+rnd()*4,h:8+rnd()*3,fill:'rgba(186,142,82,.5)',stroke:'rgba(130,96,52,.4)'}));
   scatter('pebble',60,{s0:.3,sr:.5});
   // v25: beach toys & tide-pool treasures
   propPairs('beachball',1,1.7,12,24);
@@ -5420,9 +5660,10 @@ function makeMap(key,seed){
   {const fx=8+rnd()*10,fy=8+rnd()*10,dirx=.7+rnd()*1.4,diry=.7+rnd()*1.4;for(let i=0;i<8;i++)M.deco.push({t:'footp',x:fx+i*dirx,y:fy+i*diry,s:1,o:i%2});}
   // --- hazards (organic, randomized, balanced) ---
   // a tipped water-bucket puddle (impassable) of overlapping lobes, mirrored
-  {const sp=pickSpot(9,16,5,14)||{x:c+8,y:c+9};
-   field('water',sp.x,sp.y,5.5+rnd(),3.6+rnd());field('water',sp.x+3,sp.y+2,3.4+rnd(),2.4+rnd());
-   const m=mir(sp.x,sp.y);field('water',m.x,m.y,5.5+rnd(),3.6+rnd());field('water',m.x-3,m.y-2,3.4+rnd(),2.4+rnd());}
+  {const sp=pickSpot(9,16,5,14,{fld:{k:'water',rx:6.5,ry:4.6}})||pickSpot(9,16,5,14)||{x:c+8,y:c+9};   // v103: off the quicksand
+   const o2=LOBE.find(d=>farField(sp.x+d[0],sp.y+d[1],'water',3.4,2.4))||LOBE[0];   // v103, as the kitchen's milk
+   field('water',sp.x,sp.y,5.5+rnd(),3.6+rnd());field('water',sp.x+o2[0],sp.y+o2[1],3.4+rnd(),2.4+rnd());
+   const m=mir(sp.x,sp.y);field('water',m.x,m.y,5.5+rnd(),3.6+rnd());field('water',m.x-o2[0],m.y-o2[1],3.4+rnd(),2.4+rnd());}
   // quicksand pits: slow & damaging (two mirrored pairs)
   fieldPairs('sand',2,8,17,5.5,3.8);
   // ants nest in the warm sand (mirrored pair)
@@ -5435,8 +5676,8 @@ function makeMap(key,seed){
   // curated (players+1) economy + exposed corner pairs; here we only dress the OUTER
   // ring with desk clutter, two hazards (spilled coffee + spilled soda) and nests.
   // The PvP economy prologue and mines/barricades are skipped for this key.
-  M.patches.push({x:9+rnd()*(N-32),y:9+rnd()*(N-28),w:15+rnd()*6,h:12+rnd()*4,fill:'rgba(28,32,42,.5)',stroke:'rgba(10,12,18,.55)'}); // mouse pad
-  M.patches.push({x:9+rnd()*(N-28),y:9+rnd()*(N-26),w:9+rnd()*3,h:12+rnd()*3,fill:'rgba(248,246,238,.92)',stroke:'rgba(150,150,138,.7)',inset:1}); // sheet of paper
+  patchAt(()=>({x:9+rnd()*(N-32),y:9+rnd()*(N-28),w:15+rnd()*6,h:12+rnd()*4,fill:'rgba(28,32,42,.5)',stroke:'rgba(10,12,18,.55)'})); // mouse pad
+  patchAt(()=>({x:9+rnd()*(N-28),y:9+rnd()*(N-26),w:9+rnd()*3,h:12+rnd()*3,fill:'rgba(248,246,238,.92)',stroke:'rgba(150,150,138,.7)',inset:1})); // sheet of paper
   scatter('crumb',42,{x0:8,x1:N-8,y0:8,y1:N-8,s0:.68,sr:.7});
   scatter('paperclip',15,{x0:9,x1:N-9,y0:9,y1:N-9,s0:1.08,sr:.5,extra:r=>({a:r()*6.28})});
   scatter('sticky',11,{x0:9,x1:N-9,y0:9,y1:N-9,s0:1.22,sr:.5,extra:r=>({hue:[52,320,142,196][Math.floor(r()*4)]})});
@@ -5450,7 +5691,11 @@ function makeMap(key,seed){
   // Placed on the four cardinal mid-lanes at radius ~16: clear of the carved arena
   // (~11) and of the diagonal corner economy pairs (~19), so both the field objects
   // AND their tiles survive survivalSetup's pruning and render out in the wave zone.
-  const hz=(kind,baseAng,rx,ry)=>{const a=baseAng+(rnd()-.5)*.36,rd=16+rnd()*1.6;field(kind,c+dcos(a)*rd,c+dsin(a)*rd,rx,ry);};
+  const hz=(kind,baseAng,rx,ry)=>{   // v103: retry off a hazard of a different kind
+   let px=0,py=0,got=false;
+   for(let k2=0;k2<6&&!got;k2++){const a=baseAng+(rnd()-.5)*.36,rd=16+rnd()*1.6;
+    px=c+dcos(a)*rd;py=c+dsin(a)*rd;got=farField(px,py,kind,rx,ry);}
+   field(kind,px,py,rx,ry);};
   hz('coffee',-Math.PI/2,6,4);hz('coffee',Math.PI/2,6,4);     // v66: N & S are spilled coffee now (block)
   hz('soda',0,5.5,4);hz('soda',Math.PI,5.5,4);                // E & W: spilled soda (slow + sting)
   // ants raid the crumbs (two mirrored pairs)
@@ -5464,7 +5709,12 @@ function makeMap(key,seed){
  // v35: Desk keeps only its curated hazards & nests (survivalSetup carves its own
  // arena). v66: the lane passes are PvP-only for the same reason - the Desk's
  // starts are rebuilt in the middle of the map, so its corner lanes mean nothing.
- if(key!=='desk'){edgeClutter();mineField();barrCluster(7);laneBarr();}
+ /* v103 owner pass: Backyard Brawl lays fewer random clusters. It is the one map
+    where the dark hedgehogs sit on bright grass, so the same density that reads as
+    scattered cover on tile, carpet and sand read as clutter there - the owner's
+    note names that map. The other three keep the count they have always had. */
+ if(key!=='desk'){const lawn=key==='backyard';
+  edgeClutter();mineField();barrCluster(lawn?3:7);laneBarr(lawn?[0.32,0.68]:[0.30,0.50,0.70]);}
  // never block starts (clear passability AND any field hazards in a wide ring)
  for(const s of M.starts)for(let y=-5;y<=5;y++)for(let x=-5;x<=5;x++){const tx=s.x+x,ty=s.y+y;if(tx>=0&&ty>=0&&tx<N&&ty<N){M.pass[ty*N+tx]=1;M.fld[ty*N+tx]=0;}}
  // drop any field/nest objects that overlap a start so the visuals match the cleared tiles
@@ -5521,6 +5771,52 @@ function makeMap(key,seed){
   }
   for(const fl of M.fields)if(fl.blk)delete fl.blk;   // transient bookkeeping, never leaves makeMap
  }
+ /* ---- v103: DROWNED PROPS ----
+    A blocking prop is placed long before the hazards are stamped, so a pond laid
+    on top of one leaves a rock standing in open water - "impassable level art
+    spawns completely inside the impassable map hazard", named in the owner's map
+    audit and measured at 53-158 props per 40 seeds on every map. Completely
+    inside is the test, literally: every tile the prop took is a tile the liquid
+    also took. Which is also why nothing has to be handed back - the v67 lesson
+    (dropping the OBJECT must never leave its tiles behind) is satisfied here for
+    free, because the liquid owns every one of them.
+    IT STOPS AT CODE 3 ON PURPOSE, and a future session should not "finish the
+    job" by extending it to the burn hazards. An impassable liquid is a hole in
+    the ground and art standing in one is absurd; quicksand, thorns, glue, grease
+    and spilled soda are GROUND, walkable and merely painful, so art standing on
+    them is art standing on ground. Measured before extending it: the same rule
+    over code 2 would delete 141 of the Sandbox's 1150 props over 40 seeds, 104 of
+    them the bucket fortress's own walls and towers. The right answer there was to
+    stop the pit landing on the castle (KEEP, above), not to delete the castle.
+    Line props are exempt: they lay a capsule through blockLine rather than a
+    disc, and a pencil with one end in a spill is not a pencil in a spill.
+    The point mirror goes with it. A mirrored hazard drowns both halves of a
+    mirrored pair by itself, but the un-mirrored liquids (the kiddie pool) do not,
+    and an obstacle one army has and the other does not is a balance change
+    smuggled in as a cosmetic fix. */
+ {const propTiles=(p)=>{
+   if(p.len)return null;                       // capsule, not a disc - see above
+   const br=propBlkR(p.t,p.r,p.sc);if(br<=0)return null;
+   const out=[],tx=Math.floor(p.x),ty=Math.floor(p.y);
+   if(tx>=0&&ty>=0&&tx<N&&ty<N)out.push(ty*N+tx);
+   for(let y=Math.floor(p.y-br);y<=p.y+br;y++)for(let x=Math.floor(p.x-br);x<=p.x+br;x++){
+    if(x<0||y<0||x>=N||y>=N)continue;
+    if(dhyp(x+.5-p.x,y+.5-p.y)<=br)out.push(y*N+x);}
+   return out.length?out:null;};
+  /* v103: the map's ANCHOR props are exempt. Each is a single prop the map is
+     built around - the sandcastle keep, the cereal bowl, the coffee table the
+     train ring runs around - and deleting one costs the map its centrepiece where
+     deleting a rock costs it a rock. KEEP (above) is the belt: no hazard is laid
+     over these in the first place. This is the braces, and it is not redundant -
+     a cluster's SECOND lobe is placed relative to its first and can still reach
+     ground the first one was steered away from. */
+  const ANCHOR={keep:1,bowl:1,table:1};
+  const drowned=p=>{if(ANCHOR[p.t])return false;const ts=propTiles(p);return !!ts&&ts.every(i=>M.fld[i]===3)};
+  const gone=M.props.filter(drowned);
+  if(gone.length){
+   const isMirrorOfGone=p=>gone.some(g=>g.t===p.t&&Math.abs(g.x-(N-p.x))<1e-6&&Math.abs(g.y-(N-p.y))<1e-6);
+   M.props=M.props.filter(p=>!drowned(p)&&!isMirrorOfGone(p));
+  }}
  // ---- seal unreachable pockets ----
  // flood the passable area from the start tiles using the SAME 8-way + no-corner-cut
  // rule the pathfinder uses, then block any passable tile the flood never reaches.
@@ -5541,6 +5837,33 @@ function makeMap(key,seed){
   }
   for(let i=0;i<N*N;i++)if(M.pass[i]===1&&!reach[i]){M.pass[i]=0;M.fld[i]=0;}
  })();
+ /* ---- v103: GROUND COVER THAT THE FINISHED BOARD CONTRADICTS ----
+    scatter() drops its decorations at a random point with no idea what will land
+    on top of them, and nothing has ever pruned them: tufts float on ponds, crumbs
+    hide under the sofa, cereal sits inside the bowl it spilled from. 100-334 per
+    40 seeds on every map.
+    This runs LAST, after sealPockets, because only then are pass and fld final.
+    M.deco is ART ONLY - no decoration is in pass, in fld, in hashState or in any
+    save - so this removes pixels and can change nothing else. */
+ /* ---- v103: HAZARDS WITH NOTHING UNDER THEM ----
+    A field OBJECT that owns no tile of its own code is art with no terrain
+    behind it - the exact mirror of the v67 bug (tiles with no art), and it
+    happens when a blob lands close enough to an expansion pocket that field()'s
+    own nearExp guard skips every tile it would have stamped, after which the
+    pocket-clearing pass wipes anything left. renderTerrain draws only from
+    M.fields, so this is the one place that can stop a quicksand pit being
+    painted over ground there is nothing wrong with. Runs after sealPockets,
+    because sealPockets can zero fld too. */
+ M.fields=M.fields.filter(fl=>{
+  const ext=Math.max(fl.rx,fl.ry)*1.4;
+  for(let y=Math.max(0,Math.floor(fl.cy-ext));y<=Math.min(N-1,fl.cy+ext);y++)
+   for(let x=Math.max(0,Math.floor(fl.cx-ext));x<=Math.min(N-1,fl.cx+ext);x++)
+    if(M.fld[y*N+x]===fl.code)return true;
+  return false;
+ });
+ M.deco=M.deco.filter(d=>{const tx=Math.floor(d.x),ty=Math.floor(d.y);
+  if(tx<0||ty<0||tx>=N||ty>=N)return false;
+  return M.fld[ty*N+tx]!==3&&M.pass[ty*N+tx]===1;});
  return M;
 }
 function blockLine(M,x,y,len,ang,r){const cx=dcos(ang),cy=dsin(ang),R=Math.ceil(r),rr=(r+.5)*(r+.5),t0=-Math.max(.25,r),t1=len+Math.max(.25,r);for(let t=t0;t<=t1;t+=.34){const bx=Math.floor(x+cx*t),by=Math.floor(y+cy*t);for(let oy=-R;oy<=R;oy++)for(let ox=-R;ox<=R;ox++){if(ox*ox+oy*oy>rr)continue;const tx=bx+ox,ty=by+oy;if(tx>=0&&ty>=0&&tx<M.N&&ty<M.N)M.pass[ty*M.N+tx]=0}}} /* v36: dense 4-conn footprint over the full drawn extent (both stub ends), no diagonal gaps. v74: the stub overhang is a quarter tile, not .6, so a thin limb's ends do not outgrow its middle */
@@ -5689,18 +6012,31 @@ function renderTerrain(){
   for(let i=0;i<=N;i+=4){c.beginPath();c.moveTo(isoX(i,0),isoY(i,0));c.lineTo(isoX(i,N),isoY(i,N));c.stroke();c.beginPath();c.moveTo(isoX(0,i),isoY(0,i));c.lineTo(isoX(N,i),isoY(N,i));c.stroke();}
   // soft tile gloss in big diagonal sweeps
   c.save();c.globalCompositeOperation='lighter';c.globalAlpha=.05;c.fillStyle='#ffffff';
-  for(let i=0;i<N;i+=8){const sx=isoX(i,0),sy=isoY(i,0);c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+HW*8,sy+HH*8);c.lineTo(sx+HW*8-30,sy+HH*8);c.lineTo(sx-30,sy);c.closePath();c.fill();}
+  /* v103: the same edge bug as the grass banding, and worse - this quad was
+     eight tiles LONG and thirty screen-pixels wide, so the "big diagonal sweep"
+     was a handful of slivers in the board's north corner. Full width, four tiles
+     of gloss every eight. */
+  for(let i=0;i<N;i+=8){const sx=isoX(0,i),sy=isoY(0,i);c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+HW*N,sy+HH*N);c.lineTo(sx+HW*N-HW*4,sy+HH*N+HH*4);c.lineTo(sx-HW*4,sy+HH*4);c.closePath();c.fill();}
   c.restore();
  }
  if(th==='grass'){ // mowed-stripe banding, like a lawn
+  /* v103 THE "OFF COLOUR TILES ON ONE SIDE" DEFECT, and it is the same typo in
+     three passes (here, the carpet below, and the kitchen's tile gloss above).
+     A band started at tile (i,0) and ran N tiles in +x, which is a strip three
+     tiles DEEP along one edge of the board - so every one of the 22 bands stacked
+     into the same three rows and the other 61 rows of lawn got none. Starting at
+     (0,i) is the whole fix: the band now runs the board's full width at depth i,
+     which is what a mowed stripe is.
+     The light/dark alternation was ((i>>1)%2), which alternates for a step of 2
+     and this loop steps 3 - it gave doubled bands in an irregular rhythm. */
   c.save();c.globalAlpha=.05;
-  for(let i=0;i<N;i+=3){c.fillStyle=(i>>1)%2?'#ffffff':'#000000';const sx=isoX(i,0),sy=isoY(i,0);c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+HW*N,sy+HH*N);c.lineTo(sx+HW*N-HW*3,sy+HH*N+HH*3);c.lineTo(sx-HW*3,sy+HH*3);c.closePath();c.fill();}
+  for(let i=0;i<N;i+=3){c.fillStyle=((i/3)|0)%2?'#ffffff':'#000000';const sx=isoX(0,i),sy=isoY(0,i);c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+HW*N,sy+HH*N);c.lineTo(sx+HW*N-HW*3,sy+HH*N+HH*3);c.lineTo(sx-HW*3,sy+HH*3);c.closePath();c.fill();}
   c.restore();
  }
  if(th==='carpet'){ // plush pile: soft vacuum banding + dense short fibers
   // broad vacuum-stripe banding for depth
   c.save();c.globalAlpha=.04;
-  for(let i=0;i<N;i+=4){c.fillStyle=(i>>2)%2?'#ffffff':'#000000';const sx=isoX(i,0),sy=isoY(i,0);c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+HW*N,sy+HH*N);c.lineTo(sx+HW*N-HW*4,sy+HH*N+HH*4);c.lineTo(sx-HW*4,sy+HH*4);c.closePath();c.fill();}
+  for(let i=0;i<N;i+=4){c.fillStyle=(i>>2)%2?'#ffffff':'#000000';const sx=isoX(0,i),sy=isoY(0,i);c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+HW*N,sy+HH*N);c.lineTo(sx+HW*N-HW*4,sy+HH*N+HH*4);c.lineTo(sx-HW*4,sy+HH*4);c.closePath();c.fill();}   // v103: (0,i), not (i,0) - see the grass banding above
   c.restore();
   // tiny fiber flecks scattered across the whole mat (one-time bake, so density is fine)
   c.save();c.globalAlpha=.5;c.lineCap='round';c.lineWidth=1;
@@ -5814,7 +6150,7 @@ function renderTerrain(){
  for(const p of (G.map.puddles||[])){
   const sx=isoX(p.x,p.y),sy=isoY(p.x,p.y),a=p.r*1.42*HW,b2=p.r*1.42*HH;
   let edge,body1,body2,spec;
-  if(p.col==='milk'){edge='rgba(195,198,205,.85)';body1='#ffffff';body2='#dde2e8';spec='rgba(255,255,255,.7)';}
+  if(p.col==='milk'){edge='rgba(168,173,182,.85)';body1='#edeff3';body2='#c9cfd9';spec='rgba(255,255,255,.34)';}   // v103 owner pass: as the milk FIELD above - it was pure white with a 70% white specular
   else if(p.col==='juice'){edge='rgba(150,80,10,.5)';body1='#ffb14e';body2='#e07c1a';spec='rgba(255,240,200,.6)';}
   else{edge='rgba(36,66,40,.55)';body1='#7fd0ee';body2='#3a7a9c';spec='rgba(220,250,255,.7)';}
   // damp halo
@@ -5848,7 +6184,14 @@ function renderTerrain(){
  const GOO={soda:{rim:'rgba(58,30,16,.5)',g0:'#37190d',g1:'#5c2f16',g2:'#8a4e22',fleck:'rgba(220,180,130,.5)',sheen:'rgba(255,208,150,.3)'},
             grease:{rim:'rgba(64,48,14,.5)',g0:'#5a4a12',g1:'#8a7220',g2:'#c2a63c',fleck:'rgba(255,238,178,.45)',sheen:'rgba(255,244,190,.34)'},
             glue:{rim:'rgba(46,54,66,.45)',g0:'#d8dee6',g1:'#eef2f6',g2:'#fbfdff',fleck:'rgba(150,170,195,.4)',sheen:'rgba(255,255,255,.42)'}};
- const LIQ={milk:{rim:'rgba(120,124,132,.5)',g0:'#ffffff',g1:'#f2f4f7',g2:'#d3d8e0',ring:'rgba(150,158,170,.3)',sheen:'rgba(255,255,255,.5)'},
+ /* v103 owner pass: the milk spill was PURE WHITE at the top of its ramp with a
+    50% white sheen on top of that, on a #d6dde1 tile floor - so it clipped to a
+    flat shape with no surface on it at all, brighter than anything else on the
+    board. Read in a real frame beside the grease slick, which shows its gradient,
+    its rim and its flecks. The ramp comes down to a cream, the rim darkens enough
+    to draw the edge, and the sheen is a streak rather than a wash. Milk is the
+    Kitchen's alone - juice and coffee are untouched. */
+ const LIQ={milk:{rim:'rgba(104,110,120,.62)',g0:'#eef0f4',g1:'#dde1e8',g2:'#bcc3cf',ring:'rgba(132,140,154,.34)',sheen:'rgba(255,255,255,.26)'},
             juice:{rim:'rgba(38,10,42,.6)',g0:'#a84fc0',g1:'#7a2a92',g2:'#4c1560',ring:'rgba(226,170,240,.22)',sheen:'rgba(240,190,250,.42)'},
             coffee:{rim:'rgba(26,14,6,.6)',g0:'#7a4a26',g1:'#4e2c14',g2:'#2a170a',ring:'rgba(196,150,104,.22)',sheen:'rgba(224,186,140,.34)'}};
  for(const fl of (G.map.fields||[])){
@@ -5956,6 +6299,19 @@ function renderTerrain(){
   if(d.t==='tuft'){
    for(let i=-2;i<=2;i++){const g=c.createLinearGradient(sx,sy,sx+i*4,sy-14*d.s);g.addColorStop(0,'#3a6e22');g.addColorStop(1,'#6fb83e');c.strokeStyle=g;c.lineWidth=2;c.lineCap='round';c.beginPath();c.moveTo(sx+i*3,sy);c.quadraticCurveTo(sx+i*4,sy-9*d.s,sx+i*5,sy-14*d.s);c.stroke();}
   }
+  else if(d.t==='dust'){
+   /* v103: a ball of carpet lint - a soft grey body, a lit top, and a few stray
+      fibres sticking out of it. Deliberately the same silhouette WEIGHT as the
+      tuft it replaces so the carpet keeps its scatter density and only its
+      colour changes. */
+   c.save();c.translate(sx,sy);
+   c.fillStyle='rgba(168,160,144,.5)';c.beginPath();c.ellipse(0,-1*d.s,5.2*d.s,3.1*d.s,0,0,7);c.fill();
+   c.fillStyle='rgba(208,201,186,.45)';c.beginPath();c.ellipse(-1.2*d.s,-2.2*d.s,3*d.s,1.8*d.s,0,0,7);c.fill();
+   c.strokeStyle='rgba(146,138,122,.5)';c.lineWidth=.9;c.lineCap='round';
+   for(let i=0;i<5;i++){const a=i/5*6.28+.4;
+    c.beginPath();c.moveTo(dcos(a)*3.2*d.s,-1*d.s+dsin(a)*1.9*d.s);
+    c.lineTo(dcos(a)*6.6*d.s,-1.6*d.s+dsin(a)*3.9*d.s);c.stroke();}
+   c.restore();}
   else if(d.t==='clover'){c.fillStyle='#4a8e2e';for(let i=0;i<3;i++){const a=i/3*6.28-1.57;c.beginPath();c.ellipse(sx+dcos(a)*3*d.s,sy+dsin(a)*1.6*d.s,2.4*d.s,1.8*d.s,a,0,7);c.fill();}c.strokeStyle='#3a6e22';c.lineWidth=1;c.beginPath();c.moveTo(sx,sy+1);c.lineTo(sx,sy+5*d.s);c.stroke();}
   else if(d.t==='flower'){c.fillStyle=`hsl(${d.hue},80%,62%)`;for(let i=0;i<5;i++){const a=i/5*6.28;c.beginPath();c.ellipse(sx+dcos(a)*3.2*d.s,sy+dsin(a)*1.8*d.s,2.2*d.s,1.5*d.s,a,0,7);c.fill();}c.fillStyle='#ffd24d';c.beginPath();c.arc(sx,sy,1.8*d.s,0,7);c.fill();}
   else if(d.t==='cereal'){c.strokeStyle=`hsl(${d.hue},60%,55%)`;c.lineWidth=5*d.s;c.beginPath();c.ellipse(sx,sy,8*d.s,5*d.s,0,0,7);c.stroke();c.save();c.globalCompositeOperation='lighter';c.strokeStyle='rgba(255,255,255,.3)';c.lineWidth=1.5*d.s;c.beginPath();c.ellipse(sx-1,sy-1,8*d.s,5*d.s,0,Math.PI,Math.PI*1.6);c.stroke();c.restore();}
@@ -9815,12 +10171,15 @@ function radioCD(){return (G&&G.test)?0:RADIO_CD;}
    places on every lockstep client and a snapshot taken mid-flight replays exactly.
    Damage runs weapon class q, which is 1.00 against everything except infantry.
    v77: 3 -> 7 shells at half damage each (210 -> 105). Two consequences were taken
-   deliberately and are NOT bugs: the walk now runs BARRAGE_FLY+(N-1)*GAP = 13.6s
+   deliberately and are NOT bugs: the walk runs BARRAGE_FLY+(N-1)*GAP seconds
    rather than 5.6s, and total damage rises 630 -> 735 because seven halves are more
    than three wholes. This block sits ABOVE the ability table on purpose - the table
    is built at load time and reads BARRAGE_N for its panel copy, and a const is in
-   the temporal dead zone until its own declaration runs. */
-const BARRAGE_N=7, BARRAGE_GAP=2.0, BARRAGE_FLY=1.6;
+   the temporal dead zone until its own declaration runs.
+   v103: GAP 2.0 -> 1.5 on the owner's instruction. The shells are unchanged in
+   number, damage and scatter; only the cadence tightens, so the walk closes from
+   13.6s to 10.6s and a target has less time to drive out from under it. */
+const BARRAGE_N=7, BARRAGE_GAP=1.5, BARRAGE_FLY=1.6;
 const BARRAGE_DMG=105, BARRAGE_R=3, BARRAGE_BOX=10;
 /* The barrage row below has always built its panel string out of BARRAGE_N and
    BARRAGE_BOX. Napalm and Paradrop were the two that still typed their figures

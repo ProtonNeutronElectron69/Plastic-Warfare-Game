@@ -119,7 +119,12 @@ const THEME66={backyard:{h2:'thorns',h3:'puddle'},kitchen:{h2:'grease',h3:'milk'
   return rec;
  }
  const RIM={thorns:'rgba(38,30,16,.45)',grease:'rgba(64,48,14,.5)',glue:'rgba(46,54,66,.45)',
-  soda:'rgba(58,30,16,.5)',milk:'rgba(120,124,132,.5)',juice:'rgba(38,10,42,.6)',
+  /* v103 owner pass: the milk rim DARKENED (120,124,132,.5 -> 104,110,120,.62)
+     because the spill was washing out on the Kitchen's light tile floor. This
+     table is how a painter is detected at all - it watches for the rim colour
+     being assigned - so a palette change has to be re-stated here, which is the
+     pin doing its job. */
+  soda:'rgba(58,30,16,.5)',milk:'rgba(104,110,120,.62)',juice:'rgba(38,10,42,.6)',
   coffee:'rgba(26,14,6,.6)',water:'rgba(30,52,40,.6)',puddle:'rgba(30,52,40,.6)',sand:null};
  const GRASSFLOOR='rgba(28,58,20,.4)'; // the deleted code-1 painter's floor tone
  let anyGrass=false;

@@ -299,20 +299,33 @@ section('T51.F the release is confined to map generation');
   ok('T51.F map generation is still a pure function of key and seed', same);
   ok('T51.F ...including the prop list', a.props.length === b.props.length);
 
-  /* PLACEMENT IS UNCHANGED. The whole reason collision was decoupled from the
-     call-site r instead of edited into it: r still drives the nearExpo rejection
-     and the art scale, so the props themselves must land where they always did.
-     Proved by putting every table entry out of the way and re-generating. */
+  /* v103 REWROTE THIS ASSERTION rather than loosening it, because the contract it
+     pins is the one that changed - and the replacement is the stronger of the two.
+     v74's claim was that collision was DECOUPLED from placement: the call-site r
+     drove where a prop went, PROP_BLK only how much ground it took away, and
+     moving the table moved nothing. v103 gives placement a second question -
+     "how much ground does this piece COVER" - and answers it from propArtR, which
+     is PROP_BLK read back through the 0.85 the table's own header documents. So
+     the table now drives placement too, deliberately: a neutral barricade keeps
+     clear of a bookshelf's art, and a bookshelf keeps clear of a console's.
+     A placement that ignored the table would have passed v74's version of this
+     check and fails this one. */
   {
     const keep = {};
     for (const k in PROP_BLK) { keep[k] = PROP_BLK[k]; PROP_BLK[k] = 1.234; }
     const c = makeMap('sandbox', 740301);
     for (const k in keep) PROP_BLK[k] = keep[k];
-    let placed = c.props.length === a.props.length;
-    for (let i = 0; placed && i < c.props.length; i++) {
-      if (c.props[i].t !== a.props[i].t || c.props[i].x !== a.props[i].x || c.props[i].y !== a.props[i].y) placed = false;
+    let moved = c.props.length !== a.props.length;
+    for (let i = 0; !moved && i < c.props.length; i++) {
+      if (c.props[i].t !== a.props[i].t || c.props[i].x !== a.props[i].x || c.props[i].y !== a.props[i].y) moved = true;
     }
-    ok('T51.F the collision table does not move a single prop', placed);
+    ok('T51.F the collision table drives placement now, through propArtR (v103)', moved);
+    const d = makeMap('sandbox', 740301);
+    let back = d.props.length === a.props.length;
+    for (let i = 0; back && i < d.props.length; i++) {
+      if (d.props[i].t !== a.props[i].t || d.props[i].x !== a.props[i].x || d.props[i].y !== a.props[i].y) back = false;
+    }
+    ok('T51.F ...and putting the table back puts every prop back where it was', back);
   }
 
   /* THE UI HALF MOVES NOTHING. Painting the wash is a style write on a detached

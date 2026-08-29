@@ -24,15 +24,22 @@ try { HTML77 = require('fs').readFileSync('pw.html', 'utf8'); } catch (e) { HTML
 /* ---------- A: the barrage at seven shells, half damage each ---------- */
 section('T52.A the barrage walks seven half-weight shells');
 {
-  ok('T52.A the shipped v77 barrage numbers',
-    BARRAGE_N === 7 && BARRAGE_DMG === 105 && BARRAGE_GAP === 2.0 &&
+  /* v103 EDITED THIS LINE AND THE WALK BELOW, which is the pin doing its job: the
+     owner asked for 1.5s between shells and the only way to get green is to come
+     here and say so. What v77 OWNS - seven shells at half weight each - is
+     untouched, and the two lines are kept apart so a future release can see which
+     release each number belongs to. */
+  ok('T52.A the shipped barrage numbers (v77 shape, v103 cadence)',
+    BARRAGE_N === 7 && BARRAGE_DMG === 105 && BARRAGE_GAP === 1.5 &&
     BARRAGE_FLY === 1.6 && BARRAGE_R === 3 && BARRAGE_BOX === 10);
   ok('T52.A seven shells is more than the v76 three, at exactly half the weight',
     BARRAGE_N === 7 && BARRAGE_DMG * 2 === 210);
   /* both consequences were surfaced at scope and taken deliberately; pinning them
-     means a later "fix" to either one has to be a decision, not a drift */
-  ok('T52.A the walk runs the full 13.6s it was scoped to',
-    Math.abs((BARRAGE_FLY + (BARRAGE_N - 1) * BARRAGE_GAP) - 13.6) < 1e-9);
+     means a later "fix" to either one has to be a decision, not a drift. v103
+     shortened the walk to 10.6s by tightening the gap; the shell count that made
+     it long in the first place is unchanged. */
+  ok('T52.A the walk runs 10.6s (13.6s at v77, closed by v103\'s tighter gap)',
+    Math.abs((BARRAGE_FLY + (BARRAGE_N - 1) * BARRAGE_GAP) - 10.6) < 1e-9);
   ok('T52.A total damage rose 630 -> 735, as disclosed',
     BARRAGE_N * BARRAGE_DMG === 735);
 

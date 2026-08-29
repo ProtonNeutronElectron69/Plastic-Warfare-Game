@@ -53,7 +53,7 @@ section('T51.B artillery barrage: schedule, spread, damage');
      values are pinned in T52.A; what belongs here is the shape the v76 design
      fixed and v77 did not touch. */
   ok('T51.B the barrage constants are well formed',
-    BARRAGE_N >= 1 && BARRAGE_GAP === 2.0 && BARRAGE_FLY === 1.6 &&
+    BARRAGE_N >= 1 && BARRAGE_GAP === 1.5 && BARRAGE_FLY === 1.6 &&   // v103: GAP 2.0 -> 1.5 on the owner's instruction
     BARRAGE_DMG > 0 && BARRAGE_R === 3 && BARRAGE_BOX === 10);
 
   G = null; newGame(cfg76('backyard', 'dm', 761002, 3));

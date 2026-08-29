@@ -85,7 +85,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v102 it makes **5,694
+that the results come out identical every time. As of v103 it makes **5,766
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -115,7 +115,43 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 102**.
+The game is at **version 103**.
+
+**v103 — a clean-up pass over all five battlefields.** Playing v102 turned up a
+list of things that simply looked wrong on the maps, and this release is the
+sweep that fixed them. The garden hose on *Backyard Brawl* used to run clean off
+the edge of the board and carry on into empty space; it stays on the lawn now.
+Three of the maps had a strip of oddly-shaded tiles down one side, which turned
+out to be the mowed-lawn stripes, the carpet's vacuum banding and the kitchen
+tiles' shine all being painted into the same narrow band at the rim instead of
+across the whole floor — they sweep the board properly now. Rocks, sofas, soup
+cans and the like no longer spawn stranded in the middle of a puddle of water,
+milk or grape juice. Two spills of different kinds no longer bleed through each
+other. Big pieces of scenery stop being drawn on top of each other and on top of
+the wire barricades. A sheet of paper no longer lands half on the chopping board.
+The quicksand stops swallowing the sandcastle on *Sandbox Standoff*. Blades of
+grass are no longer scattered across the living-room carpet — they are dust
+bunnies now, which is what they were always meant to be. And *Backyard Brawl*'s
+pair of terracotta pots is finally a pair: one of the two used to go missing on
+most maps.
+
+Two more came out of playing the release before it shipped. The white spills on
+*Kitchen Counter* were washing out — a puddle of milk whose brightest point is
+pure white has no surface left to shade, so it read as a flat hole in the counter
+rather than as a spill; it has its rim, its ripples and its body back, and the
+sheet of paper on the counter came down a shade with it. And *Backyard Brawl* had
+too many wire barricades, bunched into long arcs: the lawn now lays about **40%
+fewer** of them and they keep their distance from each other, so they read as
+scattered cover instead of clutter. The roadblocks across the lanes are still
+there — that is what they are for. The other three maps keep the barricades they
+had; it is the lawn where dark wire on bright grass stood out.
+
+Two smaller things came in the same release: the **Artillery Barrage** now drops
+its seven shells 1.5 seconds apart instead of 2, so the whole walk lands in
+about ten and a half seconds rather than thirteen and a half and a target has
+less time to drive out from under it — the shells themselves are unchanged. And
+**selecting a helicopter is twice as loud**, so the rotor answers you over the
+noise of a ground fleet.
 
 **v102 — you can finally see what a unit is good at.** Hovering a unit inside a
 Barracks, Garage or Helipad now opens a proper card instead of a line of plain

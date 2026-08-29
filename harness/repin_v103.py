@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""repin_v101.py - write the recut_v101 tables into the tails that pin them.
+"""repin_v103.py - write the recut_v103 tables into the tails that pin them.
 
-    cat shim_head.js game.js recut_v101.js > rc101.js && node rc101.js > cut_v101.json
-    python3 repin_v101.py cut_v101.json
+    cat shim_head.js game.js recut_v103.js > rc103.js && node rc103.js > cut_v103.json
+    python3 repin_v103.py cut_v103.json
 
-Five tables across four files:
+EIGHT tables across five files, and three of them are the LAYOUT pins - v103 is
+the release that changes map generation on purpose, so for once the 42-pin gate
+is a thing to recut rather than a thing to obey:
 
+    BASE43_LAYOUTS  tail_v43.js   the 15 layout pins
+    BASE62_LAYOUTS  tail_v62.js   the same 15, pinned a second time
+    V271_LAYOUTS    tail_v28.js   12 more: always dm, 3 opponents, no desk
     BASE45_TRAILS   tail_v43.js   T23.A
     BASE45_AI       tail_v44.js   T24.I, and tail_v44_1's T25.F reads the same one
     BASE43_DESK     tail_v45.js   T26.G
@@ -17,17 +22,17 @@ differs from the old, so a re-run against already-repinned tails fails loudly
 instead of silently doing nothing. Each file is read, rewritten in memory and
 only then written out, so a failure part-way leaves every tail untouched.
 
-The v76 repin cut two of five tables wrong because the recut assumed every table
+The v76 repin cut two of the trail tables wrong because the recut assumed every table
 is captured by "boot a match and hash it" - BASE43_DESK is not, it needs the
 Gunner-at-90 fixture, and BASE45_AI needs the human seat handed to the AI first.
-recut_v101 reproduces both, and this script verifies the shape of what it was
+recut_v103 reproduces both, and this script verifies the shape of what it was
 handed (key sets and sample counts) before writing a byte.
 """
 import json
 import re
 import sys
 
-CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v101.json'
+CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v103.json'
 cut = json.load(open(CUT, encoding='utf-8'))
 
 # ---- shape gate: refuse a cut that does not look like the tables it replaces --
@@ -52,7 +57,7 @@ if any(len(v) != 3 for v in cut['BASE45_AI'].values()):
 if len(cut['BASE43_DESK']) != 26:
     sys.exit('BASE43_DESK should hold 26 samples (2400/90), got %d' % len(cut['BASE43_DESK']))
 if cut['BASE45_TRAILS'] != cut['BASE62_TRAILS']:
-    sys.exit('the two tan tables disagree - recut_v101 should have caught this')
+    sys.exit('the two tan tables disagree - recut_v103 should have caught this')
 
 
 def obj(table, indent):
@@ -64,7 +69,17 @@ def arr(a):
     return '[' + ', '.join(str(n) for n in a) + ']'
 
 
+def flat(table):
+    """the layout tables are one line of JSON with double-quoted keys - keep that
+    shape exactly, because tail_v43 and tail_v62 must stay diffable line for line
+    against each other and against every release before this one."""
+    return '{' + ','.join('"%s":%d' % (k, v) for k, v in table.items()) + '}'
+
+
 EDITS = [
+    ('tail_v28.js', 'V271_LAYOUTS',   flat(cut['V271_LAYOUTS']),        'const'),
+    ('tail_v43.js', 'BASE43_LAYOUTS', flat(cut['BASE43_LAYOUTS']),      'const'),
+    ('tail_v62.js', 'BASE62_LAYOUTS', flat(cut['BASE62_LAYOUTS']),      'const'),
     ('tail_v43.js', 'BASE45_TRAILS', obj(cut['BASE45_TRAILS'], '  '), 'const'),
     ('tail_v44.js', 'BASE45_AI',     obj(cut['BASE45_AI'],     '  '), 'const'),
     ('tail_v45.js', 'BASE43_DESK',   arr(cut['BASE43_DESK']),         'const'),
@@ -74,15 +89,30 @@ EDITS = [
 
 # Tables this release is EXPECTED to leave alone, with the reason. Anything not
 # listed here that comes back unchanged is treated as a failed recut, not a no-op.
-# v101: EMPTY, deliberately. hashState gained a field (G.dayOff) and newGame
-# gained a srand() draw, so every table that stores a hash moves by construction
-# - the desk trail included, which under v99 could legitimately hold still. An
-# unchanged table here means the recut ran against a build without the change.
-UNMOVED_OK = {}
+# v103: ONE entry, and it was measured rather than assumed. Map generation moved,
+# so every table that hashes a board (the three layout tables) or hashes a match
+# played on one (the trail tables) is expected to move - except BASE43_DESK, which
+# is a single 2400-tick match on desk:surv:424243, and THAT BOARD GENERATES
+# IDENTICALLY: layout hash 3434555268 before and after, 22 props and 4 fields in
+# the same places. It is a Desk seed on which every retry this release added
+# happens to clear on its first roll, so no rnd() draw shifts. The one v103 change
+# that does reach it is the decoration prune (68 decorations down to 64), and a
+# decoration is art - not in pass, not in fld, not in hashState, not in the save.
+# The other five tables all carry desk rows too, but each is one row of seven, so
+# the table as a whole still moves.
+UNMOVED_OK = {'BASE43_DESK': 'desk:surv:424243 generates an identical board; only its decoration count moved, and deco is art'}
 
+# v103: tail_v43 and tail_v62 each carry TWO of these tables (a layout table and
+# a trail table), so the edits are applied CUMULATIVELY to one in-memory copy per
+# file. Reading each file fresh per edit - which is what this loop did while every
+# file held exactly one table - would have written the second edit over the first
+# and silently thrown a repinned layout away.
+work = {}
 pending = []
 for path, name, body, kw in EDITS:
-    src = open(path, encoding='utf-8').read()
+    src = work.get(path)
+    if src is None:
+        src = work[path] = open(path, encoding='utf-8').read()
     pat = re.compile(r'(^[ \t]*' + kw + r' ' + name + r'\s*=\s*)([\{\[][\s\S]*?[\}\]])(;)', re.M)
     hits = pat.findall(src)
     if len(hits) != 1:
@@ -99,9 +129,11 @@ for path, name, body, kw in EDITS:
             print('unchanged %-14s in %s (expected: %s)' % (name, path, UNMOVED_OK[name]))
             continue
         sys.exit('%s: %s already carries these numbers - is this a re-run?' % (path, name))
-    pending.append((path, new, name))
+    work[path] = new
+    pending.append((path, name))
 
-for path, new, name in pending:
-    open(path, 'w', encoding='utf-8').write(new)
+for path in dict.fromkeys(p for p, _ in pending):
+    open(path, 'w', encoding='utf-8').write(work[path])
+for path, name in pending:
     print('repinned %-14s in %s' % (name, path))
 print('%d tables written. tail_v44_1 needs no edit: T25.F reads tail_v44 BASE45_AI.' % len(pending))

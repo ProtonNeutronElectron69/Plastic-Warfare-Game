@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v100)
+# Plastic Warfare headless test harness (updated at v103)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -9,8 +9,8 @@ It grew by prepending, so the newest release sits in the MIDDLE rather than at
 the top, and the roadmap chapters below are HISTORY, not work in flight — the
 last of the three landed at v97 and nothing is outstanding. Practical route:
 
-- **What shipped recently:** the `## v100`, `## v99` and `## v98` sections (search
-  for `## v100`). Each one is the finding, the change, and what it measured.
+- **What shipped recently:** the `## v103`, `## v102` and `## v101` sections
+  (search for `## v103`). Each one is the finding, the change, and what it measured.
 - **How to build and run the suite:** `## Assembly` and `## Running`, about a
   fifth of the way down. `../CLAUDE.md` has the two commands; these have the why.
 - **Where the balance stands:** `## v90 BALANCE BASELINE`, read together with the
@@ -1175,6 +1175,233 @@ error a reader would see as anything but an odd blank report. `sim_report.js` no
 compiles the page's script block with `new Function` before writing (compiles, does
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
+
+## v103: the map layout audit, a faster barrage, and a louder rotor
+
+Three owner asks, and the third one is the release. `tail_v103.js` (T80, 71
+checks) and `harness/audit_maps.js` — the measuring tool the numbers below come
+from. **This is the first release since the layout pins existed that changes map
+generation on purpose**, so the 42-pin gate runs as its own inverse (see the
+recut section below). No unit, price or building changed.
+
+### The two small ones
+
+**The artillery barrage walks at 1.5s between shells, was 2.0** (`BARRAGE_GAP`).
+Seven shells, 105 damage, 3-tile blast and the 10×10 box are all untouched; only
+the cadence tightens, so the walk closes from 13.6s to 10.6s and a target has
+less time to drive out from under it. The Field Manual already spent this number
+through `data-tune="barrGap"`, so its sentence followed with no edit — which is
+what rule 3 buys.
+
+**Every helicopter's selection voice is twice as loud** (`ROTORV`, `.26/.24/.30`
+→ `.52/.48/.60`). Only `g` moved: chop rate, blade rate, the filter, the window
+and the Chinook's tandem beat are what tell the three apart and T43.L pins all of
+them, so the three stay exactly as distinguishable and stay in the same loudness
+order. The diesels did not come with it — this was an air-only ask.
+
+### The map audit: what the owner listed, what reproduced, and what it measured
+
+The owner named six things and invited a sweep for more. Every one reproduced,
+and `audit_maps.js` counts each over 40 seeds × 5 maps. Before → after:
+
+| defect | backyard | kitchen | sandbox | livingroom | desk |
+|---|---|---|---|---|---|
+| art drawn off the board | **162 → 0** | 0 → 0 | 0 → 0 | 0 → 0 | 0 → 0 |
+| blocking prop drowned in a liquid | 53 → 0 | 53 → 2\* | 158 → 0 | 78 → 0 | 37 → 0 |
+| ground cover on a liquid | 334 → 0 | 251 → 0 | 216 → 0 | 268 → 0 | 101 → 0 |
+| ground cover under a blocker | 40 → 0 | 264 → 0 | 237 → 0 | 223 → 0 | 93 → 0 |
+| barricade inside a prop's art | 31 → 0 | 14 → 0 | 9 → 0 | 65 → 0 | 0 → 0 |
+| two hazard KINDS sharing tiles (seeds) | 3 → 0 | 27 → 0 | 27 → 2 | 31 → 0 | 0 → 0 |
+| art drawn through art | 51 → 3 | 23 → 1 | 12 → 0 | 67 → 0 | 12 → 0 |
+| flat ground regions overlapping | — → 0 | — → 0 | — → 0 | — → 0 | — → 0 |
+
+\* two line props whose whole capsule lies in a spill; line props are exempt on
+purpose (below). The 2 remaining sandbox seeds share 10 tiles between a water
+blob and a quicksand pit — rims grazing, not colours crossing.
+
+**"Some maps have off colour tiles on 1 side" was ONE TYPO IN THREE PASSES, and
+it is the most reusable finding in the release.** The grass "mowed stripes", the
+carpet "vacuum banding" and the kitchen's "big diagonal sweeps" of tile gloss
+each anchored their band at `isoX(i,0)` and ran N tiles in +x. In tile space that
+parallelogram is `{i ≤ x ≤ i+N, 0 ≤ y ≤ 3}` — a strip three tiles DEEP along one
+edge. So all 22 mowed stripes stacked into the same three rows, layering into a
+visible pale wedge at the board's north-east rim, and the other 61 rows of lawn
+got nothing. `isoX(0,i)` is the whole fix. **When a pass claims to sweep the
+board, check which axis it actually walks.** (The grass alternation was
+`(i>>1)%2` too — right for a step of 2, and that loop steps 3.)
+
+**The garden hose walked off the map because its wave was centred on a constant.**
+`y = 6 + amp*sin(...)` with `amp` rolling to 16: a third of every backyard's hose
+was laid ten tiles past the north rim, drawn out in the void. Centring the wave on
+its own amplitude (`yc = amp+5`) is the whole fix and the hose keeps its shape.
+The same defect exists one layer down for LINE props — a pencil's origin was
+tested for bounds and the far end of its 8–15 tile limb was not — so `lineProps`
+now rotates its angle until the far end lands on the board too. `inB` is
+symmetric about the centre, so testing one end tests the mirror's end as well.
+
+**A prop drowned in a spill is removed with its point mirror, and nothing is
+handed back.** Props are placed long before hazards are stamped, so a pond laid
+over a rock leaves a rock standing in open water. "Completely inside" is the test
+literally: every tile the prop took is a tile the liquid took too — which is also
+why the v67 lesson (dropping the OBJECT must never leave its tiles behind) is
+satisfied for free here, because the liquid owns every one of them. The mirror
+goes with it because an obstacle one army has and the other does not is a balance
+change smuggled in as a cosmetic fix, and the un-mirrored liquids (the paddling
+pool) would otherwise do exactly that. **Symmetry is checked as PARITY**: every
+prop type laid in pairs must survive in an even number. Drop the mirror clause
+and that goes from 0 to 48 over the tail's 40 boards.
+
+**IT STOPS AT IMPASSABLE LIQUID ON PURPOSE, and the measurement is why.** An
+impassable liquid is a hole in the ground; quicksand, thorns, glue, grease and
+spilled soda are GROUND — walkable, merely painful — so art standing on them is
+art standing on ground. Extending the same rule to the burn hazards would delete
+**141 of the Sandbox's 1,150 props over 40 seeds, 104 of them the bucket
+fortress's own walls and towers.** The right answer there was not to delete the
+castle but to stop the pit landing on it: `KEEP` is ground no hazard may be laid
+over at all, it rides inside `fldGap` so every scoring pick gets it free, and it
+took the castle's buried props from 104 to 6. The paddling pool carries one too.
+
+**A PASS THAT GIVES UP TAKES ITS LAST ROLL BLIND — the second reusable finding.**
+Teaching the hazard picks to REJECT a spot crossing another kind cut the clipping
+by about two thirds and then stopped, because the lane pass must sit on a lane:
+it ran out of tries and stamped wherever its final roll happened to land. Scoring
+the ladder and keeping the LEAST BAD roll took the remainder to almost nothing
+(kitchen 301 clipped tiles → 0, living room 558 → 0, sandbox 620 → 10). That is
+why `fldGap` returns a MARGIN and `farField` is just its yes/no reading — three
+passes score their ladder now (the lane blob, the edge blob, and `fieldPairs`
+when its widening ladder finds nothing).
+
+**The living room has been scattering sixty clumps of GRASS on its carpet since
+v25.** The line says "soft dust-bunny ground cover" and calls `scatter('tuft')`,
+and `tuft` is the backyard's painter: five bright green blades. The owner spotted
+it by eye. `dust` is now the decoration the comment always described — a grey
+lint ball with a few stray fibres, deliberately the same silhouette weight so the
+carpet keeps its scatter density and only its colour changes.
+
+**Two more found by sweeping, neither on the owner's list.** The backyard's "two
+terracotta pots, mirrored corners" was ONE pot on 45 seeds in 60: they are laid at
+hard-coded corners and `prop()` refuses anything inside an expansion pocket, so
+the natural expansion ate one of the pair. `cornerPair` walks a deterministic
+ladder (no rnd() draws, so nothing downstream shifts) until both ends are clear.
+And the flat ground regions — a chopping board, a sheet of paper, a mouse pad, a
+raked sand patch, a mulch patch, a picnic blanket — were each dropped at a raw
+random rectangle: a sheet of paper routinely landed half on the chopping board.
+**The fix is ordering as much as retrying**: a hard-coded rectangle rolls nothing,
+so declaring the fixed regions FIRST costs no draw and is what gives the roll
+something to avoid. `reg()` also clamps, because every rolled rectangle was sized
+off N and positioned off N independently and the widest roll hung over the rim.
+
+**`propArtR` is the release's one new derivation, and it is not a second
+measurement.** `PROP_BLK`'s own header says every entry is 0.85× the sprite
+radius the type was baked at, and that 0 means "art smaller than a unit's own
+radius" — so `propArtR` reads the art back OUT of the collision table and the two
+can never drift. `propBlkR` answers "what does this take away"; `propArtR`
+answers "how much ground does this COVER". A bookshelf blocks .70 of a tile and is
+drawn over .82, which is exactly how a neutral barricade ended up standing inside
+one on 65 of 40 Living Room seeds: `barrTile` had always refused a BLOCKED tile,
+and the art is wider than the block.
+
+### The owner's pass on the same release, played before merge
+
+Two findings, and both are about how a map READS rather than about geometry, so
+both were judged from real Chromium frames.
+
+**"Some of the white features on Kitchen Counter are too white and exposed."**
+Measured by looking: the milk spill's gradient started at `#ffffff` with a 50%
+WHITE sheen laid over it, on a `#d6dde1` tile floor. A spill whose brightest point
+is pure white has no surface left to shade, so it clipped to a flat shape with no
+rim, no ripple rings and no body - a hole in the counter, and the brightest thing
+on the board. The grease slick beside it, which shows all three, is what made the
+comparison obvious. The ramp comes down to a cream (`#eef0f4` → `#bcc3cf`), the
+rim darkens enough to draw the edge, the sheen drops to .26, and the cosmetic milk
+puddle and the sheet-of-paper patch came down with it. **Juice and coffee are
+untouched** - the finding was about the Kitchen, and milk is the Kitchen's alone.
+
+**"Reduce and spread out the random arcs of green barricades on Backyard Brawl."**
+Measured before touching it: 100.6 barricade tiles per seed in 25.9 clumps, mean
+nearest-clump distance 5.9 tiles and clumps landing as close as 2.0 - which is why
+they read as long arcs rather than as scattered cover. Two changes, and the word
+RANDOM in the note picked which:
+
+- `barrCluster` scattered with no memory of ITSELF. `BARR_SEP` (8 tiles) is how
+  far a new cluster must start from every barricade already down, tested for the
+  mirror too, **with no fallback** - a cluster that cannot find clear ground is
+  simply not laid, which is what makes it reduce as well as spread. Global: no
+  map is worse for its random clusters not landing on each other.
+- The lawn lays three random clusters instead of seven, and two lane roadblocks
+  per lane instead of three. It is the one map where dark hedgehogs sit on bright
+  grass, which is why the same density reads as clutter there and as cover
+  elsewhere; the other three keep what they had.
+
+Measured after: **60.9 tiles per seed in 17.1 clumps, mean nearest clump 7.5.**
+The roadblocks' job survives - `laneBarr` is exempt from `BARR_SEP` because it is
+laid ACROSS a lane on purpose and its position is its whole job, and T80.K checks
+the lawn still carries them.
+
+Two older pins fired and were re-stated rather than loosened. `T45.C` detects a
+hazard painter by watching for its RIM colour being assigned to `fillStyle`, so a
+palette change has to be declared there. `T46.E` carried one barricade band for
+every map; the lawn has its own now (36-90), the other three keep the v74 band
+(50-140), and the split is what makes this an intended cut on one map rather than
+a drift on all of them.
+
+### The layout gate, run as its own inverse
+
+`recut_v103.js` / `repin_v103.py` replace the v101 pair. Every previous recut ran
+the 42-pin layout gate as a REFUSAL, because repinning trails on top of an
+accidental map change hides the real problem instead of recording it. v103's whole
+subject is the map, so the gate demands the opposite: the pins must have moved, or
+the cut ran against a build without the fixes. What it still refuses is a walk of
+the wrong number of pins.
+
+**Measured: 40 of the 42 moved.** The two that held are `desk:22`, the same board
+pinned in `BASE43_LAYOUTS` and `BASE62_LAYOUTS`, and only the Desk is allowed to
+hold — it is not untouched (its clutter pairs keep their art clear, its two
+hazards retry off each other, its mouse pad and sheet of paper retry off each
+other), but it lays no PvP economy, no mines and no barricade clusters, so a Desk
+seed where every retry clears on its first roll can legitimately generate
+byte-identically. `V271_LAYOUTS` has no desk row, so all twelve of its pins must
+move.
+
+**One trail table legitimately did not move, and it was verified rather than
+assumed.** `BASE43_DESK` is a single 2400-tick match on `desk:surv:424243`, and
+that board generates identically before and after: layout hash 3434555268 both
+ways, 22 props and 4 fields in the same places. The one v103 change that reaches
+it is the decoration prune (68 decorations down to 64) — and a decoration is art,
+not in `pass`, not in `fld`, not in `hashState`, not in the save. `UNMOVED_OK`
+carries that reason.
+
+**The repin script grew a bug the moment two tables shared a file.** `tail_v43`
+now carries `BASE43_LAYOUTS` and `BASE45_TRAILS`, `tail_v62` carries
+`BASE62_LAYOUTS` and `BASE62_TRAILS`. The loop read each file fresh per edit,
+which was correct while every file held exactly one table and would have written
+the second edit over the first — silently throwing a repinned layout away. Edits
+are applied cumulatively to one in-memory copy per file now.
+
+### What a screenshot caught that no assertion could
+
+Rule 7, again, and this release is the strongest case for it yet: **every defect
+in the table above is invisible to `seg.sh` by construction.** A prop in a pond
+is a legal prop. A band drawn along one edge is a legal band. `renderGuard` means
+a drawing bug cannot crash the game and cannot go red either. `harness/map_shot.sh`
+is the answer — it boots a real match per map in headless Chromium, paints the
+baked terrain canvas plus every prop into one canvas sized to the whole board,
+outlines the board's own rim in magenta and leaves that as the page, so Chromium's
+`--screenshot` is the whole board. The hose walking into the void and the pale
+wedge at the north-east rim were both read off that picture before a line of the
+fix was written, and read again after.
+
+Nothing it prints is pinned and it is not part of `seg.sh`, like `sim.sh` and the
+two probes. `audit_maps.js` is its numeric half: `cat shim_head.js game.js
+audit_maps.js > .audit.js && node .audit.js 40`.
+
+**A trap for the next session using it:** `plastic-warfare.html` ends with
+`</html>` and no trailing newline, so the obvious `head -c -1` used to strip a
+trailing newline before appending a `<script>` eats the `>` instead and the
+injected script never runs — silently, with the page still rendering fine. And do
+not wait on `load`: on a 6.7MB page full of `data:` URLs that event sits behind
+every decode and Chromium's virtual clock runs out first. Poll `ASSETS_STATE`,
+which is the same gate the Start button waits on.
 
 ## v102: the unit stat card, and the DPS bug a real frame caught
 
@@ -4184,8 +4411,38 @@ now runs each table from its own cfg and asserts both the equality that should h
 
 ## Contents
 
+v103 adds tail_v103.js (T80), riding segment 3 and listed last in tails.txt.
+**The suite stands at 5,766 checks** (5,694 at v102, 5,638 at v101, 5,587 at
+v100). Sections A-B are the barrage's cadence and the rotor's level, both
+transcribed on the rule that a number the owner set has to be re-stated by the
+next release that moves it. C-J are the map audit and they GENERATE MAPS rather
+than booting one: art on the board (props, line-prop far ends, flat regions),
+props not drowned in a liquid with mirror survival checked as PAIRITY, ground
+cover pruned against the finished board, art not drawn through art (and
+`propArtR` proved to invert `PROP_BLK` rather than restate it), hazard kinds not
+sharing tiles plus the bucket fortress not buried in quicksand, the living room's
+dust instead of grass, the three banding passes anchored on the right axis, and
+the containment claim - a map generates on the map's own mulberry stream and
+consumes nothing from `srand()`.
+
+Section K is the owner's pass on the same release: the Kitchen's whites bounded
+by the PROPERTY that caused the wash-out (nothing clips, the ramp keeps range, the
+sheen is a streak) rather than by a transcribed colour, and the lawn's barricades
+bounded by a count and a spacing, because "reduce and spread out" is what was
+asked. Those palettes are local consts inside `renderTerrain`, so reading the
+shipped file is the only way to make a claim about them at all.
+
+Six checks in older tails were EDITED rather than repinned, each deliberately:
+`T51.B` and `T52.A` carry the barrage's cadence and had to be re-stated; `T51.F`
+pinned "the collision table does not move a single prop" and v103 makes it drive
+placement on purpose, so the assertion was rewritten to the stronger opposite
+claim; and `T40.F`'s hedgehog scan accepted any tile that was not `terrain`, so
+once the map moved it picked one whose spacing denial came from a wildlife nest -
+the scan now says what its own comment always described. `T45.C`'s rim table and
+`T46.E`'s barricade band are the owner pass's two, described above.
+
 v100 adds tail_v100.js (T77), riding segment 3 and listed last in tails.txt.
-The suite stands at 5,587 checks (5,538 at v99).
+The suite stood at 5,587 checks at that release (5,538 at v99).
 Sections A-C: the Bail crew falling under canopies (including the snapshot cut
 mid-fall, and the fog gate for a strike that has a pi and no owner), wildlife
 selection driven end to end from pickAt through the panel to the dead
