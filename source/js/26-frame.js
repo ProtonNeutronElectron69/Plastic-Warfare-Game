@@ -2,6 +2,7 @@
 let lastT=0,acc=0,RDT=1/60; // v41: wall-clock render delta (s), drives the cosmetic turret slew
 function frame(t){
  requestAnimationFrame(frame);
+ musTick(); // v104: above the !G return on purpose - the menu is exactly !G, and it has music
  if(!G){lastT=t;return}
  // v56: the SPECTATOR SPEED lives here and nowhere else. The clamp above is
  // applied first, so even 2x can only ever bank 200ms = 6 steps in one frame;

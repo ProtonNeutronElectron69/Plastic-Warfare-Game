@@ -18,15 +18,16 @@ owner asks "what should I build", that is the section.
 ## The shape of the project
 
 The game is **assembled from `source/`** into one file, `plastic-warfare.html`
-(~6.7MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
+(~8.4MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
 audio, UI, netcode — is still one `<script>` block in the shipped file; it is
-written as 34 files listed in `source/order.txt`. There are no dependencies.
+written as 36 files listed in `source/order.txt`. There are no dependencies.
 The recorded sound set (25 voices in 35 mp3 takes, `assets/snd/`, since v92 —
 the voices that repeat fastest carry alternates, which is why takes outnumber
 voices), the full sprite texture set (218 WebP files, `assets/img/`, since v95)
 and their normal maps (218 more, `assets/nrm/`, since v96) all ride inside the
 script as base64 — the
-double-clicked file stays self-contained. `tools/embed_snd.py` and
+double-clicked file stays self-contained. **Four music tracks (`assets/mus/`,
+since v104)** ride the same way. `tools/embed_snd.py`, `tools/embed_mus.py` and
 `tools/embed_img.py` pack them; the suite asserts the committed files and the
 embedded copies stay byte-identical.
 
@@ -49,12 +50,13 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v103, and what a fresh session does)
+## Where the game stands (v104, and what a fresh session does)
 
-The game is at **v103**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v104**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
-v103 are standalone owner passes (below). There is no release in flight.
+v103 are standalone owner passes (below), and **v104 is the first Roadmap 4 item
+delivered** — the soundtrack. There is no release in flight.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
 ranked, written after a whole-game review at v103 and NOT started. It supersedes
@@ -78,8 +80,14 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 5,766 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 5,809 checks, expect 0 failures
 ```
+
+**One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
+colliding two gun voices. It fingerprints the SYNTHESISED weapons and those are
+jittered with `Math.random` (rule 2 — audio never touches the sim stream), so a
+coincidence is possible by construction. Re-run before investigating; the fix,
+if anyone wants it, is in the v104 section of `harness/README.md`.
 
 If those are green the repository is exactly as the last release left it, and
 whatever the owner asks for next is a fresh vNN starting from `origin/main`. If
@@ -309,7 +317,13 @@ system invented.
 
 ### Band 1 — highest return
 
-1. **Music.** MEASURED: there is none. Not quiet — none. The only continuous
+1. ~~**Music.**~~ **DONE at v104** — four Old Guard Fife and Drum Corps tracks
+   (menu / build / combat / victory sting), public domain as US Government works,
+   with the score ducking under gunfire through `COMBAT_DUCK_T` exactly as
+   predicted below. **The bark half of this item is still open:** infantry
+   selection still speaks through `speechSynthesis`, and ten recorded barks
+   would retire the one sound in the game that is not in its art direction.
+   The original entry, for the reasoning: MEASURED: there is none. Not quiet — none. The only continuous
    audio is the mining ambience loop, on a game where every gun is a recorded
    take. Four short loops (setup, build-up, combat, victory sting) would do more
    for the first thirty seconds than anything else on this list. The plumbing
@@ -420,8 +434,8 @@ system invented.
     that block line of sight, so cover means something without the ground moving.
     *Impact transformative · effort very high · balance risk destabilising.*
 
-**The order proposed, if the owner wants one:** v104 music and barks (safe, felt
-immediately, no repin); v105 two new battlefields plus a second survival board;
+**The order proposed, if the owner wants one:** ~~v104 music~~ (done — and it
+needed no repin, as predicted) then the barks; v105 two new battlefields plus a second survival board;
 v106 the armies pass — Blue, then Gray, then the eight bot abilities, which
 raises the ceiling on Hard and shows off the fixes at the same time.
 
@@ -521,6 +535,54 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v104 — the soundtrack (Roadmap 4 item 1)
+
+**The game has music**, and it is the first Roadmap 4 item delivered. Four
+recorded tracks by the **United States Army Old Guard Fife and Drum Corps** —
+menu march, build-up loop, combat loop, victory fanfare — chosen by the owner by
+ear from a 17-track audition page. `tail_v104.js` (T81, 43 checks in the suite; 41 run standalone - two need an AudioContext, which an earlier tail in segment 3 supplies as a stub); full evidence
+in the v104 section of `harness/README.md`. **No trail moved and no repin was
+due**: music is presentation, and `triage.sh` said "sim unchanged" first time.
+
+- **The licence is first-hand for once.** The Old Guard is a serving US Army
+  unit, so its recordings are works of the federal government and public domain
+  under 17 USC 105 — not resting on a mirror's CC0 label. That matters because
+  the game is one double-clickable file with no credits screen, so an
+  attribution licence would have nowhere to put the attribution.
+- **`03b-music.js` is client-local presentation, top to bottom.** Nothing is in
+  `hashState` or the snapshot, nothing calls `srand()`, and `musTick()` reads the
+  game but never writes it — so one player's failed decode cannot desync a
+  lockstep match. That is rule 2 and the `G.cam` precedent applied to a
+  subsystem it is very tempting to give state to. T81.C asserts all three.
+- **It reuses the two audio mechanisms that already existed** rather than
+  inventing any: `armsBus` is the pattern for the music bus off `masterGain`,
+  and `COMBAT_DUCK_T` — the "guns are going off" clock since v27.1 — does two
+  jobs, ducking the score while true and holding the combat track for
+  `MUS_COMBAT_T` after it goes quiet so a lull cannot flap the music.
+- **`sndLead` already solved the MP3 padding problem at v92.** The plan was OGG
+  until Safari's unreliable Vorbis support ruled it out. MP3 then needs the
+  encoder padding beaten, and v92 already measures the decoder's leading silence
+  off the decoded samples because browsers differ. Music reuses it plus a 0.5s
+  margin of real music outside the loop. **Grep for the function that already
+  derives it** — the v102 lesson, again.
+- **`musTick()` is called ABOVE `frame()`'s `if(!G) return`**, because the menu
+  is exactly the `!G` case and would otherwise be the one screen with no music.
+  T81.F pins the ordering, not just the call.
+
+**Two things that cost time and would cost it again:**
+
+- **A `str.replace()` with no assert is a silent no-op.** A constant was
+  "changed" by a patch that missed on whitespace and reported nothing, and the
+  improvement was credited to it until the value was read back. Every patch in
+  this release asserts its anchor first.
+- **Rule 7 has an audio form.** You cannot hear a screenshot, but you can read
+  the decoded buffer: loading the shipped file in real Chromium and printing
+  each track's duration, channels and measured `pwOff` proved the loop points
+  land where the cutter put them — and caught that the victory sting carried
+  0.56s of the recording's own silence, which `sndLead` skipped so it sounded
+  right by accident while wasting a twelfth of the sting's budget. No assertion
+  would ever have shown it.
 
 ## v103 — the map layout audit (not part of a roadmap)
 

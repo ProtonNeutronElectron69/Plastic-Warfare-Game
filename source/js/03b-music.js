@@ -1,0 +1,153 @@
+/* ---------------- MUSIC (v104) ----------------
+   Four recorded tracks, one per phase of a match: the menu march, the build-up
+   loop, the combat loop, and a one-shot victory sting. All four are the United
+   States Army Old Guard Fife and Drum Corps.
+
+   THE WHOLE FILE IS CLIENT-LOCAL PRESENTATION. Nothing here is in hashState()
+   or the save snapshot, nothing here calls srand(), and musTick() reads the
+   game but never writes it - so two machines whose music is out of step (one
+   muted, one whose decode failed) still run bit-identical simulations. That is
+   rule 2 and the G.cam precedent, applied to a subsystem that is very tempting
+   to give state to.
+
+   IT IS ALSO ENTIRELY OPTIONAL, in the assets-override sense the whole project
+   is built on. No AudioContext, muted, a manifest that never loaded, a decode
+   that failed - every one of those leaves musBuf() answering null and the game
+   playing exactly as it did at v103, silently. The headless suite has no fetch,
+   so that silent path is the one it exercises on every run, permanently. */
+
+/* Per-track gain. This is the mixing desk for music and the ONLY one - the
+   files are peak-normalised, so a track that sits wrong is fixed here and not
+   by re-encoding it (the v92 rule for SNDV, which this deliberately mirrors).
+   Music sits well under the guns on purpose: it is the floor of the mix, not a
+   layer of it. */
+const MUSV={menu:.55,build:.30,combat:.38,victory:.62};
+const MUS_FADE=1.8;      // seconds to crossfade one track into the next
+const MUS_DUCK=.45;      // how far music drops under gunfire (multiplier)
+const MUS_COMBAT_T=7;    // seconds of quiet before combat relaxes back to build
+
+let musBus=null;         // gain node, hangs off masterGain like armsBus
+let musNow=null;         // {src,gain,key} currently playing, or null
+let musKey='';           // what musNow is, '' when nothing plays
+let musDuckT=0;          // AC time until which music stays ducked
+let musCombatT=0;        // AC time until which the match counts as "in combat"
+
+/* Decode on demand and cache, exactly as sndBuf does for the takes. Returns
+   null for every reason a track might not be there, and null is always a legal
+   answer - the caller falls back to silence. */
+function musBuf(key){
+ const a=ASSETS.mus&&ASSETS.mus[key];
+ if(!a||a.err)return null;
+ if(!a.buf&&!a.pend&&AC){
+  a.pend=1;
+  try{AC.decodeAudioData(a.bytes.slice(0),b=>{b.pwOff=sndLead(b);a.buf=b;},()=>{a.err=1;});}
+  catch(e){a.err=1;}
+ }
+ return a.buf||null;
+}
+
+/* The music bus. Built lazily off masterGain so this file needs no edit inside
+   ac()'s own try block - if masterGain is null (no context, or the bus block
+   threw) there is simply no music, which is the fallback. */
+function musGain(){
+ if(musBus)return musBus;
+ if(!AC||!masterGain)return null;
+ try{musBus=AC.createGain();musBus.gain.value=1;musBus.connect(masterGain);}
+ catch(e){musBus=null;}
+ return musBus;
+}
+
+/* Start `key`, crossfading out whatever is playing. A loop gets its loop points
+   from MUS_LOOP, OFFSET BY THE DECODER'S OWN LEADING SILENCE (b.pwOff, measured
+   by sndLead): an mp3's encoder padding decodes as real silence and how much
+   survives differs per browser, so the file's 0.5 s margin plus this offset is
+   what keeps the loop landing on music instead of on padding. Both points move
+   by the same offset, so the loop LENGTH is exact either way. */
+function musPlay(key){
+ if(musKey===key)return true;
+ const g=musGain();if(!g)return false;
+ const buf=musBuf(key);if(!buf)return false;
+ musStop();
+ let src,gain;
+ try{
+  src=AC.createBufferSource();src.buffer=buf;
+  gain=AC.createGain();gain.gain.value=0;
+  src.connect(gain).connect(g);
+  const L=(typeof MUS_LOOP!=='undefined')?MUS_LOOP[key]:null,off=buf.pwOff||0;
+  if(L){src.loop=true;src.loopStart=off+L.start;src.loopEnd=off+L.end;}
+  src.start(0,off);
+  gain.gain.setTargetAtTime(MUSV[key]||.4,AC.currentTime,MUS_FADE/3);
+ }catch(e){return false}
+ musNow={src:src,gain:gain,key:key};musKey=key;
+ return true;
+}
+
+/* Fade the current track out and let it stop itself. The node is released by
+   the timeout, not kept in a list: nothing else ever needs to find it again. */
+function musStop(){
+ const m=musNow;musNow=null;musKey='';
+ if(!m||!AC)return;
+ try{
+  m.gain.gain.setTargetAtTime(0,AC.currentTime,MUS_FADE/4);
+  const s=m.src;setTimeout(()=>{try{s.stop()}catch(e){}},MUS_FADE*1000);
+ }catch(e){}
+}
+
+/* The sting. Fire-and-forget on its own node so it is not the "current track"
+   and cannot be crossfaded out from under itself. */
+function musSting(key){
+ const g=musGain();if(!g)return false;
+ const buf=musBuf(key);if(!buf)return false;
+ try{
+  const src=AC.createBufferSource();src.buffer=buf;
+  const gn=AC.createGain();gn.gain.value=MUSV[key]||.6;
+  src.connect(gn).connect(g);src.start(0,buf.pwOff||0);
+ }catch(e){return false}
+ return true;
+}
+
+/* Which track the game wants RIGHT NOW. Pure reading - no game state is
+   written, and the answer is derived every frame rather than stored, which is
+   the same discipline gRsv and the auras use. '' means silence. */
+function musWant(){
+ if(muted)return '';
+ if(!G)return 'menu';                 // the setup screen: G is null exactly then
+ if(G.over)return '';                 // the sting has already played; let it ring
+ if(G.paused)return '';
+ /* No AudioContext is a question for musTick, not for this function: what the
+    game WANTS and what the machine CAN PLAY are two claims, and folding them
+    together here made a running match ask for silence under the headless shim
+    (T81.E). The combat clock is an AC time, so it is guarded rather than
+    assumed. */
+ return (AC&&AC.currentTime<musCombatT)?'combat':'build';
+}
+
+/* Called every frame from frame(), BEFORE its `if(!G) return` - the menu needs
+   music too, and that early return is why this cannot live below it.
+
+   COMBAT_DUCK_T is the existing "guns are going off near the camera" signal,
+   set by every weapon and explosion since v27.1 and already used to pull the
+   mining loop down. Music reads the same clock for two different jobs: it ducks
+   while it is true, and it holds the combat track for MUS_COMBAT_T seconds
+   after it goes quiet, so a firefight does not flap the score back and forth
+   between two tracks every time there is a lull. */
+function musTick(){
+ if(!AC||!musGain())return;
+ /* THE COMBAT HOLD IS PER MATCH, and forgetting that was a real bug rather
+    than a test artifact. musCombatT is module state that outlives a match, so
+    a player who finished one firefight, quit, and started again inside
+    MUS_COMBAT_T seconds opened the new match on the COMBAT track - the game
+    remembering shooting that happened in a match that no longer exists.
+    Returning to the menu is the one moment every match boundary passes
+    through (againBtn and quitBtn both set G=null), so it is where the hold is
+    cleared. T81.E drives exactly this. */
+ if(!G)musCombatT=0;
+ const want=musWant();
+ if(G&&!G.over&&!G.paused&&AC.currentTime<COMBAT_DUCK_T)musCombatT=AC.currentTime+MUS_COMBAT_T;
+ if(want!==musKey){if(want)musPlay(want);else musStop();}
+ const duck=(AC.currentTime<COMBAT_DUCK_T)?MUS_DUCK:1;
+ if(duck!==musDuckT){
+  musDuckT=duck;
+  try{musBus.gain.setTargetAtTime(duck,AC.currentTime,.25);}catch(e){}
+ }
+}

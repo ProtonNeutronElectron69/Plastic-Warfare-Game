@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v103)
+# Plastic Warfare headless test harness (updated at v104)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -9,7 +9,7 @@ It grew by prepending, so the newest release sits in the MIDDLE rather than at
 the top, and the roadmap chapters below are HISTORY, not work in flight — the
 last of the three landed at v97 and nothing is outstanding. Practical route:
 
-- **What shipped recently:** the `## v103`, `## v102` and `## v101` sections
+- **What shipped recently:** the `## v104`, `## v103` and `## v102` sections
   (search for `## v103`). Each one is the finding, the change, and what it measured.
 - **How to build and run the suite:** `## Assembly` and `## Running`, about a
   fifth of the way down. `../CLAUDE.md` has the two commands; these have the why.
@@ -1179,6 +1179,83 @@ error a reader would see as anything but an odd blank report. `sim_report.js` no
 compiles the page's script block with `new Function` before writing (compiles, does
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
+
+## v104 — the soundtrack (Roadmap 4 item 1)
+
+**The game has music.** Four recorded tracks, `tail_v104.js` (T81, 43 checks in the suite; 41 run standalone - two need an AudioContext, which an earlier tail in segment 3 supplies as a stub),
+and two new tools: `tools/cut_music_v104.py` (choose the loop) and
+`tools/embed_mus.py` (pack it). **No hash trail moved and no repin was due** —
+music is presentation, and `triage.sh` said "sim unchanged" on the first run.
+
+**The tracks, and why the licence is the easy part for once.** All four are the
+**United States Army Old Guard Fife and Drum Corps** — a serving US Army unit, so
+the recordings are works of the federal government and public domain under
+17 USC 105 rather than resting on a mirror's CC0 label. `menu` The President's
+March, `build` Paddy on the Handcar, `combat` Soldier's Farewell / March of War,
+`victory` ERAFNAF Fanfare. The owner chose them by ear from a 17-track audition
+page (`tools/audition_music.py`, the release before this one), having rejected a
+first set of library production music as not sounding like a real band.
+
+**Six things worth carrying forward:**
+
+- **A LOOP IS CHOSEN BY THE MUSIC, NOT BY A STOPWATCH — but correlation alone
+  cannot choose it.** The cutter correlates a 2-second window against the whole
+  track and takes the lag where the music most nearly repeats. On live acoustic
+  playing that tops out around 0.5 (measured: 0.43 / 0.52 / 0.34), because a
+  human band drifts and the second time through a strain is never the first.
+  What actually made the seams inaudible was **penalising a loud boundary** so
+  the join lands at a phrase end. Read `seam`, not `score`.
+- **THE FIRST SEAM METRIC MEASURED THE CROSSFADE, NOT THE SEAM.** It compared
+  the blended head against unblended audio a loop later — which of course
+  differ — and reported ~1.0 for every track, which looked like a number and
+  was noise. The honest one builds what the game actually plays (the loop
+  region twice, back to back) and asks whether the spectral jump AT the join is
+  bigger than the jumps this music makes everywhere else. Shipped at 0.53x /
+  0.57x / 0.86x, where 1.0 means "no more jarring than an ordinary beat".
+- **A `str.replace()` WITHOUT AN ASSERT IS A SILENT NO-OP.** The crossfade
+  length was "changed" from 120ms to 700ms by a patch that missed on
+  whitespace and said nothing. The improved seams were credited to it for
+  several minutes before the constant was actually read back. Measuring all
+  four lengths afterwards showed 120ms was already fine (40ms 0.84x, 120ms
+  0.65x, 300ms 0.58x) and 300ms blurs half a beat of a march to win narrowly —
+  so the original value shipped, now for a stated reason. Every patch in this
+  release asserts its anchor.
+- **`sndLead` ALREADY SOLVED THE MP3 PADDING PROBLEM, at v92.** The plan was
+  OGG (no encoder padding) until Safari's unreliable Vorbis support ruled it
+  out; MP3 then needs the padding beaten, and the file already had the answer —
+  v92 measures the decoder's leading silence off the decoded samples because
+  browsers differ. Music reuses it verbatim, plus a 0.5s margin of real music
+  outside the loop so the loop points never land on padding. **Grep for the
+  function that already derives it** (the v102 lesson, again).
+- **THE COMBAT HOLD LEAKED ACROSS MATCHES, and a test caught it for a reason
+  worth noting.** `musCombatT` is module state that outlives a match, so
+  finishing a firefight, quitting and starting again inside `MUS_COMBAT_T`
+  opened the new match on the combat track. It surfaced only because an earlier
+  tail in segment 3 leaves a stub AudioContext, so the hold armed for real
+  inside the suite. Cleared on `!G` — the menu is the one moment every match
+  boundary passes through. T81.E drives it directly now.
+- **RULE 7 HAS AN AUDIO FORM: you cannot hear a screenshot, but you can read
+  the decoded buffer.** Loading the shipped file in real Chromium and printing
+  each buffer's duration, channel count and measured `pwOff` proved the loops
+  decode and that `loopStart`/`loopEnd` land exactly where the cutter put them
+  (0.500 → 31.153, length 30.653). It also caught the one thing no assertion
+  would have: the victory sting reported 0.56s of leading silence, which is the
+  RECORDING's own lead-in, not encoder padding. `sndLead` skipped it at
+  playback so it sounded right by accident, while shipping half a second of
+  silence as base64 and delivering 5.94s of fanfare out of a 6.5s budget. The
+  cutter trims it now and all four report zero.
+
+**A PRE-EXISTING FLAKE, found by running the suite and not caused here.**
+`T43.M` ("every combat sound in the game is distinct") failed once in four
+consecutive runs of segment 3, colliding `gun:smg` with `gun:amg`. It
+fingerprints the SYNTHESISED voices, and those are jittered by `ajit()` through
+`Math.random` — which is rule 2 working exactly as intended, audio deliberately
+never touching the sim stream. So two fingerprints can coincide by chance. v104
+touches neither `03-audio.js` nor `tail_v64.js`, so it is not this release's,
+and it was left alone rather than folded in. **The fix, when someone wants it:**
+stub `Math.random` to a fixed sequence around the capture in `tail_v64.js`, so
+the check compares the RECIPE rather than one random realisation of it. That
+strengthens the test rather than loosening it.
 
 ## v103 POST-MERGE MEASUREMENT: the balance re-measure and the AI ability audit
 

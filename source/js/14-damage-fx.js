@@ -515,6 +515,10 @@ function checkEnd(){
 }
 function endGame(win){
  G.over=true;
+ /* v104: the sting, and only for a win the local player actually shares in.
+    musWant() answers '' from here on, so the loop fades and the fanfare rings
+    out over silence. A spectator (G.watch) has no side, so nothing fires. */
+ if(win&&!G.watch&&!muted)musSting('victory');
  // v55: "win" is meaningless without a local side - name the survivor instead,
  // and print one summary line per army rather than army 1's private stats.
  if(G.watch)watchEndTitle(win);
