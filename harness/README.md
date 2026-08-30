@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v104)
+# Plastic Warfare headless test harness (updated at v104.1)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -1180,7 +1180,7 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
-## v104 — the soundtrack (Roadmap 4 item 1)
+## v104 / v104.1 — the soundtrack (Roadmap 4 item 1)
 
 **The game has music.** Four recorded tracks, `tail_v104.js` (T81, 43 checks in the suite; 41 run standalone - two need an AudioContext, which an earlier tail in segment 3 supplies as a stub),
 and two new tools: `tools/cut_music_v104.py` (choose the loop) and
@@ -1244,6 +1244,53 @@ first set of library production music as not sounding like a real band.
   playback so it sounded right by accident, while shipping half a second of
   silence as base64 and delivering 5.94s of fanfare out of a 6.5s budget. The
   cutter trims it now and all four report zero.
+
+**The owner's feedback pass, v104.1 (played after merge).** Three findings, each
+a change and a check (`tail_v104_1.js`, T82, 39 checks). **No trail moved.**
+Every one was invisible to the suite for the same structural reason: the shim
+has no AudioContext and no fetch, so v104's tests could assert that the music
+DEGRADES correctly and never that it WORKS. All three were found by playing and
+root-caused in real Chromium.
+
+- **The victory sting had never played once — not a tuning miss, a dead code
+  path.** `decodeAudioData` is asynchronous, so `musBuf()` returns null on the
+  FIRST ask for a track. The three loops hide that completely: they are asked
+  every frame, the second ask wins, and all that happens is the loop starts a
+  beat late. The sting is asked for exactly once, at the one instant it must
+  sound. Measured: `musSting('victory')` returned false with
+  `ASSETS.mus.victory.buf` unset. `ac()` had called `sndWarm()` since v92 —
+  which walks `ASSETS.snd` only. `musWarm()` is the fix and it is four words
+  long. **A one-shot asset needs warming in a way a loop never reveals.**
+- **The menu march waited for a hover, and the fix is about WHICH gesture.** A
+  browser refuses an AudioContext before the user interacts, so the march
+  genuinely cannot play on load — that part is policy, not a bug. What was a bug
+  is that the only thing on the setup screen ever calling `ac()` was
+  `menuAudioBind`'s HOVER tick, so a click on the page background left `AC`
+  null (measured). `musUnlock` now listens on the DOCUMENT for pointer, touch
+  and key, and unbinds itself once a context exists.
+- **The duck was doing the opposite of its job.** `MUS_DUCK` .45 against a
+  combat track at .38 put the score at **.171** during a firefight — which is
+  exactly when the player is watching, and exactly the track written to be heard
+  there. The duck exists to stop music MASKING a gun cue, not to silence it.
+  .75 x .50 = **.375**, 2.2x its old level and still under a rifle's .44.
+- **The sting's trigger moved, on the owner's spec.** Not `endGame` — by then
+  you are reading a results overlay and a fanfare is a stinger on a title card.
+  `musDecided()` fires it while you are still playing: one enemy left, and
+  either they hold zero supply or you are more than `MUS_MOP_DELTA` (20) ahead.
+  `endGame` remains the fallback for a win that never mopped up, and both go
+  through `musVictory()` — a once-per-match gate that **consumes only on
+  success**, so a sting whose buffer is not ready retries next frame instead of
+  being silently spent, which is the very failure that lost v104's.
+- **It is a VICTORY sting, and the owner's wording did not say so.** "The delta
+  in supply used exceeds 20" is direction-free; the same position seen from the
+  losing side would have earned a fanfare for being wiped out. `musDecided()`
+  requires the lead to be YOURS. T82.D drives both sides.
+
+**Two smaller things worth carrying forward:** `makeUnit` is `(key, player, x,
+y)` — key FIRST, and getting it backwards is a crash inside the fixture rather
+than a failed check. And T81.F carried a DUPLICATE version pin beside T75.B's
+transcribed one; it was widened to "v104 or a point release of it" rather than
+edited twice every pass.
 
 **A PRE-EXISTING FLAKE, found by running the suite and not caused here.**
 `T43.M` ("every combat sound in the game is distinct") failed once in four

@@ -181,7 +181,7 @@ section('T75.B the version and date, stamped in the menu\'s corner');
      the NEXT release has to come here and say which version it is. Bump
      GAME_VER and GAME_DATE in 01-constants.js and this line with them. */
   ok('T75.B the release constants name THIS version - bump them together',
-    GAME_VER === 'v104' && /^v\d+(\.\d+)?$/.test(GAME_VER)); // v104: bumped with the constants, as this line's comment demands
+    GAME_VER === 'v104.1' && /^v\d+(\.\d+)?$/.test(GAME_VER)); // v104.1: bumped with the constants, as this line's comment demands
   ok('T75.B the date is ISO, which is the form a repository can check',
     /^\d{4}-\d{2}-\d{2}$/.test(GAME_DATE));
   ok('T75.B the save-snapshot tag is DERIVED from the version, not typed twice',

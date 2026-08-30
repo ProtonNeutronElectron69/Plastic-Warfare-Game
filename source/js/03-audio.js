@@ -76,6 +76,12 @@ function ac(){
      them all now, once, off the critical path. By the first battle sound they
      are long ready; until then sndPlay answers false and synthesis covers. */
   if(AC)sndWarm();
+  /* v104.1: and the music, for the same reason and one sharper. A loop that
+     decodes late merely starts late and nobody notices. The VICTORY STING is
+     asked for exactly once, at the one instant it must play - and decodeAudioData
+     is async, so musBuf() answered null and the sting never played once in the
+     whole of v104. Warming it here is what makes it exist. */
+  if(AC&&typeof musWarm==='function')musWarm();
  }
  if(AC&&AC.state==='suspended'){try{AC.resume();}catch(e){}}
  return AC;

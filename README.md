@@ -85,7 +85,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v104 it makes **5,809
+that the results come out identical every time. As of v104.1 it makes **5,848
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -115,7 +115,25 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 104**.
+The game is at **version 104.1**.
+
+**v104.1 — three fixes to the new music.** Playing v104 turned up three things.
+The menu march used to wait until your mouse happened to pass over a button —
+now *any* click or keypress starts it. (Your browser will not let a page play
+sound before you interact with it at all, so that first click is unavoidable;
+what was wrong was insisting it be a click on the right thing.) The score used
+to duck so far under gunfire that it vanished exactly when you were watching
+the fight — it now sits at more than twice its old level during combat, still
+under the guns but audibly there. And **the victory fanfare had never once
+played**: it was only ever asked for at the single instant it was needed, and
+the file had not finished preparing itself by then, so nothing came out. All
+four tracks are now made ready the moment the game gets sound.
+
+The fanfare also fires at a better moment. It used to wait for the final
+results screen, which is a strange place for a celebration. It now plays while
+you are still on the battlefield, at the point the result stops being in doubt
+— one enemy left, and either they have no army at all or you are more than 20
+supply ahead of them. If you are the one being mopped up, you hear nothing.
 
 **v104 — the game has music.** Until now the only continuous sound in Plastic
 Warfare was the hum of a Dump Truck mining, on a game where every gun is a real

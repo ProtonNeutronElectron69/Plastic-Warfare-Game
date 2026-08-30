@@ -219,11 +219,20 @@ function fresh104(seed){G=null;newGame(cfg104(seed));return G.human}
   ok('T81.F ...ABOVE its `if(!G) return`, because the menu is exactly !G',
      call>f&&ret>call);
 
+  /* v104.1: this called musSting('victory') directly. It goes through the
+     once-per-match gate now, because the sting also fires DURING play the
+     moment the match is decided (T82.D) and a win that met both conditions
+     would otherwise sound the fanfare twice. The claim is unchanged - endGame
+     still fires it, on a win, never for a spectator - only the callee moved. */
   const eg=SCRIPT104.indexOf('function endGame(win){');
-  const sting=SCRIPT104.indexOf("musSting('victory')",eg);
+  const sting=SCRIPT104.indexOf('musVictory()',eg);
   ok('T81.F endGame fires the victory sting', eg>0&&sting>eg&&sting-eg<400);
   ok('T81.F ...only on a win, and not for a spectator with no side',
      SCRIPT104.slice(eg,sting+40).indexOf('win&&!G.watch')>0);
  }
- ok('T81.F the release stamp says v104', GAME_VER==='v104');
+ /* v104.1: this was ==='v104' and is a DUPLICATE of T75.B, which is the
+    deliberately-transcribed version pin. Widened to "this tail's release or a
+    point release of it" so a feedback pass edits one line, not two. */
+ ok('T81.F the release stamp is v104 or a point release of it',
+    String(GAME_VER).indexOf('v104')===0);
 }
