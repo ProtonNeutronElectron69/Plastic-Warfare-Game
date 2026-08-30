@@ -1,0 +1,336 @@
+<title>Plastic Warfare Soundtrack Audition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --paper:#e9ebe3; --card:#f4f5ef; --card-2:#eceee5;
+  --line:#ccd1c2; --line-soft:#dde1d5;
+  --ink:#171a13; --ink-2:#4d5347; --ink-3:#7b8274;
+  --green:#4a7a37; --green-soft:#dfe8d6; --amber:#9c6f2e;
+  --bar:#c2cab6; --bar-on:#4a7a37;
+  --shadow:0 1px 2px rgba(23,26,19,.07),0 8px 24px -12px rgba(23,26,19,.18);
+  --display:"Big Shoulders Display","Haettenschweiler","Arial Narrow",sans-serif;
+  --body:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#111409; --card:#191d11; --card-2:#1f2417;
+    --line:#2d3324; --line-soft:#252b1d;
+    --ink:#e6eadb; --ink-2:#a6ae98; --ink-3:#79816c;
+    --green:#8dc06f; --green-soft:#232e18; --amber:#d2a862;
+    --bar:#39412c; --bar-on:#8dc06f;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -14px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111409; --card:#191d11; --card-2:#1f2417;
+  --line:#2d3324; --line-soft:#252b1d;
+  --ink:#e6eadb; --ink-2:#a6ae98; --ink-3:#79816c;
+  --green:#8dc06f; --green-soft:#232e18; --amber:#d2a862;
+  --bar:#39412c; --bar-on:#8dc06f;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 28px -14px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  padding:0 0 132px}
+.wrap{max-width:980px;margin:0 auto;padding:0 24px}
+
+/* ---------- masthead ---------- */
+header{padding:56px 0 28px;border-bottom:2px solid var(--ink)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--green);font-weight:600;margin:0 0 14px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(46px,8vw,82px);
+  line-height:.92;letter-spacing:-.005em;text-transform:uppercase;
+  margin:0 0 18px;text-wrap:balance}
+.standfirst{max-width:62ch;font-size:17px;color:var(--ink-2);margin:0}
+.standfirst strong{color:var(--ink);font-weight:600}
+
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;background:var(--line);border:1px solid var(--line);
+  margin:30px 0 0;border-radius:3px;overflow:hidden}
+.fact{background:var(--card);padding:13px 15px}
+.fact dt{font-family:var(--mono);font-size:10px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-3);margin:0 0 5px}
+.fact dd{margin:0;font-family:var(--display);font-weight:700;font-size:23px;
+  line-height:1.1;font-variant-numeric:tabular-nums}
+.fact dd small{font-family:var(--body);font-size:12px;font-weight:400;color:var(--ink-3)}
+
+/* ---------- slots ---------- */
+.slot{padding:44px 0 6px;border-bottom:1px solid var(--line-soft)}
+.slot:last-of-type{border-bottom:0}
+.slot-head{display:flex;gap:18px;align-items:baseline;margin:0 0 6px}
+.ord{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--green);
+  letter-spacing:.08em;padding-top:6px}
+.slot h2{font-family:var(--display);font-weight:700;font-size:34px;
+  text-transform:uppercase;letter-spacing:.01em;margin:0;line-height:1}
+.need{max-width:64ch;color:var(--ink-2);margin:0 0 22px 44px;font-size:14.5px}
+.need code{font-family:var(--mono);font-size:12.5px;background:var(--green-soft);
+  color:var(--green);padding:1px 5px;border-radius:3px}
+
+/* ---------- track cards ---------- */
+.tracks{display:flex;flex-direction:column;gap:9px;margin-left:44px}
+@media (max-width:640px){.tracks,.need{margin-left:0}}
+.track{background:var(--card);border:1px solid var(--line);border-radius:4px;
+  padding:13px 15px;display:grid;gap:12px;
+  grid-template-columns:auto minmax(0,1fr) auto;align-items:center;
+  transition:border-color .15s,background .15s}
+.track:hover{border-color:var(--ink-3)}
+.track[data-picked="1"]{border-color:var(--green);background:var(--green-soft)}
+.track.playing{border-color:var(--green)}
+
+.play{width:42px;height:42px;flex:none;border-radius:50%;cursor:pointer;
+  border:1.5px solid var(--ink);background:transparent;color:var(--ink);
+  display:grid;place-items:center;transition:background .15s,color .15s,border-color .15s}
+.play:hover{background:var(--ink);color:var(--paper)}
+.track.playing .play{background:var(--green);border-color:var(--green);color:var(--paper)}
+:root[data-theme="dark"] .track.playing .play,
+.play:hover{color:var(--paper)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .track.playing .play{color:#111409}
+  :root:not([data-theme="light"]) .play:hover{color:#111409}}
+:root[data-theme="dark"] .play:hover{color:#111409}
+:root[data-theme="dark"] .track.playing .play{color:#111409}
+.play svg{width:15px;height:15px;fill:currentColor;pointer-events:none}
+
+.meta{min-width:0}
+.tname{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.05;
+  text-transform:uppercase;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);border:1px solid var(--line);border-radius:20px;padding:2px 8px;
+  font-weight:400}
+.tnote{color:var(--ink-2);font-size:13.5px;line-height:1.5;margin:4px 0 0;max-width:60ch}
+
+.wave{display:flex;align-items:flex-end;gap:1.5px;height:34px;margin:10px 0 0;
+  cursor:pointer;width:100%}
+.wave div{flex:1;background:var(--bar);border-radius:1px;min-height:2px;
+  transition:background .06s linear}
+.wave div.on{background:var(--bar-on)}
+.tfoot{display:flex;gap:14px;margin:7px 0 0;font-family:var(--mono);font-size:11px;
+  color:var(--ink-3);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.tfoot b{color:var(--ink-2);font-weight:400}
+
+.pick{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  border:1.5px solid var(--line);background:transparent;color:var(--ink-2);
+  border-radius:3px;padding:9px 13px;cursor:pointer;font-weight:600;white-space:nowrap;
+  transition:all .15s;align-self:center}
+.pick:hover{border-color:var(--ink);color:var(--ink)}
+.track[data-picked="1"] .pick{background:var(--green);border-color:var(--green);color:var(--card)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .track[data-picked="1"] .pick{color:#111409}}
+:root[data-theme="dark"] .track[data-picked="1"] .pick{color:#111409}
+
+/* ---------- loadout bar ---------- */
+.loadout{position:fixed;left:0;right:0;bottom:0;background:var(--card);
+  border-top:2px solid var(--ink);box-shadow:var(--shadow);z-index:20}
+.loadout .wrap{display:flex;gap:22px;align-items:center;padding-top:12px;
+  padding-bottom:12px;flex-wrap:wrap}
+.picks{display:flex;gap:7px;flex:1;min-width:230px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:10px;letter-spacing:.06em;padding:5px 9px;
+  border:1px solid var(--line);border-radius:3px;color:var(--ink-3);
+  text-transform:uppercase;white-space:nowrap}
+.chip.set{border-color:var(--green);color:var(--green);background:var(--green-soft)}
+.budget{text-align:right;min-width:190px}
+.budget .n{font-family:var(--display);font-weight:800;font-size:29px;line-height:1;
+  font-variant-numeric:tabular-nums}
+.budget .n.warn{color:var(--amber)}
+.budget .l{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:4px}
+.gauge{height:6px;background:var(--bar);border-radius:3px;overflow:hidden;
+  margin-top:8px;display:flex}
+.gauge i{display:block;height:100%;background:var(--ink-3)}
+.gauge i.add{background:var(--green)}
+.reset{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  background:none;border:0;color:var(--ink-3);cursor:pointer;text-decoration:underline;
+  text-underline-offset:3px;padding:4px}
+.reset:hover{color:var(--ink)}
+
+/* ---------- notes ---------- */
+.notes{padding:46px 0 10px;border-top:2px solid var(--ink);margin-top:40px}
+.notes h2{font-family:var(--display);font-weight:700;font-size:30px;text-transform:uppercase;
+  margin:0 0 22px}
+.note{margin:0 0 22px;max-width:66ch}
+.note h3{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--green);margin:0 0 7px;font-weight:600}
+.note p{margin:0 0 9px;color:var(--ink-2);font-size:14.5px}
+.note p strong{color:var(--ink);font-weight:600}
+.note code{font-family:var(--mono);font-size:12.5px;background:var(--card-2);
+  border:1px solid var(--line);padding:1px 5px;border-radius:3px;color:var(--ink)}
+.note a{color:var(--green)}
+
+:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Roadmap 4 · Item 1 · Candidate review</p>
+  <h1>Sixteen tracks<br>for four slots</h1>
+  <p class="standfirst">Every candidate below is <strong>CC0 / public domain</strong> — no attribution required, no licence to track. Each is trimmed to a 30-second excerpt and encoded <strong>mono at 96 kbps</strong>, which is roughly how it would ship, so what you hear is what the game would sound like. Pick one per slot; the bar at the bottom keeps a running total of what your choices would add to the download.</p>
+  <dl class="facts">
+    <div class="fact"><dt>Game file today</dt><dd>6.77 <small>MB</small></dd></div>
+    <div class="fact"><dt>All sound effects</dt><dd>444 <small>KB · 35 files</small></dd></div>
+    <div class="fact"><dt>Per 30 s loop</dt><dd>~480 <small>KB embedded</small></dd></div>
+    <div class="fact"><dt>Licence</dt><dd>CC0 <small>public domain</small></dd></div>
+  </dl>
+</header>
+<main id="slots"></main>
+
+<section class="notes">
+  <h2>Before you commit</h2>
+
+  <div class="note">
+    <h3>Where these came from</h3>
+    <p>Every music host I would normally use — Musopen, OpenGameArt, Kenney, the Internet Archive — is <strong>blocked by this environment's network policy</strong>. GitHub is not, so these came from <code>SoundSafari/CC0-1.0-Music</code>, a public mirror that preserves the <strong>FreePD</strong> library after that site shut down in 2025. All sixteen are from the FreePD portion, originally Kevin MacLeod public-domain dedications.</p>
+    <p><strong>Treat the licence as good but second-hand.</strong> It is a community-aggregated mirror, not the original publisher. Before any of these ship, the track you choose should be confirmed CC0 at its original source — that is a five-minute check per track, and worth doing once rather than never.</p>
+  </div>
+
+  <div class="note">
+    <h3>These are full tracks, not loops</h3>
+    <p>Every candidate runs one to five minutes. A game loop wants <strong>30–45 seconds that joins back to its own start</strong> without a seam, so whichever you pick still needs a loop point chosen and cut. What you are judging here is the <em>material</em> — does this sound like your game — not the edit.</p>
+  </div>
+
+  <div class="note">
+    <h3>MP3 cannot loop seamlessly</h3>
+    <p>This is the one technical decision that should be made before any files are cut. Every MP3 encoder pads the start and end of a file with a few milliseconds of silence, so a looped MP3 audibly ticks. Your existing 35 sounds are one-shots, where this is invisible.</p>
+    <p>Two ways out: ship the music as <strong>OGG Vorbis</strong> instead (no padding, and every browser the game already supports plays it), or keep MP3 and set explicit loop points on the Web Audio source node so the padding is skipped. The first is simpler and is what I would recommend.</p>
+  </div>
+
+  <div class="note">
+    <h3>What the plumbing already gives you</h3>
+    <p><code>armsBus</code> in <code>source/js/03-audio.js:65</code> is the pattern a music bus would copy — its own gain node hanging off <code>masterGain</code>, so music gets a volume of its own without touching the weapons mix. And <code>COMBAT_DUCK_T</code> (line 1003, applied at line 1050) already pulls the mining ambience down during a firefight; pointing it at the music bus too means <strong>the score drops back under gunfire for free</strong>.</p>
+  </div>
+
+  <div class="note">
+    <h3>One track worth hearing twice</h3>
+    <p><strong>Night Attack</strong> is darker and lower-energy than the other combat candidates. Since v101 the game has a real day/night cycle — so rather than competing with the other four for one slot, it could be the night half of a <em>pair</em>, swapped by <code>dayPhase()</code>. That is a bigger job than four loops, but it is the kind of thing this engine is already shaped for.</p>
+  </div>
+</section>
+</div>
+
+<div class="loadout">
+  <div class="wrap">
+    <div class="picks" id="picks"></div>
+    <button class="reset" id="reset" type="button">Clear picks</button>
+    <div class="budget">
+      <div class="n" id="total">6.77 MB</div>
+      <div class="gauge"><i id="gbase"></i><i class="add" id="gadd"></i></div>
+      <div class="l" id="sub">no tracks chosen</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA=/*__DATA__*/;
+const BASE=6773396, KEY="pw_music_picks";
+const PLAY='<svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z"/></svg>';
+const PAUSE='<svg viewBox="0 0 16 16"><path d="M4 2.5h3.2v11H4zm4.8 0H12v11H8.8z"/></svg>';
+let picks={}, cur=null, curEl=null;
+
+try{ picks=JSON.parse(localStorage.getItem(KEY))||{}; }catch(e){ picks={}; }
+const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(picks)); }catch(e){} };
+const kb=b=>b<1e6?Math.round(b/1e3)+" KB":(b/1e6).toFixed(2)+" MB";
+
+function stop(){ if(cur){cur.pause();} if(curEl){curEl.el.classList.remove("playing");
+  curEl.btn.innerHTML=PLAY; curEl.btn.setAttribute("aria-label","Play "+curEl.name);} cur=null; curEl=null; }
+
+function build(){
+  const root=document.getElementById("slots");
+  DATA.slots.forEach(slot=>{
+    const sec=document.createElement("section"); sec.className="slot";
+    const head=document.createElement("div"); head.className="slot-head";
+    const ord=document.createElement("span"); ord.className="ord"; ord.textContent=slot.n;
+    const h2=document.createElement("h2"); h2.textContent=slot.t;
+    head.append(ord,h2);
+    const need=document.createElement("p"); need.className="need"; need.innerHTML=slot.need;
+    sec.append(head,need);
+    const list=document.createElement("div"); list.className="tracks";
+    slot.tracks.forEach(t=>{
+      const card=document.createElement("article"); card.className="track";
+      if(picks[slot.k]===t.name) card.dataset.picked="1";
+      const btn=document.createElement("button");
+      btn.className="play"; btn.type="button"; btn.innerHTML=PLAY;
+      btn.setAttribute("aria-label","Play "+t.name);
+      const meta=document.createElement("div"); meta.className="meta";
+      meta.innerHTML='<div class="tname">'+t.name+'<span class="tag">'+t.tag+'</span></div>'+
+        '<p class="tnote">'+t.note+'</p>';
+      const wave=document.createElement("div");
+      wave.className="wave"; wave.setAttribute("role","presentation");
+      t.peaks.forEach(p=>{ const b=document.createElement("div");
+        b.style.height=Math.max(2,p*34)+"px"; wave.appendChild(b); });
+      const foot=document.createElement("div"); foot.className="tfoot";
+      foot.innerHTML='<span><b>0:30</b> excerpt from '+Math.floor(t.off/60)+':'+
+        String(t.off%60).padStart(2,"0")+'</span><span><b>'+kb(t.bytes)+'</b> mono 96k</span>'+
+        '<span>adds <b>'+kb(Math.round(t.bytes*1.333))+'</b> to the game</span>';
+      meta.appendChild(wave); meta.appendChild(foot);
+      const pick=document.createElement("button");
+      pick.className="pick"; pick.type="button";
+      pick.textContent=picks[slot.k]===t.name?"Chosen":"Choose";
+      card.append(btn,meta,pick); list.appendChild(card);
+
+      const ref={el:card,btn:btn,name:t.name}; let audio=null;
+      const mk=()=>{ if(!audio){ audio=new Audio("data:audio/mpeg;base64,"+t.b64);
+        audio.addEventListener("timeupdate",()=>{ const f=audio.currentTime/(audio.duration||30);
+          const n=Math.floor(f*t.peaks.length);
+          [...wave.children].forEach((b,i)=>b.classList.toggle("on",i<=n)); });
+        audio.addEventListener("ended",()=>{ [...wave.children].forEach(b=>b.classList.remove("on")); stop(); });
+      } return audio; };
+      btn.addEventListener("click",()=>{
+        if(cur===audio&&audio&&!audio.paused){ stop(); return; }
+        stop(); const a=mk(); cur=a; curEl=ref;
+        card.classList.add("playing"); btn.innerHTML=PAUSE;
+        btn.setAttribute("aria-label","Pause "+t.name);
+        a.play().catch(()=>{ stop(); });
+      });
+      wave.addEventListener("click",e=>{
+        const a=mk(); const r=wave.getBoundingClientRect();
+        const f=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+        if(cur!==a){ stop(); cur=a; curEl=ref; card.classList.add("playing");
+          btn.innerHTML=PAUSE; }
+        a.currentTime=f*(a.duration||30); a.play().catch(()=>{});
+      });
+      pick.addEventListener("click",()=>{
+        if(picks[slot.k]===t.name) delete picks[slot.k]; else picks[slot.k]=t.name;
+        save(); refresh();
+      });
+    });
+    sec.appendChild(list); root.appendChild(sec);
+  });
+}
+
+function refresh(){
+  DATA.slots.forEach(slot=>{
+    slot.tracks.forEach((t,i)=>{
+      const card=document.querySelectorAll(".slot")[DATA.slots.indexOf(slot)]
+        .querySelectorAll(".track")[i];
+      const on=picks[slot.k]===t.name;
+      if(on) card.dataset.picked="1"; else delete card.dataset.picked;
+      card.querySelector(".pick").textContent=on?"Chosen":"Choose";
+    });
+  });
+  const box=document.getElementById("picks"); box.innerHTML="";
+  let add=0, n=0;
+  DATA.slots.forEach(slot=>{
+    const name=picks[slot.k];
+    const c=document.createElement("span");
+    c.className="chip"+(name?" set":"");
+    c.textContent=slot.n+" "+(name||slot.t.toUpperCase());
+    box.appendChild(c);
+    if(name){ n++; const t=slot.tracks.find(x=>x.name===name);
+      if(t) add+=Math.round(t.bytes*1.333); }
+  });
+  const tot=BASE+add;
+  const el=document.getElementById("total");
+  el.textContent=(tot/1e6).toFixed(2)+" MB";
+  el.classList.toggle("warn",tot>9e6);
+  document.getElementById("sub").textContent = n===0 ? "no tracks chosen"
+    : n+" of 4 chosen · +"+kb(add)+" ("+Math.round(add/BASE*100)+"% larger)";
+  const max=BASE+4*520000;
+  document.getElementById("gbase").style.width=(BASE/max*100)+"%";
+  document.getElementById("gadd").style.width=(add/max*100)+"%";
+}
+
+document.getElementById("reset").addEventListener("click",()=>{picks={};save();refresh();});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") stop(); });
+build(); refresh();
+</script>
