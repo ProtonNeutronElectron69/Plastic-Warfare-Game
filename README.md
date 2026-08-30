@@ -85,7 +85,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v103 it makes **5,766
+that the results come out identical every time. As of v104 it makes **5,809
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -115,7 +115,25 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 103**.
+The game is at **version 104**.
+
+**v104 — the game has music.** Until now the only continuous sound in Plastic
+Warfare was the hum of a Dump Truck mining, on a game where every gun is a real
+recording. It now has a soundtrack: a march on the setup screen, a lighter tune
+while you build your base, a drum-driven one when the shooting starts, and a
+bugle fanfare when you win. All four are played by the **United States Army Old
+Guard Fife and Drum Corps** — real fifes, real marching drums, an actual Army
+band — which felt like the only honest choice for a game about plastic soldiers.
+Because they are recordings by a serving US Army unit they are public domain, so
+they cost nothing and need no credits screen.
+
+The music knows what is happening. It switches to the combat track when a fight
+starts and settles back a few seconds after it ends, and it drops back under
+gunfire the same way the mining hum already did, so it never fights the guns for
+your attention. If your browser cannot play it, the game runs exactly as it did
+before, silently — nothing about the battle depends on it. The download grew from
+6.8 MB to 8.4 MB, which is the price of four real recordings living inside the
+file.
 
 **v103 — a clean-up pass over all five battlefields.** Playing v102 turned up a
 list of things that simply looked wrong on the maps, and this release is the

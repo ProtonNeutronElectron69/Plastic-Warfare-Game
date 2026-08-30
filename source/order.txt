@@ -18,7 +18,9 @@
 02c-snd-data.js
 02d-img-data.js
 02e-nrm-data.js
+02f-mus-data.js
 03-audio.js
+03b-music.js
 04-tables.js
 05-setup-lobby.js
 06-state.js

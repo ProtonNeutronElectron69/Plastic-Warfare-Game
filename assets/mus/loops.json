@@ -1,0 +1,30 @@
+{
+ "build": {
+  "dur": 30.015,
+  "end": 29.515,
+  "loop": true,
+  "score": 0.524,
+  "seam": 0.57,
+  "start": 0.5
+ },
+ "combat": {
+  "dur": 30.395,
+  "end": 29.895,
+  "loop": true,
+  "score": 0.341,
+  "seam": 0.86,
+  "start": 0.5
+ },
+ "menu": {
+  "dur": 31.653,
+  "end": 31.153,
+  "loop": true,
+  "score": 0.428,
+  "seam": 0.53,
+  "start": 0.5
+ },
+ "victory": {
+  "dur": 6.5,
+  "loop": false
+ }
+}

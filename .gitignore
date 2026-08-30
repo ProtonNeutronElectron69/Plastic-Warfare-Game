@@ -45,6 +45,12 @@ harness/cut_v*.json
 # the game itself whenever the pipeline runs.
 tools/_base_v95/
 
+# Soundtrack audition runs (tools/audition_music.py). Candidate downloads, the
+# cut previews and the listening page it writes - tens of megabytes of music
+# that is NOT part of the game and is re-fetched from the mirror on demand.
+# Nothing here ships; assets/snd/ is where a CHOSEN track would land.
+build/audition/
+
 # ---------------------------------------------------------------------------
 # Ordinary clutter your computer creates on its own
 # ---------------------------------------------------------------------------
