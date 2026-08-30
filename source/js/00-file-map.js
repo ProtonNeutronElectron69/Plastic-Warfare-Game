@@ -99,6 +99,7 @@
      COMPACT SDP CODEC ........................................... PW2 binary signalling codec
      WEBRTC GLUE (browser only) .................................. peer connection wiring
      INPUT ....................................................... mouse + keyboard
+     AUDIO PANEL (v104.2) ........................................ v104.2: the mute button's Music and Effects faders - setVol, sfxBus, stored in localStorage
      RENDER ...................................................... render()
        POST-PROCESSING ........................................... grade, vignette, bloom (POSTV, the 2d compositor - the permanent fallback)
      WEBGL PRESENT & POST ........................................ v93: glComposite - the same post pass as real shaders, 2d when GL is absent

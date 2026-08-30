@@ -117,6 +117,19 @@ canvas{display:block}
       --bannerH:56px}
 #topbar{position:absolute;top:0;left:0;right:0;height:var(--topbarH);background:linear-gradient(180deg,rgba(20,30,14,.95),rgba(20,30,14,.82));display:flex;align-items:center;gap:22px;padding:0 18px;pointer-events:auto;border-bottom:2px solid rgba(255,255,255,.12);color:#fff;font-size:20px}
 #topbar .chip{display:flex;align-items:center;gap:9px;font-weight:bold}
+/* v104.2 audio panel. Hangs under the mute button, which is now the entry point
+   for all three audio controls rather than a bare mute toggle. Absolutely
+   positioned against #topbar, so it does not push the bar's flex row around. */
+#audioPanel{position:absolute;top:calc(var(--topbarH) + 6px);right:18px;z-index:40;
+ background:rgba(20,30,14,.97);border:2px solid rgba(255,255,255,.25);border-radius:10px;
+ padding:12px 14px;display:flex;flex-direction:column;gap:10px;pointer-events:auto;
+ box-shadow:0 8px 24px rgba(0,0,0,.5);font-size:15px;min-width:260px}
+#audioPanel[hidden]{display:none}
+.apRow{display:flex;align-items:center;gap:10px;color:#fff;font-weight:bold}
+.apRow>span{width:64px;flex:none}
+.apRow>b{width:48px;text-align:right;font-variant-numeric:tabular-nums;font-weight:bold}
+.apRow input[type=range]{flex:1;accent-color:#8dc06f;cursor:pointer;min-width:110px}
+#apMute{width:100%;font-size:15px;padding:5px 10px}
 .dotS{width:20px;height:20px;border-radius:50%;box-shadow:inset -2px -3px 3px rgba(0,0,0,.4),inset 2px 2px 3px rgba(255,255,255,.5)}
 .res{font-weight:bold}
 .res.p{color:#ffb95e}.res.e{color:#7fe3ff}
@@ -504,7 +517,16 @@ canvas{display:block}
     <div class="res" style="color:#cfe6b8">🪖 <span id="popN">0</span>/<span id="popC">10</span></div>
     <div id="modeinfo"></div>
     <div class="spacer"></div>
-    <button class="tbtn" id="muteBtn">🔊</button>
+    <button class="tbtn" id="muteBtn" title="Audio (mute and volume)">🔊</button>
+    <div id="audioPanel" hidden>
+     <div class="apRow"><button class="tbtn apMute" id="apMute">🔊 Sound on</button></div>
+     <label class="apRow"><span>Music</span>
+      <input type="range" id="apMus" min="0" max="150" step="5" value="100">
+      <b id="apMusN">100%</b></label>
+     <label class="apRow"><span>Effects</span>
+      <input type="range" id="apSfx" min="0" max="150" step="5" value="100">
+      <b id="apSfxN">100%</b></label>
+    </div>
     <button class="tbtn" id="pauseBtn">⏸ Pause</button>
     <button class="tbtn" id="helpBtn">? Help</button>
     <button class="tbtn" id="manualBtn">📘 Manual</button>

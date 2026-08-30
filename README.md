@@ -85,7 +85,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v104.1 it makes **5,848
+that the results come out identical every time. As of v104.2 it makes **5,899
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -115,7 +115,23 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 104.1**.
+The game is at **version 104.2**.
+
+**v104.2 — volume sliders, and the music finally follows the battle.** The
+speaker button in the top bar is now an audio menu: click it for **Music** and
+**Effects** sliders, plus mute. Both run from silent to half again louder than
+the default, and your browser remembers where you left them. That is the real
+answer to "the music is too quiet under gunfire" — a firefight is a dozen guns
+sounding at once against a single piece of music, so how loud it *should* be
+depends on your speakers and your taste. The default is louder again anyway,
+more than three times what v104 shipped.
+
+The other fix explains a puzzle: in spectate mode you only ever heard the
+build-up music. The combat track was switching on when the game heard *gunfire
+near your camera* — and a spectator's camera does not follow the fighting, so
+the music never knew a war was on. It now watches the battle itself, so the
+combat track plays when soldiers are actually fighting, wherever you happen to
+be looking. Spectators get the victory fanfare too.
 
 **v104.1 — three fixes to the new music.** Playing v104 turned up three things.
 The menu march used to wait until your mouse happened to pass over a button —

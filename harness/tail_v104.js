@@ -227,8 +227,14 @@ function fresh104(seed){G=null;newGame(cfg104(seed));return G.human}
   const eg=SCRIPT104.indexOf('function endGame(win){');
   const sting=SCRIPT104.indexOf('musVictory()',eg);
   ok('T81.F endGame fires the victory sting', eg>0&&sting>eg&&sting-eg<400);
-  ok('T81.F ...only on a win, and not for a spectator with no side',
-     SCRIPT104.slice(eg,sting+40).indexOf('win&&!G.watch')>0);
+  /* v104.2 REVERSES HALF OF THIS CLAIM, deliberately. It read `win&&!G.watch`:
+     a spectator has no side, so there was no win to celebrate. The owner then
+     watched a whole match in spectate and pointed out that they never heard the
+     fanfare - and a spectator who sat through the match has as much claim on
+     the ending as anyone. `win||G.watch` now. The "only on a win" half stands
+     unchanged for a player who has a side. */
+  ok('T81.F ...on a win, or for a spectator who watched the whole match',
+     SCRIPT104.slice(eg,sting+40).indexOf('win||G.watch')>0);
  }
  /* v104.1: this was ==='v104' and is a DUPLICATE of T75.B, which is the
     deliberately-transcribed version pin. Widened to "this tail's release or a

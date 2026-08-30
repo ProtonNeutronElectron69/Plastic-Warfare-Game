@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v104.1)
+# Plastic Warfare headless test harness (updated at v104.2)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -1180,7 +1180,7 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
-## v104 / v104.1 — the soundtrack (Roadmap 4 item 1)
+## v104 / v104.1 / v104.2 — the soundtrack (Roadmap 4 item 1)
 
 **The game has music.** Four recorded tracks, `tail_v104.js` (T81, 43 checks in the suite; 41 run standalone - two need an AudioContext, which an earlier tail in segment 3 supplies as a stub),
 and two new tools: `tools/cut_music_v104.py` (choose the loop) and
@@ -1291,6 +1291,48 @@ y)` — key FIRST, and getting it backwards is a crash inside the fixture rather
 than a failed check. And T81.F carried a DUPLICATE version pin beside T75.B's
 transcribed one; it was widened to "v104 or a point release of it" rather than
 edited twice every pass.
+
+**The owner's second pass, v104.2** (`tail_v104_2.js`, T83, 41 checks). **No
+trail moved.** Two of the three items were the same finding wearing different
+clothes, and the third was not the bug it looked like.
+
+- **"I only hear the build-up music in spectate" WAS NEVER A SPECTATE BUG.** The
+  combat track was armed by `COMBAT_DUCK_T` — which `sfxGun` sets, but only
+  after `const a=audFor(...); if(!a)return;`, so a shot outside the viewport
+  sets nothing. The score was following the CAMERA rather than the battle, and
+  a spectator's camera does not chase the fighting. It was equally wrong in a
+  normal match with the view away from the front; spectate merely made it
+  total. `musFighting()` reads the SIMULATION now — units in `state==='attack'`
+  with a target, throttled to one scan in `MUS_SCAN_EVERY` frames because the
+  hold it feeds is seconds long. Verified in Chromium with the camera parked at
+  (-4000,-4000): `COMBAT_DUCK_T` in the past, three units swinging, `musKey`
+  `'combat'`.
+  **`COMBAT_DUCK_T` is still exactly right for the DUCK** — "are guns loud near
+  the listener" is a camera question with a camera answer. Choosing the TRACK is
+  a different question. T83.D pins that separation, because collapsing them
+  again is the obvious tidy-up for someone who has not read this.
+- **THE DUCK, THIRD TIME, AND WHY A THIRD NUMBER WAS NOT THE ANSWER.** v104
+  shipped .45 x .38 = .171; v104.1 went to .75 x .50 = .375; the owner still
+  could not hear it. Both passes treated this as a tuning problem with one right
+  answer, and it is not: a firefight is a dozen gun voices SUMMING against a
+  single music voice, so "loud enough" depends on the fight, the mix and the
+  listener's speakers. .90 x .62 = .558 is now only where it STARTS, and the
+  player has a fader. **When two tuning passes in a row miss, the variable is
+  probably the listener.**
+- **THE FADERS NEEDED A BUS THAT DID NOT EXIST.** Every sound went straight to
+  `masterGain`, where music also lives, so there was no node meaning "everything
+  except the music". `sfxBus` sits under `masterGain` with `armsBus`, both
+  reverbs, the recorded one-shots and the mining loop feeding it; `musBus` stays
+  on `masterGain` beside it. Mute is above both, unchanged. T83.A pins each
+  re-pointed path AND that music is not among them — a miss there is silent, the
+  sound still plays and merely stops answering its slider.
+- **Two earlier checks were REWRITTEN, not loosened, because the claim reversed.**
+  T81.F asserted the sting fires `win&&!G.watch` and T82.D that a spectator gets
+  none — both correct when written, both contradicted by the owner watching a
+  whole match and finding the silence wrong. They now assert the new claim and
+  say in a comment that it was reversed on purpose. An ELIMINATED player
+  (`G.spectate`) still gets nothing: they have a side and it lost. Different
+  flag, different answer.
 
 **A PRE-EXISTING FLAKE, found by running the suite and not caused here.**
 `T43.M` ("every combat sound in the game is distinct") failed once in four

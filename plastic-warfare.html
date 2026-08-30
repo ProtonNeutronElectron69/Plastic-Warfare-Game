@@ -117,6 +117,19 @@ canvas{display:block}
       --bannerH:56px}
 #topbar{position:absolute;top:0;left:0;right:0;height:var(--topbarH);background:linear-gradient(180deg,rgba(20,30,14,.95),rgba(20,30,14,.82));display:flex;align-items:center;gap:22px;padding:0 18px;pointer-events:auto;border-bottom:2px solid rgba(255,255,255,.12);color:#fff;font-size:20px}
 #topbar .chip{display:flex;align-items:center;gap:9px;font-weight:bold}
+/* v104.2 audio panel. Hangs under the mute button, which is now the entry point
+   for all three audio controls rather than a bare mute toggle. Absolutely
+   positioned against #topbar, so it does not push the bar's flex row around. */
+#audioPanel{position:absolute;top:calc(var(--topbarH) + 6px);right:18px;z-index:40;
+ background:rgba(20,30,14,.97);border:2px solid rgba(255,255,255,.25);border-radius:10px;
+ padding:12px 14px;display:flex;flex-direction:column;gap:10px;pointer-events:auto;
+ box-shadow:0 8px 24px rgba(0,0,0,.5);font-size:15px;min-width:260px}
+#audioPanel[hidden]{display:none}
+.apRow{display:flex;align-items:center;gap:10px;color:#fff;font-weight:bold}
+.apRow>span{width:64px;flex:none}
+.apRow>b{width:48px;text-align:right;font-variant-numeric:tabular-nums;font-weight:bold}
+.apRow input[type=range]{flex:1;accent-color:#8dc06f;cursor:pointer;min-width:110px}
+#apMute{width:100%;font-size:15px;padding:5px 10px}
 .dotS{width:20px;height:20px;border-radius:50%;box-shadow:inset -2px -3px 3px rgba(0,0,0,.4),inset 2px 2px 3px rgba(255,255,255,.5)}
 .res{font-weight:bold}
 .res.p{color:#ffb95e}.res.e{color:#7fe3ff}
@@ -504,7 +517,16 @@ canvas{display:block}
     <div class="res" style="color:#cfe6b8">🪖 <span id="popN">0</span>/<span id="popC">10</span></div>
     <div id="modeinfo"></div>
     <div class="spacer"></div>
-    <button class="tbtn" id="muteBtn">🔊</button>
+    <button class="tbtn" id="muteBtn" title="Audio (mute and volume)">🔊</button>
+    <div id="audioPanel" hidden>
+     <div class="apRow"><button class="tbtn apMute" id="apMute">🔊 Sound on</button></div>
+     <label class="apRow"><span>Music</span>
+      <input type="range" id="apMus" min="0" max="150" step="5" value="100">
+      <b id="apMusN">100%</b></label>
+     <label class="apRow"><span>Effects</span>
+      <input type="range" id="apSfx" min="0" max="150" step="5" value="100">
+      <b id="apSfxN">100%</b></label>
+    </div>
     <button class="tbtn" id="pauseBtn">⏸ Pause</button>
     <button class="tbtn" id="helpBtn">? Help</button>
     <button class="tbtn" id="manualBtn">📘 Manual</button>
@@ -673,6 +695,7 @@ canvas{display:block}
      COMPACT SDP CODEC ........................................... PW2 binary signalling codec
      WEBRTC GLUE (browser only) .................................. peer connection wiring
      INPUT ....................................................... mouse + keyboard
+     AUDIO PANEL (v104.2) ........................................ v104.2: the mute button's Music and Effects faders - setVol, sfxBus, stored in localStorage
      RENDER ...................................................... render()
        POST-PROCESSING ........................................... grade, vignette, bloom (POSTV, the 2d compositor - the permanent fallback)
      WEBGL PRESENT & POST ........................................ v93: glComposite - the same post pass as real shaders, 2d when GL is absent
@@ -688,7 +711,7 @@ canvas{display:block}
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v104.1';
+const GAME_VER='v104.2';
 const GAME_DATE='2026-08-31';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
@@ -2553,6 +2576,7 @@ for(const k in MUS_B64)ASSET_MANIFEST.mus[k]='data:audio/mpeg;base64,'+MUS_B64[k
    game sounds can move a pinned hash trail. splice_v64 asserts the absence of
    the literal call as a post-condition, and T43.J asserts it at runtime. */
 let AC=null, muted=false, masterGain=null, NOISE=null, PINK=null, IMP=null;
+let sfxBus=null; // v104.2: everything that is NOT music, so the two have separate faders
 let roomBus=null, farBus=null, armsBus=null;
 /* Two reverbs rather than one. The old single 0.55 s bus had to serve both a
    rifle report and a building collapse; a short bright room reads as "close" and
@@ -2585,19 +2609,24 @@ function ac(){
    comp.threshold.value=-6;comp.knee.value=10;comp.ratio.value=4;comp.attack.value=0.003;comp.release.value=0.18;
    const clip=AC.createWaveShaper();clip.curve=softCurve();try{clip.oversample='2x';}catch(e){}
    masterGain.connect(comp).connect(clip).connect(AC.destination);
+   /* v104.2: one bus for every sound that is not music. The music bus hangs off
+      masterGain beside it, so the Effects and Music sliders are a gain each and
+      neither can touch the other. Mute stays on masterGain, above both. */
+   sfxBus=AC.createGain();sfxBus.connect(masterGain);
+   sfxBus.gain.value=(typeof SFXV_USER==='number')?SFXV_USER:1; // the stored fader, applied at birth
    /* small-arms sub-bus. Explosions and launches duck it for ~250 ms, which is
       the single cheapest trick in game audio for making a blast feel enormous:
       the blast is not louder, the gunfire around it gets out of the way. */
-   armsBus=AC.createGain();armsBus.gain.value=1;armsBus.connect(masterGain);
+   armsBus=AC.createGain();armsBus.gain.value=1;armsBus.connect(sfxBus);
    /* short bright room, for anything happening close to the camera */
    roomBus=AC.createConvolver();
    roomBus.buffer=makeIR(0.35,2.2,0.55,[[0.011,0.7],[0.019,-0.5],[0.031,0.4],[0.047,-0.3]]);
-   const rg=AC.createGain();rg.gain.value=0.85;roomBus.connect(rg).connect(masterGain);
+   const rg=AC.createGain();rg.gain.value=0.85;roomBus.connect(rg).connect(sfxBus);
    /* long dark tail, for distance and for the big low-frequency events */
    farBus=AC.createConvolver();
    farBus.buffer=makeIR(1.4,2.8,0.16,null);
-   const fg=AC.createGain();fg.gain.value=0.7;farBus.connect(fg).connect(masterGain);
-  }catch(e){masterGain=null;roomBus=null;farBus=null;armsBus=null;}
+   const fg=AC.createGain();fg.gain.value=0.7;farBus.connect(fg).connect(sfxBus);
+  }catch(e){masterGain=null;roomBus=null;farBus=null;armsBus=null;sfxBus=null;}
   /* v92: the context exists, so the recorded takes can finally decode - kick
      them all now, once, off the critical path. By the first battle sound they
      are long ready; until then sndPlay answers false and synthesis covers. */
@@ -2677,7 +2706,7 @@ function duckArms(amt,rel){
 /* --- routing. aout applies the distance low-pass, picks the bus and pans;
    rsend feeds the two reverbs. d is the 0..1 distance factor from audAt. --- */
 function aout(node,pan,d,bus){
- const dest=(bus==='arms'&&armsBus)?armsBus:(masterGain||AC.destination);
+ const dest=(bus==='arms'&&armsBus)?armsBus:(sfxBus||masterGain||AC.destination);
  let n=node;
  if(d!=null&&d>0.02){
   /* air absorption: 18 kHz at the camera, 900 Hz at the far edge of the model */
@@ -3562,7 +3591,8 @@ function buildMineVoice(kind){
   lz.connect(lzg).connect(bz.gain);lz.start(t);
   s3.connect(hpz).connect(bz).connect(g);s3.start(t);
  }
- if(pan)g.connect(pan).connect(masterGain||AC.destination);else g.connect(masterGain||AC.destination);
+ const mdest=sfxBus||masterGain||AC.destination; // v104.2: the mining loop is an effect, not music
+ if(pan)g.connect(pan).connect(mdest);else g.connect(mdest);
  return {gain:g,pan:pan};
 }
 function updateMineAmbience(){
@@ -3610,17 +3640,22 @@ function updateMineAmbience(){
    by re-encoding it (the v92 rule for SNDV, which this deliberately mirrors).
    Music sits well under the guns on purpose: it is the floor of the mix, not a
    layer of it. */
-const MUSV={menu:.55,build:.30,combat:.50,victory:.62};
+const MUSV={menu:.60,build:.38,combat:.62,victory:.70};
 const MUS_FADE=1.8;      // seconds to crossfade one track into the next
-/* v104.1: the duck was .45 and the combat track .38, so during a firefight the
-   score sat at .171 - and a firefight is precisely when the player is watching,
-   so the owner reported the music was "barely heard at all". The duck exists to
-   stop music MASKING a gun cue, not to silence the one track written to play
-   under gunfire. At .75 x .50 the combat loop sits at .375, 2.2x its old level
-   and still under a rifle's .44. */
-const MUS_DUCK=.75;      // how far music drops under gunfire (multiplier)
+/* THE DUCK, THIRD TIME. v104 shipped .45 x .38 = .171 and the owner could not
+   hear it. v104.1 went to .75 x .50 = .375 and the owner still could not. The
+   mistake in both was treating this as a tuning problem with one right answer:
+   a firefight is a dozen gun voices SUMMING against one music voice, so what
+   "loud enough" means depends on the fight, the mix and the listener's speakers.
+   So .90 x .62 = .558 is now only the DEFAULT, and the player has a fader
+   (MUSV_USER / SFXV_USER, the Music and Effects sliders). A duck of .90 is a dip
+   that keeps a gun cue clear rather than a hole the score falls into. */
+const MUS_DUCK=.90;      // how far music drops under gunfire (multiplier)
 const MUS_COMBAT_T=7;    // seconds of quiet before combat relaxes back to build
 const MUS_MOP_DELTA=20;  // supply-used lead that means the match is decided
+const MUS_FIGHT_N=2;     // units swinging before the score calls it a battle
+const MUS_SCAN_EVERY=10; // frames between sim scans; the hold is seconds long
+const VOL_MAX=1.5;       // both sliders run 0..150%, so 100% has headroom above it
 
 let musBus=null;         // gain node, hangs off masterGain like armsBus
 let musNow=null;         // {src,gain,key} currently playing, or null
@@ -3628,6 +3663,28 @@ let musKey='';           // what musNow is, '' when nothing plays
 let musDuckT=0;          // AC time until which music stays ducked
 let musCombatT=0;        // AC time until which the match counts as "in combat"
 let musVicDone=false;    // the sting is once per match, whichever trigger fires
+let musScanF=0;          // frame counter for the throttled battle scan
+
+/* The two faders, 0..VOL_MAX, 1 = the tuned default. Persisted per browser like
+   pw_mmsize, and read the same defensive way - a browser with storage blocked
+   gets the defaults and everything still works. */
+let MUSV_USER=(function(){try{const v=parseFloat(localStorage.getItem('pw_musvol'));
+ return (isFinite(v)&&v>=0&&v<=VOL_MAX)?v:1}catch(e){return 1}})();
+let SFXV_USER=(function(){try{const v=parseFloat(localStorage.getItem('pw_sfxvol'));
+ return (isFinite(v)&&v>=0&&v<=VOL_MAX)?v:1}catch(e){return 1}})();
+
+/* Set and store one fader. `which` is 'mus' or 'sfx'. Applying is immediate and
+   separate from storing, so a browser that refuses localStorage still gets the
+   slider it just moved. */
+function setVol(which,v){
+ v=Math.max(0,Math.min(VOL_MAX,+v||0));
+ if(which==='sfx'){SFXV_USER=v;try{localStorage.setItem('pw_sfxvol',String(v))}catch(e){}
+  if(AC&&sfxBus)try{sfxBus.gain.setTargetAtTime(v,AC.currentTime,.05)}catch(e){}}
+ else{MUSV_USER=v;try{localStorage.setItem('pw_musvol',String(v))}catch(e){}
+  musDuckT=-1;                    // force musTick to re-apply the bus gain
+ }
+ return v;
+}
 
 /* Decode on demand and cache, exactly as sndBuf does for the takes. Returns
    null for every reason a track might not be there, and null is always a legal
@@ -3716,6 +3773,28 @@ function musSting(key){
  return true;
 }
 
+/* IS A BATTLE HAPPENING? Read off the simulation, not off what you can hear.
+
+   THIS IS THE SPECTATE BUG, and it was never really a spectate bug. Through
+   v104.1 the combat track was driven by COMBAT_DUCK_T, which every weapon sets
+   - but sfxGun returns BEFORE setting it when the shot is off-screen, because
+   audFor() answers null outside the viewport. So the score followed the CAMERA
+   rather than the battle: park the view away from the fighting and the music
+   never knew a war was on. In spectate the camera does not chase the action at
+   all, which is why the owner watched a whole match on the build-up loop.
+
+   COMBAT_DUCK_T is still exactly right for the DUCK - that asks "are guns loud
+   near the listener", which is a camera question. Choosing the TRACK is a
+   different question with a different answer, so it gets its own reading. */
+function musFighting(){
+ if(!G||!G.units)return false;
+ let n=0;
+ for(const u of G.units){
+  if(u.state==='attack'&&u.target&&++n>=MUS_FIGHT_N)return true;
+ }
+ return false;
+}
+
 /* THE FIRST GESTURE, ANY GESTURE.
 
    A browser refuses to start an AudioContext until the user has interacted, so
@@ -3750,9 +3829,19 @@ if(typeof document!=='undefined'&&document.addEventListener)
    position seen from the losing side gets nothing. Spectators have no side and
    are excluded, as they already were at endGame. */
 function musDecided(){
- if(!G||G.over||G.watch||G.spectate)return false;
+ if(!G||G.over||typeof supUsed!=='function')return false;
+ /* SPECTATING (v104.2). A watcher has no side, so "is the lead yours" has no
+    answer - but the match is just as decided and the owner still wants to hear
+    it. Two players left, the same delta rule between them, direction-free. */
+ if(G.watch){
+  const live=G.players.filter(p=>p!==G.neutral&&p.alive);
+  if(live.length!==2)return false;
+  const a=supUsed(live[0]),b=supUsed(live[1]);
+  return a===0||b===0||Math.abs(a-b)>MUS_MOP_DELTA;
+ }
+ if(G.spectate)return false;      // eliminated: your side is not the one mopping up
  const me=G.human;
- if(!me||!me.alive||typeof supUsed!=='function')return false;
+ if(!me||!me.alive)return false;
  const foes=G.players.filter(p=>p!==me&&p!==G.neutral&&p.alive&&p.team!==me.team);
  if(foes.length!==1)return false;
  const mine=supUsed(me),theirs=supUsed(foes[0]);
@@ -3812,12 +3901,15 @@ function musTick(){
  if(!G){musCombatT=0;musVicDone=false;}
  const want=musWant();
  if(musDecided())musVictory(); // v104.1: the fanfare lands while you are still playing
- if(G&&!G.over&&!G.paused&&AC.currentTime<COMBAT_DUCK_T)musCombatT=AC.currentTime+MUS_COMBAT_T;
+ /* the battle scan is throttled - it walks every unit, and the hold it feeds
+    is MUS_COMBAT_T seconds long, so three reads a second is ample */
+ if(G&&!G.over&&!G.paused&&(musScanF++%MUS_SCAN_EVERY)===0&&musFighting())
+  musCombatT=AC.currentTime+MUS_COMBAT_T;
  if(want!==musKey){if(want)musPlay(want);else musStop();}
  const duck=(AC.currentTime<COMBAT_DUCK_T)?MUS_DUCK:1;
  if(duck!==musDuckT){
   musDuckT=duck;
-  try{musBus.gain.setTargetAtTime(duck,AC.currentTime,.25);}catch(e){}
+  try{musBus.gain.setTargetAtTime(duck*MUSV_USER,AC.currentTime,.25);}catch(e){}
  }
 }
 /* ---------------- DATA TABLES ---------------- */
@@ -9583,7 +9675,7 @@ function endGame(win){
  /* v104: the sting, and only for a win the local player actually shares in.
     musWant() answers '' from here on, so the loop fades and the fanfare rings
     out over silence. A spectator (G.watch) has no side, so nothing fires. */
- if(win&&!G.watch)musVictory(); // v104.1: once-per-match gate; the mop-up trigger usually beat us to it
+ if(win||G.watch)musVictory(); // v104.1: once-per-match gate. v104.2: a spectator has no side to win, but the match still ended - and they watched it
  // v55: "win" is meaningless without a local side - name the survivor instead,
  // and print one summary line per army rather than army 1's private stats.
  if(G.watch)watchEndTitle(win);
@@ -18577,7 +18669,67 @@ function togglePause(){
  if(G.net)netBroadcast({pp:G.paused?1:0});
 }
 document.getElementById('pauseBtn').onclick=togglePause;
-document.getElementById('muteBtn').onclick=function(){muted=!muted;this.textContent=muted?'🔇':'🔊';if(AC&&masterGain){try{masterGain.gain.setTargetAtTime(muted?0:0.9,AC.currentTime,0.05);}catch(e){}}if(muted&&typeof speechSynthesis!=='undefined'){try{speechSynthesis.cancel();}catch(e){}}};
+/* ---------------- AUDIO PANEL (v104.2) ----------------
+   The mute button is the entry point for all three audio controls now, rather
+   than a bare toggle: the owner asked for Music and Effects faders on it, and
+   three controls in one place beats a second button in the bar. Mute is the
+   first row of the panel, so it is still one gesture away and the emoji still
+   reports the state at a glance.
+
+   NAMED FUNCTIONS on the v73 rule - the headless shim's addEventListener is a
+   no-op, so a check can reach these by name and nothing else. */
+function audioSyncUI(){
+ const mb=document.getElementById('muteBtn'),am=document.getElementById('apMute');
+ if(mb)mb.textContent=muted?'🔇':'🔊';
+ if(am)am.textContent=muted?'🔇 Sound off':'🔊 Sound on';
+ const mv=document.getElementById('apMus'),sv=document.getElementById('apSfx');
+ const mn=document.getElementById('apMusN'),sn=document.getElementById('apSfxN');
+ const mp=Math.round((typeof MUSV_USER==='number'?MUSV_USER:1)*100);
+ const sp=Math.round((typeof SFXV_USER==='number'?SFXV_USER:1)*100);
+ if(mv)mv.value=mp; if(sv)sv.value=sp;
+ if(mn)mn.textContent=mp+'%'; if(sn)sn.textContent=sp+'%';
+}
+function audioToggleMute(){
+ muted=!muted;
+ if(AC&&masterGain){try{masterGain.gain.setTargetAtTime(muted?0:0.9,AC.currentTime,0.05);}catch(e){}}
+ if(muted&&typeof speechSynthesis!=='undefined'){try{speechSynthesis.cancel();}catch(e){}}
+ audioSyncUI();
+}
+function audioPanelOpen(v){
+ const p=document.getElementById('audioPanel');if(!p)return;
+ if(v)ac(); // the sliders should bite on the gesture that opened the panel
+ p.hidden=!v;
+ if(v)audioSyncUI();
+}
+function audioPanelToggle(){
+ const p=document.getElementById('audioPanel');
+ audioPanelOpen(!!(p&&p.hidden));
+}
+function audioSlide(which,el){
+ if(!el)return;
+ setVol(which,(+el.value||0)/100);
+ audioSyncUI();
+}
+(function(){
+ const mb=document.getElementById('muteBtn');
+ if(mb)mb.onclick=audioPanelToggle;
+ const am=document.getElementById('apMute');
+ if(am)am.onclick=audioToggleMute;
+ const mv=document.getElementById('apMus');
+ if(mv)mv.oninput=function(){audioSlide('mus',this)};
+ const sv=document.getElementById('apSfx');
+ if(sv)sv.oninput=function(){audioSlide('sfx',this)};
+ /* click anywhere else closes it. The panel and the button are excluded, or
+    opening it would immediately close it again on the same click. */
+ if(document.addEventListener)document.addEventListener('click',function(e){
+  const p=document.getElementById('audioPanel');
+  if(!p||p.hidden)return;
+  const t=e&&e.target;
+  if(t&&t.closest&&(t.closest('#audioPanel')||t.closest('#muteBtn')))return;
+  audioPanelOpen(false);
+ });
+ audioSyncUI();
+})();
 document.getElementById('helpBtn').onclick=()=>{const h=document.getElementById('helpBox');h.style.display=h.style.display==='block'?'none':'block'};
 document.getElementById('hqBtn').onclick=()=>{hqFocus()}; // v73
 /* v90.1: one line, and deliberately no second gate of its own - startPlacing runs

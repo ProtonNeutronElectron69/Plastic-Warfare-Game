@@ -50,9 +50,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v104.1, and what a fresh session does)
+## Where the game stands (v104.2, and what a fresh session does)
 
-The game is at **v104.1**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v104.2**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), and **v104 is the first Roadmap 4 item
@@ -80,7 +80,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 5,848 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 5,899 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -536,7 +536,7 @@ landed with the trails untouched; a render change that moves a trail has a bug.
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
 
-## v104 / v104.1 — the soundtrack (Roadmap 4 item 1)
+## v104 / v104.1 / v104.2 — the soundtrack (Roadmap 4 item 1)
 
 **The game has music**, and it is the first Roadmap 4 item delivered. Four
 recorded tracks by the **United States Army Old Guard Fife and Drum Corps** —
@@ -592,6 +592,29 @@ due**: music is presentation, and `triage.sh` said "sim unchanged" first time.
   its once-per-match flag only on success** — a sting whose buffer is not ready
   retries rather than being spent. It is a VICTORY sting, so the lead must be
   yours; the owner's wording was direction-free and the name settled it.
+
+**The owner's second pass (v104.2) — an audio mixer, and one real diagnosis:**
+
+- **"Only the build-up music in spectate" was NOT a spectate bug.** The combat
+  track was armed by `COMBAT_DUCK_T`, which `sfxGun` sets only AFTER its
+  `audFor()` early return — so a shot off-screen arms nothing and the score
+  followed the CAMERA rather than the battle. A spectator's camera never chases
+  the fighting, which made it total; it was already wrong in a normal match with
+  the view away from the front. `musFighting()` reads the sim instead.
+  **`COMBAT_DUCK_T` remains right for the DUCK** — that one IS a camera question.
+  Two questions, two readings; T83.D pins the separation.
+- **The duck, third time — and the answer was not a third number.** .171, then
+  .375, and the owner still could not hear it. A firefight is a dozen gun voices
+  summing against one music voice, so there is no value that is right for
+  everyone. .90 x .62 = .558 is the DEFAULT now and there is a fader.
+  **When two tuning passes in a row miss, suspect the listener, not the number.**
+- **Music and Effects sliders on the mute button** (`setVol`, `VOL_MAX` 1.5,
+  stored in `localStorage` like `pw_mmsize`). They needed `sfxBus`, a node
+  meaning "everything except the music", which the game had never had — every
+  sound went straight to `masterGain` where music also lives.
+- **Two checks were rewritten because their claim reversed on purpose:** the
+  sting fires for a spectator now (they watched the whole match). An ELIMINATED
+  player still gets nothing — they have a side and it lost.
 
 **Two things that cost time and would cost it again:**
 

@@ -518,7 +518,7 @@ function endGame(win){
  /* v104: the sting, and only for a win the local player actually shares in.
     musWant() answers '' from here on, so the loop fades and the fanfare rings
     out over silence. A spectator (G.watch) has no side, so nothing fires. */
- if(win&&!G.watch)musVictory(); // v104.1: once-per-match gate; the mop-up trigger usually beat us to it
+ if(win||G.watch)musVictory(); // v104.1: once-per-match gate. v104.2: a spectator has no side to win, but the match still ended - and they watched it
  // v55: "win" is meaningless without a local side - name the survivor instead,
  // and print one summary line per army rather than army 1's private stats.
  if(G.watch)watchEndTitle(win);

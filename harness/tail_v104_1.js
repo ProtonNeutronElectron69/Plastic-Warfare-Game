@@ -176,8 +176,14 @@ function strip1041(p,sup){
  G.over=true;
  ok('T82.D a finished match does not re-fire it', musDecided()===false);
  G.over=false;
+ /* v104.2: this asserted the OPPOSITE - that a spectator got no fanfare,
+    because they have no side. The owner watched a whole match that way and
+    found the silence wrong, so a spectated match is now decided on the same
+    delta rule applied between the last two armies, direction-free. T83.E owns
+    the detail; this line records that the claim was reversed on purpose. */
  G.watch=true;
- ok('T82.D a spectator has no side, so no fanfare', musDecided()===false);
+ ok('T82.D a spectated match IS decided - no side to take, but an ending to hear',
+    musDecided()===true);
  G.watch=false;
  G.spectate=true;
  ok('T82.D an eliminated player watching on gets none either', musDecided()===false);

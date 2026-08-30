@@ -27,6 +27,7 @@
    game sounds can move a pinned hash trail. splice_v64 asserts the absence of
    the literal call as a post-condition, and T43.J asserts it at runtime. */
 let AC=null, muted=false, masterGain=null, NOISE=null, PINK=null, IMP=null;
+let sfxBus=null; // v104.2: everything that is NOT music, so the two have separate faders
 let roomBus=null, farBus=null, armsBus=null;
 /* Two reverbs rather than one. The old single 0.55 s bus had to serve both a
    rifle report and a building collapse; a short bright room reads as "close" and
@@ -59,19 +60,24 @@ function ac(){
    comp.threshold.value=-6;comp.knee.value=10;comp.ratio.value=4;comp.attack.value=0.003;comp.release.value=0.18;
    const clip=AC.createWaveShaper();clip.curve=softCurve();try{clip.oversample='2x';}catch(e){}
    masterGain.connect(comp).connect(clip).connect(AC.destination);
+   /* v104.2: one bus for every sound that is not music. The music bus hangs off
+      masterGain beside it, so the Effects and Music sliders are a gain each and
+      neither can touch the other. Mute stays on masterGain, above both. */
+   sfxBus=AC.createGain();sfxBus.connect(masterGain);
+   sfxBus.gain.value=(typeof SFXV_USER==='number')?SFXV_USER:1; // the stored fader, applied at birth
    /* small-arms sub-bus. Explosions and launches duck it for ~250 ms, which is
       the single cheapest trick in game audio for making a blast feel enormous:
       the blast is not louder, the gunfire around it gets out of the way. */
-   armsBus=AC.createGain();armsBus.gain.value=1;armsBus.connect(masterGain);
+   armsBus=AC.createGain();armsBus.gain.value=1;armsBus.connect(sfxBus);
    /* short bright room, for anything happening close to the camera */
    roomBus=AC.createConvolver();
    roomBus.buffer=makeIR(0.35,2.2,0.55,[[0.011,0.7],[0.019,-0.5],[0.031,0.4],[0.047,-0.3]]);
-   const rg=AC.createGain();rg.gain.value=0.85;roomBus.connect(rg).connect(masterGain);
+   const rg=AC.createGain();rg.gain.value=0.85;roomBus.connect(rg).connect(sfxBus);
    /* long dark tail, for distance and for the big low-frequency events */
    farBus=AC.createConvolver();
    farBus.buffer=makeIR(1.4,2.8,0.16,null);
-   const fg=AC.createGain();fg.gain.value=0.7;farBus.connect(fg).connect(masterGain);
-  }catch(e){masterGain=null;roomBus=null;farBus=null;armsBus=null;}
+   const fg=AC.createGain();fg.gain.value=0.7;farBus.connect(fg).connect(sfxBus);
+  }catch(e){masterGain=null;roomBus=null;farBus=null;armsBus=null;sfxBus=null;}
   /* v92: the context exists, so the recorded takes can finally decode - kick
      them all now, once, off the critical path. By the first battle sound they
      are long ready; until then sndPlay answers false and synthesis covers. */
@@ -151,7 +157,7 @@ function duckArms(amt,rel){
 /* --- routing. aout applies the distance low-pass, picks the bus and pans;
    rsend feeds the two reverbs. d is the 0..1 distance factor from audAt. --- */
 function aout(node,pan,d,bus){
- const dest=(bus==='arms'&&armsBus)?armsBus:(masterGain||AC.destination);
+ const dest=(bus==='arms'&&armsBus)?armsBus:(sfxBus||masterGain||AC.destination);
  let n=node;
  if(d!=null&&d>0.02){
   /* air absorption: 18 kHz at the camera, 900 Hz at the far edge of the model */
@@ -1036,7 +1042,8 @@ function buildMineVoice(kind){
   lz.connect(lzg).connect(bz.gain);lz.start(t);
   s3.connect(hpz).connect(bz).connect(g);s3.start(t);
  }
- if(pan)g.connect(pan).connect(masterGain||AC.destination);else g.connect(masterGain||AC.destination);
+ const mdest=sfxBus||masterGain||AC.destination; // v104.2: the mining loop is an effect, not music
+ if(pan)g.connect(pan).connect(mdest);else g.connect(mdest);
  return {gain:g,pan:pan};
 }
 function updateMineAmbience(){
