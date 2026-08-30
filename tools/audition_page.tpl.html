@@ -101,6 +101,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(46px,8vw,82px);
   color:var(--ink-3);border:1px solid var(--line);border-radius:20px;padding:2px 8px;
   font-weight:400}
 .tnote{color:var(--ink-2);font-size:13.5px;line-height:1.5;margin:4px 0 0;max-width:60ch}
+.twarn{color:var(--amber);font-size:12.5px;line-height:1.45;margin:5px 0 0;max-width:60ch;
+  font-weight:500;display:flex;gap:6px;align-items:baseline}
+.twarn::before{content:"▲";font-size:9px;flex:none}
 
 .wave{display:flex;align-items:flex-end;gap:1.5px;height:34px;margin:10px 0 0;
   cursor:pointer;width:100%}
@@ -165,13 +168,13 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(46px,8vw,82px);
 <div class="wrap">
 <header>
   <p class="eyebrow">Roadmap 4 · Item 1 · Candidate review</p>
-  <h1>Sixteen tracks<br>for four slots</h1>
-  <p class="standfirst">Every candidate below is <strong>CC0 / public domain</strong> — no attribution required, no licence to track. Each is trimmed to a 30-second excerpt and encoded <strong>mono at 96 kbps</strong>, which is roughly how it would ship, so what you hear is what the game would sound like. Pick one per slot; the bar at the bottom keeps a running total of what your choices would add to the download.</p>
+  <h1>Fife, drum<br>and bugle</h1>
+  <p class="standfirst">Seventeen traditional military band candidates, twelve of them the <strong>United States Army Old Guard Fife and Drum Corps</strong> — a serving Army unit, so the recordings are US Government works and public domain outright. Each is trimmed to a 30-second excerpt and encoded <strong>mono at 96 kbps</strong>, which is roughly how it would ship, so what you hear is what the game would sound like. Pick one per slot; the bar at the bottom keeps a running total of what your choices would add to the download.</p>
   <dl class="facts">
     <div class="fact"><dt>Game file today</dt><dd>6.77 <small>MB</small></dd></div>
     <div class="fact"><dt>All sound effects</dt><dd>444 <small>KB · 35 files</small></dd></div>
     <div class="fact"><dt>Per 30 s loop</dt><dd>~480 <small>KB embedded</small></dd></div>
-    <div class="fact"><dt>Licence</dt><dd>CC0 <small>public domain</small></dd></div>
+    <div class="fact"><dt>Licence</dt><dd>PD <small>US Gov / pre-1926</small></dd></div>
   </dl>
 </header>
 <main id="slots"></main>
@@ -180,14 +183,20 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(46px,8vw,82px);
   <h2>Before you commit</h2>
 
   <div class="note">
-    <h3>Where these came from</h3>
-    <p>Every music host I would normally use — Musopen, OpenGameArt, Kenney, the Internet Archive — is <strong>blocked by this environment's network policy</strong>. GitHub is not, so these came from <code>SoundSafari/CC0-1.0-Music</code>, a public mirror that preserves the <strong>FreePD</strong> library after that site shut down in 2025. All sixteen are from the FreePD portion, originally Kevin MacLeod public-domain dedications.</p>
-    <p><strong>Treat the licence as good but second-hand.</strong> It is a community-aggregated mirror, not the original publisher. Before any of these ship, the track you choose should be confirmed CC0 at its original source — that is a five-minute check per track, and worth doing once rather than never.</p>
+    <h3>Where these came from, and why the licence is stronger this time</h3>
+    <p>Every music host I would normally use — Musopen, OpenGameArt, Kenney, the Internet Archive — is <strong>blocked by this environment's network policy</strong>. GitHub is not, so these came from <code>SoundSafari/CC0-1.0-Music</code>, a public mirror aggregating several free-music libraries.</p>
+    <p>But the provenance here does not rest on that mirror. <strong>Twelve of the seventeen are the US Army Old Guard Fife and Drum Corps</strong> — a serving unit of the US Army, so its recordings are works of the federal government and public domain in the US under 17 USC 105, whatever any mirror claims. Three more (Edison Military Band, Arthur Pryor's Band, Prince's Orchestra) are acoustic-era sides from roughly 1900–1920, long out of copyright.</p>
+    <p><strong>Still confirm before shipping.</strong> That argument is about where the recordings came from, not about the mirror — check the one track you actually choose at its original source.</p>
   </div>
 
   <div class="note">
-    <h3>These are full tracks, not loops</h3>
-    <p>Every candidate runs one to five minutes. A game loop wants <strong>30–45 seconds that joins back to its own start</strong> without a seam, so whichever you pick still needs a loop point chosen and cut. What you are judging here is the <em>material</em> — does this sound like your game — not the edit.</p>
+    <h3>Marches loop better than the last set did</h3>
+    <p>Every candidate runs 36 seconds to 3 minutes, and still needs <strong>30–45 seconds that joins back to its own start</strong> cut out of it. But a march is built from repeated strains of fixed length, which is exactly the structure a loop wants — far easier to cut cleanly than the through-composed cues in the first round.</p>
+  </div>
+
+  <div class="note">
+    <h3>One ensemble, or four</h3>
+    <p>Twelve of these are the same corps, so choosing all four slots from the Old Guard would give the soundtrack <strong>one voice</strong> — the same fifes, the same drum line, the same room — which is usually worth more than picking the single best track per slot. The drum features in the combat slot are literally the same players as the menu march with the fifes taken away, and that relationship will read.</p>
   </div>
 
   <div class="note">
@@ -202,8 +211,9 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(46px,8vw,82px);
   </div>
 
   <div class="note">
-    <h3>One track worth hearing twice</h3>
-    <p><strong>Night Attack</strong> is darker and lower-energy than the other combat candidates. Since v101 the game has a real day/night cycle — so rather than competing with the other four for one slot, it could be the night half of a <em>pair</em>, swapped by <code>dayPhase()</code>. That is a bigger job than four loops, but it is the kind of thing this engine is already shaped for.</p>
+    <h3>The three antique recordings are a taste decision</h3>
+    <p><strong>Uncle Sammy March</strong>, <strong>Children Toy March</strong> and <strong>General Mixup March</strong> are flagged in amber above because they are genuine acoustic-era transfers — measured at 20 dB less content above 10 kHz than the modern recordings here, which you hear as narrow, hissy 78rpm sound.</p>
+    <p>That is not a defect to fix. A wind-up-gramophone soundtrack under a game about toy soldiers on a kitchen floor is a real aesthetic, and it would sit beside the recorded gunfire in a way the clean recordings would not. But it is a decision to make deliberately, which is why they are marked rather than mixed in.</p>
   </div>
 </section>
 </div>
@@ -252,8 +262,16 @@ function build(){
       btn.className="play"; btn.type="button"; btn.innerHTML=PLAY;
       btn.setAttribute("aria-label","Play "+t.name);
       const meta=document.createElement("div"); meta.className="meta";
-      meta.innerHTML='<div class="tname">'+t.name+'<span class="tag">'+t.tag+'</span></div>'+
-        '<p class="tnote">'+t.note+'</p>';
+      // name, tag and note are TEXT - built as nodes so an "&" in a title stays
+      // an "&" everywhere, including the loadout chip that reads t.name raw.
+      const tn=document.createElement("div"); tn.className="tname";
+      tn.appendChild(document.createTextNode(t.name));
+      const tg=document.createElement("span"); tg.className="tag"; tg.textContent=t.tag;
+      tn.appendChild(tg);
+      const note=document.createElement("p"); note.className="tnote"; note.textContent=t.note;
+      meta.append(tn,note);
+      if(t.warn){ const w=document.createElement("p"); w.className="twarn";
+        w.textContent=t.warn; meta.appendChild(w); }
       const wave=document.createElement("div");
       wave.className="wave"; wave.setAttribute("role","presentation");
       t.peaks.forEach(p=>{ const b=document.createElement("div");
