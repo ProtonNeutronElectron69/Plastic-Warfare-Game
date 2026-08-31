@@ -518,7 +518,11 @@ function endGame(win){
  /* v104: the sting, and only for a win the local player actually shares in.
     musWant() answers '' from here on, so the loop fades and the fanfare rings
     out over silence. A spectator (G.watch) has no side, so nothing fires. */
- if(win||G.watch)musVictory(); // v104.1: once-per-match gate. v104.2: a spectator has no side to win, but the match still ended - and they watched it
+ /* v104.3: a FLAG, not a sting. The victory music is a looping track now and
+    plays for as long as the results screen is up, so all this has to do is say
+    that the match ended in a way that earns it. Same rule as v104.2: a win, or
+    a spectator, who has no side but watched the whole thing. */
+ musVicEnd=(win||!!G.watch);
  // v55: "win" is meaningless without a local side - name the survivor instead,
  // and print one summary line per army rather than army 1's private stats.
  if(G.watch)watchEndTitle(win);

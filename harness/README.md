@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v104.2)
+# Plastic Warfare headless test harness (updated at v104.3)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -1180,7 +1180,7 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
-## v104 / v104.1 / v104.2 — the soundtrack (Roadmap 4 item 1)
+## v104 / v104.1 / v104.2 / v104.3 — the soundtrack (Roadmap 4 item 1)
 
 **The game has music.** Four recorded tracks, `tail_v104.js` (T81, 43 checks in the suite; 41 run standalone - two need an AudioContext, which an earlier tail in segment 3 supplies as a stub),
 and two new tools: `tools/cut_music_v104.py` (choose the loop) and
@@ -1333,6 +1333,52 @@ clothes, and the third was not the bug it looked like.
   say in a comment that it was reversed on purpose. An ELIMINATED player
   (`G.spectate`) still gets nothing: they have a side and it lost. Different
   flag, different answer.
+
+**The owner's third pass, v104.3 — the sting becomes a track**
+(`tail_v104_3.js`, T84, 40 checks). **No trail moved.**
+
+The ask was four things — play continuously while the conditions hold, keep
+playing over the end-of-match graphs, override what is playing, mix like the
+rest of the score — and together they say *stop treating this as a sting*. A
+sting is a fire-and-forget one-shot on its own node, deliberately outside the
+track machinery so nothing can crossfade it away; every one of those four is
+what a TRACK does. So victory is a fourth loop now, cut by the same script,
+chosen by `musWant`, crossfaded and ducked with the others.
+`musSting`/`musVictory`/`musVicDone` were REMOVED rather than left orphaned, and
+T84.F pins their absence.
+
+- **A 36-second fanfare does loop, and the seam is the best of the four.**
+  Searched 8-30s on the same recording: the 14-28 band gives 27.96s at
+  **0.43x**, against the menu march's 0.53x. The match score is 0.25 and means
+  nothing here — see the v104 note on why `seam` is the number to read.
+- **TWO ANTI-FLICKER LAYERS, and they are independent.** Supply moves every time
+  a unit dies or finishes building, so a single threshold would chatter around a
+  lead of 20. (1) A SCHMITT GAP: start above `MUS_MOP_DELTA`, do not stop until
+  the lead falls below `MUS_MOP_DELTA - MUS_MOP_HYST` — an 8-wide dead band.
+  (2) A TRAILING DWELL of `MUS_VIC_HOLD` seconds past the moment the relaxed
+  rule lets go.
+- **THE FIRST MEASUREMENT OF THAT LIED, AND IT LOOKED LIKE A PASS.** Driving it
+  with the human's opening army — 4 supply — made every margin NEGATIVE the
+  moment the enemy built anything, so the latch held on the DWELL alone and the
+  gap was never exercised. The table read "latched TRUE across the boundary" and
+  was measuring the wrong mechanism entirely. Re-run with the human built up to
+  48 supply, and with one layer neutralised while the other is tested, it shows
+  what it claims: releases at margin 11, refuses to re-arm at 14/17/19, re-arms
+  at 21. **A test that cannot fail for the reason it claims has not tested
+  anything** — and a probe that confirms your expectation is exactly when to
+  check which mechanism actually produced the result.
+- **`endGame` plays nothing now.** It sets one client-local flag saying this
+  ending earns the music (a win, or a spectator who watched the whole match);
+  `musWant` does the rest. One path instead of two, and the end screen keeps
+  playing because `musWant` no longer answers '' the moment `G.over` is true —
+  it answers '' only when the match ended WITHOUT a victory, which is the
+  defeat screen.
+- **Six older checks were rewritten to reversed claims**, across three tails:
+  victory has loop points now (T81.A), `loops.json` says it loops (T81.B), the
+  embedded set is 1455 kB not 1157 (T81.A), `musSting` is gone (T81.C/D),
+  `endGame` records rather than fires (T81.F, T82.F), and T82.E's once-per-match
+  gate no longer exists to be tested. Each says in a comment that the claim
+  reversed on purpose.
 
 **A PRE-EXISTING FLAKE, found by running the suite and not caused here.**
 `T43.M` ("every combat sound in the game is distinct") failed once in four

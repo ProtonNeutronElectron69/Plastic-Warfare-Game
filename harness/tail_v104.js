@@ -48,8 +48,12 @@ function fresh104(seed){G=null;newGame(cfg104(seed));return G.human}
  /* The loop points. start is the file's margin; end is one loop later. The
     margin exists so the mp3's encoder padding is never inside the loop. */
  ok('T81.A the three loops carry loop points, the sting carries none',
-    MUS_LOOP.menu&&MUS_LOOP.build&&MUS_LOOP.combat&&MUS_LOOP.victory===null);
- const loops=['menu','build','combat'];
+/* v104.3: victory used to be `===null` here - a 6.5s one-shot with no loop
+    points. The owner asked for it to play continuously and over the end-of-match
+    graphs, so it is a fourth LOOP now and this line asserts the opposite of what
+    it once did. T84.A owns the detail. */
+    MUS_LOOP.menu&&MUS_LOOP.build&&MUS_LOOP.combat&&MUS_LOOP.victory);
+ const loops=['menu','build','combat','victory'];
  ok('T81.A every loop starts AFTER the file does, leaving room for the padding',
     loops.every(k=>MUS_LOOP[k].start>=0.2));
  ok('T81.A every loop is a real span, tens of seconds long',
@@ -63,7 +67,7 @@ function fresh104(seed){G=null;newGame(cfg104(seed));return G.human}
     length, fails here until someone says why in this line. */
  ok('T81.A the set is four tracks and ~1.1 MB of mp3 - a deliberate size',
     MUSKEYS.length===4
-    &&Math.abs(MUSKEYS.reduce((n,k)=>n+MUS_B64[k].length,0)*3/4-1157000)<120000);
+    &&Math.abs(MUSKEYS.reduce((n,k)=>n+MUS_B64[k].length,0)*3/4-1455000)<140000);
 }
 
 /* ---------- B: the committed files and the embedded copies agree ---------- */
@@ -88,10 +92,10 @@ function fresh104(seed){G=null;newGame(cfg104(seed));return G.human}
   try{meta=JSON.parse(fs104.readFileSync('../assets/mus/loops.json','utf8'))}catch(e){}
   ok('T81.B loops.json exists beside the tracks', !!meta);
   if(meta)ok('T81.B the embedded loop points equal the ones the cutter measured',
-     ['menu','build','combat'].every(k=>meta[k]&&meta[k].loop
+     ['menu','build','combat','victory'].every(k=>meta[k]&&meta[k].loop
        &&Math.abs(meta[k].start-MUS_LOOP[k].start)<1e-6
        &&Math.abs(meta[k].end-MUS_LOOP[k].end)<1e-6)
-     &&meta.victory&&meta.victory.loop===false);
+     &&meta.victory&&meta.victory.loop===true);
  }
 }
 
@@ -105,7 +109,7 @@ function fresh104(seed){G=null;newGame(cfg104(seed));return G.human}
 
  /* the RNG stream is the one that desyncs a live match (rule 2) */
  const r0=G.rngS;
- musTick();musWant();musPlay('menu');musStop();musSting('victory');
+ musTick();musWant();musPlay('menu');musStop();musVicTick();
  ok('T81.C nothing in the music path consumes srand()', G.rngS===r0);
 
  /* and nothing of it rides in the save */
@@ -140,7 +144,8 @@ function fresh104(seed){G=null;newGame(cfg104(seed));return G.human}
     Object.keys(ASSETS.mus).length===0);
  ok('T81.D musBuf answers null for every track', MUSKEYS.every(k=>musBuf(k)===null));
  ok('T81.D musPlay refuses rather than throwing', MUSKEYS.every(k=>musPlay(k)===false));
- ok('T81.D musSting refuses rather than throwing', musSting('victory')===false);
+ ok('T81.D musPlay refuses the victory track too, now that it is one',
+    musPlay('victory')===false);
  ok('T81.D musAsset answers null', MUSKEYS.every(k=>musAsset(k)===null));
 
  /* the real claim: a whole match runs with the music dead */
@@ -219,22 +224,23 @@ function fresh104(seed){G=null;newGame(cfg104(seed));return G.human}
   ok('T81.F ...ABOVE its `if(!G) return`, because the menu is exactly !G',
      call>f&&ret>call);
 
-  /* v104.1: this called musSting('victory') directly. It goes through the
-     once-per-match gate now, because the sting also fires DURING play the
-     moment the match is decided (T82.D) and a win that met both conditions
-     would otherwise sound the fanfare twice. The claim is unchanged - endGame
-     still fires it, on a win, never for a spectator - only the callee moved. */
+  /* THE CALLEE HAS MOVED TWICE. v104 called musSting('victory') here. v104.1
+     routed it through a once-per-match gate, musVictory(). v104.3 removed the
+     sting altogether - victory is a looping TRACK chosen by musWant, so endGame
+     only has to RECORD that this ending earns it. The surviving claim is the
+     narrow one: a win earns it, a spectator earns it, a loss does not. */
   const eg=SCRIPT104.indexOf('function endGame(win){');
-  const sting=SCRIPT104.indexOf('musVictory()',eg);
-  ok('T81.F endGame fires the victory sting', eg>0&&sting>eg&&sting-eg<400);
+  const sting=SCRIPT104.indexOf('musVicEnd=',eg);
+  ok('T81.F endGame records that the ending earns the victory music',
+     eg>0&&sting>eg&&sting-eg<700);
   /* v104.2 REVERSES HALF OF THIS CLAIM, deliberately. It read `win&&!G.watch`:
      a spectator has no side, so there was no win to celebrate. The owner then
      watched a whole match in spectate and pointed out that they never heard the
      fanfare - and a spectator who sat through the match has as much claim on
-     the ending as anyone. `win||G.watch` now. The "only on a win" half stands
-     unchanged for a player who has a side. */
+     the ending as anyone. The "only on a win" half stands unchanged for a
+     player who has a side. */
   ok('T81.F ...on a win, or for a spectator who watched the whole match',
-     SCRIPT104.slice(eg,sting+40).indexOf('win||G.watch')>0);
+     /musVicEnd=\(win\|\|!?!?G\.watch\)/.test(SCRIPT104.slice(eg,sting+60)));
  }
  /* v104.1: this was ==='v104' and is a DUPLICATE of T75.B, which is the
     deliberately-transcribed version pin. Widened to "this tail's release or a

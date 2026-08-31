@@ -50,9 +50,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v104.2, and what a fresh session does)
+## Where the game stands (v104.3, and what a fresh session does)
 
-The game is at **v104.2**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v104.3**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), and **v104 is the first Roadmap 4 item
@@ -80,7 +80,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 5,899 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 5,939 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -536,7 +536,7 @@ landed with the trails untouched; a render change that moves a trail has a bug.
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
 
-## v104 / v104.1 / v104.2 — the soundtrack (Roadmap 4 item 1)
+## v104 / v104.1 / v104.2 / v104.3 — the soundtrack (Roadmap 4 item 1)
 
 **The game has music**, and it is the first Roadmap 4 item delivered. Four
 recorded tracks by the **United States Army Old Guard Fife and Drum Corps** —
@@ -615,6 +615,27 @@ due**: music is presentation, and `triage.sh` said "sim unchanged" first time.
 - **Two checks were rewritten because their claim reversed on purpose:** the
   sting fires for a spectator now (they watched the whole match). An ELIMINATED
   player still gets nothing — they have a side and it lost.
+
+**The owner's third pass (v104.3) — the sting becomes a track:**
+
+- **Four asks that were one change.** Continuous while the conditions hold,
+  continuous over the end-of-match graphs, overriding what is playing, mixed
+  like the rest — every one of those is what a TRACK does and a sting cannot.
+  So victory is a fourth loop (27.96s, seam 0.43x, the best of the four), and
+  `musSting`/`musVictory`/`musVicDone` were removed rather than orphaned.
+- **Two independent anti-flicker layers.** A SCHMITT GAP (`MUS_MOP_HYST`):
+  start above `MUS_MOP_DELTA`, release below `MUS_MOP_DELTA - MUS_MOP_HYST`.
+  And a TRAILING DWELL (`MUS_VIC_HOLD`) past the moment the relaxed rule lets
+  go. Supply churns on every death and every build, so one threshold chatters.
+- **THE FIRST MEASUREMENT OF THAT LIED AND LOOKED LIKE A PASS.** Driven with the
+  human's 4-supply opening army, every margin went negative the moment the enemy
+  built anything, so the DWELL held the latch and the gap was never exercised at
+  all. **A probe that confirms your expectation is exactly when to ask which
+  mechanism produced the result** — test the layers with the other one
+  neutralised, or you have tested neither.
+- **`endGame` plays nothing.** It records a client-local flag; `musWant` does
+  the playing. `musWant` answers '' on `G.over` only when the ending earned no
+  victory — which is the defeat screen.
 
 **Two things that cost time and would cost it again:**
 

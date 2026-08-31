@@ -21,7 +21,7 @@
    by re-encoding it (the v92 rule for SNDV, which this deliberately mirrors).
    Music sits well under the guns on purpose: it is the floor of the mix, not a
    layer of it. */
-const MUSV={menu:.60,build:.38,combat:.62,victory:.70};
+const MUSV={menu:.60,build:.38,combat:.62,victory:.66};
 const MUS_FADE=1.8;      // seconds to crossfade one track into the next
 /* THE DUCK, THIRD TIME. v104 shipped .45 x .38 = .171 and the owner could not
    hear it. v104.1 went to .75 x .50 = .375 and the owner still could not. The
@@ -34,6 +34,16 @@ const MUS_FADE=1.8;      // seconds to crossfade one track into the next
 const MUS_DUCK=.90;      // how far music drops under gunfire (multiplier)
 const MUS_COMBAT_T=7;    // seconds of quiet before combat relaxes back to build
 const MUS_MOP_DELTA=20;  // supply-used lead that means the match is decided
+/* v104.3 ANTI-FLICKER, two layers, because supply moves every time a unit dies
+   or finishes building and the raw rule sits right on that churn.
+   1. A SCHMITT GAP. The track starts at a lead of more than MUS_MOP_DELTA but
+      does not stop until the lead falls below MUS_MOP_DELTA - MUS_MOP_HYST, so
+      a lead hovering at 20 cannot chatter the music on and off.
+   2. A TRAILING DWELL. Once playing it holds MUS_VIC_HOLD seconds past the
+      moment the relaxed rule stops being true - long enough that a brief
+      counter-attack does not cut the fanfare mid-phrase. */
+const MUS_MOP_HYST=8;    // how far the lead must fall back before it stops
+const MUS_VIC_HOLD=12;   // seconds it keeps playing after the rule lets go
 const MUS_FIGHT_N=2;     // units swinging before the score calls it a battle
 const MUS_SCAN_EVERY=10; // frames between sim scans; the hold is seconds long
 const VOL_MAX=1.5;       // both sliders run 0..150%, so 100% has headroom above it
@@ -43,7 +53,9 @@ let musNow=null;         // {src,gain,key} currently playing, or null
 let musKey='';           // what musNow is, '' when nothing plays
 let musDuckT=0;          // AC time until which music stays ducked
 let musCombatT=0;        // AC time until which the match counts as "in combat"
-let musVicDone=false;    // the sting is once per match, whichever trigger fires
+let musVicOn=false;      // the latched victory reading - see musVicTick
+let musVicUntil=0;       // AC time before which the latch will not let go
+let musVicEnd=false;     // the match ENDED in a way that earns the victory track
 let musScanF=0;          // frame counter for the throttled battle scan
 
 /* The two faders, 0..VOL_MAX, 1 = the tuned default. Persisted per browser like
@@ -141,17 +153,30 @@ function musStop(){
  }catch(e){}
 }
 
-/* The sting. Fire-and-forget on its own node so it is not the "current track"
-   and cannot be crossfaded out from under itself. */
-function musSting(key){
- const g=musGain();if(!g)return false;
- const buf=musBuf(key);if(!buf)return false;
- try{
-  const src=AC.createBufferSource();src.buffer=buf;
-  const gn=AC.createGain();gn.gain.value=MUSV[key]||.6;
-  src.connect(gn).connect(g);src.start(0,buf.pwOff||0);
- }catch(e){return false}
- return true;
+/* THE LATCH. Updated once a frame from musTick; musWant only reads it.
+
+   v104.3 REPLACES THE STING ENTIRELY. Victory used to be a 6.5s one-shot fired
+   on its own node by musSting/musVictory, deliberately outside the track
+   machinery so nothing could crossfade it away. The owner asked for the
+   opposite: continuous while the match is decided, continuous over the
+   end-of-match graphs, overriding whatever is playing, and mixed like any other
+   part of the score. That is a TRACK, so it is one - a fourth loop, chosen by
+   musWant, crossfaded and ducked with the rest. musSting and musVictory are
+   gone rather than left unused.
+
+   Note the order: the end-of-match case is checked FIRST and never lets go,
+   because once the results screen is up there is no rule left to re-evaluate -
+   the match is over and the music simply plays until you leave for the menu. */
+function musVicTick(){
+ if(!G){musVicOn=false;musVicUntil=0;musVicEnd=false;return}
+ if(musVicEnd){musVicOn=true;return}
+ const now=AC?AC.currentTime:0;
+ if(musVicOn){
+  if(musDecided(true))musVicUntil=now+MUS_VIC_HOLD;   // still true: push the dwell out
+  else if(now>=musVicUntil)musVicOn=false;            // and only then let go
+ }else if(musDecided(false)){
+  musVicOn=true;musVicUntil=now+MUS_VIC_HOLD;
+ }
 }
 
 /* IS A BATTLE HAPPENING? Read off the simulation, not off what you can hear.
@@ -209,8 +234,13 @@ if(typeof document!=='undefined'&&document.addEventListener)
    It is a VICTORY sting, so it only fires when the lead is YOURS; the same
    position seen from the losing side gets nothing. Spectators have no side and
    are excluded, as they already were at endGame. */
-function musDecided(){
+function musDecided(sustain){
  if(!G||G.over||typeof supUsed!=='function')return false;
+ /* `sustain` asks the RELAXED question - "is this still true enough to keep
+    playing" rather than "is it true enough to start". The gap between the two
+    is the hysteresis; asking one question with two thresholds is what stops
+    the boundary chattering. */
+ const gap=sustain?(MUS_MOP_DELTA-MUS_MOP_HYST):MUS_MOP_DELTA;
  /* SPECTATING (v104.2). A watcher has no side, so "is the lead yours" has no
     answer - but the match is just as decided and the owner still wants to hear
     it. Two players left, the same delta rule between them, direction-free. */
@@ -218,7 +248,7 @@ function musDecided(){
   const live=G.players.filter(p=>p!==G.neutral&&p.alive);
   if(live.length!==2)return false;
   const a=supUsed(live[0]),b=supUsed(live[1]);
-  return a===0||b===0||Math.abs(a-b)>MUS_MOP_DELTA;
+  return a===0||b===0||Math.abs(a-b)>gap;
  }
  if(G.spectate)return false;      // eliminated: your side is not the one mopping up
  const me=G.human;
@@ -227,7 +257,7 @@ function musDecided(){
  if(foes.length!==1)return false;
  const mine=supUsed(me),theirs=supUsed(foes[0]);
  if(mine<=theirs)return false;
- return theirs===0||(mine-theirs)>MUS_MOP_DELTA;
+ return theirs===0||(mine-theirs)>gap;
 }
 
 /* Fire the sting, at most once per match.
@@ -237,21 +267,18 @@ function musDecided(){
    which is the same failure that made v104's sting inaudible, now unable to
    swallow the event even if warming were ever to miss. muted does not consume
    it either: unmuting while the mop-up is still on still earns the fanfare. */
-function musVictory(){
- if(musVicDone||muted)return false;
- if(!musSting('victory'))return false;
- musVicDone=true;
- return true;
-}
-
 /* Which track the game wants RIGHT NOW. Pure reading - no game state is
    written, and the answer is derived every frame rather than stored, which is
    the same discipline gRsv and the auras use. '' means silence. */
 function musWant(){
  if(muted)return '';
  if(!G)return 'menu';                 // the setup screen: G is null exactly then
- if(G.over)return '';                 // the sting has already played; let it ring
- if(G.paused)return '';
+ if(G.paused)return '';               // pause still silences everything
+ /* VICTORY OUTRANKS EVERYTHING BELOW IT (v104.3) - it overrides the combat and
+    build loops while the match is being mopped up, and it is the one track that
+    keeps playing once G.over is true, under the end-of-match graphs. */
+ if(musVicOn)return 'victory';
+ if(G.over)return '';                 // over WITHOUT a victory: the defeat screen is silent
  /* No AudioContext is a question for musTick, not for this function: what the
     game WANTS and what the machine CAN PLAY are two claims, and folding them
     together here made a running match ask for silence under the headless shim
@@ -279,9 +306,9 @@ function musTick(){
     Returning to the menu is the one moment every match boundary passes
     through (againBtn and quitBtn both set G=null), so it is where the hold is
     cleared. T81.E drives exactly this. */
- if(!G){musCombatT=0;musVicDone=false;}
+ if(!G)musCombatT=0;
+ musVicTick();                 // v104.3: update the latch BEFORE musWant reads it
  const want=musWant();
- if(musDecided())musVictory(); // v104.1: the fanfare lands while you are still playing
  /* the battle scan is throttled - it walks every unit, and the hold it feeds
     is MUS_COMBAT_T seconds long, so three reads a second is ample */
  if(G&&!G.over&&!G.paused&&(musScanF++%MUS_SCAN_EVERY)===0&&musFighting())

@@ -176,7 +176,7 @@ function fresh1042(seed,extra){
  if(SCR1042){
   const eg=SCR1042.indexOf('function endGame(win){');
   ok('T83.E endGame fires it for a spectator too - they watched the whole thing',
-     eg>0&&SCR1042.slice(eg,eg+400).indexOf('win||G.watch')>0);
+     eg>0&&/musVicEnd=\(win\|\|!?!?G\.watch\)/.test(SCR1042.slice(eg,eg+700)));
  }
 }
 

@@ -85,7 +85,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v104.2 it makes **5,899
+that the results come out identical every time. As of v104.3 it makes **5,939
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -115,7 +115,21 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 104.2**.
+The game is at **version 104.3**.
+
+**v104.3 — the victory music plays properly now.** It used to be a six-second
+fanfare that sounded once and stopped. It is a full looping track like the other
+three: it starts when the match is clearly decided, keeps playing while that
+stays true, overrides whatever was playing, and carries on under the
+end-of-match graphs until you leave for the menu. A defeat screen stays silent.
+
+The fiddly part was stopping it flickering. Supply changes every time a unit
+dies or finishes building, so a lead hovering right on the threshold would have
+switched the music on and off repeatedly. It now starts at a lead of more than
+20 but does not stop until the lead falls below 12, and once it starts it keeps
+playing for at least twelve seconds — so a brief counter-attack cannot cut the
+music off mid-phrase. The download grew to 8.74 MB, the fanfare now being a
+full-length track rather than a snippet.
 
 **v104.2 — volume sliders, and the music finally follows the battle.** The
 speaker button in the top bar is now an audio menu: click it for **Music** and

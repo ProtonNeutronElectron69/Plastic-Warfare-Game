@@ -53,8 +53,11 @@ with silence, so looping the whole buffer ticks. Two things fix it:
   a beat of a march to do it, so 120ms is shipped - already well under 1.0 on
   every track, and a quarter of a beat.
 
-The victory sting is NOT a loop: it plays once, so it is cut from the top of
-the track with a fade and carries no loop points at all.
+EVERY TRACK IS A LOOP as of v104.3. The victory music used to be a 6.5s
+one-shot; the owner asked for it to run continuously while the match is decided
+and under the end-of-match graphs, so it is cut like the rest. The `one` branch
+below is kept because it is still the right tool for a one-shot and costs
+nothing - but nothing in the game currently uses it.
 
 Needs: pip install imageio-ffmpeg numpy
 """
@@ -90,8 +93,16 @@ TRACKS = [
  ('combat',  OGC + '07_-_Soldiers_Farewell_FanfareMontezumaMarch_of_War'
              'Windsor_Park(chosic.com).mp3',
   dict(lo=24, hi=42, frm=25)),
+ # v104.3: WAS a 6.5s one-shot, dict(one=6.5, frm=0.0). The owner asked for the
+ # victory music to play continuously while the match is decided and to go on
+ # running under the end-of-match graphs, so it is a fourth LOOP now, cut the
+ # same way as the other three. frm=1.0 steps past the recording's own 0.56s of
+ # lead-in silence, which the one-shot branch used to trim and which a loop
+ # search would otherwise happily choose as its "quiet" boundary.
+ # Searched 8-30s: the 14-28 band wins on seam (0.43x) with 27.96s - better
+ # than the menu march manages, and a length in line with the rest.
  ('victory', OG + 'ERAFNAF Fanfare.mp3',
-  dict(one=6.5, frm=0.0)),
+  dict(lo=14, hi=28, frm=1.0)),
 ]
 
 
