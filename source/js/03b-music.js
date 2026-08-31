@@ -21,16 +21,51 @@
    by re-encoding it (the v92 rule for SNDV, which this deliberately mirrors).
    Music sits well under the guns on purpose: it is the floor of the mix, not a
    layer of it. */
-const MUSV={menu:.55,build:.30,combat:.38,victory:.62};
+const MUSV={menu:.60,build:.38,combat:.62,victory:.70};
 const MUS_FADE=1.8;      // seconds to crossfade one track into the next
-const MUS_DUCK=.45;      // how far music drops under gunfire (multiplier)
+/* THE DUCK, THIRD TIME. v104 shipped .45 x .38 = .171 and the owner could not
+   hear it. v104.1 went to .75 x .50 = .375 and the owner still could not. The
+   mistake in both was treating this as a tuning problem with one right answer:
+   a firefight is a dozen gun voices SUMMING against one music voice, so what
+   "loud enough" means depends on the fight, the mix and the listener's speakers.
+   So .90 x .62 = .558 is now only the DEFAULT, and the player has a fader
+   (MUSV_USER / SFXV_USER, the Music and Effects sliders). A duck of .90 is a dip
+   that keeps a gun cue clear rather than a hole the score falls into. */
+const MUS_DUCK=.90;      // how far music drops under gunfire (multiplier)
 const MUS_COMBAT_T=7;    // seconds of quiet before combat relaxes back to build
+const MUS_MOP_DELTA=20;  // supply-used lead that means the match is decided
+const MUS_FIGHT_N=2;     // units swinging before the score calls it a battle
+const MUS_SCAN_EVERY=10; // frames between sim scans; the hold is seconds long
+const VOL_MAX=1.5;       // both sliders run 0..150%, so 100% has headroom above it
 
 let musBus=null;         // gain node, hangs off masterGain like armsBus
 let musNow=null;         // {src,gain,key} currently playing, or null
 let musKey='';           // what musNow is, '' when nothing plays
 let musDuckT=0;          // AC time until which music stays ducked
 let musCombatT=0;        // AC time until which the match counts as "in combat"
+let musVicDone=false;    // the sting is once per match, whichever trigger fires
+let musScanF=0;          // frame counter for the throttled battle scan
+
+/* The two faders, 0..VOL_MAX, 1 = the tuned default. Persisted per browser like
+   pw_mmsize, and read the same defensive way - a browser with storage blocked
+   gets the defaults and everything still works. */
+let MUSV_USER=(function(){try{const v=parseFloat(localStorage.getItem('pw_musvol'));
+ return (isFinite(v)&&v>=0&&v<=VOL_MAX)?v:1}catch(e){return 1}})();
+let SFXV_USER=(function(){try{const v=parseFloat(localStorage.getItem('pw_sfxvol'));
+ return (isFinite(v)&&v>=0&&v<=VOL_MAX)?v:1}catch(e){return 1}})();
+
+/* Set and store one fader. `which` is 'mus' or 'sfx'. Applying is immediate and
+   separate from storing, so a browser that refuses localStorage still gets the
+   slider it just moved. */
+function setVol(which,v){
+ v=Math.max(0,Math.min(VOL_MAX,+v||0));
+ if(which==='sfx'){SFXV_USER=v;try{localStorage.setItem('pw_sfxvol',String(v))}catch(e){}
+  if(AC&&sfxBus)try{sfxBus.gain.setTargetAtTime(v,AC.currentTime,.05)}catch(e){}}
+ else{MUSV_USER=v;try{localStorage.setItem('pw_musvol',String(v))}catch(e){}
+  musDuckT=-1;                    // force musTick to re-apply the bus gain
+ }
+ return v;
+}
 
 /* Decode on demand and cache, exactly as sndBuf does for the takes. Returns
    null for every reason a track might not be there, and null is always a legal
@@ -45,6 +80,19 @@ function musBuf(key){
  }
  return a.buf||null;
 }
+
+/* Kick every music decode once, the moment there is a context to decode with -
+   the mirror of sndWarm(), and called from the same place in ac().
+
+   THIS IS WHAT MADE THE VICTORY STING EXIST. decodeAudioData is asynchronous,
+   so musBuf() returns null on the FIRST call for a track and the buffer only
+   arrives a moment later. The three loops hide that completely: they are asked
+   for repeatedly, every frame, so the second ask succeeds and all that happens
+   is the loop starts a beat late. The sting is asked for once, at the single
+   instant it must sound - so through the whole of v104 it answered null and
+   played never. Measured in Chromium: musSting('victory') returned false with
+   ASSETS.mus.victory.buf still unset. */
+function musWarm(){for(const k in ASSETS.mus)musBuf(k)}
 
 /* The music bus. Built lazily off masterGain so this file needs no edit inside
    ac()'s own try block - if masterGain is null (no context, or the bus block
@@ -106,6 +154,96 @@ function musSting(key){
  return true;
 }
 
+/* IS A BATTLE HAPPENING? Read off the simulation, not off what you can hear.
+
+   THIS IS THE SPECTATE BUG, and it was never really a spectate bug. Through
+   v104.1 the combat track was driven by COMBAT_DUCK_T, which every weapon sets
+   - but sfxGun returns BEFORE setting it when the shot is off-screen, because
+   audFor() answers null outside the viewport. So the score followed the CAMERA
+   rather than the battle: park the view away from the fighting and the music
+   never knew a war was on. In spectate the camera does not chase the action at
+   all, which is why the owner watched a whole match on the build-up loop.
+
+   COMBAT_DUCK_T is still exactly right for the DUCK - that asks "are guns loud
+   near the listener", which is a camera question. Choosing the TRACK is a
+   different question with a different answer, so it gets its own reading. */
+function musFighting(){
+ if(!G||!G.units)return false;
+ let n=0;
+ for(const u of G.units){
+  if(u.state==='attack'&&u.target&&++n>=MUS_FIGHT_N)return true;
+ }
+ return false;
+}
+
+/* THE FIRST GESTURE, ANY GESTURE.
+
+   A browser refuses to start an AudioContext until the user has interacted, so
+   the menu march genuinely cannot play on load - that part is policy, not a
+   bug. What WAS a bug is which interactions counted. Through v104 the only
+   thing on the setup screen that ever called ac() was menuAudioBind's hover
+   tick, so the music began when the pointer happened to cross a button and not
+   before: the owner reported it "only triggers when the mouse hovers over a
+   menu button", and a click on the page background left AC null (measured).
+
+   One listener each for pointer, touch and key, on the document, removing
+   themselves once a context exists. Guarded on addEventListener because the
+   headless shim's is a no-op and there is no document to bind in Node. */
+const MUS_UNLOCK_EV=['pointerdown','touchstart','keydown'];
+function musUnlock(){
+ if(!ac())return;
+ musTick();                       // start the march on this very gesture
+ if(typeof document!=='undefined'&&document.removeEventListener)
+  for(const ev of MUS_UNLOCK_EV)document.removeEventListener(ev,musUnlock,true);
+}
+if(typeof document!=='undefined'&&document.addEventListener)
+ for(const ev of MUS_UNLOCK_EV)document.addEventListener(ev,musUnlock,true);
+
+/* Has the human effectively won already? The owner's rule, and the reason it
+   is not simply "the match ended": by the time endGame fires you are looking at
+   the results overlay, and a fanfare there is a stinger on a title card. This
+   fires while you are still playing, at the moment the outcome stops being in
+   doubt - one enemy left, and either they have no army at all or you are more
+   than MUS_MOP_DELTA supply ahead of them. What remains is mopping up buildings.
+
+   It is a VICTORY sting, so it only fires when the lead is YOURS; the same
+   position seen from the losing side gets nothing. Spectators have no side and
+   are excluded, as they already were at endGame. */
+function musDecided(){
+ if(!G||G.over||typeof supUsed!=='function')return false;
+ /* SPECTATING (v104.2). A watcher has no side, so "is the lead yours" has no
+    answer - but the match is just as decided and the owner still wants to hear
+    it. Two players left, the same delta rule between them, direction-free. */
+ if(G.watch){
+  const live=G.players.filter(p=>p!==G.neutral&&p.alive);
+  if(live.length!==2)return false;
+  const a=supUsed(live[0]),b=supUsed(live[1]);
+  return a===0||b===0||Math.abs(a-b)>MUS_MOP_DELTA;
+ }
+ if(G.spectate)return false;      // eliminated: your side is not the one mopping up
+ const me=G.human;
+ if(!me||!me.alive)return false;
+ const foes=G.players.filter(p=>p!==me&&p!==G.neutral&&p.alive&&p.team!==me.team);
+ if(foes.length!==1)return false;
+ const mine=supUsed(me),theirs=supUsed(foes[0]);
+ if(mine<=theirs)return false;
+ return theirs===0||(mine-theirs)>MUS_MOP_DELTA;
+}
+
+/* Fire the sting, at most once per match.
+
+   The flag is consumed only on SUCCESS, so a sting asked for before its buffer
+   finished decoding is retried on the next frame rather than silently spent -
+   which is the same failure that made v104's sting inaudible, now unable to
+   swallow the event even if warming were ever to miss. muted does not consume
+   it either: unmuting while the mop-up is still on still earns the fanfare. */
+function musVictory(){
+ if(musVicDone||muted)return false;
+ if(!musSting('victory'))return false;
+ musVicDone=true;
+ return true;
+}
+
 /* Which track the game wants RIGHT NOW. Pure reading - no game state is
    written, and the answer is derived every frame rather than stored, which is
    the same discipline gRsv and the auras use. '' means silence. */
@@ -141,13 +279,17 @@ function musTick(){
     Returning to the menu is the one moment every match boundary passes
     through (againBtn and quitBtn both set G=null), so it is where the hold is
     cleared. T81.E drives exactly this. */
- if(!G)musCombatT=0;
+ if(!G){musCombatT=0;musVicDone=false;}
  const want=musWant();
- if(G&&!G.over&&!G.paused&&AC.currentTime<COMBAT_DUCK_T)musCombatT=AC.currentTime+MUS_COMBAT_T;
+ if(musDecided())musVictory(); // v104.1: the fanfare lands while you are still playing
+ /* the battle scan is throttled - it walks every unit, and the hold it feeds
+    is MUS_COMBAT_T seconds long, so three reads a second is ample */
+ if(G&&!G.over&&!G.paused&&(musScanF++%MUS_SCAN_EVERY)===0&&musFighting())
+  musCombatT=AC.currentTime+MUS_COMBAT_T;
  if(want!==musKey){if(want)musPlay(want);else musStop();}
  const duck=(AC.currentTime<COMBAT_DUCK_T)?MUS_DUCK:1;
  if(duck!==musDuckT){
   musDuckT=duck;
-  try{musBus.gain.setTargetAtTime(duck,AC.currentTime,.25);}catch(e){}
+  try{musBus.gain.setTargetAtTime(duck*MUSV_USER,AC.currentTime,.25);}catch(e){}
  }
 }

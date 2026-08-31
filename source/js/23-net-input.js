@@ -319,7 +319,67 @@ function togglePause(){
  if(G.net)netBroadcast({pp:G.paused?1:0});
 }
 document.getElementById('pauseBtn').onclick=togglePause;
-document.getElementById('muteBtn').onclick=function(){muted=!muted;this.textContent=muted?'🔇':'🔊';if(AC&&masterGain){try{masterGain.gain.setTargetAtTime(muted?0:0.9,AC.currentTime,0.05);}catch(e){}}if(muted&&typeof speechSynthesis!=='undefined'){try{speechSynthesis.cancel();}catch(e){}}};
+/* ---------------- AUDIO PANEL (v104.2) ----------------
+   The mute button is the entry point for all three audio controls now, rather
+   than a bare toggle: the owner asked for Music and Effects faders on it, and
+   three controls in one place beats a second button in the bar. Mute is the
+   first row of the panel, so it is still one gesture away and the emoji still
+   reports the state at a glance.
+
+   NAMED FUNCTIONS on the v73 rule - the headless shim's addEventListener is a
+   no-op, so a check can reach these by name and nothing else. */
+function audioSyncUI(){
+ const mb=document.getElementById('muteBtn'),am=document.getElementById('apMute');
+ if(mb)mb.textContent=muted?'🔇':'🔊';
+ if(am)am.textContent=muted?'🔇 Sound off':'🔊 Sound on';
+ const mv=document.getElementById('apMus'),sv=document.getElementById('apSfx');
+ const mn=document.getElementById('apMusN'),sn=document.getElementById('apSfxN');
+ const mp=Math.round((typeof MUSV_USER==='number'?MUSV_USER:1)*100);
+ const sp=Math.round((typeof SFXV_USER==='number'?SFXV_USER:1)*100);
+ if(mv)mv.value=mp; if(sv)sv.value=sp;
+ if(mn)mn.textContent=mp+'%'; if(sn)sn.textContent=sp+'%';
+}
+function audioToggleMute(){
+ muted=!muted;
+ if(AC&&masterGain){try{masterGain.gain.setTargetAtTime(muted?0:0.9,AC.currentTime,0.05);}catch(e){}}
+ if(muted&&typeof speechSynthesis!=='undefined'){try{speechSynthesis.cancel();}catch(e){}}
+ audioSyncUI();
+}
+function audioPanelOpen(v){
+ const p=document.getElementById('audioPanel');if(!p)return;
+ if(v)ac(); // the sliders should bite on the gesture that opened the panel
+ p.hidden=!v;
+ if(v)audioSyncUI();
+}
+function audioPanelToggle(){
+ const p=document.getElementById('audioPanel');
+ audioPanelOpen(!!(p&&p.hidden));
+}
+function audioSlide(which,el){
+ if(!el)return;
+ setVol(which,(+el.value||0)/100);
+ audioSyncUI();
+}
+(function(){
+ const mb=document.getElementById('muteBtn');
+ if(mb)mb.onclick=audioPanelToggle;
+ const am=document.getElementById('apMute');
+ if(am)am.onclick=audioToggleMute;
+ const mv=document.getElementById('apMus');
+ if(mv)mv.oninput=function(){audioSlide('mus',this)};
+ const sv=document.getElementById('apSfx');
+ if(sv)sv.oninput=function(){audioSlide('sfx',this)};
+ /* click anywhere else closes it. The panel and the button are excluded, or
+    opening it would immediately close it again on the same click. */
+ if(document.addEventListener)document.addEventListener('click',function(e){
+  const p=document.getElementById('audioPanel');
+  if(!p||p.hidden)return;
+  const t=e&&e.target;
+  if(t&&t.closest&&(t.closest('#audioPanel')||t.closest('#muteBtn')))return;
+  audioPanelOpen(false);
+ });
+ audioSyncUI();
+})();
 document.getElementById('helpBtn').onclick=()=>{const h=document.getElementById('helpBox');h.style.display=h.style.display==='block'?'none':'block'};
 document.getElementById('hqBtn').onclick=()=>{hqFocus()}; // v73
 /* v90.1: one line, and deliberately no second gate of its own - startPlacing runs

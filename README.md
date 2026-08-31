@@ -85,7 +85,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v104 it makes **5,809
+that the results come out identical every time. As of v104.2 it makes **5,899
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -115,7 +115,41 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 104**.
+The game is at **version 104.2**.
+
+**v104.2 — volume sliders, and the music finally follows the battle.** The
+speaker button in the top bar is now an audio menu: click it for **Music** and
+**Effects** sliders, plus mute. Both run from silent to half again louder than
+the default, and your browser remembers where you left them. That is the real
+answer to "the music is too quiet under gunfire" — a firefight is a dozen guns
+sounding at once against a single piece of music, so how loud it *should* be
+depends on your speakers and your taste. The default is louder again anyway,
+more than three times what v104 shipped.
+
+The other fix explains a puzzle: in spectate mode you only ever heard the
+build-up music. The combat track was switching on when the game heard *gunfire
+near your camera* — and a spectator's camera does not follow the fighting, so
+the music never knew a war was on. It now watches the battle itself, so the
+combat track plays when soldiers are actually fighting, wherever you happen to
+be looking. Spectators get the victory fanfare too.
+
+**v104.1 — three fixes to the new music.** Playing v104 turned up three things.
+The menu march used to wait until your mouse happened to pass over a button —
+now *any* click or keypress starts it. (Your browser will not let a page play
+sound before you interact with it at all, so that first click is unavoidable;
+what was wrong was insisting it be a click on the right thing.) The score used
+to duck so far under gunfire that it vanished exactly when you were watching
+the fight — it now sits at more than twice its old level during combat, still
+under the guns but audibly there. And **the victory fanfare had never once
+played**: it was only ever asked for at the single instant it was needed, and
+the file had not finished preparing itself by then, so nothing came out. All
+four tracks are now made ready the moment the game gets sound.
+
+The fanfare also fires at a better moment. It used to wait for the final
+results screen, which is a strange place for a celebration. It now plays while
+you are still on the battlefield, at the point the result stops being in doubt
+— one enemy left, and either they have no army at all or you are more than 20
+supply ahead of them. If you are the one being mopped up, you hear nothing.
 
 **v104 — the game has music.** Until now the only continuous sound in Plastic
 Warfare was the hum of a Dump Truck mining, on a game where every gun is a real
