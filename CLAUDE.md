@@ -6,7 +6,7 @@ Read this first. It is the orientation; `harness/README.md` is the detail.
 touch anything — what the project is, where it stands, how to build, how to
 test, how to watch the bots, and the rules that are load-bearing. Everything
 after that is the record: the roadmap chapters, then one section per standalone
-release NEWEST FIRST (v104 down to v89), then the balance baseline, then the
+release NEWEST FIRST (v105 down to v89), then the balance baseline, then the
 patterns worth copying. Read the record when you are about to touch the
 subsystem it describes; do not read it front to back.
 
@@ -52,14 +52,16 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v104.4, and what a fresh session does)
+## Where the game stands (v105, and what a fresh session does)
 
-The game is at **v104.4**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v105**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
-v103 are standalone owner passes (below), and **v104 is the first Roadmap 4 item
+v103 are standalone owner passes (below), **v104 is the first Roadmap 4 item
 delivered** — the soundtrack, which then took four owner feedback passes
-(v104.1–v104.4) before it was right. There is no release in flight.
+(v104.1–v104.4) before it was right — and **v105 is a standalone menu pass**
+(the whole roster parades behind the setup screen, and the Field Manual is
+painted on the same parade ground). There is no release in flight.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
 ranked, written after a whole-game review at v103. **One of the twelve has
@@ -69,7 +71,9 @@ headline of it: the systems layer is finished, and what is thin is content (four
 PvP maps and one survival board) and balance (two of four armies do not work).
 Presentation was the third leg of that and is now half-answered — the game has a
 score, but the ground is still the one visual layer with no textures, and one
-sound is still the browser's own text-to-speech voice:
+sound is still the browser's own text-to-speech voice. (v105 repainted the MENU's
+parade ground and gave the Field Manual the same backdrop; neither is the
+in-match ground, so item 5 is untouched by it.)
 
 - **Map ART, as opposed to map LAYOUT** — Roadmap 4 item 5. The owner deferred
   map art from v97's detail pass ("maps/map art will be handled separately") and
@@ -90,7 +94,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 5,973 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 6,009 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -158,7 +162,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,973 checks at v104.4.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 6,009 checks at v105.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -323,7 +327,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 5,973 checks. What is thin is everything AROUND it — how
+recorded soundtrack, 6,009 checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -553,6 +557,61 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v105 — the whole roster parades, and the manual joins it (not part of a roadmap)
+
+Two owner asks about the menu. `tail_v105.js` (T86, 36 checks; the suite is
+6,009 now); full evidence in the v105 section of `harness/README.md`. **No trail
+moved and no repin was due** — both asks are presentation, and all 30 layout
+pins held.
+
+- **Every unit in the game marches, and there are four times as many of them.**
+  `MENUBG_LANES` went from twelve entries over four lanes (only NINE distinct
+  units — the Grunt was in all four) to **all 26 rows of `U` over six lanes,
+  each unit appearing exactly once**, and from 17 marchers to 70. The private
+  cache grew only 56 → 66 cells, and the reason is that one-army rule: nothing
+  is baked twice. **Lane 1 is the flight** — the four helicopters and the
+  balloon, lifted the same 34px `drawUnit` lifts a flyer, with the shadow left
+  on the floor.
+- **The Field Manual is painted on the same parade ground.** The backdrop paints
+  while the manual is open (including opened from the HUD mid-match), the
+  panel's v31 gradient went translucent, and the canvas **climbs to z-index 39**
+  while it is serving the manual.
+
+Five things worth carrying forward:
+
+- **THE Z-INDEX IS THE WHOLE TRICK, and it is the half that is easy to miss.**
+  `#menuBg` is z-index 1 — under `#setup` (30) and under the HUD (10), which is
+  correct for a backdrop. Make the manual (40) translucent without moving the
+  canvas and what reads through is the setup screen's own cards, or the live
+  HUD, never the parade. `#menuBg.front` at 39 is above both and still under the
+  manual. T86.F scrapes all four numbers out of the stylesheet and asserts the
+  ORDER, on T65.B's precedent, rather than transcribing any of them.
+- **A quantity that changed UNITS took a multiplier with it.** `off` went from an
+  absolute pixel gap to a fraction of the wrap span (which is what makes the
+  parade spread across a wide window instead of bunching into its first
+  1,200px). The frame passed `tick+m.off*.01` for the per-man animation phase —
+  correct when `off` was ~1,500, and with `off` in 0..1 it silently became every
+  man in the game bobbing in lockstep. Nothing would have failed. **Grep for
+  what multiplies a quantity before you change what it measures.**
+- **The rotor was LIFTED OUT of `drawUnit`, not copied.** `heliRotor(c,key,rot)`
+  paints at the caller's transform so the 1.25 tandem scale stays with the
+  caller, and both call sites are asserted to reach it. Its spin is derived from
+  the menu clock rather than accumulated on the marcher, so reduced motion
+  freezes the blades with everything else.
+- **"Is the whole roster on parade" is a question `U` already answers.** T86.A
+  is derived, so a 27th unit fails the suite until it is given a lane — the same
+  conscious-edit rule as T71.A's texture roster. And an exclusive's colours are
+  not the lane's to decide: `menubgFacOf` defers to the manual's `infoFacOf`,
+  so there is no second ownership list to fall out of step with `FAC`.
+- **Rule 7 paid for itself three times.** 41 marchers passed every check and
+  still read as a thin scatter in a real frame (70 is what the frame wanted);
+  the first manual scrim at .80/.86/.90 was legible and reduced the parade to
+  texture (.70/.77/.82 shipped); and headless Chromium's `--window-size` is not
+  the viewport — at 1600x900 `innerHeight` is 813 and the screenshot is 900, so
+  the bottom 87px of browser chrome looks exactly like a backdrop that stops
+  short of the screen. It reproduces on `origin/main`, which is how it was ruled
+  out.
 
 ## v104 / v104.1 / v104.2 / v104.3 / v104.4 — the soundtrack (Roadmap 4 item 1)
 

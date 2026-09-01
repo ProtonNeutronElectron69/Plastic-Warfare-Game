@@ -49,7 +49,12 @@ section('v58 menu backdrop');
  let cells = 0;
  for (const k in MENUBG.cells.inf) for (const f in MENUBG.cells.inf[k]) cells += MENUBG.cells.inf[k][f].length;
  for (const k in MENUBG.cells.veh) for (const f in MENUBG.cells.veh[k]) cells += 1;
- ok('v58 roster is 56 baked cells (got ' + cells + ')', cells === 56);
+ /* v105: 56 -> 66. The parade went from 12 roster entries to all 26 units in
+    the game and from 17 marchers to 41, and the cache grew by TEN cells,
+    because no unit is baked in two armies any more (the old table had the
+    Grunt in all four). Deliberately transcribed, per rule 5: a roster change
+    has to come here and say what it did. */
+ ok('v58 roster is 66 baked cells (got ' + cells + ')', cells === 66);
 
  // the full table, for the ratio the scope was approved on
  const facs = Object.keys(FAC).filter(f => f !== 'bug');
@@ -71,9 +76,9 @@ section('v58 menu backdrop');
  ok('v58 Flamethrower baked tan', !!MENUBG.cells.inf.flamer && !!MENUBG.cells.inf.flamer.tan);
  ok('v58 Sniper baked gray', !!MENUBG.cells.inf.sniper && !!MENUBG.cells.inf.sniper.gray);
 
- ok('v58 four ranks', MENUBG.lanes.length === 4);
+ ok('v58 six ranks', MENUBG.lanes.length === 6); // v105: the flight plus five ground lanes
  const men = MENUBG.lanes.reduce((a, L) => a + L.men.length, 0);
- ok('v58 seventeen marchers (got ' + men + ')', men === 17);
+ ok('v58 seventy marchers (got ' + men + ')', men === 70); // v105: 17 -> 70, the density half of the owner's ask
 }
 
 /* ---- 4. painting: no throw, and G is left exactly as found ---- */
@@ -141,9 +146,14 @@ section('v58 menu backdrop');
  let same = true; for (let i = 0; i < 50; i++) if (a() !== b()) same = false;
  ok('v58 private rng is deterministic', same);
 
- const snap = MENUBG.lanes.map(L => L.men.map(m => m.key + ':' + Math.round(m.off)).join(',')).join('|');
+ /* v105: off is a FRACTION of the wrap span now, not a pixel gap, so
+    Math.round() would have collapsed every offset to 0 and left this
+    comparing nothing but the key order. toFixed(4) keeps it a real
+    comparison of the laid-out column. */
+ const lay58 = () => MENUBG.lanes.map(L => L.men.map(m => m.key + '@' + m.fac + ':' + m.off.toFixed(4)).join(',')).join('|');
+ const snap = lay58();
  menubgColumn();
- const snap2 = MENUBG.lanes.map(L => L.men.map(m => m.key + ':' + Math.round(m.off)).join(',')).join('|');
+ const snap2 = lay58();
  ok('v58 the marching column rebuilds identically', snap === snap2);
 }
 

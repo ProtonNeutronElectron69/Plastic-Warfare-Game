@@ -86,7 +86,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v104.4 it makes **5,973
+that the results come out identical every time. As of v105 it makes **6,009
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -116,7 +116,20 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 104.4**.
+The game is at **version 105**.
+
+**v105 — the menu parade shows off the whole army, and the Field Manual joins
+it.** The little marching column behind the setup screen used to be nine kinds
+of soldier walking in four ranks. It is now **every single unit in the game** —
+all 26 of them, in six ranks, four times as many figures on the field, with the
+helicopters and the observation balloon flying over the top of it all. Every
+unit marches in one army's colours, and the four army-exclusive units always
+wear their own army's, so what you are looking at is the actual roster.
+
+The **Field Manual** is now painted on that same parade ground instead of a flat
+green panel — including when you open it in the middle of a match. The page
+itself is unchanged and just as readable; there is simply an army marching past
+behind it.
 
 **v104.4 — the music changes tracks instead of piling up.** When the build-up
 music gave way to the combat music, both played at once for a moment and the old

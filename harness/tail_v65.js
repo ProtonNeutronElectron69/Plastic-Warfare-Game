@@ -419,8 +419,11 @@ section('T44.F the setup scrim stops occluding the backdrop');
   ok('T44.F the depth cue itself survived (mid and floor haze stops untouched)',
      html.includes("rgba(20,34,14,.14)")&&html.includes("rgba(12,20,8,.10)")&&html.includes("rgba(6,12,4,.34)"));
  }
- // and the backdrop still paints: four ranks, canvas shown while the menu is up
- ok('T44.F the rank table is intact',MENUBG_LANES.length===4);
+ // and the backdrop still paints: every rank present, canvas shown while the menu is up
+ /* v105: was ===4 and the parade is six lanes now. Restated as the claim this
+    check was making - the scrim pass did not eat the rank table - rather than
+    re-pinned to 6, which would be a second copy of a number tail_v105 owns. */
+ ok('T44.F the rank table is intact',MENUBG_LANES.length>=4&&MENUBG_LANES.every(L=>L.roster.length>0&&L.n>=L.roster.length));
  {
   const setup=document.getElementById('setup');
   const wasDisplay=setup.style.display;

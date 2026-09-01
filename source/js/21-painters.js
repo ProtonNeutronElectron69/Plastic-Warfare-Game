@@ -232,6 +232,23 @@ function rallied(u){
  }
  return false;
 }
+/* rotor (motion-blurred disc + blades). v46: the Chinook is a tandem, so it draws
+   two smaller counter-rotating discs fore and aft instead of one head rotor. The
+   single-rotor arm is byte-for-byte the v45 geometry (disc 18, blades 17).
+   v105: lifted out of drawUnit unchanged so the menu parade can fly the same
+   blades. It paints at the CALLER's transform - drawUnit scales the tandem hull
+   by 1.25 before calling, and the parade does the same - so the geometry stays
+   in one place and cannot drift between the two. */
+function heliRotor(c,key,rot){
+ const twin=key==='chinook';
+ for(const [hx,hr,dir] of (twin?[[13,11.5,1],[-15,11.5,-1]]:[[0,18,1]])){
+  c.save();c.globalAlpha=.13;c.fillStyle='#bfc4cc';c.beginPath();c.ellipse(hx,0,hr,hr,0,0,7);c.fill();c.restore();
+  c.strokeStyle='rgba(30,30,36,.85)';c.lineWidth=2.2;c.save();c.translate(hx,0);c.rotate(rot*dir);
+  c.beginPath();c.moveTo(-hr+1,0);c.lineTo(hr-1,0);c.stroke();c.rotate(Math.PI/2);c.beginPath();c.moveTo(-hr+1,0);c.lineTo(hr-1,0);c.stroke();c.restore();
+  // hub
+  plSphere(c,'#3a3a42',hx,0,2.2,1,false);
+ }
+}
 function drawUnit(c,u){
  const sx=isoX(u.x,u.y),sy=isoY(u.x,u.y);
  const col=FAC[u.p.fac].color,b=hx2rgb(col),dk=shade(col,.62),lt=shade(col,1.32),md=shade(col,.85);
@@ -347,16 +364,7 @@ function drawUnit(c,u){
   const twin=u.key==='chinook',s=twin?1.25:1;c.rotate(ang);
   if(!blitVeh(c,u.key,u.p.fac))vehBody(c,u.key,col);
   c.scale(s,s);
-  // rotor (motion-blurred disc + blades). v46: the Chinook is a tandem, so it draws
-  // two smaller counter-rotating discs fore and aft instead of one head rotor. The
-  // single-rotor arm below is byte-for-byte the v45 geometry (disc 18, blades 17).
-  for(const [hx,hr,dir] of (twin?[[13,11.5,1],[-15,11.5,-1]]:[[0,18,1]])){
-   c.save();c.globalAlpha=.13;c.fillStyle='#bfc4cc';c.beginPath();c.ellipse(hx,0,hr,hr,0,0,7);c.fill();c.restore();
-   c.strokeStyle='rgba(30,30,36,.85)';c.lineWidth=2.2;c.save();c.translate(hx,0);c.rotate(u.rot*dir);
-   c.beginPath();c.moveTo(-hr+1,0);c.lineTo(hr-1,0);c.stroke();c.rotate(Math.PI/2);c.beginPath();c.moveTo(-hr+1,0);c.lineTo(hr-1,0);c.stroke();c.restore();
-   // hub
-   plSphere(c,'#3a3a42',hx,0,2.2,1,false);
-  }
+  heliRotor(c,u.key,u.rot);
  }
  else{ // v30.1: generic hull fallback - the APC's a:'apc' matched no branch above, so only
   // its shadow drew (the shadow pass keys SPR.veh by unit key); any future archetype now

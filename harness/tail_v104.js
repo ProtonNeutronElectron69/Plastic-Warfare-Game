@@ -245,6 +245,11 @@ function fresh104(seed){G=null;newGame(cfg104(seed));return G.human}
  /* v104.1: this was ==='v104' and is a DUPLICATE of T75.B, which is the
     deliberately-transcribed version pin. Widened to "this tail's release or a
     point release of it" so a feedback pass edits one line, not two. */
- ok('T81.F the release stamp is v104 or a point release of it',
-    String(GAME_VER).indexOf('v104')===0);
+ /* v105: this was 'the stamp says v104', which is a THIRD copy of the current
+    version - T75.B is the one deliberately-transcribed pin and a new release
+    should edit one line, not three. Restated as the claim this tail can
+    actually make: the score shipped at v104 and the build is not older than
+    the release these checks describe. */
+ ok('T81.F the build is not older than the release this tail describes',
+    GAME_VER_N >= 104 && /^v\d+(\.\d+)?$/.test(GAME_VER));
 }
