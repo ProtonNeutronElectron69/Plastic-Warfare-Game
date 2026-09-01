@@ -72,13 +72,14 @@ host/join mode for playing against another person.
 | Path | What it is |
 |---|---|
 | `plastic-warfare.html` | **The game.** This is the whole thing — open it to play. |
-| `source/` | The same game as 34 readable files; `./build.sh` assembles them into the file above. |
+| `source/` | The same game as 36 readable files; `./build.sh` assembles them into the file above. |
 | `assets/snd/` | The sound effects as playable mp3 files — they also ride inside the game file, so it stays self-contained. |
+| `assets/mus/` | The four soundtrack tracks as playable mp3 files, plus the loop points — they ride inside the game file too. |
 | `assets/img/` | The sprite textures as viewable webp images — same deal: they also ride inside the game file. |
 | `assets/nrm/` | The textures' normal maps — the per-pixel surface directions the lighting uses. |
-| `harness/` | The automated test suite: 80+ test files that play the game headlessly and check nothing broke. |
+| `harness/` | The automated test suite: 89 test files that play the game headlessly and check nothing broke. |
 | `harness/README.md` | The full development record — the design decisions, the balance measurements, and the traps learned at every version. |
-| `tools/` | The offline pipelines that make the art and sound: the sound renderer, and the four steps that turn the game's own painters into textures and normal maps. |
+| `tools/` | The offline pipelines that make the art and sound: the sound renderer, the music loop-cutter and packer, and the four steps that turn the game's own painters into textures and normal maps. |
 
 ### A note on the test suite
 
@@ -359,6 +360,13 @@ project up fresh, start with [`CLAUDE.md`](CLAUDE.md).
 
 ## Credits
 
-All code, artwork and design in this repository are original work. *Army Men RTS*
-(2002) was published by 3DO / Global Star Software; this project is an
-independent tribute and contains no assets from it.
+All code, artwork and design in this repository are original work, with one
+exception: the four soundtrack tracks are recordings by the **United States Army
+Old Guard Fife and Drum Corps** — *The President's March*, *Paddy on the
+Handcar*, *Soldier's Farewell / March of War* and *ERAFNAF Fanfare*. The Old
+Guard is a serving US Army unit, so its recordings are works of the federal
+government and are in the public domain under 17 USC 105. Every other sound in
+the game is synthesised or rendered from the game's own recipes.
+
+*Army Men RTS* (2002) was published by 3DO / Global Star Software; this project
+is an independent tribute and contains no assets from it.

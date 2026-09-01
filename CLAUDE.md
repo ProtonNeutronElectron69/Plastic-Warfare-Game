@@ -6,19 +6,21 @@ Read this first. It is the orientation; `harness/README.md` is the detail.
 touch anything — what the project is, where it stands, how to build, how to
 test, how to watch the bots, and the rules that are load-bearing. Everything
 after that is the record: the roadmap chapters, then one section per standalone
-release NEWEST FIRST (v103 down to v89), then the balance baseline, then the
+release NEWEST FIRST (v104 down to v89), then the balance baseline, then the
 patterns worth copying. Read the record when you are about to touch the
 subsystem it describes; do not read it front to back.
 
 **The one exception to "it is all record":** `## Roadmap 4` is the only
 FORWARD-looking chapter in this file. Roadmaps 1-3 are finished history; roadmap
-4 is a tentative, unagreed menu of what could come next, written at v103. If the
-owner asks "what should I build", that is the section.
+4 is a tentative, unagreed menu of what could come next, written at v103 — one
+of its twelve items has since been delivered (item 1, music, at v104) and the
+rest are untouched. If the owner asks "what should I build", that is the
+section.
 
 ## The shape of the project
 
 The game is **assembled from `source/`** into one file, `plastic-warfare.html`
-(~8.4MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
+(~8.7MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
 audio, UI, netcode — is still one `<script>` block in the shipped file; it is
 written as 36 files listed in `source/order.txt`. There are no dependencies.
 The recorded sound set (25 voices in 35 mp3 takes, `assets/snd/`, since v92 —
@@ -56,14 +58,18 @@ The game is at **v104.4**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), and **v104 is the first Roadmap 4 item
-delivered** — the soundtrack. There is no release in flight.
+delivered** — the soundtrack, which then took four owner feedback passes
+(v104.1–v104.4) before it was right. There is no release in flight.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
-ranked, written after a whole-game review at v103 and NOT started. It supersedes
-the three-line list this section used to carry. The headline of it: the systems
-layer is finished, and what is thin is content (four PvP maps), presentation (no
-music at all) and balance (two of four armies do not work). The three items that
-were listed here before are all still live and all now sit inside that roadmap:
+ranked, written after a whole-game review at v103. **One of the twelve has
+shipped** — item 1's music half, as v104–v104.4; its barks half and the other
+eleven items are untouched. The
+headline of it: the systems layer is finished, and what is thin is content (four
+PvP maps and one survival board) and balance (two of four armies do not work).
+Presentation was the third leg of that and is now half-answered — the game has a
+score, but the ground is still the one visual layer with no textures, and one
+sound is still the browser's own text-to-speech voice:
 
 - **Map ART, as opposed to map LAYOUT** — Roadmap 4 item 5. The owner deferred
   map art from v97's detail pass ("maps/map art will be handled separately") and
@@ -73,6 +79,10 @@ were listed here before are all still live and all now sit inside that roadmap:
 - **Balance** — Roadmap 4 item 3, and it is **re-measured at v103**: the
   balance section below now carries 32 fresh matches instead of the eleven-release-old
   v90 percentages. Short version: Green 47%, Tan 34%, Gray 9%, Blue 9%.
+- **The infantry BARKS** — the tail of Roadmap 4 item 1, and the only part of
+  it left. Selecting a soldier speaks through `speechSynthesis`, the browser's
+  own TTS voice, which is the one sound in the game outside its art direction.
+  Ten recorded barks retire it, and the v92 pipeline takes them unchanged.
 - `T26.C`'s air-value question is still open, and is untouched by any of it.
 
 **What a fresh session actually does first.** Nothing here is in flight, so there
@@ -94,8 +104,8 @@ whatever the owner asks for next is a fresh vNN starting from `origin/main`. If
 they are NOT green, stop and read the failure before touching anything: every
 check in this suite was put there by a release that paid for it.
 
-**The map generator has just had an audit and is the cleanest it has ever been**
-(v103, below). If you touch `makeMap`, run `harness/audit_maps.js` before and
+**The map generator was audited at v103 and nothing has touched it since**
+(the v103 section below). If you touch `makeMap`, run `harness/audit_maps.js` before and
 after — it counts every defect class the audit found, and the residual it should
 report is: 3-4 decor-sized art grazes, 2 line props lying in a spill, and one
 sandbox seed in twenty sharing ten tiles between two hazards. Anything larger
@@ -181,7 +191,7 @@ suite**, which is rule 7 with a whole subsystem behind it.
 Two traps in that recipe, both paid for: `plastic-warfare.html` ends with
 `</html>` and NO trailing newline, so `head -c -1` before appending a `<script>`
 eats the `>` and the injection silently never runs; and do not wait on the `load`
-event — on a 6.7MB page of `data:` URLs it sits behind every decode and Chromium's
+event — on an 8.7MB page of `data:` URLs it sits behind every decode and Chromium's
 virtual clock expires first. Poll `ASSETS_STATE`, the gate the Start button uses.
 
 `sim.sh` runs whole matches with a CPU in every seat and builds
@@ -295,12 +305,15 @@ having walked fewer, and clean is the answer that stops an investigation.
    because `sim.sh`'s outcomes could not distinguish "never chose air" from
    "chose air and could not pay for it".
 
-## Roadmap 4 — the tentative shortlist (NOT STARTED, proposed at v103)
+## Roadmap 4 — the tentative shortlist (proposed at v103; item 1 delivered)
 
 **Nothing here is agreed and nothing here is in flight.** This is the menu that
 came out of a whole-game review at v103, written when the owner said they were
-running out of ideas. It is ranked by return on effort, and four of the twelve
-items rest on measurements taken at the time rather than on opinion — those are
+running out of ideas. Item 1 has since shipped (v104–v104.4, bar its barks);
+items 2–12 are exactly as written.
+
+It is ranked by return on effort, and four of the twelve items rest on
+measurements taken at the time rather than on opinion — those are
 marked MEASURED and the evidence is in the v103 measurement section of
 `harness/README.md`. The full write-up, with the reasoning and the charts, is the
 "v104 Shortlist" artifact:
@@ -309,32 +322,29 @@ marked MEASURED and the evidence is in the v103 measurement section of
 **The framing, because it decides the ranking.** The SYSTEMS layer is finished:
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
-queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, 5,766
-checks. What is thin is everything AROUND it — how many places you can play, what
-the game sounds like while you do, and whether all four armies are worth picking.
-Every item below is content, presentation or tuning; none of them needs a new
-system invented.
+queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
+recorded soundtrack, 5,973 checks. What is thin is everything AROUND it — how
+many places you can play, and whether all four armies are worth picking. Every
+item below is content, presentation or tuning; none of them needs a new system
+invented. (Written at v103, when the "what does it sound like" leg of that was
+still empty; item 1 has since answered it.)
 
 ### Band 1 — highest return
 
-1. ~~**Music.**~~ **DONE at v104** (and refined through v104.4) — four Old Guard
+1. ~~**Music.**~~ **DELIVERED at v104, refined through v104.4** — four Old Guard
    Fife and Drum Corps tracks (menu / build / combat / victory), public domain as
-   US Government works, with the score ducking under gunfire through
-   `COMBAT_DUCK_T` exactly as predicted below. **The bark half of this item is still open:** infantry
-   selection still speaks through `speechSynthesis`, and ten recorded barks
-   would retire the one sound in the game that is not in its art direction.
-   The original entry, for the reasoning: MEASURED: there is none. Not quiet — none. The only continuous
-   audio is the mining ambience loop, on a game where every gun is a recorded
-   take. Four short loops (setup, build-up, combat, victory sting) would do more
-   for the first thirty seconds than anything else on this list. The plumbing
-   already exists: `SNDV` is the mixing desk, there is a weapons bus separate
-   from master, and `COMBAT_DUCK_T` already ducks the mining loop under gunfire —
-   point that at the music and the score falls back under a firefight for free.
-   The v92 pipeline (render offline, embed as base64) applies unchanged.
-   **Same release, while you are in the audio file:** infantry selection speaks
-   through `speechSynthesis` — the browser's own TTS voice, and the one sound in
-   the game that is not in the game's art direction. Ten recorded barks retire it.
-   *Impact high · effort medium · balance risk none.*
+   works of the US federal government, ducking under gunfire through
+   `COMBAT_DUCK_T` exactly as this entry predicted, plus Music and Effects faders
+   on the audio button. The reasoning, the four owner passes and every trap are
+   in the v104 chapter below and in `harness/README.md`; nothing about the score
+   is outstanding.
+   **What IS still open is the second half of this item, the BARKS.** Infantry
+   selection speaks through `speechSynthesis` — the browser's own text-to-speech
+   voice, and the one sound in the game outside its art direction. Ten recorded
+   barks retire it, the v92 pipeline (render offline, embed as base64) takes them
+   unchanged, and `sfxBus` already exists to hang them off. It is the smallest
+   unstarted job on this list.
+   *Impact medium (barks only) · effort low · balance risk none.*
 2. **More battlefields.** Four PvP maps and ONE survival map, against 25 units
    and four armies. Maps are the best value on the list: every one reuses the
    existing props, painters, hazards and wildlife; each is point-symmetric by
@@ -434,10 +444,18 @@ system invented.
     that block line of sight, so cover means something without the ground moving.
     *Impact transformative · effort very high · balance risk destabilising.*
 
-**The order proposed, if the owner wants one:** ~~v104 music~~ (done — and it
-needed no repin, as predicted) then the barks; v105 two new battlefields plus a second survival board;
-v106 the armies pass — Blue, then Gray, then the eight bot abilities, which
-raises the ceiling on Hard and shows off the fixes at the same time.
+**The order proposed, if the owner wants one.** The music half of item 1 is
+done and needed no repin, as this section predicted. What was next in that plan,
+unchanged:
+
+- **the barks** — the rest of item 1, and small enough to ride with anything else;
+- **two new battlefields plus a second survival board** (item 2), the best
+  value-per-effort left, and the one thing every mode benefits from at once;
+- **the armies pass** (items 3 and 4) — Blue, then Gray, then the eight unit
+  abilities the bots never use, which raises the ceiling on Hard and shows off
+  the fixes at the same time.
+
+None of that is agreed; it is what the v103 review would have done next.
 
 ## Roadmap 3 — real art and real sound (COMPLETE, v91–v97)
 
