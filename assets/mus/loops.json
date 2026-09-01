@@ -24,7 +24,11 @@
   "start": 0.5
  },
  "victory": {
-  "dur": 6.5,
-  "loop": false
+  "dur": 28.958,
+  "end": 28.458,
+  "loop": true,
+  "score": 0.254,
+  "seam": 0.43,
+  "start": 0.5
  }
 }

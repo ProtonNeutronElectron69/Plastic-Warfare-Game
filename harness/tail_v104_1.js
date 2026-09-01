@@ -26,6 +26,8 @@
         late); the sting is asked for once, at the one instant it must sound.
         Measured in Chromium: musSting('victory') returned false with
         ASSETS.mus.victory.buf unset. sndWarm() had covered ASSETS.snd only.
+        (v104.3 retired musSting entirely - victory is a looping track now - but
+        the warming this pass added is what still makes every track ready.)
 
    And the owner re-specified WHEN it should fire, which is the real design
    change here: not at endGame - by then you are reading a results overlay - but
@@ -197,26 +199,22 @@ function strip1041(p,sup){
  const wasMuted=muted;
  fresh1041(1041101);
  strip1041(foe1041(),0);
- muted=false;musVicDone=false;
- /* headless there is no buffer, so musSting fails. The gate MUST NOT record
-    that as the sting having played - that is precisely how v104 lost it. */
- const r=musVictory();
- ok('T82.E a sting that could not sound returns false', r===false);
- ok('T82.E ...and does NOT consume the one firing', musVicDone===false);
-
+ muted=false;
+ /* v104.3 REPLACED THE WHOLE MECHANISM THIS SECTION TESTED. It checked a
+    once-per-match gate that consumed only on success, which is what a one-shot
+    needs; victory is a looping TRACK now, so there is no firing to consume and
+    no gate to protect. What survives is the claim underneath: the music turns
+    itself on when the match is decided and off again on the way back to the
+    menu. T84.C/D/G own the detail. */
+ musVicOn=false;musVicUntil=0;musVicTick();
+ ok('T82.E the mop-up latches the victory music on', musVicOn===true);
+ ok('T82.E ...and it outranks whatever loop was playing', musWant()==='victory');
  muted=true;
- ok('T82.E muted refuses', musVictory()===false);
- ok('T82.E ...and does not consume it either, so unmuting still earns it',
-    musVicDone===false);
+ ok('T82.E muted still silences it', musWant()==='');
  muted=wasMuted;
-
- musVicDone=true;
- ok('T82.E once it HAS fired, the gate refuses a second', musVictory()===false);
-
- /* and a new match hands it back */
- G=null;musTick();
- ok('T82.E returning to the menu re-arms it for the next match',
-    musVicDone===false);
+ G=null;musVicTick();
+ ok('T82.E returning to the menu clears it for the next match',
+    musVicOn===false);
  fresh1041(1041102);
 }
 
@@ -227,17 +225,33 @@ function strip1041(p,sup){
   ok('T82.F (skipped - pw.html not readable)', true);
  }else{
   const t=SCR1041.indexOf('function musTick(){');
-  ok('T82.F musTick checks the mop-up rule every frame',
-     t>0&&SCR1041.slice(t,t+900).indexOf('musDecided()')>0);
+  /* v104.3: musTick used to call musDecided() itself. The rule now lives behind
+     musVicTick, which adds the hysteresis and the dwell on top of it - so the
+     claim is unchanged in substance (the mop-up rule is consulted every frame)
+     and only the name of the thing doing the consulting moved. */
+  ok('T82.F musTick consults the mop-up rule every frame, via the latch',
+     t>0&&SCR1041.slice(t,t+900).indexOf('musVicTick()')>0
+     &&SCR1041.indexOf('function musVicTick()')>0
+     &&/function musVicTick\(\)\{[\s\S]{0,600}musDecided\(/.test(
+        SCR1041.slice(SCR1041.indexOf('function musVicTick()'))));
   const eg=SCR1041.indexOf('function endGame(win){');
   ok('T82.F endGame still fires it, as the fallback for a win that never mopped up',
-     eg>0&&SCR1041.slice(eg,eg+400).indexOf('musVictory()')>0);
-  /* THE BUG THIS PREVENTS: endGame calling musSting directly again would bypass
-     the gate and double the fanfare on any match that met both conditions. */
-  ok('T82.F ...through musVictory, never musSting directly',
-     SCR1041.slice(eg,eg+400).indexOf('musSting(')<0);
+     eg>0&&SCR1041.slice(eg,eg+700).indexOf('musVicEnd=')>0);
+  /* v104.3: endGame used to CALL something. It only records a flag now, and the
+     track machinery does the playing - so the claim is that it plays nothing
+     itself, which is stronger and simpler than the old one. */
+  ok('T82.F ...by recording a flag, never by playing anything itself',
+     SCR1041.slice(eg,eg+700).indexOf('musSting(')<0
+     &&SCR1041.slice(eg,eg+700).indexOf('musPlay(')<0);
+  /* v104.4: the menu frame used to clear exactly one thing, so this check
+     matched that one statement. The sequencer added three more per-match
+     variables and every one of them has to be cleared in the same place for
+     the same reason - so the claim is RESTATED as "the hold is cleared on the
+     menu frame, alongside everything else that is per match", which is what it
+     was always trying to say. T85.E owns the full list. */
   ok('T82.F the reset rides with the combat hold, on the same menu frame',
-     t>0&&/if\(!G\)\{musCombatT=0;musVicDone=false;\}/.test(SCR1041.slice(t,t+700)));
+     t>0&&/if\(!G\)\{[^}]*musCombatT=0;/.test(SCR1041.slice(t,t+900))
+     &&SCR1041.indexOf('musVicTick()',t)>t);
  }
  /* this tail's release, or any point release of it - T75.B is the version pin
     and there is no value in a second one drifting beside it */
