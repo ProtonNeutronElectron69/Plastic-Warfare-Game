@@ -10,7 +10,8 @@ the top, and the roadmap chapters below are HISTORY, not work in flight — the
 last of the three landed at v97 and nothing is outstanding. Practical route:
 
 - **What shipped recently:** the `## v104`, `## v103` and `## v102` sections
-  (search for `## v103`). Each one is the finding, the change, and what it measured.
+  (search for `## v104` — it covers v104 through v104.4 in one chapter). Each one
+  is the finding, the change, and what it measured.
 - **How to build and run the suite:** `## Assembly` and `## Running`, about a
   fifth of the way down. `../CLAUDE.md` has the two commands; these have the why.
 - **Where the balance stands:** `## v103 POST-MERGE MEASUREMENT` — 32 matches on
@@ -21,8 +22,8 @@ last of the three landed at v97 and nothing is outstanding. Practical route:
   built; not a to-do list.
 - **What could come NEXT:** `## Roadmap 4` in `../CLAUDE.md` — a tentative,
   unagreed shortlist written at v103, four of whose twelve items rest on the
-  measurement section below. It is the only forward-looking chapter either file
-  carries.
+  measurement section below. Item 1 (music) shipped as v104; the other eleven are
+  untouched. It is the only forward-looking chapter either file carries.
 
 Everything in here is written as a claim someone paid for. When a section and a
 heading disagree, the section is usually the one that was updated - and both are
@@ -1561,6 +1562,12 @@ matrix, 4 modes, 4 PvP maps plus 1 survival-only, 15 survival waves over 6 speci
 **The thin columns in that list are the roadmap.** Four PvP maps and one survival
 board is the tightest content constraint the game has; zero music is the largest
 presentation gap; two of four armies at 9% is the largest play problem.
+
+> **Superseded in part, at v104.** The music column was filled by v104-v104.4 —
+> four tracks, and the check count above has since gone 5,766 -> 5,973. The map
+> and balance columns are untouched and the numbers in this section are still the
+> current measurement. Left as written because it is the evidence Roadmap 4 was
+> ranked on, not a to-do list.
 
 ## v103: the map layout audit, a faster barrage, and a louder rotor
 
@@ -4803,9 +4810,17 @@ now runs each table from its own cfg and asserts both the equality that should h
 
 ## Contents
 
-v103 adds tail_v103.js (T80), riding segment 3 and listed last in tails.txt.
-**The suite stands at 5,766 checks** (5,694 at v102, 5,638 at v101, 5,587 at
-v100). Sections A-B are the barrage's cadence and the rotor's level, both
+v104 and its four feedback passes add five tails, all riding segment 3 and
+listed last in tails.txt: `tail_v104.js` (T81, the soundtrack itself),
+`tail_v104_1.js` (T82, the warm/unlock/duck/mop-up pass), `tail_v104_2.js` (T83,
+the effects bus and the two faders), `tail_v104_3.js` (T84, victory as a fourth
+loop with its Schmitt gap and dwell) and `tail_v104_4.js` (T85, the sequenced
+handover and the FOV scoping). **The suite stands at 5,973 checks** (5,939 at
+v104.3, 5,766 at v103, 5,694 at v102, 5,638 at v101, 5,587 at v100). None of the
+five moved a hash trail: music is presentation, and every one of the five ran
+`triage.sh` to "sim unchanged" before it was believed.
+
+v103 adds tail_v103.js (T80), riding segment 3. Sections A-B are the barrage's cadence and the rotor's level, both
 transcribed on the rule that a number the owner set has to be re-stated by the
 next release that moves it. C-J are the map audit and they GENERATE MAPS rather
 than booting one: art on the board (props, line-prop far ends, flat regions),
