@@ -243,8 +243,14 @@ function strip1041(p,sup){
   ok('T82.F ...by recording a flag, never by playing anything itself',
      SCR1041.slice(eg,eg+700).indexOf('musSting(')<0
      &&SCR1041.slice(eg,eg+700).indexOf('musPlay(')<0);
+  /* v104.4: the menu frame used to clear exactly one thing, so this check
+     matched that one statement. The sequencer added three more per-match
+     variables and every one of them has to be cleared in the same place for
+     the same reason - so the claim is RESTATED as "the hold is cleared on the
+     menu frame, alongside everything else that is per match", which is what it
+     was always trying to say. T85.E owns the full list. */
   ok('T82.F the reset rides with the combat hold, on the same menu frame',
-     t>0&&/if\(!G\)musCombatT=0;/.test(SCR1041.slice(t,t+700))
+     t>0&&/if\(!G\)\{[^}]*musCombatT=0;/.test(SCR1041.slice(t,t+900))
      &&SCR1041.indexOf('musVicTick()',t)>t);
  }
  /* this tail's release, or any point release of it - T75.B is the version pin

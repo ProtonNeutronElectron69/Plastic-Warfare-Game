@@ -108,27 +108,52 @@ function fresh1042(seed,extra){
 
 /* ---------- D: combat is read off the sim, not off the camera ---------- */
 {
- section('T83.D musFighting reads the battle, not what happens to be on screen');
+ /* v104.4 REVERSES HALF OF THIS ON PURPOSE, so read the restatement before
+    "fixing" anything here. The bug this section was written for was that the
+    combat track was armed inside sfxGun, AFTER its audFor() early return - so
+    what picked the track was whether a SOUND PLAYED. v104.4 keeps that fix
+    (musFighting still reads the simulation) and adds the owner's later ask that
+    it follow the camera's view - but through the sim's own audibility test,
+    which a silent, unspawned or muted gun cannot suppress. So the claim below
+    is now "it reads the sim", not "it ignores the camera"; T85.D owns the FOV
+    behaviour and the spectate exception that keeps this release's complaint
+    fixed. The fixture gained a fog warm-up and a camera placement for the same
+    reason - audAt gates on fog===2 and a fresh board has revealed nothing. */
+ section('T83.D musFighting reads the simulation, not whether a gun was heard');
  ok('T83.D the threshold is a named constant', MUS_FIGHT_N===2);
  ok('T83.D the scan is throttled - it walks every unit', MUS_SCAN_EVERY>1);
 
  fresh1042(1042001);
+ for(let i=0;i<12;i++)update(1/30);          // fog needs ~10 ticks to reach 2
  for(const u of G.units){u.state='idle';u.target=null}
  ok('T83.D nobody swinging is not a battle', musFighting()===false);
 
  const us=G.units.slice(0,3);
+ G.cam.x=isoX(us[0].x,us[0].y)-vpW()/2;
+ G.cam.y=isoY(us[0].x,us[0].y)-vpH()/2;
  us[0].state='attack';us[0].target=us[1];
  ok('T83.D one unit attacking is a skirmish, not a battle',
     musFighting()===false);
  us[1].state='attack';us[1].target=us[0];
  ok('T83.D two is', musFighting()===true);
+ /* THE ORIGINAL POINT, and it still stands: nothing here has fired a weapon.
+    Clear the duck clock outright and it makes no difference - which is the bug
+    this section exists for, because the old code read the track off exactly
+    that clock and would have called this silence.
+    (Clearing rather than merely reading it: an earlier tail in this segment
+    fires real weapons, and a check that passes only because nobody shot before
+    it is a check that depends on its neighbours.) */
+ const dk1042=COMBAT_DUCK_T;COMBAT_DUCK_T=0;
+ ok('T83.D ...with the gun-heard clock cleared, which is the bug this is for',
+    musFighting()===true);
+ COMBAT_DUCK_T=dk1042;
  /* a state without a target is a unit that has just lost one */
  us[1].target=null;
  ok('T83.D an attack state with no target does not count', musFighting()===false);
 
  if(SCR1042){
   const t=SCR1042.indexOf('function musTick(){');
-  const body=t>0?SCR1042.slice(t,t+1200):'';
+  const body=t>0?SCR1042.slice(t,t+3600):'';
   ok('T83.D musTick picks the track from musFighting', body.indexOf('musFighting()')>0);
   /* THE SEPARATION, pinned. COMBAT_DUCK_T still appears in musTick - it drives
      the duck - but it must not be what arms the combat HOLD any more, which is

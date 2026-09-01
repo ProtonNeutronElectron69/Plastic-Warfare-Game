@@ -85,7 +85,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v104.3 it makes **5,939
+that the results come out identical every time. As of v104.4 it makes **5,973
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -115,7 +115,23 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 104.3**.
+The game is at **version 104.4**.
+
+**v104.4 — the music changes tracks instead of piling up.** When the build-up
+music gave way to the combat music, both played at once for a moment and the old
+one never quite stopped — it faded down to a whisper and stayed there under
+everything else for the rest of the match. Two marches in different keys sounding
+together is a mess however brief, so a change of track is now a proper handover:
+the old one fades right out, there is a beat of silence, then the new one comes
+up. Nothing overlaps.
+
+The combat music also follows what you are actually looking at again. It now
+switches on when a fight is going on **in view**, and waits a second and a half
+before committing, so two scouts trading a shot at the edge of the screen no
+longer swings the whole soundtrack. Spectating is the exception, on purpose: a
+spectator has no army for the camera to follow, so they still hear the fighting
+wherever it is — which is what v104.2 fixed and this release is careful not to
+undo.
 
 **v104.3 — the victory music plays properly now.** It used to be a six-second
 fanfare that sounded once and stopped. It is a full looping track like the other

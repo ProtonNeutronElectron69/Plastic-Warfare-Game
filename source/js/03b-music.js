@@ -22,7 +22,19 @@
    Music sits well under the guns on purpose: it is the floor of the mix, not a
    layer of it. */
 const MUSV={menu:.60,build:.38,combat:.62,victory:.66};
-const MUS_FADE=1.8;      // seconds to crossfade one track into the next
+/* TRACKS DO NOT CROSSFADE. v104 faded the outgoing track down while fading the
+   incoming one up, which is right for ambience and wrong for music: two marches
+   in different keys and tempos sounding together is a mess, however briefly.
+   Measured on the v104.3 build - 0.25s into a build->combat switch the old track
+   sat at 0.16 against the new one's 0.18, both plainly audible, and the owner
+   reported it "just overlays both". Worse, setTargetAtTime is asymptotic and
+   never arrives: the outgoing gain floored at 0.0055 and stayed there.
+
+   So a transition is SEQUENCED - down, a beat of silence, then up - and the
+   ramps are linear so they reach exactly zero. */
+const MUS_FADE_OUT=0.55; // seconds to take the outgoing track to silence
+const MUS_GAP=0.30;      // silence between the two, so they never sound together
+const MUS_FADE_IN=0.85;  // seconds to bring the incoming track up
 /* THE DUCK, THIRD TIME. v104 shipped .45 x .38 = .171 and the owner could not
    hear it. v104.1 went to .75 x .50 = .375 and the owner still could not. The
    mistake in both was treating this as a tuning problem with one right answer:
@@ -33,6 +45,7 @@ const MUS_FADE=1.8;      // seconds to crossfade one track into the next
    that keeps a gun cue clear rather than a hole the score falls into. */
 const MUS_DUCK=.90;      // how far music drops under gunfire (multiplier)
 const MUS_COMBAT_T=7;    // seconds of quiet before combat relaxes back to build
+const MUS_COMBAT_IN=1.5; // seconds of fighting before the score commits to combat
 const MUS_MOP_DELTA=20;  // supply-used lead that means the match is decided
 /* v104.3 ANTI-FLICKER, two layers, because supply moves every time a unit dies
    or finishes building and the raw rule sits right on that churn.
@@ -57,6 +70,9 @@ let musVicOn=false;      // the latched victory reading - see musVicTick
 let musVicUntil=0;       // AC time before which the latch will not let go
 let musVicEnd=false;     // the match ENDED in a way that earns the victory track
 let musScanF=0;          // frame counter for the throttled battle scan
+let musFightSince=0;     // AC time this bout of fighting was first seen
+let musPend='';          // track waiting for the outgoing one to finish leaving
+let musPendT=0;          // AC time it may start
 
 /* The two faders, 0..VOL_MAX, 1 = the tuned default. Persisted per browser like
    pw_mmsize, and read the same defensive way - a browser with storage blocked
@@ -127,7 +143,7 @@ function musPlay(key){
  if(musKey===key)return true;
  const g=musGain();if(!g)return false;
  const buf=musBuf(key);if(!buf)return false;
- musStop();
+ musStop(); // a safety net: the sequencer in musTick has already emptied musNow
  let src,gain;
  try{
   src=AC.createBufferSource();src.buffer=buf;
@@ -136,20 +152,33 @@ function musPlay(key){
   const L=(typeof MUS_LOOP!=='undefined')?MUS_LOOP[key]:null,off=buf.pwOff||0;
   if(L){src.loop=true;src.loopStart=off+L.start;src.loopEnd=off+L.end;}
   src.start(0,off);
-  gain.gain.setTargetAtTime(MUSV[key]||.4,AC.currentTime,MUS_FADE/3);
+  const t0=AC.currentTime;
+  gain.gain.setValueAtTime(0,t0);
+  gain.gain.linearRampToValueAtTime(MUSV[key]||.4,t0+MUS_FADE_IN);
  }catch(e){return false}
  musNow={src:src,gain:gain,key:key};musKey=key;
  return true;
 }
 
-/* Fade the current track out and let it stop itself. The node is released by
-   the timeout, not kept in a list: nothing else ever needs to find it again. */
+/* Take the current track to SILENCE and stop it. Two deliberate choices:
+
+   A LINEAR RAMP, not setTargetAtTime. The exponential approach is asymptotic -
+   it never arrives - and measurement showed the outgoing gain flooring at
+   0.0055 and sitting there for as long as the node lived. linearRampToValueAtTime
+   reaches exactly zero at a time we choose.
+
+   src.stop() ON THE AUDIO CLOCK, not a setTimeout. The audio thread and the
+   timer queue are different clocks; scheduling the stop where the ramp lands
+   means the node cannot outlive its own fade under load. */
 function musStop(){
  const m=musNow;musNow=null;musKey='';
  if(!m||!AC)return;
  try{
-  m.gain.gain.setTargetAtTime(0,AC.currentTime,MUS_FADE/4);
-  const s=m.src;setTimeout(()=>{try{s.stop()}catch(e){}},MUS_FADE*1000);
+  const t=AC.currentTime,g=m.gain.gain;
+  g.cancelScheduledValues(t);
+  g.setValueAtTime(g.value,t);
+  g.linearRampToValueAtTime(0,t+MUS_FADE_OUT);
+  m.src.stop(t+MUS_FADE_OUT+0.05);
  }catch(e){}
 }
 
@@ -194,9 +223,23 @@ function musVicTick(){
    different question with a different answer, so it gets its own reading. */
 function musFighting(){
  if(!G||!G.units)return false;
+ /* IN THE CAMERA'S VIEW, which is the owner's wording and a narrowing of what
+    v104.2 shipped. That release widened this to the whole map to fix spectate
+    hearing nothing; in a normal match the effect was that a battle you were not
+    watching still changed your music. audFor/audAt is the door that already
+    answers "can the listener hear something at this spot" - viewport plus fog -
+    so the score reuses it rather than inventing a second notion of on-screen.
+
+    SPECTATE KEEPS THE WHOLE-MAP READING. A player's camera follows their own
+    battle, so scoping to it is meaningful; a spectator has no army and no
+    reason for the camera to be anywhere in particular, which is exactly the
+    case that reported silence for a whole match at v104.2. */
+ const fov=!(G.watch||G.spectate)&&typeof audAt==='function';
  let n=0;
  for(const u of G.units){
-  if(u.state==='attack'&&u.target&&++n>=MUS_FIGHT_N)return true;
+  if(u.state!=='attack'||!u.target)continue;
+  if(fov&&!audAt(u.x,u.y))continue;
+  if(++n>=MUS_FIGHT_N)return true;
  }
  return false;
 }
@@ -306,14 +349,42 @@ function musTick(){
     Returning to the menu is the one moment every match boundary passes
     through (againBtn and quitBtn both set G=null), so it is where the hold is
     cleared. T81.E drives exactly this. */
- if(!G)musCombatT=0;
+ if(!G){musCombatT=0;musFightSince=0;musPend='';musPendT=0;}
  musVicTick();                 // v104.3: update the latch BEFORE musWant reads it
  const want=musWant();
- /* the battle scan is throttled - it walks every unit, and the hold it feeds
-    is MUS_COMBAT_T seconds long, so three reads a second is ample */
- if(G&&!G.over&&!G.paused&&(musScanF++%MUS_SCAN_EVERY)===0&&musFighting())
-  musCombatT=AC.currentTime+MUS_COMBAT_T;
- if(want!==musKey){if(want)musPlay(want);else musStop();}
+ /* THE ENTRY BUFFER. The trailing hold (MUS_COMBAT_T) has always kept the
+    combat track on after the shooting stops; this is the other side of it -
+    fighting has to persist MUS_COMBAT_IN seconds before the score commits, so a
+    single exchange between two scouts does not swing the whole soundtrack.
+    The scan is throttled: it walks every unit, and both buffers are seconds
+    long, so three reads a second is ample. */
+ const now=AC.currentTime;
+ if(G&&!G.over&&!G.paused&&(musScanF++%MUS_SCAN_EVERY)===0){
+  if(musFighting()){
+   if(!musFightSince)musFightSince=now;
+   if(now-musFightSince>=MUS_COMBAT_IN)musCombatT=now+MUS_COMBAT_T;
+  }else musFightSince=0;
+ }
+
+ /* THE TRANSITION IS SEQUENCED, and this is the whole of it. Wanting a
+    different track starts the outgoing one leaving and QUEUES the incoming one;
+    it starts only once the fade-out and the gap have both elapsed, so the two
+    are never audible together. Re-deciding mid-transition just re-queues. */
+ if(want!==musKey&&want!==musPend){
+  /* CAPTURE THIS FIRST. musStop() clears musKey, so reading it afterwards to
+     decide whether a gap is needed always answered "nothing was playing" and
+     the incoming track started instantly - which is the overlay all over again,
+     in the very code written to prevent it. Measured: 0.21 against 0.18 two
+     frames after the switch, before this line existed. */
+  const had=!!musKey;
+  if(had)musStop();                          // begin the exit
+  musPend=want;
+  musPendT=now+(had?MUS_FADE_OUT+MUS_GAP:0);
+ }
+ if(musPend&&now>=musPendT){
+  const k=musPend;musPend='';
+  if(k)musPlay(k);
+ }
  const duck=(AC.currentTime<COMBAT_DUCK_T)?MUS_DUCK:1;
  if(duck!==musDuckT){
   musDuckT=duck;

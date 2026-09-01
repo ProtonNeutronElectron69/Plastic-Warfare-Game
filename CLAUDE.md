@@ -50,9 +50,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v104.3, and what a fresh session does)
+## Where the game stands (v104.4, and what a fresh session does)
 
-The game is at **v104.3**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v104.4**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), and **v104 is the first Roadmap 4 item
@@ -80,7 +80,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 5,939 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 5,973 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -148,7 +148,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,766 checks at v103.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 5,973 checks at v104.4.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -317,10 +317,10 @@ system invented.
 
 ### Band 1 — highest return
 
-1. ~~**Music.**~~ **DONE at v104** — four Old Guard Fife and Drum Corps tracks
-   (menu / build / combat / victory sting), public domain as US Government works,
-   with the score ducking under gunfire through `COMBAT_DUCK_T` exactly as
-   predicted below. **The bark half of this item is still open:** infantry
+1. ~~**Music.**~~ **DONE at v104** (and refined through v104.4) — four Old Guard
+   Fife and Drum Corps tracks (menu / build / combat / victory), public domain as
+   US Government works, with the score ducking under gunfire through
+   `COMBAT_DUCK_T` exactly as predicted below. **The bark half of this item is still open:** infantry
    selection still speaks through `speechSynthesis`, and ten recorded barks
    would retire the one sound in the game that is not in its art direction.
    The original entry, for the reasoning: MEASURED: there is none. Not quiet — none. The only continuous
@@ -536,7 +536,7 @@ landed with the trails untouched; a render change that moves a trail has a bug.
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
 
-## v104 / v104.1 / v104.2 / v104.3 — the soundtrack (Roadmap 4 item 1)
+## v104 / v104.1 / v104.2 / v104.3 / v104.4 — the soundtrack (Roadmap 4 item 1)
 
 **The game has music**, and it is the first Roadmap 4 item delivered. Four
 recorded tracks by the **United States Army Old Guard Fife and Drum Corps** —
@@ -636,6 +636,36 @@ due**: music is presentation, and `triage.sh` said "sim unchanged" first time.
 - **`endGame` plays nothing.** It records a client-local flag; `musWant` does
   the playing. `musWant` answers '' on `G.over` only when the ending earned no
   victory — which is the defeat screen.
+
+**The owner's fourth pass (v104.4) — the tracks hand over instead of piling up:**
+
+- **A CROSSFADE IS WRONG FOR MUSIC, and it was not even a crossfade.** Measured
+  on the v104.3 build through a switch: old build 0.1597 against new combat
+  0.1813 at t=0.25 — two marches in different keys at a comparable level — and
+  `setTargetAtTime` is ASYMPTOTIC, so the outgoing gain floored at **0.0055 and
+  stayed there for the life of the node**. A change of track is SEQUENCED now:
+  `MUS_FADE_OUT` (a linear ramp, which actually reaches zero), `MUS_GAP` of real
+  silence, then `MUS_FADE_IN`. Same total length; 0 overlapping frames measured.
+- **THE FIX CONTAINED THE BUG IT WAS FIXING.** The first cut decided whether a
+  gap was needed by reading `musKey` AFTER `musStop()` — which clears it — so it
+  always skipped the gap and reproduced the overlay exactly. `const had=!!musKey`
+  before the stop is the whole fix. **A sequencer that reads state its own
+  previous step just cleared is a shape to watch for**, and T85.B pins the
+  ordering rather than the audible result.
+- **"In the camera FOV" narrows what v104.2 widened, so both asks had to be
+  squared.** `musFighting()` still reads the SIMULATION — that is v104.2's fix,
+  and the reason the track is not chosen by whether a sound played — but it is
+  gated on `audAt()` for a player, and keeps the WHOLE-MAP reading under
+  `G.watch`/`G.spectate`, who have no army for the camera to follow. Collapsing
+  those two back together brings back a complaint from either v104.2 or v104.4.
+- **`MUS_COMBAT_IN` is the entry buffer to `MUS_COMBAT_T`'s trailing one.** 1.5s
+  of sustained fighting before the score commits; measured not armed at 1.35s,
+  armed at 1.67s.
+- **A live match undoes a hand-set unit state within a second**, so the first
+  entry-buffer probe measured `updateUnit` rather than the buffer — while a
+  stale count of other attackers made it look like the fight was still on.
+  Its headless mirror: a fixture that does not tick has `fog===0` everywhere
+  (2 by tick ~10), so every FOV check passes for the wrong reason.
 
 **Two things that cost time and would cost it again:**
 
