@@ -255,6 +255,11 @@ function strip1041(p,sup){
  }
  /* this tail's release, or any point release of it - T75.B is the version pin
     and there is no value in a second one drifting beside it */
- ok('T82.F the release stamp is v104 or a point release of it',
-    String(GAME_VER).indexOf('v104')===0);
+ /* v105: this was 'the stamp says v104', which is a THIRD copy of the current
+    version - T75.B is the one deliberately-transcribed pin and a new release
+    should edit one line, not three. Restated as the claim this tail can
+    actually make: the score shipped at v104 and the build is not older than
+    the release these checks describe. */
+ ok('T82.F the build is not older than the release this tail describes',
+    GAME_VER_N >= 104 && /^v\d+(\.\d+)?$/.test(GAME_VER));
 }

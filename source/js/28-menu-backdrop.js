@@ -21,49 +21,84 @@
 const MENUBG={cv:null,c:null,cells:{inf:{},veh:{}},lanes:[],tile:null,pat:null,
  ready:false,W:0,H:0,dpr:1,t0:0};
 const MENUBG_RM=(typeof matchMedia==='function')&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-/* faction-exclusive units stay with their home army, same rule the manual uses */
+/* --- THE PARADE, WIDENED AT v105 ---
+   Owner ask: every unit in the game marches, and there are more of them on
+   screen. Both halves are this table.
+   EVERY ROW OF U APPEARS EXACTLY ONCE across the six lanes - all 26 of them,
+   the Paratrooper and the Observation Balloon included - and each one marches
+   in exactly ONE army's colours. That is what keeps the private bake small:
+   the roster more than doubles in KINDS (12 entries -> 26) while the cache
+   grows only 56 -> 66 cells, because the old table had the Grunt baked four
+   times over and this one bakes nothing twice. T82.A counts it.
+   Faction-exclusive units stay with their home army, same rule the manual
+   uses - and now it literally IS the manual's rule: menubgFacOf defers to
+   infoFacOf rather than relying on the lane list being hand-kept correct.
+   Lane 1 is THE FLIGHT: every aircraft plus the balloon, lifted off the
+   ground the same 34px drawUnit lifts a flyer, so the six things in the game
+   that never touch the floor are not marching on it. */
 const MENUBG_LANES=[
- {y:.20,s:.90,v:.010,fac:'gray', roster:['grunt','gunner','sniper'],       n:5},
- {y:.41,s:1.15,v:.014,fac:'tan',  roster:['grunt','bazooka','flamer'],     n:5},
- {y:.63,s:1.50,v:.020,fac:'green',roster:['grunt','gunner','sarge'],       n:4},
- {y:.83,s:1.85,v:.028,fac:'blue', roster:['grunt','bazooka','tank'],       n:3}
+ {y:.13,s:.95,v:.019,fac:'green',roster:['heli','apache','choktaw','firebomb','chinook','balloon'],n:10},
+ {y:.30,s:.86,v:.009,fac:'gray', roster:['grunt','sniper','jeep','arty'],       n:16},
+ {y:.45,s:1.08,v:.013,fac:'tan',  roster:['gunner','flamer','truck','bulltank'], n:14},
+ {y:.60,s:1.32,v:.017,fac:'green',roster:['sarge','mortar','medic','cmdtruck'],  n:12},
+ {y:.75,s:1.58,v:.022,fac:'blue', roster:['grenadier','runner','bike','aatruck'],n:10},
+ {y:.90,s:1.86,v:.028,fac:'tan',  roster:['bazooka','para','tank','apc'],        n:8}
 ];
+/* An exclusive wears its owner's colours; everything else wears the lane's.
+   The ownership answer is INFO_FEXCL_U / infoFacOf, i.e. the Field Manual's,
+   which reads it off FAC - so there is no second list of who owns what to
+   fall out of step with the first. */
+function menubgFacOf(key,laneFac){return INFO_FEXCL_U.includes(key)?infoFacOf('unit',key):laneFac}
 function menubgRng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-/* private roster bake: bakeCell only, SPR untouched */
+/* private roster bake: bakeCell only, SPR untouched.
+   v105: the column is laid out FIRST and the bake then walks the marchers,
+   so the cache holds exactly the cells the parade paints - one per (key,
+   army) pair actually on the field, none for a pair nobody marches in. The
+   previous order (bake the lane table, then lay out) could not do that once
+   a lane carries units in a colour other than its own. */
 function menubgBake(){
  if(MENUBG.ready)return;
- for(const L of MENUBG_LANES){
-  const col=FAC[L.fac].color;
-  for(const key of L.roster){
-   if(U[key].a==='inf'){
-    if(!MENUBG.cells.inf[key])MENUBG.cells.inf[key]={};
-    if(MENUBG.cells.inf[key][L.fac])continue;
-    const set=[];
-    for(let i=0;i<5;i++){const bob=i*.5-1;set.push(bakeCell(-22,-31,22,10,cc=>trooperBody(cc,key,col,bob)));}
-    MENUBG.cells.inf[key][L.fac]=set;
-   }else{
-    if(!MENUBG.cells.veh[key])MENUBG.cells.veh[key]={};
-    if(MENUBG.cells.veh[key][L.fac])continue;
-    const bx=VEH_BOX[key]||[-24,-16,24,16];
-    MENUBG.cells.veh[key][L.fac]=bakeCell(bx[0],bx[1],bx[2],bx[3],cc=>vehBody(cc,key,col));
-   }
+ menubgColumn();
+ for(const L of MENUBG.lanes)for(const m of L.men){
+  const col=FAC[m.fac].color;
+  if(m.t.a==='inf'){
+   if(!MENUBG.cells.inf[m.key])MENUBG.cells.inf[m.key]={};
+   if(MENUBG.cells.inf[m.key][m.fac])continue;
+   const set=[];
+   for(let i=0;i<5;i++){const bob=i*.5-1;set.push(bakeCell(-22,-31,22,10,cc=>trooperBody(cc,m.key,col,bob)));}
+   MENUBG.cells.inf[m.key][m.fac]=set;
+  }else{
+   if(!MENUBG.cells.veh[m.key])MENUBG.cells.veh[m.key]={};
+   if(MENUBG.cells.veh[m.key][m.fac])continue;
+   const bx=VEH_BOX[m.key]||[-24,-16,24,16];
+   MENUBG.cells.veh[m.key][m.fac]=bakeCell(bx[0],bx[1],bx[2],bx[3],cc=>vehBody(cc,m.key,col));
   }
  }
- menubgColumn();
  MENUBG.ready=true;
 }
 /* the marching ranks: fixed layout from a private stream, so the scene is the
-   same every time the menu opens */
+   same every time the menu opens.
+   v105, two changes and both are the density ask:
+   - the key is taken ROUND-ROBIN off the lane's roster rather than rolled, so
+     every unit in a lane is guaranteed to be on the field. A roll of n from a
+     roster of n omits one about a third of the time, which is not good enough
+     for a parade whose stated job is to show the whole army list. Every lane's
+     n is >= its roster length for the same reason.
+   - `off` is a FRACTION of the wrap span, not a pixel gap. The men of a lane
+     are dealt one per 1/n slot with a jitter inside it, so they stay evenly
+     spread at any window width - the old fixed 200-290px gap left the whole
+     back half of a wide window empty, which read as a much thinner parade than
+     the count suggested. */
 function menubgColumn(){
  const r=menubgRng(0x9ab3);
  MENUBG.lanes.length=0;
  for(const L of MENUBG_LANES){
   const men=[];
   for(let i=0;i<L.n;i++){
-   const key=L.roster[(r()*L.roster.length)|0];
-   const t=U[key];
-   men.push({key:key,t:t,fac:L.fac,id:3+i*2,off:i*(200+r()*90),
-    u:{kind:'unit',key:key,t:t,p:{fac:L.fac,human:false},x:0,y:0,face:0,id:3+i*2,
+   const key=L.roster[i%L.roster.length];
+   const t=U[key],fac=menubgFacOf(key,L.fac);
+   men.push({key:key,t:t,fac:fac,id:3+i*2,off:(i+r()*.55)/L.n,
+    u:{kind:'unit',key:key,t:t,p:{fac:fac,human:false},x:0,y:0,face:0,id:3+i*2,
        hp:t.hp,mhp:t.hp,sel:false,vr:0,hold:false,rot:0,flash:0,mining:false,cargo:0,
        path:[1],wp:0,healedAt:null,target:null,tface:0,garrison:[],entrenched:false}});
   }
@@ -104,7 +139,20 @@ function menubgFloor(){
  }
  MENUBG.tile=cv;return cv;
 }
-/* mirrors drawUnit's infantry / vehicle branches against the private cache */
+/* mirrors drawUnit's infantry / vehicle branches against the private cache.
+   v105: and its FLYING branches too, because the parade now carries the four
+   helicopters and the balloon. Each of the three claims below is drawUnit's
+   own, read off the same table field rather than off a list of keys:
+   - t.fly lifts the body 34px and leaves the shadow on the ground, which is
+     what drawItemShadow does for a flyer (plShadow, no silhouette);
+   - a:'balloon' is deliberately NOT rotated - see the v86 note in drawUnit;
+   - a:'heli' spins the blades through heliRotor, the same function and the
+     same 1.25 tandem scale the match uses. The spin is DERIVED from the menu
+     clock rather than accumulated on the fake unit, so reduced-motion (which
+     freezes that clock) freezes the rotor too instead of leaving one thing
+     turning on a still picture. tick counts sim ticks at 30/s and updateUnit
+     turns a rotor at 22 rad/s, hence 22/30. */
+const MENUBG_ROTOR=22/30;
 function menubgPaint(c,m,tick){
  const col=FAC[m.fac].color,ang=screenAng(0);
  const moving=true,bob=Math.sin(tick*.6+m.id*2);
@@ -121,9 +169,20 @@ function menubgPaint(c,m,tick){
  }else{
   const cell=MENUBG.cells.veh[m.key]&&MENUBG.cells.veh[m.key][m.fac];
   if(!cell)return;
-  try{offsetSil(c,cell,0,0,.26,ang);contactShadow(c,0,1,14,6,.16);}catch(e){}
-  c.rotate(ang);
+  const fly=!!m.t.fly;
+  try{
+   if(fly)plShadow(c,0,0,16,7,.22);
+   else{offsetSil(c,cell,0,0,.26,ang);contactShadow(c,0,1,14,6,.16);}
+  }catch(e){}
+  if(fly)c.translate(0,-34+Math.sin(tick*.09+m.id)*1.6); // a slow hover on top of the lift
+  if(m.t.a!=='balloon')c.rotate(ang);
   c.drawImage(cell.cv,-cell.ax,-cell.ay,cell.w,cell.h);
+  if(m.t.a==='heli'){
+   const hs=m.key==='chinook'?1.25:1;
+   c.save();if(hs!==1)c.scale(hs,hs);
+   try{heliRotor(c,m.key,tick*MENUBG_ROTOR)}catch(e){}
+   c.restore();
+  }
  }
 }
 function menubgResize(){
@@ -133,12 +192,28 @@ function menubgResize(){
  MENUBG.cv.height=Math.max(1,MENUBG.H*MENUBG.dpr|0);
  MENUBG.pat=null;
 }
+/* v105: the Field Manual is painted on the same parade ground as the menu
+   (owner ask). Two halves, and the second is the one that is easy to miss:
+   - the loop runs while the manual is open as well as while #setup is shown,
+     which includes the manual opened from the HUD mid-match;
+   - and the canvas has to CLIMB while it is serving the manual. It lives at
+     z-index 1, under #setup's z-index 30 and the HUD's 10, which is right for
+     a backdrop; the manual is z-index 40, so at z-index 1 the parade would be
+     read through a translucent panel with the setup screen's own scrim and
+     cards - or the live HUD - sandwiched in between. The .front class puts it
+     at 39: above both, still under the manual. */
+function menubgOn(){
+ if(document.hidden)return 0;
+ const info=document.getElementById('infoPanel');
+ if(info&&info.classList.contains('open'))return 2;
+ return document.getElementById('setup').style.display!=='none'?1:0;
+}
 function menubgFrame(t){
  requestAnimationFrame(menubgFrame);
- const setup=document.getElementById('setup');
- const on=setup.style.display!=='none'&&!document.hidden;
+ const mode=menubgOn(),on=mode>0;
  const want=on?'block':'none';
  if(MENUBG.cv.style.display!==want)MENUBG.cv.style.display=want;
+ MENUBG.cv.classList.toggle('front',mode===2);
  if(!on)return;
  if(MENUBG.W!==innerWidth||MENUBG.H!==innerHeight)menubgResize();
  const c=MENUBG.c,W=MENUBG.W,H=MENUBG.H;
@@ -160,9 +235,9 @@ function menubgFrame(t){
    for(const L of MENUBG.lanes){
     const y=H*L.y,sc=L.s*zoom;
     for(const m of L.men){
-     const span=W+700,x=((ms*L.v+m.off)%span)-350;
+     const span=W+700,x=(((ms*L.v+m.off*span)%span)+span)%span-350;
      c.save();c.translate(x,y+(x-W/2)*.045);c.scale(sc,sc);
-     menubgPaint(c,m,tick+m.off*.01);
+     menubgPaint(c,m,tick+m.off*97); // per-man phase: off is a 0..1 fraction now, so it is scaled up rather than down
      c.restore();
     }
    }

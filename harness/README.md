@@ -1181,6 +1181,155 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v105 — the whole roster parades, and the Field Manual joins it
+
+Two owner asks, one release. `tail_v105.js` (T86, 36 checks; the suite goes
+5,973 -> 6,009). **No hash trail moved and no repin was due** — both asks are
+presentation, and `triage.sh` said "the simulation did NOT move" on the first
+run, with all 30 layout pins holding.
+
+### Ask 1: "the parade should include all units, and be denser"
+
+Both halves live in `MENUBG_LANES`, and both are a table edit rather than new
+machinery.
+
+**The roster.** The old parade carried twelve entries over four lanes — and
+only nine distinct units, because the Grunt was in all four. It is now **all 26
+rows of `U`**, the Paratrooper and the Observation Balloon included, spread over
+six lanes with **every unit appearing exactly once**.
+
+That last property is what pays for the whole thing. The private cache goes
+**56 cells -> 66**, a 18% rise for a roster that more than doubled in kinds,
+because nothing is baked in two armies any more. T86.B pins the shape (`no unit
+is baked in two armies`) and v58's transcribed 56 was bumped to 66 as the
+conscious edit rule 5 asks for.
+
+**The check that matters is DERIVED off `U`, not transcribed.** T86.A asks "is
+every row of `U` marching, exactly once" — so a 27th unit fails this file until
+somebody puts it in a lane, exactly as T71.A fails until its texture is baked.
+The lanes cannot answer that question with a hand-kept list, and neither can
+they answer "whose colours does an exclusive wear": `menubgFacOf` defers to the
+Field Manual's `infoFacOf`, which reads `FAC`. The parade and the manual now
+give the same answer by construction rather than by both being edited.
+
+**The density, and the part that was NOT the count.** 17 marchers -> 70. But
+the count was only half of it: `off` used to be an absolute pixel gap
+(`i*(200+r()*90)`), so a lane of five men occupied the first ~1,200px of a wrap
+span that is `W+700` wide — on a 2,600px window the whole back half of every
+lane was empty however many men were in it. `off` is a **fraction of the span**
+now and the men are dealt one per `1/n` slot with a jitter inside it, so the
+spread follows the window. T86.C measures exactly that: at 900 / 1500 / 2600 /
+3800px, no lane may leave a hole wider than two even slots.
+
+Two smaller things that fall out of the same change and would bite again:
+
+- **The key is taken ROUND-ROBIN off the lane roster, not rolled.** Rolling n
+  keys from a roster of n leaves at least one out about a third of the time,
+  which is not good enough for a parade whose stated job is to show the whole
+  army list. Every lane's `n` is `>=` its roster length for the same reason
+  (T86.A pins both the rule and the result).
+- **A per-man animation phase that was scaled DOWN now has to be scaled UP.**
+  The frame passed `tick+m.off*.01` when `off` was ~1,500px; with `off` in
+  0..1 that is a phase spread of one hundredth of a tick, i.e. every man in the
+  game bobbing in lockstep. It is `*97` now. **When a quantity changes units,
+  grep for what multiplies it** — nothing would have failed.
+
+**Lane 1 is the flight.** Six things in this game never touch the ground, and
+before v105 none of them was in the parade at all. They are their own lane now
+and `menubgPaint` grew the three claims `drawUnit` already makes, each read off
+the same table field rather than off a list of keys: `t.fly` lifts the body 34px
+and leaves a `plShadow` on the floor; `a==='balloon'` is deliberately not
+rotated (the v86 note); `a==='heli'` turns its blades.
+
+**The rotor was lifted out of `drawUnit` rather than copied** — `heliRotor(c,
+key,rot)`, painting at the caller's transform so the 1.25 tandem scale stays
+with the caller. A second copy of the disc/blade geometry is precisely the kind
+of thing that drifts one release later, and T86.D asserts both call sites reach
+the shared function. The spin is DERIVED from the menu clock (`tick*22/30`,
+because `tick` counts sim ticks at 30/s and `updateUnit` turns a rotor at 22
+rad/s) rather than accumulated onto the fake marcher — so the reduced-motion
+path, which freezes that clock, freezes the rotor with it instead of leaving one
+thing turning on a still picture. T86.D pins that `m.u.rot` is never written.
+
+**The bake order was INVERTED, and it had to be.** `menubgBake` used to walk the
+lane table and then lay out the column; it lays out the column first and then
+bakes what the marchers actually need. Once a lane can carry a unit in another
+army's colours (the flight lane carries a gray Choktaw, a tan Firebomb and a
+blue Chinook) the lane's own `fac` is no longer the answer to "what do I bake".
+
+### Ask 2: "the Field Manual should have the menu's background"
+
+Three edits, and the third is the one that is easy to miss.
+
+1. `menubgFrame` paints while `#infoPanel.open` as well as while `#setup` is
+   shown — which includes the manual opened from the HUD mid-match.
+2. `#infoPanel`'s background keeps its v31 gradient and its v31 colours but goes
+   **translucent** (.70 / .77 / .82). It is a flat cover rather than `#setup`'s
+   centre-tight ellipse because the manual is a full-width reading surface: the
+   gallery, the stat column and the controls page all run to the rim, and a
+   scrim that fades out at the edges would fade out under the text. The two
+   text-heaviest regions (`#infoControls`, `#infoStats`) plus the header take a
+   second .34-.42 wash of their own.
+3. **The canvas has to CLIMB.** `#menuBg` is z-index 1, under `#setup` (30) and
+   under the HUD (10), which is right for a backdrop and wrong for this: at
+   z-index 1 a translucent manual reads the *setup screen's own cards*, or the
+   live HUD, and not the parade at all. `#menuBg.front` is z-index 39 — above
+   both, still under the manual — and `menubgFrame` owns the class.
+
+T86.F scrapes those four z-indexes out of the stylesheet and asserts the ORDER
+rather than transcribing any of them, on T65.B's precedent. T86.E drives the
+transitions functionally, including a manual opened over a **live match**: the
+parade paints, the canvas climbs, and `hashState()` is identical either side.
+
+### Rule 7, which is the whole of this release
+
+Nothing here can fail `seg.sh` by looking wrong. Everything above is read off
+calls, tables and stylesheet numbers, and the frames were read in real headless
+Chromium at 1600x900 and 1000x700 before the tail was written. Three things came
+out of looking that no assertion would have shown:
+
+- **The first density pass was not dense enough.** 41 marchers looked correct
+  in the numbers and still read as a thin scatter on a 1600px screen, because
+  the figures are 35-90px against 145px lane spacing. 70 is what the frame
+  wanted. There is no test for this and there should not be.
+- **The first manual scrim was too heavy** at .80/.86/.90: legible, and the
+  parade behind it read as texture rather than as the menu's own background,
+  which is what the ask actually said. .70/.77/.82 with the local washes keeps
+  every line readable and lets the ranks through.
+- **`--window-size` is not the viewport.** Headless Chromium at
+  `--window-size=1600,900` gives `innerHeight` 813 and screenshots 900, so the
+  bottom ~87px is browser chrome painted flat dark. It looks exactly like a
+  backdrop that stops short of the bottom of the screen — and it reproduces on
+  `origin/main`, which is how it was ruled out. Shoot at `H+87` or measure
+  `innerHeight` before believing a frame's edges.
+
+A recording-context trick worth reusing: T86.D passes `menubgPaint` a `Proxy`
+that logs every call instead of drawing, which turns "is the helicopter lifted
+off the ground" into an assertion. It needs one correction to be honest —
+**only translates at save-depth 0 count**, because `offsetSil` and
+`contactShadow` translate inside their own `save()/restore()` and a naive sum
+reads a ground vehicle's shadow offset as a 2.2px lift.
+
+### Three older checks were edited rather than re-pinned
+
+- **`v58 four ranks` / `seventeen marchers` / `56 baked cells`** — transcribed
+  counts doing their job. Bumped deliberately to 6 / 70 / 66.
+- **`v58 the marching column rebuilds identically`** compared
+  `Math.round(m.off)`, which with `off` a 0..1 fraction would have collapsed to
+  a row of zeros and quietly stopped comparing anything. It compares
+  `key@fac:off.toFixed(4)` now — a *stronger* claim than the one it replaced,
+  since it covers the army as well.
+- **`T44.F the rank table is intact`** pinned `MENUBG_LANES.length===4`. The
+  claim it was making is "the v65 scrim pass did not eat the rank table", so it
+  was restated as that (at least four lanes, every one with a roster it can
+  fill) rather than re-pinned to 6, which would have made it a second copy of a
+  number `tail_v105` owns.
+- **`T81.F` / `T82.F` "the release stamp is v104"** were a THIRD copy of the
+  current version — the v104.1 comment already called them a duplicate of
+  T75.B, the one deliberately-transcribed pin. Restated to the claim those
+  tails can actually make: `GAME_VER_N >= 104`. A new release should edit one
+  line, not three.
+
 ## v104 / v104.1 / v104.2 / v104.3 / v104.4 — the soundtrack (Roadmap 4 item 1)
 
 **The game has music.** Four recorded tracks, `tail_v104.js` (T81, 43 checks in the suite; 41 run standalone - two need an AudioContext, which an earlier tail in segment 3 supplies as a stub),
