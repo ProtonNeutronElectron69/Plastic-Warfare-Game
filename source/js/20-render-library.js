@@ -813,6 +813,28 @@ function aaTurret(c,col){
 /* keys whose portrait needs the live turret composited on, -> the scale drawUnit
    applies to it (Bull draws its turret 1.34x, matching its hull blit). */
 const TURR_PORTRAIT={tank:1,bulltank:1.34,aatruck:1};
+/* v105.1: the ONE place that knows which hull wears a turret, where that turret
+   sits and how big it is. It paints at the CALLER's transform, on top of a hull
+   the caller has already drawn and already rotated to its heading, so every site
+   that draws a vehicle can put the gun on it with one call.
+   Three callers: drawUnit (a match), vehPortraitPaint (the panel and Field Manual
+   thumbnails) and menubgPaint (the menu parade, which drew hulls with no turret
+   at all - the bug this was extracted for).
+   `rot` is the extra screen rotation between the hull's facing and the turret's,
+   which only a live unit has; it is 0 wherever the turret simply rides the hull.
+   MEMBERSHIP IS TURR_PORTRAIT'S OWN KEY SET, which is already the answer to "does
+   this hull have a live turret" - so the Rocket Artillery, whose launcher is
+   baked into its hull, falls through here exactly as it skips drawUnit's turret
+   block, and it stays one table rather than becoming two that can disagree. */
+function vehTurret(c,key,col,rot){
+ const s=TURR_PORTRAIT[key];
+ if(!s)return false;
+ if(key==='aatruck')c.translate(AA_PIVOT,0); // the rack swivels off the hull's centre
+ else if(s!==1)c.scale(s,s);
+ if(rot)c.rotate(rot);
+ if(key==='aatruck')aaTurret(c,col);else tankTurret(c,key,col);
+ return true;
+}
 /* v49: the logical box a vehicle portrait must fit = the baked hull's VEH_BOX
    widened by whatever the live turret reaches past it, so the barrel is not
    clipped at the tile edge. Barrel tip = plLimb endpoint + half its round cap;
@@ -841,8 +863,7 @@ function vehPortraitPaint(c,key,fac,Pz,pad){
  c.translate((Pz-bw*s2)/2-bx.x0*s2,(Pz-bh*s2)/2-bx.y0*s2);c.scale(s2,s2);
  c.imageSmoothingEnabled=true;
  c.drawImage(cell.cv,-cell.ax,-cell.ay,cell.w,cell.h);
- const ts=TURR_PORTRAIT[key];
- if(ts){c.scale(ts,ts);if(key==='aatruck'){c.translate(AA_PIVOT,0);aaTurret(c,FAC[fac].color);}else tankTurret(c,key,FAC[fac].color);} // v51: same painter split as drawUnit
+ vehTurret(c,key,FAC[fac].color,0); // v105.1: the split that used to be inlined here, shared
  c.restore();return true;
 }
 /* painted white service star, squashed for the top-down vehicle view */

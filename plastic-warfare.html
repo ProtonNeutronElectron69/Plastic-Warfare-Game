@@ -723,7 +723,7 @@ canvas{display:block}
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v105';
+const GAME_VER='v105.1';
 const GAME_DATE='2026-09-01';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
@@ -4496,9 +4496,34 @@ B.lab.d=(function(){
 })();
 // LAB catalog, grouped for a readable layout: production unlocks, then economy, then
 // defence/utility unlocks, then the (non-army) upgrades.
+/* v105.1: LAB_ORDER now only ORDERS the catalog; it no longer IS the catalog.
+   researchCatalog used to be a filter OVER this list, so a lab-routed unlock that
+   nobody remembered to type here had no button anywhere in the game - however
+   correct RESEARCH, TECH_BLD and techAvailable all were about it. Three shipped
+   that way and stayed that way: the Command Post (v86), the Foundry (v87) and the
+   Heavy Barricade (v88), i.e. the SECOND exclusive structure of Green, Tan and
+   Gray. Blue's two are here because v85 was the last release that remembered.
+   The asymmetry is the part that matters: aiResearch walks RESEARCH and pushes
+   FAC[p.fac].ub before anything else, so the BOTS have been researching all three
+   since the release that added them, against a human who could not.
+   The three keys are APPENDED rather than slotted in, so every button that was
+   already on the panel keeps the position it has had since v85. */
 const LAB_ORDER=['b_garage','b_helipad','b_generator','b_turbine','b_fwdpad','b_guardtower','b_radar','b_radiotower','b_dump','b_bunker',
+                 'b_foundry','b_cmdpost','b_hbarricade',
                  'up_guardtower','up_generator','up_turbine','up_dump','up_bunker','up_lab'];
-function researchCatalog(p){return LAB_ORDER.filter(k=>RESEARCH[k]&&techAvailable(p,k)&&researchBuilding(k)==='lab');}
+/* DERIVED from RESEARCH + TECH_BLD + techAvailable: every lab-routed tech this
+   player may take is offered, unlocks before upgrades, in LAB_ORDER's order.
+   Anything this file forgets to name rides at the end of its own kind instead of
+   falling off the panel - a missing name is now a cosmetic ordering question and
+   can never again be an unreachable building. */
+function researchCatalog(p){
+ const out=[];
+ for(const k in RESEARCH)if(researchBuilding(k)==='lab'&&techAvailable(p,k))out.push(k);
+ const rank=k=>{const i=LAB_ORDER.indexOf(k);return i<0?LAB_ORDER.length:i};
+ out.sort((a,b)=>((RESEARCH[a].kind==='upgrade'?1:0)-(RESEARCH[b].kind==='upgrade'?1:0))
+                 ||(rank(a)-rank(b))||(a<b?-1:a>b?1:0)); // ties break on key, as SUP_U does
+ return out;
+}
 // the research a given PRODUCTION building offers: its unit unlocks first, then its own upgrade
 function bldResearchList(p,bk){
  const out=[];
@@ -15113,6 +15138,28 @@ function aaTurret(c,col){
 /* keys whose portrait needs the live turret composited on, -> the scale drawUnit
    applies to it (Bull draws its turret 1.34x, matching its hull blit). */
 const TURR_PORTRAIT={tank:1,bulltank:1.34,aatruck:1};
+/* v105.1: the ONE place that knows which hull wears a turret, where that turret
+   sits and how big it is. It paints at the CALLER's transform, on top of a hull
+   the caller has already drawn and already rotated to its heading, so every site
+   that draws a vehicle can put the gun on it with one call.
+   Three callers: drawUnit (a match), vehPortraitPaint (the panel and Field Manual
+   thumbnails) and menubgPaint (the menu parade, which drew hulls with no turret
+   at all - the bug this was extracted for).
+   `rot` is the extra screen rotation between the hull's facing and the turret's,
+   which only a live unit has; it is 0 wherever the turret simply rides the hull.
+   MEMBERSHIP IS TURR_PORTRAIT'S OWN KEY SET, which is already the answer to "does
+   this hull have a live turret" - so the Rocket Artillery, whose launcher is
+   baked into its hull, falls through here exactly as it skips drawUnit's turret
+   block, and it stays one table rather than becoming two that can disagree. */
+function vehTurret(c,key,col,rot){
+ const s=TURR_PORTRAIT[key];
+ if(!s)return false;
+ if(key==='aatruck')c.translate(AA_PIVOT,0); // the rack swivels off the hull's centre
+ else if(s!==1)c.scale(s,s);
+ if(rot)c.rotate(rot);
+ if(key==='aatruck')aaTurret(c,col);else tankTurret(c,key,col);
+ return true;
+}
 /* v49: the logical box a vehicle portrait must fit = the baked hull's VEH_BOX
    widened by whatever the live turret reaches past it, so the barrel is not
    clipped at the tile edge. Barrel tip = plLimb endpoint + half its round cap;
@@ -15141,8 +15188,7 @@ function vehPortraitPaint(c,key,fac,Pz,pad){
  c.translate((Pz-bw*s2)/2-bx.x0*s2,(Pz-bh*s2)/2-bx.y0*s2);c.scale(s2,s2);
  c.imageSmoothingEnabled=true;
  c.drawImage(cell.cv,-cell.ax,-cell.ay,cell.w,cell.h);
- const ts=TURR_PORTRAIT[key];
- if(ts){c.scale(ts,ts);if(key==='aatruck'){c.translate(AA_PIVOT,0);aaTurret(c,FAC[fac].color);}else tankTurret(c,key,FAC[fac].color);} // v51: same painter split as drawUnit
+ vehTurret(c,key,FAC[fac].color,0); // v105.1: the split that used to be inlined here, shared
  c.restore();return true;
 }
 /* painted white service star, squashed for the top-down vehicle view */
@@ -16173,16 +16219,17 @@ function drawUnit(c,u){
   if(!blitVeh(c,vk,u.p.fac))vehBody(c,vk,col);
  }
  else if(a==='tank'||a==='arty'){
-  const big=u.key==='bulltank',s=big?1.34:1;c.rotate(ang);
+  c.rotate(ang);
   if(!blitVeh(c,u.key,u.p.fac))vehBody(c,u.key,col);
+  /* The Rocket Artillery's launcher is baked into its hull, and vehTurret answers
+     "does this wear a live turret" off TURR_PORTRAIT - but the SLEW below is state
+     only a tank keeps, so the arty guard stays. */
   if(a!=='arty'){
-   c.scale(s,s);
    // turret faces its target (or its body) in screen space
    const goal=u.target?u.tface:u.face; // v41: turret eases toward the aim, re-centering on the hull when idle
    if(u.tvis==null)u.tvis=goal;
    else{let dd=Math.atan2(Math.sin(goal-u.tvis),Math.cos(goal-u.tvis));const st=(TURR_SLEW[u.key]||TURR_SLEW.tank)*RDT;u.tvis+=Math.abs(dd)<=st?dd:Math.sign(dd)*st;u.tvis=Math.atan2(Math.sin(u.tvis),Math.cos(u.tvis));}
-   c.rotate(screenAng(u.tvis)-ang);
-   tankTurret(c,u.key,col); // v49: same geometry, now shared with the portrait painter
+   vehTurret(c,u.key,col,screenAng(u.tvis)-ang); // v49 geometry; v105.1 shared with the portrait AND the menu parade
   }
  }
  else if(a==='aa'){ // v51: hull blits with its travel facing, rack swivels on its own
@@ -16191,8 +16238,7 @@ function drawUnit(c,u){
   const goal=u.target?u.tface:u.face; // re-centres on the hull when idle, exactly like the tank
   if(u.tvis==null)u.tvis=goal;
   else{let dd=Math.atan2(Math.sin(goal-u.tvis),Math.cos(goal-u.tvis));const st=(TURR_SLEW[u.key]||TURR_SLEW.tank)*RDT;u.tvis+=Math.abs(dd)<=st?dd:Math.sign(dd)*st;u.tvis=Math.atan2(Math.sin(u.tvis),Math.cos(u.tvis));}
-  c.translate(AA_PIVOT,0);c.rotate(screenAng(u.tvis)-ang);
-  aaTurret(c,col);
+  vehTurret(c,u.key,col,screenAng(u.tvis)-ang); // v105.1: the AA_PIVOT translate lives in vehTurret now
  }
  else if(a==='balloon'){
   /* v86: deliberately NOT rotated. Everything else in this function turns with its
@@ -20558,6 +20604,12 @@ function menubgPaint(c,m,tick){
   if(fly)c.translate(0,-34+Math.sin(tick*.09+m.id)*1.6); // a slow hover on top of the lift
   if(m.t.a!=='balloon')c.rotate(ang);
   c.drawImage(cell.cv,-cell.ax,-cell.ay,cell.w,cell.h);
+  /* v105.1: THE GUN GOES ON THE HULL. A turret is not in the baked cell - it is
+     painted live on top, which is why every marching tank, Bull and AA truck was
+     a bare hull. Nothing here decides which hull has one or where it sits;
+     vehTurret is the same call drawUnit makes, with rot 0 because a parade
+     turret simply rides its hull rather than tracking a target. */
+  c.save();try{vehTurret(c,m.key,col,0)}catch(e){}c.restore();
   if(m.t.a==='heli'){
    const hs=m.key==='chinook'?1.25:1;
    c.save();if(hs!==1)c.scale(hs,hs);

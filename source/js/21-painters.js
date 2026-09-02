@@ -333,16 +333,17 @@ function drawUnit(c,u){
   if(!blitVeh(c,vk,u.p.fac))vehBody(c,vk,col);
  }
  else if(a==='tank'||a==='arty'){
-  const big=u.key==='bulltank',s=big?1.34:1;c.rotate(ang);
+  c.rotate(ang);
   if(!blitVeh(c,u.key,u.p.fac))vehBody(c,u.key,col);
+  /* The Rocket Artillery's launcher is baked into its hull, and vehTurret answers
+     "does this wear a live turret" off TURR_PORTRAIT - but the SLEW below is state
+     only a tank keeps, so the arty guard stays. */
   if(a!=='arty'){
-   c.scale(s,s);
    // turret faces its target (or its body) in screen space
    const goal=u.target?u.tface:u.face; // v41: turret eases toward the aim, re-centering on the hull when idle
    if(u.tvis==null)u.tvis=goal;
    else{let dd=Math.atan2(Math.sin(goal-u.tvis),Math.cos(goal-u.tvis));const st=(TURR_SLEW[u.key]||TURR_SLEW.tank)*RDT;u.tvis+=Math.abs(dd)<=st?dd:Math.sign(dd)*st;u.tvis=Math.atan2(Math.sin(u.tvis),Math.cos(u.tvis));}
-   c.rotate(screenAng(u.tvis)-ang);
-   tankTurret(c,u.key,col); // v49: same geometry, now shared with the portrait painter
+   vehTurret(c,u.key,col,screenAng(u.tvis)-ang); // v49 geometry; v105.1 shared with the portrait AND the menu parade
   }
  }
  else if(a==='aa'){ // v51: hull blits with its travel facing, rack swivels on its own
@@ -351,8 +352,7 @@ function drawUnit(c,u){
   const goal=u.target?u.tface:u.face; // re-centres on the hull when idle, exactly like the tank
   if(u.tvis==null)u.tvis=goal;
   else{let dd=Math.atan2(Math.sin(goal-u.tvis),Math.cos(goal-u.tvis));const st=(TURR_SLEW[u.key]||TURR_SLEW.tank)*RDT;u.tvis+=Math.abs(dd)<=st?dd:Math.sign(dd)*st;u.tvis=Math.atan2(Math.sin(u.tvis),Math.cos(u.tvis));}
-  c.translate(AA_PIVOT,0);c.rotate(screenAng(u.tvis)-ang);
-  aaTurret(c,col);
+  vehTurret(c,u.key,col,screenAng(u.tvis)-ang); // v105.1: the AA_PIVOT translate lives in vehTurret now
  }
  else if(a==='balloon'){
   /* v86: deliberately NOT rotated. Everything else in this function turns with its

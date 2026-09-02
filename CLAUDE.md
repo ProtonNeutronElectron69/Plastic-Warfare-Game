@@ -6,7 +6,7 @@ Read this first. It is the orientation; `harness/README.md` is the detail.
 touch anything — what the project is, where it stands, how to build, how to
 test, how to watch the bots, and the rules that are load-bearing. Everything
 after that is the record: the roadmap chapters, then one section per standalone
-release NEWEST FIRST (v105 down to v89), then the balance baseline, then the
+release NEWEST FIRST (v105.1 down to v89), then the balance baseline, then the
 patterns worth copying. Read the record when you are about to touch the
 subsystem it describes; do not read it front to back.
 
@@ -52,16 +52,18 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v105, and what a fresh session does)
+## Where the game stands (v105.1, and what a fresh session does)
 
-The game is at **v105**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v105.1**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), **v104 is the first Roadmap 4 item
 delivered** — the soundtrack, which then took four owner feedback passes
 (v104.1–v104.4) before it was right — and **v105 is a standalone menu pass**
 (the whole roster parades behind the setup screen, and the Field Manual is
-painted on the same parade ground). There is no release in flight.
+painted on the same parade ground), with **v105.1** the owner's feedback pass on
+it — two bugs found by playing, one of which had let the BOTS research three
+structures the human could not. There is no release in flight.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
 ranked, written after a whole-game review at v103. **One of the twelve has
@@ -94,7 +96,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 6,009 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 6,039 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -162,7 +164,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 6,009 checks at v105.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 6,039 checks at v105.1.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -327,7 +329,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 6,009 checks. What is thin is everything AROUND it — how
+recorded soundtrack, 6,039 checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -558,10 +560,58 @@ landed with the trails untouched; a render change that moves a trail has a bug.
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
 
+## v105.1 — two owner bug fixes (the feedback pass on v105)
+
+Both found by the owner playing v105. `tail_v105_1.js` (T87, 30 checks; the suite
+is 6,039 now); full evidence in the v105.1 section of `harness/README.md`. **No
+trail moved and no repin was due** — one bug is a UI catalog, the other a painter.
+
+- **Three exclusive structures had no research button, and the BOTS could build
+  them.** `researchCatalog` was `LAB_ORDER.filter(...)` — the hand-typed list was
+  not the catalog's ORDER, it WAS the catalog. Green's Command Post (v86), Tan's
+  Foundry (v87) and Gray's Heavy Barricade (v88) were never added to it, so
+  three armies in four could not research their second exclusive structure. Blue
+  is whole because v85 was the last release that remembered.
+- **The menu parade drew hulls with no turrets** — and so did the Field Manual,
+  which since v105 is painted on that same parade.
+
+Four things worth carrying forward:
+
+- **THE ASYMMETRY IS THE FINDING, not the missing button.** `aiResearch` builds
+  its wishlist off `RESEARCH` and pushes `FAC[p.fac].ub` first; it never reads
+  `LAB_ORDER`. So a CPU Green has been putting up Command Posts since v86
+  against a human who could not build one, for nineteen releases. Nothing caught
+  it because every existing check asked `RESEARCH` or `techAvailable` and both
+  were right the whole time. **When a hand-typed list sits between a correct
+  table and the player, ask who ELSE reads the table.**
+- **A hand-typed list may ORDER a catalog and must not BE one.** `LAB_ORDER`
+  still declares the reading order; `researchCatalog` is derived from `RESEARCH`
+  + `TECH_BLD` + `techAvailable` and sorts by that list's positions, so a name it
+  forgets rides at the end of its own kind instead of falling off the panel.
+  T87.A proves that by SPLICING a key out of `LAB_ORDER` at runtime and asserting
+  the catalog still offers it — a `const` array is still a mutable one, and that
+  turns "is this derived" into something a test can drive rather than read.
+- **A turret is not in the baked cell.** It is painted live on top, which is why
+  drawing the cell and stopping loses it. `vehTurret(c,key,col,rot)` is the one
+  painter now — `drawUnit`'s two branches, `vehPortraitPaint` and `menubgPaint` —
+  and its MEMBERSHIP is `TURR_PORTRAIT`'s own key set, which was already the
+  answer to "does this hull wear one". So the Rocket Artillery (launcher baked
+  into its hull) is refused by the same table that gives the Bull its 1.34, and
+  `AA_PIVOT` stopped being restated at each call site. Same shape as v105's
+  `heliRotor`, and the same rule: lift it out, never copy it.
+- **Two of this pass's own checks were wrong first, both by asserting a SHAPE
+  instead of the claim.** One expected a flat ten-key order and failed on Blue,
+  who never sees three of those ten. The other measured the Bull's turret
+  placement by summing every `translate`/`scale` in the paint log — which
+  measures the ARTWORK, since `plSphere` translates internally — and assumed the
+  Bull's turret was the Tank's scaled up, which it is not (`tankTurret` draws it
+  a longer barrel off its own `big` branch). Both are stated against a control
+  now: per-army availability, and the bare painter's own log.
+
 ## v105 — the whole roster parades, and the manual joins it (not part of a roadmap)
 
 Two owner asks about the menu. `tail_v105.js` (T86, 36 checks; the suite is
-6,009 now); full evidence in the v105 section of `harness/README.md`. **No trail
+6,009 at that release); full evidence in the v105 section of `harness/README.md`. **No trail
 moved and no repin was due** — both asks are presentation, and all 30 layout
 pins held.
 

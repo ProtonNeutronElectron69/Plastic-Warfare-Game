@@ -1181,6 +1181,114 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v105.1 — two owner bug reports: the missing research buttons, and the missing turrets
+
+Both found by the owner playing v105. `tail_v105_1.js` (T87, 30 checks; the suite
+goes 6,009 -> 6,039). **No hash trail moved and no repin was due** — one bug is a
+UI catalog and the other is a painter; `triage.sh` said "the simulation did NOT
+move" on the first run and all 30 layout pins held.
+
+### 1. Three structures were researchable by the bots and by nobody else
+
+The owner: *"some of the more recent special structures are locked behind
+research in the Research lab, but don't have a button to research them."*
+
+`researchCatalog(p)` was `LAB_ORDER.filter(...)` — a filter OVER a hand-typed
+list. So the list was not the ORDER of the lab catalog, it WAS the catalog, and a
+lab-routed unlock nobody remembered to type into it had no button anywhere in the
+game, however correct `RESEARCH`, `TECH_BLD` and `techAvailable` all were about
+it. Audited across all four armies, before the fix:
+
+| army | may research at a lab | lab panel offered | unreachable |
+|---|---|---|---|
+| green | 10 | 9 | `b_cmdpost` (v86) |
+| tan | 11 | 10 | `b_foundry` (v87) |
+| gray | 11 | 10 | `b_hbarricade` (v88) |
+| blue | 11 | 11 | none |
+
+It is the **second exclusive structure of three armies in four**, and the pattern
+says why: v85 gave Blue the Turbine and the Forward Pad and updated `LAB_ORDER`;
+v86, v87 and v88 each added a structure and a `tech` and did not.
+
+**THE PART THAT MATTERS IS THAT THE GAP WAS ONE-SIDED.** `aiResearch` builds its
+wishlist off `RESEARCH` and pushes `FAC[p.fac].ub` before the shared structures
+(step 4 of its plan) — it never consults `LAB_ORDER`. So a CPU Green has been
+putting up Command Posts since v86 against a human who could not build one. T87.C
+pins that asymmetry rather than just the fix, because it is the reason nothing
+caught this: every existing check asked `RESEARCH` or `techAvailable`, and both
+were right the whole time.
+
+`LAB_ORDER` now only ORDERS the catalog; `researchCatalog` is DERIVED from
+`RESEARCH` + `TECH_BLD` + `techAvailable` and sorts by `LAB_ORDER` position,
+unlocks before upgrades, ties on key name. Anything the list forgets rides at the
+end of its own kind instead of falling off the panel — a missing name is now a
+cosmetic ordering question and can never again be an unreachable building. The
+three keys are **appended** rather than slotted in, so every button already on
+the panel keeps the position it has had since v85 (T87.B, checked per army,
+because four of those ten are other people's exclusives).
+
+**T87.A's non-vacuity is the check worth copying.** It does not read the source to
+prove the filter is gone: it `splice`s a key OUT of `LAB_ORDER`, asserts the
+catalog still offers it, and puts it back. A `const` array is still a mutable
+one, and that turns "is this derived" into something a test can actually drive.
+
+### 2. The parade drew hulls with no guns
+
+The owner: *"the turrets on tanks aren't showing for the units in the background
+parade on the main menu or the Field Manual."* One bug, both places — since v105
+the manual is painted on that same parade.
+
+A turret is **not in the baked hull cell**. It is painted live on top, which is
+why `menubgPaint` — which draws the cell and stops — gave every marching Tank,
+Bull and AA Truck a bare chassis. (The Rocket Artillery was right by accident:
+its launcher IS baked in.)
+
+The fix is v105's rotor treatment again. `vehTurret(c,key,col,rot)` is lifted out
+as the ONE painter that knows which hull wears a turret, where it sits and how
+big it is, and all four sites go through it: `drawUnit`'s tank branch, its AA
+branch, `vehPortraitPaint` and now `menubgPaint`. Three things fell out of doing
+it that way rather than copying eight lines into the parade:
+
+- **Membership is `TURR_PORTRAIT`'s own key set**, which was already the answer to
+  "does this hull wear a live turret". So the question is asked in one place for
+  the match, the portraits and the parade alike, and the arty is answered by the
+  same table that answers the Bull's 1.34 scale rather than by a fourth copy of
+  `a!=='arty'`.
+- **The `AA_PIVOT` translate moved into it**, so the rack's pivot is no longer
+  restated at each call site.
+- `rot` is the extra screen rotation between the hull's facing and the turret's —
+  the slew a live unit has and a marching one does not. The parade passes 0.
+
+**Three older checks were EDITED, not loosened** (rule 5 in both directions):
+`T30.D` and `T32.E` pinned `drawUnit.toString().includes('tankTurret(...)')` and
+`aaTurret(`, i.e. the inlined call shape. Each was restated to the claim it was
+making — the geometry is not a second copy inside `drawUnit` — and each is now
+STRONGER, because it asserts the shared painter is reached from every caller
+including the parade.
+
+### Rule 7, and it decided both halves
+
+Neither bug could fail `seg.sh`: a missing button is a correct table plus a short
+list, and a missing turret is a frame nobody looked at. Both were found by the
+owner playing, and both fixes were read back as real Chromium frames before this
+was written — the parade with turrets on its Tanks, Bulls and AA trucks; the
+Field Manual preview for all four of `tank` / `bulltank` / `aatruck` / `arty`,
+which is what proves the `drawUnit` refactor did not lose a gun; and the Lab
+panel for each of the four armies, which is where the missing buttons now are.
+
+**Two of this release's own checks were wrong first, both for the same reason —
+they asserted a shape instead of the claim:**
+
+- The v85-order check expected a flat ten keys and failed on Blue, who never sees
+  the Radar Tent, the Munitions Dump or the Bunker at all. It is filtered per
+  army now.
+- The Bull's placement was first checked by summing every `translate`/`scale` in
+  the log, which measures the ARTWORK (`plSphere` translates internally), not the
+  placement. It is stated against the bare painter now: `vehTurret('bulltank')`
+  must equal `tankTurret(c,'bulltank')` with exactly one `scale(1.34)` in front.
+  The first cut also assumed the Bull's turret was the Tank's turret scaled up —
+  it is not; `tankTurret` draws it a longer barrel off its own `big` branch.
+
 ## v105 — the whole roster parades, and the Field Manual joins it
 
 Two owner asks, one release. `tail_v105.js` (T86, 36 checks; the suite goes
