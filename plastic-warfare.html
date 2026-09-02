@@ -723,8 +723,8 @@ canvas{display:block}
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v105.1';
-const GAME_DATE='2026-09-01';
+const GAME_VER='v106';
+const GAME_DATE='2026-09-02';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
    the version that nothing tied back to the first, which is the trap this whole
@@ -1197,6 +1197,19 @@ const CRATE_GLOW=0.30;     // ...and the amplitude of the green pulse around it
 /* The four BOT thresholds. Named here with the abilities they spend rather than
    buried in aiTick, on the same rule as LOCK_AI_FLOOR and VALVE_AI_INF_P. */
 const BCAST_AI_N=3;        // Broadcast: allies under fire inside the radius before a bot pins its truck
+/* v106 - THE UNIT ABILITIES A BOT NEVER USED. Five toggles were owned and never
+   switched on by any CPU army (measured with harness/probe_v106.sh: Smoke
+   Rounds, Full Throttle, Flat Out, Air Assault and Sprint all read 0.0% of
+   carrier-ticks over four matches). Every threshold below is named here on the
+   same rule as BCAST_AI_N and LOCK_AI_FLOOR rather than buried in aiTick.
+   THE THREE THAT SILENCE GUNS SHARE ONE SHAPE - charge/run/sprint only while
+   TRAVELLING and only while the nearest thing this unit could shoot is further
+   off than it can shoot, so the ability spends travel time and never a shot. */
+const SMOKE_AI_N=3;        // Smoke Rounds: allies under fire inside the mortar's own firing envelope before it stops firing HE
+const THROTTLE_AI_PAD=2;   // Full Throttle: tiles BEYOND its own weapon range the nearest foe must be before a Bull charges
+const FLAT_AI_PAD=2;       // Flat Out: ...the same margin for the Scout Bike, whose guns it silences the same way
+const SPRINT_AI_R=8;       // Sprint: no enemy may be within this many tiles of the Runner - it silences every infantryman around him, not just him
+const ASSAULT_AI_R=6;      // Air Assault: enemies within this many tiles before a loaded transport opens up and pins itself
 const REGROUP_AI_N=3;      // Regroup: hurt units inside the radius before a bot spends it...
 const REGROUP_AI_FLOOR=0.7;// ...counting a unit as hurt below this share of its own health
 const BAIL_AI_T=6;         // Bail: seconds of gas left at which a bot gets its crew out rather than losing them
@@ -13509,12 +13522,119 @@ function aiTick(p){
   if(tg80.kind==='unit'&&armorOf(tg80)==='inf')continue;
   u.valve=false;u.vrt=0;
  }
- /* --- v81: Ripple Fire is deliberately NOT wired to a bot rule. It measured
-    better than single fire in every arm, so a rule would only ever be a way of
-    saying "always on", and that belongs in the table if it belongs anywhere.
-    Called Shot is not here either: it lives in the sim, at acquisition, for
-    the reason the v80 valve does - aiTick runs once every 18 ticks and a
-    target turns over faster than that. */
+ /* ============ v106: THE FIVE ABILITIES A BOT OWNED AND NEVER USED ============
+    Measured first, with harness/probe_v106.sh: over four all-CPU matches, Smoke
+    Rounds, Full Throttle, Flat Out, Air Assault and Sprint each read 0.0% of
+    carrier-ticks while their carriers were on the field in numbers (57 mortars,
+    33 bikes, 59 runners in single matches). Entrench, On Me!, the valve and
+    Called Shot were already driven, so this block is the rest of the roster -
+    Roadmap 4 item 4.
+
+    THE THREE THAT SILENCE GUNS SHARE ONE SHAPE, and it is the whole design:
+    Full Throttle, Flat Out and Sprint all buy speed by giving up shooting, so
+    each is spent on TRAVEL and never on a fight. A carrier switches on only
+    while it is actually going somewhere (state move/amove with a dest) and only
+    while the nearest thing it could shoot is further away than it can shoot -
+    then switches off the moment either stops being true. Nothing is remembered
+    between ticks, so nothing has to expire or be serialized: every rule here
+    reads the world and writes one boolean, exactly as the v80 valve does.
+    nearestEnemy is the SIM'S OWN acquisition helper, so concealment, balloons
+    and the AA/secondary filters are honoured rather than re-implemented - a
+    bot cannot charge past a sniper it would not have been able to see. */
+
+ /* SMOKE ROUNDS. The cost is total: a smoking mortar deals no damage and
+    acquires nothing at all (updateUnit gates acquisition on !u.smoke), so this
+    is not "use it when it might help" but "use it when the thing it protects is
+    worth the whole gun". The count is allies UNDER FIRE inside the mortar's own
+    firing envelope - rgOf/mrg, the same envelope nearestHurtFriend will pick the
+    shot from, so a mortar can never switch to smoke and then find nothing it can
+    reach. HURT_WINDOW is the same "under fire" the Radar Tent and the Command
+    Truck already read. */
+ for(const u of p.units){
+  if(!u.t.smokeCap||u.garrisoned||u.hp<=0)continue;
+  const rg=rgOf(u),minR=u.t.mrg||0;
+  let n106=0;
+  for(const v of p.units){
+   if(v===u||v.hp<=0||v.garrisoned||v.calmT>=HURT_WINDOW)continue;
+   const d=dhyp(v.x-u.x,v.y-u.y);
+   if(d<=rg&&d>=minR)n106++;
+  }
+  u.smoke=n106>=SMOKE_AI_N;
+ }
+
+ /* FULL THROTTLE. The Bull charges while it is crossing the map and throttles
+    down to fight, which is what the ability is for: +30% on the approach, and
+    both guns back the moment anything is in reach. THROTTLE_AI_PAD is measured
+    off rgOf rather than typed as a tile count, so re-ranging the Bull moves the
+    hand-over with it. u.thr also nulls its target every tick in updateUnit, so
+    leaving it on in contact would be a Bull that drives through a fight without
+    firing - the one failure this gate exists to prevent. */
+ for(const u of p.units){
+  if(!u.t.throttle||u.garrisoned||u.hp<=0)continue;
+  const going=(u.state==='move'||u.state==='amove')&&!!u.dest;
+  u.thr=going&&!nearestEnemy(u,rgOf(u)+THROTTLE_AI_PAD);
+ }
+
+ /* FLAT OUT. Same shape, same reason, and the Scout Bike gets more out of it
+    than the Bull does: +2 sight on top of the speed, on the unit whose whole job
+    is finding things. A scouting bike is travelling by definition, so this fires
+    for most of a scout's run and stops the instant it finds what it went to
+    find. */
+ for(const u of p.units){
+  if(!u.t.flat||u.garrisoned||u.hp<=0)continue;
+  const going=(u.state==='move'||u.state==='amove')&&!!u.dest;
+  u.flat=going&&!nearestEnemy(u,rgOf(u)+FLAT_AI_PAD);
+ }
+
+ /* SPRINT. The same shape again but the widest gate by a distance, because this
+    is the only one of the three that silences OTHER units: every friendly
+    infantryman within SPRINT_R stops acquiring, not just the Runner. So the test
+    is not "can the Runner shoot something" but "is anything near at all", at
+    SPRINT_AI_R (8) against his own 3.2 range - a foe closing at ~2 tiles/s is
+    still two aiTicks from contact when the whistle goes down. */
+ for(const u of p.units){
+  if(!u.t.sprint||u.garrisoned||u.hp<=0)continue;
+  const going=(u.state==='move'||u.state==='amove')&&!!u.dest;
+  u.spr=going&&!nearestEnemy(u,SPRINT_AI_R);
+ }
+
+ /* AIR ASSAULT. The opposite trade to the three above: it buys FIRE by giving up
+    movement, so it is spent when the transport has arrived and its squad has
+    something to shoot. It is also the only one here that must be switched off
+    for the bot to keep playing - orderMove REFUSES a pinned aircraft (13-orders
+    line 3), so a transport left open would never march again. Reading the world
+    every tick rather than remembering a decision is what makes that safe: the
+    tick after the last enemy near it dies, it closes and can be ordered. */
+ for(const u of p.units){
+  if(!u.t.assault||u.garrisoned||u.hp<=0)continue;
+  u.aslt=!!(u.garrison&&u.garrison.length&&nearestEnemy(u,ASSAULT_AI_R));
+ }
+
+ /* RIPPLE FIRE, and this one is a MEASUREMENT overturning a guess rather than a
+    new rule. Roadmap 4 item 4 proposed "Ripple Fire at a clump"; v81 had already
+    recorded that it "measured better than single fire in every arm, so a rule
+    would only ever be a way of saying always on". v81 was right and the clump
+    framing is wrong, re-measured at v106 over 60 sim-seconds x 3 seeds of one
+    Rocket Artillery against a fixed target block:
+
+        targets   single   ripple   ripple/single
+           1        265      353        1.33
+           2        124      347        2.79
+           3        198      217        1.09
+           6        270      315        1.17
+
+    Better even against ONE man, because the salvo's bursts are 1.6x wider than
+    the single shell's (RIPPLE_SPL) while the scatter is only +-RIPPLE_BOX, so a
+    rocket landing off the aim point still covers it. So a bot's battery always
+    ripples. The HUMAN default is untouched - single fire is still what a Rocket
+    Artillery rolls off the line with, and the button still says so. */
+ for(const u of p.units){
+  if(!u.t.ripple||u.hp<=0)continue;
+  u.rip=true;
+ }
+ /* Called Shot is not in this block: it lives in the sim, at acquisition, for
+    the reason the v80 valve does - aiTick runs once every 18 ticks and a target
+    turns over faster than that. */
  /* --- v81: Lockdown, spent only on a bunker that is LOSING. Measured: locking
     down a fight the bunker was going to win costs more in forgone garrison
     fire than it saves in damage, so the rule is a health floor rather than a

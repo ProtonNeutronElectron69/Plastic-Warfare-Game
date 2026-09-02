@@ -249,16 +249,19 @@ function quiet82(map, seed, W, H) {
 
 /* ---------- H: AI policy and state hygiene ---------- */
 {
-  /* DELIBERATELY UNWIRED, all three, and measured rather than assumed. Overdrive
-     was the one item scoped for a bot rule; the trigger was measured first and
-     said not to write it. Across three Blue-bot matches a bot's training options
-     were blocked by ENERGY alone 0.4% of the time and by plastic 61.2%, against a
-     median bank of 2156, so an energy floor would fire on nothing - and when it
-     did fire it would trade 88 electricity now for 154 later. Same disposition as
-     Ripple Fire at v81 and the Sarge broadcast at v79. */
+  /* Overdrive is STILL deliberately unwired, and measured rather than assumed:
+     across three Blue-bot matches a bot's training options were blocked by ENERGY
+     alone 0.4% of the time and by plastic 61.2%, against a median bank of 2156,
+     so an energy floor would fire on nothing - and when it did fire it would
+     trade 88 electricity now for 154 later.
+     v106 REVERSED the other two. Flat Out and Air Assault were unwired here
+     alongside it, and probe_v106 measured what that cost: over four all-CPU
+     matches both read 0.0% of carrier-ticks, i.e. the bots owned them and never
+     once used them. Both are driven now (Roadmap 4 item 4); Overdrive is not,
+     because its measurement still says not to. */
   const ai = aiTick.toString();
-  ok('T56.H no bot rule reads Flat Out', !ai.includes('.flat'));
-  ok('T56.H no bot rule reads Air Assault', !ai.includes('.aslt'));
+  ok('T56.H a bot rule now reads Flat Out', ai.includes('u.flat='));
+  ok('T56.H ...and Air Assault', ai.includes('u.aslt='));
   ok('T56.H no bot rule presses Overdrive', !ai.includes("'over'") && !ai.includes('OVER_T'));
 
   const S = quiet82('kitchen', 8207);

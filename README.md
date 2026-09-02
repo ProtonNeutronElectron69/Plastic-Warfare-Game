@@ -86,7 +86,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v105.1 it makes **6,039
+that the results come out identical every time. As of v106 it makes **6,083
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -116,7 +116,25 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 105.1**.
+The game is at **version 106**.
+
+**v106 — the computer players learned six abilities they had never used.** Every
+army has unit abilities you can switch on and off — a Bull that charges, a scout
+that runs flat out, a mortar that fires smoke to cover your men. The computer
+players knew about four of them and simply never touched the rest, so you could
+play a hundred matches and never once see a Bull charge you.
+
+That is fixed for six of them: **Smoke Rounds, Full Throttle, Flat Out, Sprint,
+Ripple Fire** and **Air Assault**. Each one is used the way it is meant to be —
+the three that trade gunfire for speed are switched on while crossing the map and
+switched off the instant there is something to shoot, so a computer army never
+silences itself in a fight. A charging Bull is the one exception, and on purpose:
+it flattens infantry it drives over, so it keeps charging through them and only
+stops for things it has to shoot at.
+
+Two payoffs. The hardest difficulty is harder without a single unit being made
+stronger, and you get to see your own army's tricks used against you, which is
+the best way to learn what they do.
 
 **v105.1 — two bugs found by playing.** The first one mattered: **three
 army-exclusive buildings had no button to research them**, so you could never

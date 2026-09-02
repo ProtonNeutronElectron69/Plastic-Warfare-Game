@@ -300,6 +300,19 @@ const CRATE_GLOW=0.30;     // ...and the amplitude of the green pulse around it
 /* The four BOT thresholds. Named here with the abilities they spend rather than
    buried in aiTick, on the same rule as LOCK_AI_FLOOR and VALVE_AI_INF_P. */
 const BCAST_AI_N=3;        // Broadcast: allies under fire inside the radius before a bot pins its truck
+/* v106 - THE UNIT ABILITIES A BOT NEVER USED. Five toggles were owned and never
+   switched on by any CPU army (measured with harness/probe_v106.sh: Smoke
+   Rounds, Full Throttle, Flat Out, Air Assault and Sprint all read 0.0% of
+   carrier-ticks over four matches). Every threshold below is named here on the
+   same rule as BCAST_AI_N and LOCK_AI_FLOOR rather than buried in aiTick.
+   THE THREE THAT SILENCE GUNS SHARE ONE SHAPE - charge/run/sprint only while
+   TRAVELLING and only while the nearest thing this unit could shoot is further
+   off than it can shoot, so the ability spends travel time and never a shot. */
+const SMOKE_AI_N=3;        // Smoke Rounds: allies under fire inside the mortar's own firing envelope before it stops firing HE
+const THROTTLE_AI_PAD=2;   // Full Throttle: tiles BEYOND its own weapon range the nearest foe must be before a Bull charges
+const FLAT_AI_PAD=2;       // Flat Out: ...the same margin for the Scout Bike, whose guns it silences the same way
+const SPRINT_AI_R=8;       // Sprint: no enemy may be within this many tiles of the Runner - it silences every infantryman around him, not just him
+const ASSAULT_AI_R=6;      // Air Assault: enemies within this many tiles before a loaded transport opens up and pins itself
 const REGROUP_AI_N=3;      // Regroup: hurt units inside the radius before a bot spends it...
 const REGROUP_AI_FLOOR=0.7;// ...counting a unit as hurt below this share of its own health
 const BAIL_AI_T=6;         // Bail: seconds of gas left at which a bot gets its crew out rather than losing them

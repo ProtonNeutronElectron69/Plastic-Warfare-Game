@@ -267,8 +267,24 @@ function quiet81(map, seed, W, H) {
     aiTick(bot);
     ok('T55.G an EMPTY bunker never spends it - there is no fire to trade away', empty.upT <= 0);
   }
-  ok('T55.G Ripple Fire is deliberately not wired to any bot rule',
-    !aiTick.toString().includes('u.rip') && !updateUnit.toString().includes('u.rip='));
+  /* v106: REVERSED ON PURPOSE, and by this check's own reasoning. v81 recorded
+     that Ripple Fire "measured better than single fire in every arm, so a rule
+     would only ever be a way of saying always on" - and left it unwired, which
+     meant a CPU battery never rippled at all. v106 re-measured it (60 sim-seconds
+     x 3 seeds, one battery against a fixed block: 1.33x the damage against ONE
+     man, 1.09-2.79x against two to six) and wrote the always-on rule v81
+     described. The claim that has NOT changed is the one below it: the bot never
+     reaches into a human's army. */
+  ok('T55.G a BOT battery always ripples - v81 measured it better in every arm',
+    aiTick.toString().includes('u.rip=true'));
+  {
+    const ba = makeUnit('arty', bot, A.x + 6, A.y + 6);
+    ba.rip = false; aiTick(bot);
+    ok('T55.G ...so a bot arty that rolled off the line single-firing is switched over', ba.rip === true);
+    const ha = makeUnit('arty', G.human, A.x + 17, A.y + 6);
+    ha.rip = false; aiTick(bot);
+    ok('T55.G ...and a HUMAN battery keeps the single fire it shipped with', ha.rip === false);
+  }
   ok('T55.G ...and a HUMAN sniper is never touched by the bot rule',
     (() => { const h = makeUnit('sniper', G.human, A.x + 15, A.y + 5); h.cs = true; h.target = null; update(DT81); return h.cs === true; })());
 }

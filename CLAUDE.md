@@ -6,7 +6,7 @@ Read this first. It is the orientation; `harness/README.md` is the detail.
 touch anything — what the project is, where it stands, how to build, how to
 test, how to watch the bots, and the rules that are load-bearing. Everything
 after that is the record: the roadmap chapters, then one section per standalone
-release NEWEST FIRST (v105.1 down to v89), then the balance baseline, then the
+release NEWEST FIRST (v106 down to v89), then the balance baseline, then the
 patterns worth copying. Read the record when you are about to touch the
 subsystem it describes; do not read it front to back.
 
@@ -52,9 +52,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v105.1, and what a fresh session does)
+## Where the game stands (v106, and what a fresh session does)
 
-The game is at **v105.1**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v106**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), **v104 is the first Roadmap 4 item
@@ -63,7 +63,9 @@ delivered** — the soundtrack, which then took four owner feedback passes
 (the whole roster parades behind the setup screen, and the Field Manual is
 painted on the same parade ground), with **v105.1** the owner's feedback pass on
 it — two bugs found by playing, one of which had let the BOTS research three
-structures the human could not. There is no release in flight.
+structures the human could not. **v106 is the second Roadmap 4 item delivered**:
+the bots use the six unit abilities they owned and never switched on. There is no
+release in flight.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
 ranked, written after a whole-game review at v103. **One of the twelve has
@@ -96,7 +98,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 6,039 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~320s: 6,083 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -164,7 +166,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 6,039 checks at v105.1.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 6,083 checks at v106.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -218,6 +220,10 @@ another. Read a batch as a hint about a direction, and re-run with a different
 SEED0=2000 ./probe_v89.sh 16      # default, on sim.sh's own seed/map/faction deal
 ./probe_v99.sh           # order churn: wave cadence, divert-and-return flips, the worst
 SEEDS="7 8" MAP=kitchen ./probe_v99.sh   # same-tick mass diversion, and the endgame
+./probe_v106.sh          # per-ability usage: for each row of UNIT_TOGGLES, the share of
+SEEDS="7 8" ./probe_v106.sh              # carrier-ticks a CPU unit has it switched ON. A row
+                         # with carriers and no on-ticks is an ability the bots own and
+                         # never use - which is what v106 was written to find
                          # duel readout. 3 matches, ~4min
 ```
 
@@ -240,13 +246,15 @@ five baseline tables behind the 42-pin layout gate. Copy the current
 `recut_vNN.js` / `repin_vNN.py` pair forward to the new version and delete the
 old one; only the current release's one-shots ship.
 
-**The pair in the tree is `recut_v103` / `repin_v103`** — the pair is carried
+**The pair in the tree is `recut_v106` / `repin_v106`** — the pair is carried
 forward by the release that MOVES the trails, not by every release. Do not read
 the version on those two files as the version of the game; read it as "the last
-release that had to repin". v103's pair is the unusual one and worth reading
-before you copy it forward: it recuts the LAYOUT pins as well as the trails, and
-it runs the 42-pin gate as its own inverse, because v103 changes map generation
-on purpose. Every other release wants that gate as a refusal.
+release that had to repin". v106's pair is the ORDINARY shape and the one to copy:
+it recuts the five trail tables only, and it walks the 42-pin layout gate as a
+REFUSAL. v103's pair (now retired) was the one exception — it recut the layout
+pins too and ran that gate as its own inverse, because v103 changed map
+generation on purpose. Every other release wants the gate as a refusal, which is
+what v106 restored.
 
 **Recut ONCE, on the final bytes.** If you repin, then keep editing the sim, the
 tables you wrote are already stale. v99 hit this: a later pacing change moved one
@@ -315,8 +323,10 @@ having walked fewer, and clean is the answer that stops an investigation.
 
 **Nothing here is agreed and nothing here is in flight.** This is the menu that
 came out of a whole-game review at v103, written when the owner said they were
-running out of ideas. Item 1 has since shipped (v104–v104.4, bar its barks);
-items 2–12 are exactly as written.
+running out of ideas. TWO items have since shipped: item 1 (v104–v104.4, bar its
+barks) and **item 4 (v106)**. The rest are exactly as written — and item 4 is a
+warning about how they were written, because its own inventory of the code was
+out of date by two releases when the review made it. Measure before you build.
 
 It is ranked by return on effort, and four of the twelve items rest on
 measurements taken at the time rather than on opinion — those are
@@ -329,7 +339,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 6,039 checks. What is thin is everything AROUND it — how
+recorded soundtrack, 6,083 checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -368,7 +378,17 @@ still empty; item 1 has since answered it.)
    tractable item here because it is the one you can measure — `probe_v89.sh`
    before touching a price, per rule 8. *Impact high · effort medium · balance
    risk: it IS the balance.*
-4. **Teach the bots the other eight unit abilities.** MEASURED: `aiTick` drives
+4. ~~**Teach the bots the other eight unit abilities.**~~ **DELIVERED at v106.**
+   Its inventory was WRONG, which the release records: Called Shot was driven at
+   v81 and Broadcast at v86, so the real count was 5 driven and 6 not, and
+   "Ripple Fire at a clump" was refuted by measurement (better even against one
+   man; always-on is right, as v81 had already said). Six are driven now and the
+   probe that proves it is `harness/probe_v106.sh`. What is NOT done and is
+   measured as a separate problem: a bot transport is loaded 0.0% of the time, so
+   Air Assault has no occasion, and a bot's Command Truck sits with the base, so
+   Broadcast rarely fires — both are positioning, not abilities. The original
+   note, kept because its reasoning is still the argument for the item:
+   MEASURED: `aiTick` drives
    3 of the 11 rows in `UNIT_TOGGLES` — `entrench`, `rally`, `valve`. It never
    uses `smokeCap`, `cshot`, `ripple`, `throttle`, `flat`, `aslt`, `sprint` or
    `bcast`. (It handles the BUILDING abilities well: garrisons, Lockdown,
@@ -559,6 +579,65 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v106 — the unit abilities a bot never used (Roadmap 4 item 4)
+
+**Six abilities a CPU army owned and never switched on are now driven.**
+`tail_v106.js` (T88, 42 checks; the suite is 6,083 now), plus
+`harness/probe_v106.sh` — the measurement tool the release is built on. Full
+evidence in the v106 section of `harness/README.md`. **Every hash trail moved and
+all five trail tables were recut**: this is the first release since v103 to need
+a repin, and `recut_v106` / `repin_v106` are the carried-forward pair.
+
+- **Smoke Rounds, Full Throttle, Flat Out and Sprint** went from **0.0% of
+  carrier-ticks to 5.4–14.7%, 39.8–43.8%, 10.1–30.2% and 14.4–29.7%.**
+- **Ripple Fire** is on for a bot battery — a measurement, not a guess (below).
+- **Air Assault** is wired and still reads 0%, for a reason that is measured and
+  is not the rule (below).
+
+Five things worth carrying forward:
+
+- **THE ROADMAP NOTE WAS WRONG ABOUT ITS OWN INVENTORY.** Item 4 said `aiTick`
+  drives 3 of the 11 toggles and named eight it never used. Called Shot has been
+  driven since **v81** and Broadcast since **v86** — both predate the note — so
+  the real count was 5 driven, 6 not. Building the instrument first is what
+  found that. **T88.A now derives the inventory off `UNIT_TOGGLES`**, so a
+  twelfth toggle cannot ship unwired and unremarked.
+- **The three that silence guns share one shape, and it is the whole design.**
+  Full Throttle, Flat Out and Sprint buy speed by giving up shooting, so each is
+  spent on TRAVEL and never on a fight: on only while going somewhere AND while
+  the nearest thing it could shoot is further off than it can shoot. Sprint is
+  gated widest by a real margin because it is the only one that silences OTHER
+  units — every friendly infantryman in radius, not just its carrier.
+- **Reusing `nearestEnemy` — the SIM'S OWN acquisition helper — bought a correct
+  answer nobody designed.** It honours concealment, so a bot cannot charge past a
+  sniper it could not see; and it hands infantry to a unit's SECONDARY, so **a
+  charging Bull does not throttle down for foot soldiers.** That is right, and
+  `crush80` is why: a charge kills outright any infantryman inside `THROTTLE_R`
+  and any barricade, with no damage roll. It stops for what it has to SHOOT.
+  A hand-written proximity scan would have got that wrong.
+- **"It does not fire" and "the rule is wrong" are different claims, and only
+  measurement separates them.** Air Assault still reads 0% — because a bot
+  transport is LOADED on **0.0%** of samples (six matches, `maxAboard 0`,
+  `carry-jobs 0`): the v48 carry job needs a free transport AND six infantry in
+  one wave at one launch. That is a transport-doctrine question, not an ability
+  one, and the release says so rather than widening into it. Broadcast's
+  0.0–8.5% is the same shape: its truck sits with the base while the fighting is
+  elsewhere.
+- **AN A/B THAT SWAPS `plastic-warfare.html` IS NOT AN A/B.** `harness/build.sh`
+  chains to the root build, which REGENERATES that file from `source/` — so the
+  first attempt overwrote the base before a match ran, measured v106 against
+  itself, and reported byte-identical win counts for both seed sets. That is
+  exactly what a clean null result looks like. **Run the base out of a `git
+  worktree`,** and print something from the file you actually ran so the log
+  carries its own proof.
+
+**What the outcome measurement can say, and what it cannot.** 32 matches per side
+on identical seeds: matches end slightly sooner (medians 994→926s and 769→739s,
+one fewer clock-out of 32) and no army moved outside the batch wobble. Every army
+got the abilities, so an all-CPU batch cannot answer "are the bots stronger" — it
+can only say whether the balance BETWEEN armies moved, and it did not. The
+mechanism is the deliverable; rule 8, again.
 
 ## v105.1 — two owner bug fixes (the feedback pass on v105)
 
