@@ -156,8 +156,18 @@ function trail49(c,ticks,every){
 
 /* ---------- D: tankTurret ---------- */
 {
- ok('T30.D tankTurret exists and drawUnit delegates to it',
-    typeof tankTurret==='function'&&drawUnit.toString().includes('tankTurret(c,u.key,col)'));
+ /* v105.1: drawUnit no longer names tankTurret itself - it calls vehTurret, the
+    one painter that knows which hull wears a turret and where. The claim this
+    check was making is "the geometry is not a second copy inside drawUnit", and
+    it is now STRONGER than it was: the same painter serves the match, the
+    portraits and the menu parade, so all three are asserted to reach it. */
+ ok('T30.D tankTurret exists and drawUnit delegates to it, through vehTurret',
+    typeof tankTurret==='function'&&typeof vehTurret==='function'&&
+    drawUnit.toString().includes('vehTurret(c,u.key,col,')&&
+    vehTurret.toString().includes('tankTurret(c,key,col)'));
+ ok('T30.D ...and every other vehicle painter reaches the same one',
+    vehPortraitPaint.toString().includes('vehTurret(')&&
+    menubgPaint.toString().includes('vehTurret('));
  ok('T30.D the turret geometry lives in exactly one place',
     !drawUnit.toString().includes("plSphere(c,col,-1,0,6.6,.82,false)"));
 

@@ -177,6 +177,12 @@ function menubgPaint(c,m,tick){
   if(fly)c.translate(0,-34+Math.sin(tick*.09+m.id)*1.6); // a slow hover on top of the lift
   if(m.t.a!=='balloon')c.rotate(ang);
   c.drawImage(cell.cv,-cell.ax,-cell.ay,cell.w,cell.h);
+  /* v105.1: THE GUN GOES ON THE HULL. A turret is not in the baked cell - it is
+     painted live on top, which is why every marching tank, Bull and AA truck was
+     a bare hull. Nothing here decides which hull has one or where it sits;
+     vehTurret is the same call drawUnit makes, with rot 0 because a parade
+     turret simply rides its hull rather than tracking a target. */
+  c.save();try{vehTurret(c,m.key,col,0)}catch(e){}c.restore();
   if(m.t.a==='heli'){
    const hs=m.key==='chinook'?1.25:1;
    c.save();if(hs!==1)c.scale(hs,hs);

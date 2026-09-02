@@ -86,7 +86,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v105 it makes **6,009
+that the results come out identical every time. As of v105.1 it makes **6,039
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -116,7 +116,21 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 105**.
+The game is at **version 105.1**.
+
+**v105.1 — two bugs found by playing.** The first one mattered: **three
+army-exclusive buildings had no button to research them**, so you could never
+build them at all — Green's Command Post, Tan's Foundry and Gray's Heavy
+Barricade. Worse, the computer players *could* research all three, and had been
+doing so for nineteen versions, so this was a gap that only ever ran against you.
+Blue was unaffected. All four armies can now research everything they are meant
+to, and the list of what a Research Lab offers is worked out from the buildings
+themselves, so a new one can never go missing this way again.
+
+The second is cosmetic: the tanks marching in the menu parade (and so behind the
+Field Manual too) had **no turrets** — just bare hulls. The Tank, the "Bull" and
+the AA Missile Truck now carry their guns on parade, exactly as they do in a
+battle.
 
 **v105 — the menu parade shows off the whole army, and the Field Manual joins
 it.** The little marching column behind the setup screen used to be nine kinds

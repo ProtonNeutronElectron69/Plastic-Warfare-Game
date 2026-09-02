@@ -275,7 +275,10 @@ function quiet51(){for(const mn of (G.map.mines||[]))mn.live=false;}
     rackFills.includes('#d8352a')&&!hullFills.includes('#d8352a')&&hullFills.length>6&&rackFills.length>6);
  ok('T32.E the hull still bakes its own chassis, radar dish and cab glass',
     hullFills.includes('#23232a')&&hullFills.includes('#b9bec6')&&hullFills.includes('#bfe9ff')&&
-    drawUnit.toString().includes('aaTurret('));
+    // v105.1: drawUnit reaches aaTurret through vehTurret, which is also where
+    // the AA_PIVOT translate moved. Same claim, one level of sharing deeper.
+    drawUnit.toString().includes('vehTurret(c,u.key,col,')&&
+    vehTurret.toString().includes('aaTurret(c,col)'));
  ok('T32.E both halves carry team colour, so the faction reads whichever way the rack points',
     hullFills.some(v=>v==='rgb(76,175,80)')&&rackFills.includes('#4caf50'));
  ok('T32.E the rack pivots behind the cab, not on the sprite origin',AA_PIVOT===-3.5);
@@ -285,8 +288,12 @@ function quiet51(){for(const mn of (G.map.mines||[]))mn.live=false;}
  // the v49 portrait painter must composite exactly one rack for the AA truck and none elsewhere
  ok('T32.E the rack paints all four tubes, so the salvo count reads off the model',
     rackFills.filter(v=>v==='#d8352a').length===U.aatruck.sal);
- ok('T32.E TURR_PORTRAIT lists it, so both portrait paths composite the rack',
-    TURR_PORTRAIT.aatruck===1&&vehPortraitPaint.toString().includes('aaTurret'));
+ ok('T32.E TURR_PORTRAIT lists it, so every path that draws the hull composites the rack',
+    TURR_PORTRAIT.aatruck===1&&vehPortraitPaint.toString().includes('vehTurret(')&&
+    // v105.1: TURR_PORTRAIT is now the MEMBERSHIP test too - vehTurret paints a
+    // turret exactly for the keys it lists and nothing for the rest, so the arty
+    // (launcher baked into its hull) is answered by the same table.
+    vehTurret.toString().includes('TURR_PORTRAIT[key]'));
 }
 
 /* ---------- F: the two rebalance cells, and ONLY those two ---------- */

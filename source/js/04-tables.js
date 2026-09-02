@@ -472,9 +472,34 @@ B.lab.d=(function(){
 })();
 // LAB catalog, grouped for a readable layout: production unlocks, then economy, then
 // defence/utility unlocks, then the (non-army) upgrades.
+/* v105.1: LAB_ORDER now only ORDERS the catalog; it no longer IS the catalog.
+   researchCatalog used to be a filter OVER this list, so a lab-routed unlock that
+   nobody remembered to type here had no button anywhere in the game - however
+   correct RESEARCH, TECH_BLD and techAvailable all were about it. Three shipped
+   that way and stayed that way: the Command Post (v86), the Foundry (v87) and the
+   Heavy Barricade (v88), i.e. the SECOND exclusive structure of Green, Tan and
+   Gray. Blue's two are here because v85 was the last release that remembered.
+   The asymmetry is the part that matters: aiResearch walks RESEARCH and pushes
+   FAC[p.fac].ub before anything else, so the BOTS have been researching all three
+   since the release that added them, against a human who could not.
+   The three keys are APPENDED rather than slotted in, so every button that was
+   already on the panel keeps the position it has had since v85. */
 const LAB_ORDER=['b_garage','b_helipad','b_generator','b_turbine','b_fwdpad','b_guardtower','b_radar','b_radiotower','b_dump','b_bunker',
+                 'b_foundry','b_cmdpost','b_hbarricade',
                  'up_guardtower','up_generator','up_turbine','up_dump','up_bunker','up_lab'];
-function researchCatalog(p){return LAB_ORDER.filter(k=>RESEARCH[k]&&techAvailable(p,k)&&researchBuilding(k)==='lab');}
+/* DERIVED from RESEARCH + TECH_BLD + techAvailable: every lab-routed tech this
+   player may take is offered, unlocks before upgrades, in LAB_ORDER's order.
+   Anything this file forgets to name rides at the end of its own kind instead of
+   falling off the panel - a missing name is now a cosmetic ordering question and
+   can never again be an unreachable building. */
+function researchCatalog(p){
+ const out=[];
+ for(const k in RESEARCH)if(researchBuilding(k)==='lab'&&techAvailable(p,k))out.push(k);
+ const rank=k=>{const i=LAB_ORDER.indexOf(k);return i<0?LAB_ORDER.length:i};
+ out.sort((a,b)=>((RESEARCH[a].kind==='upgrade'?1:0)-(RESEARCH[b].kind==='upgrade'?1:0))
+                 ||(rank(a)-rank(b))||(a<b?-1:a>b?1:0)); // ties break on key, as SUP_U does
+ return out;
+}
 // the research a given PRODUCTION building offers: its unit unlocks first, then its own upgrade
 function bldResearchList(p,bk){
  const out=[];
