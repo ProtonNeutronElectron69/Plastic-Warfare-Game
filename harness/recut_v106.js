@@ -1,45 +1,28 @@
-/* recut_v103.js - regenerate the baselines v103 moved: the LAYOUT tables AND the
- * hash trails.
+/* recut_v106.js - regenerate the five hash-trail baselines v106 moved.
  *
- *   cat shim_head.js game.js recut_v103.js > rc103.js && node rc103.js > cut_v103.json
- *   python3 repin_v103.py cut_v103.json
+ *   cat shim_head.js game.js recut_v106.js > rc106.js && node rc106.js > cut_v106.json
+ *   python3 repin_v106.py cut_v106.json
  *
- * v103 is the map layout audit. Alone among the releases that have needed a
- * repin, this one CHANGES MAP GENERATION ON PURPOSE - so the 42-pin layout gate
- * that every previous recut ran as a refusal runs here as its own inverse.
+ * v106 teaches the bots six unit abilities they never used (Roadmap 4 item 4).
+ * That is a SIMULATION change - a charging Bull, a sprinting squad and a smoking
+ * mortar all move and shoot differently - so every hash trail moves and every
+ * trail table has to be recut.
  *
- * WHY THE GATE IS INVERTED, and why that is not a licence.
- * The gate exists to catch a release that moved the map by ACCIDENT, because
- * repinning trails on top of an accidental map change hides the real problem
- * instead of recording it. v103's whole subject is the map: the garden hose no
- * longer walks off the north edge, a blocking prop no longer stands drowned
- * inside a spill, hazards of different kinds no longer clip through each other,
- * ground cover is pruned against the finished board, and the terracotta pots
- * survive as a pair. Every one of those changes what fills M.pass and M.props,
- * which is exactly what layoutHash reads.
- * So this script demands the OPPOSITE of what recut_v101 demanded: the layout
- * must have moved, on the maps whose generation this release touched, or the cut
- * ran against a build without the fixes in it. What it still refuses is a cut
- * that walked the wrong number of pins.
+ * THE 42-PIN LAYOUT GATE IS A REFUSAL AGAIN, which is the normal disposition and
+ * the one this file restores. v103 - the map layout audit - is the only release
+ * that has ever run it as its own inverse, and its header is explicit that the
+ * inversion was licensed by that release's subject and not by precedent. v106
+ * touches aiTick and one tunable block; it must not move a single board, so this
+ * script walks all 42 pins and refuses to cut anything if ANY of them changed.
+ * Repinning trails on top of an accidental map change would hide the real
+ * problem instead of recording it, which is the whole point of the gate.
  *
- * ONLY THE DESK IS ALLOWED TO HOLD, and naming that is the honest half of the
- * inversion. The Desk is not untouched - its clutter pairs now keep their art
- * clear, its two hazards retry off each other, and its mouse pad and sheet of
- * paper retry off each other too - so most of its boards move like everything
- * else. What it lacks is the PvP economy, the mines and the barricade clusters
- * (survivalSetup carves its own arena), so a Desk seed on which every retry
- * happens to clear on its first roll can legitimately generate byte-identically.
- * MEASURED: 40 of the 42 pins moved and the two that held are desk:22, the same
- * board pinned in BASE43_LAYOUTS and BASE62_LAYOUTS. V271_LAYOUTS has no desk row
- * at all, so all twelve of its pins must move. A PvP board holding still is a fix
- * that did not land, and the gate below says so.
+ * It also emits NO layout table: v103 had to rewrite those three, v106 must not
+ * touch them, so they are cut, compared and thrown away.
  *
  * Each trail table is regenerated with the SAME generator its own tail uses,
  * read off that tail rather than reimplemented from memory:
  *
- *   BASE43_LAYOUTS tail_v43  layoutHash on 5 maps x 3 seeds
- *   BASE62_LAYOUTS tail_v62  the same 15, pinned a second time
- *   V271_LAYOUTS   tail_v28  12: always deathmatch, 3 opponents, no desk
  *   BASE45_TRAILS  tail_v43  cfg fac 'tan',   7 combos, 900/2400 ticks, every 90
  *   BASE48_TRAILS  tail_v49  cfg fac 'green', same combos and sampling
  *   BASE62_TRAILS  tail_v62  cfg fac 'tan'    - same inputs as BASE45_TRAILS
@@ -49,7 +32,6 @@
  * BASE45_TRAILS and BASE62_TRAILS are cut independently and then asserted equal,
  * because they are the same run pinned in two files: if they ever disagree the
  * tables have diverged and one of the two tails is lying about what it tests.
- * The same holds for BASE43_LAYOUTS and BASE62_LAYOUTS.
  */
 const DT = 1 / 30;
 const fs = require('fs');
@@ -124,25 +106,24 @@ for (const k in out.BASE43_LAYOUTS) {
   }
 }
 
-let checked = 0, held = [];
+let checked = 0, moved = [];
 for (const [file, tbl] of [['tail_v43.js', 'BASE43_LAYOUTS'], ['tail_v62.js', 'BASE62_LAYOUTS'], ['tail_v28.js', 'V271_LAYOUTS']]) {
   const was = pinned(file, tbl), now = out[tbl];
-  for (const key of Object.keys(was)) { checked++; if (was[key] === now[key]) held.push(`${tbl} ${key}`); }
+  for (const key of Object.keys(was)) { checked++; if (was[key] !== now[key]) moved.push(`${tbl} ${key}`); }
 }
 if (checked !== 42) { console.error('gate expected 42 pins, walked ' + checked + '. Nothing cut.'); process.exit(1); }
-// only the Desk may hold, and only for the reason given in the header
-const HOLD_OK = new Set(['BASE43_LAYOUTS desk:11', 'BASE43_LAYOUTS desk:22', 'BASE43_LAYOUTS desk:33',
-                         'BASE62_LAYOUTS desk:11', 'BASE62_LAYOUTS desk:22', 'BASE62_LAYOUTS desk:33']);
-const surprise = held.filter(h => !HOLD_OK.has(h));
-if (surprise.length) {
-  console.error('INVERTED GATE FAILED - ' + surprise.length + ' PvP layout pins did not move. Nothing cut.');
-  for (const l of surprise) console.error('  ' + l);
-  console.error('v103 changes map generation on purpose; a PvP board that generated');
-  console.error('identically means this cut ran against a build without the fixes.');
+if (moved.length) {
+  console.error('LAYOUT GATE FAILED - ' + moved.length + ' of 42 map-layout pins MOVED. Nothing cut.');
+  for (const l of moved) console.error('  ' + l);
+  console.error('v106 changes aiTick, not map generation. A board that generates');
+  console.error('differently means this release moved the map by accident, and');
+  console.error('repinning trails on top of that would hide it. Fix that first.');
   process.exit(1);
 }
-console.error('layout: ' + (42 - held.length) + ' of 42 pins moved, ' + held.length + ' held' +
-  (held.length ? ' (' + held.join(', ') + ')' : '') + '. Cutting trails.\n');
+// cut only to run the gate: v106 must not repin a layout table
+delete out.BASE43_LAYOUTS; delete out.BASE62_LAYOUTS; delete out.V271_LAYOUTS;
+console.error('layout: all 42 pins hold - map generation untouched. Cutting trails.\n');
+
 
 /* ---------------- THE TRAIL TABLES ---------------- */
 const cutTrails = (cfg) => {

@@ -1181,6 +1181,188 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v106 — the unit abilities a bot never used (Roadmap 4 item 4)
+
+**Six abilities that a CPU army owned and never switched on are now driven.**
+`tail_v106.js` (T88), `harness/probe_v106.sh` + `probe_v106.js` (the measurement
+tool this release adds), and the carried-forward `recut_v106.js` / `repin_v106.py`
+pair. **Every hash trail moved and all five trail tables were recut** — this is a
+simulation change, and the first release since v103 to need a repin.
+
+### The roadmap note was wrong about its own inventory, and that is half the value
+
+Roadmap 4 item 4 said `aiTick` "drives 3 of the 11 rows in `UNIT_TOGGLES`" and
+"never uses `smokeCap`, `cshot`, `ripple`, `throttle`, `flat`, `aslt`, `sprint`
+or `bcast`". Two of those eight were already driven when the note was written:
+**Called Shot since v81** (in the sim, at acquisition) and **Broadcast since
+v86**. The real count was 5 driven, 6 not.
+
+That is exactly the kind of claim rule 8 exists for, so the first thing this
+release built was the instrument. `probe_v106.sh` samples every AI tick and
+reports, per ability, the share of **carrier-ticks** on which a CPU unit that
+owns the ability has it switched on. Four all-CPU matches on backyard:
+
+| ability | before | after |
+|---|---|---|
+| Entrench (v48) | 1.7–7.8% | 3.8–12.5% |
+| On Me! (v79) | 19.7% | unchanged |
+| Pressure Valve (v80) | 8.0–17.2% | 6.8–12.9% |
+| Called Shot (v81) | 9.2–13.9% | 7.0–23.5% |
+| **Smoke Rounds** | **0.0%** (57 carriers) | **5.4–14.7%** |
+| **Full Throttle** | **0.0%** (5 carriers) | **39.8–43.8%** |
+| **Flat Out** | **0.0%** (33 carriers) | **10.1–30.2%** |
+| **Sprint** | **0.0%** (59 carriers) | **14.4–29.7%** |
+| Air Assault | 0.0% (1 carrier) | 0.0% — see below |
+| Ripple Fire | no carrier in any match | — see below |
+| Broadcast (v86) | 0.0–8.5% | unchanged |
+
+A row with carriers and no on-ticks is an ability the bots own and never use,
+which is what the probe was written to find and what the release fixes.
+
+### The three that silence guns share one shape
+
+Full Throttle, Flat Out and Sprint all buy speed by giving up shooting, so each
+is spent on TRAVEL and never on a fight: a carrier switches on only while it is
+actually going somewhere (`state` move/amove with a `dest`) **and** while the
+nearest thing it could shoot is further off than it can shoot. Nothing is
+remembered between ticks, so nothing has to expire or be serialized — the same
+stateless read-the-world-write-one-boolean shape as the v80 valve.
+
+**`nearestEnemy` is the gate, and reusing the sim's own acquisition helper rather
+than writing a proximity scan bought a correct answer nobody designed.** It
+honours concealment, so a bot cannot charge past a sniper it could not see — and
+it hands infantry to a unit's SECONDARY weapon, which means **a charging Bull
+does not throttle down for foot soldiers.** That is correct play, and `crush80`
+is the reason: a charging Bull kills outright any infantryman inside
+`THROTTLE_R`, and any barricade, with no damage roll and no reload. Stopping to
+shoot them would trade a certain kill for an uncertain one. It stops for what it
+has to shoot. T88.C pins both halves.
+
+**Sprint is gated widest of the three, by a real margin, because it is the only
+one that silences OTHER units** — every friendly infantryman within `SPRINT_R`
+stops acquiring, not just the Runner. So its test is not "can the Runner shoot
+something" but "is anything near at all", at `SPRINT_AI_R` (8) against his own
+3.2 range: a foe closing at ~2 tiles/s is still two aiTicks from contact when the
+whistle goes down.
+
+**Air Assault is the opposite trade** — it buys fire by giving up movement — and
+is the only rule here that must be switched OFF for the bot to keep playing,
+because `orderMove` refuses a pinned aircraft. Reading the world every tick
+rather than remembering a decision is what makes that safe.
+
+**Smoke Rounds** costs the mortar's entire output (a smoking mortar acquires
+nothing at all), so the gate is not "might this help" but "is what it protects
+worth the whole gun": `SMOKE_AI_N` allies under fire inside the mortar's own
+firing envelope, `rgOf`/`mrg` — the same envelope `nearestHurtFriend` will pick
+the shot from, so a mortar can never switch to smoke and then find nothing it can
+reach.
+
+### Ripple Fire: a measurement overturning the roadmap's guess
+
+Item 4 proposed "Ripple Fire at a clump". **v81 had already recorded the answer**
+— it "measured better than single fire in every arm, so a rule would only ever be
+a way of saying always on" — and then left it unwired, which meant a CPU battery
+never rippled at all. Re-measured at v106, 60 sim-seconds × 3 seeds, one battery
+against a fixed target block, damage read off a spy on `applyDmg`:
+
+| targets | single | ripple | ripple/single |
+|---|---|---|---|
+| 1 | 265 | 353 | **1.33** |
+| 2 | 124 | 347 | 2.79 |
+| 3 | 198 | 217 | 1.09 |
+| 6 | 270 | 315 | 1.17 |
+
+Better even against ONE man, so the clump framing is wrong and v81 was right. The
+reason is in the constants and T88.E pins it: the salvo's bursts are `RIPPLE_SPL`
+(1.6×) wider than the single shell's while the scatter is only ±`RIPPLE_BOX`, so
+a rocket landing off the aim point still covers the target. A bot's battery always
+ripples. **The human default is untouched** — a Rocket Artillery still rolls off
+the line single-firing.
+
+### The two that still read zero, and why it is not the rule
+
+Recorded rather than hidden, because "it does not fire" and "the rule is wrong"
+are different claims and only measurement separates them.
+
+- **Air Assault.** Measured over six all-CPU matches: a bot transport was LOADED
+  on **0.0%** of samples — 375 transport-samples in the one match that built one,
+  `maxAboard 0`, `carry-jobs 0`. The v48 carry job needs a free transport AND six
+  infantry in one wave at one launch, and that never coincided. The gate is
+  correct and simply never has an occasion. A transport-doctrine question, not an
+  ability one.
+- **Broadcast.** Driven since v86, measured at 0.0–8.5%. Its gate is three allies
+  *under fire* within `BCAST_R` of the truck, and a bot's Command Truck sits with
+  the base while the fighting is at the far end of the map. Also positioning, not
+  the ability; v106 does not re-tune an existing threshold on the way past.
+
+### Two tests that pinned the ABSENCE of these rules, and were reversed
+
+`T55.G` ("Ripple Fire is deliberately not wired to any bot rule") and `T56.H`
+("no bot rule reads Flat Out" / "...Air Assault") were the strongest evidence
+that the old state was deliberate rather than forgotten. Each was restated to the
+claim it is making now, with the measurement that changed it, and the half of each
+that did NOT change — the bot never reaches into a human's army — was kept.
+`T56.H`'s third assertion, that no bot rule presses **Overdrive**, still holds:
+its own measurement still says not to write it.
+
+### The repin, and the layout gate restored to a refusal
+
+`recut_v103` / `repin_v103` were carried forward to `recut_v106` / `repin_v106`
+and the old pair deleted, per the one-shot rule. **The 42-pin layout gate is a
+refusal again.** v103 — the map layout audit — is the only release that has ever
+run it as its own inverse, and its header is explicit that the inversion was
+licensed by that release's subject and not by precedent. v106 touches `aiTick`
+and one tunable block and must not move a board: the recut walks all 42 pins,
+reports `all 42 pins hold`, and would have cut nothing had one moved. It also
+emits no layout table at all.
+
+`UNMOVED_OK` is **empty**, measured rather than assumed: all five trail tables
+moved, the Desk included. Its single CPU seat is an ALLY with no foes to fight,
+but the three speed gates ask "is anything I could shoot within reach" — false on
+an empty board — so a Bull, a bike or a Runner there now charges where before it
+walked.
+
+### The outcome side, and what an all-CPU A/B can and cannot say
+
+32 matches per side on identical seeds, base against v106:
+
+| | before (main) | after (v106) |
+|---|---|---|
+| ran out the clock | 6 of 32 | 5 of 32 |
+| median match length | 994s / 769s | 926s / 739s |
+| K/L (all armies) | 0.96 | 0.95 |
+| wins, seed0=101 | green 6, tan 6, gray 2, blue 2 | green 7, tan 4, gray 1, blue 4 |
+| wins, seed0=4200 | green 9, tan 5, gray 1, blue 1 | green 4, tan 9, gray 3, blue 0 |
+
+**Read it for what it is.** Every army got the abilities, so an all-CPU batch
+cannot answer "are the bots stronger" — it can only say whether the balance
+BETWEEN the four armies moved, and it did not move outside the wobble this
+project already warns about (green 15→11 and tan 11→13 across 32 matches, with
+gray and blue flat at 3–4). K/L across all armies is ~1 by construction and is
+not informative. What did move, slightly and in both seed sets, is that matches
+end sooner: medians down 68s and 30s, and one fewer clock-out. The baseline
+numbers reproduce the v103 balance chapter's own figures (median 769–994s, 6 of
+32 timeouts), which is what makes them worth quoting at all.
+
+**THE FIRST ATTEMPT AT THIS A/B WAS INVALID AND LOOKED LIKE A CLEAN RESULT.** It
+swapped `plastic-warfare.html` for the base version and re-ran `sim.sh` — and
+`harness/build.sh` chains to the ROOT build, which REGENERATES
+`plastic-warfare.html` from `source/`. So the swapped file was overwritten before
+a single match ran and both sides were v106. It reported byte-identical win
+counts for both seed sets, which is exactly what a correct null result looks
+like, and the only reason it was caught is that byte-identical outcomes are not
+credible after a change that moved fourteen hash trails. **To A/B a release, run
+the base out of a `git worktree`** — the built file is generated and cannot be
+swapped. Both sides here print the count of v106 constants in the file they
+actually ran, so the log carries its own proof.
+
+### What this release deliberately does NOT claim
+
+That the bots are measurably stronger. Sixteen matches is a hint and not a
+verdict, the balance chapter of `CLAUDE.md` says so in its own words, and an
+all-CPU batch gives both sides the same new behaviour. The MECHANISM is the
+deliverable and the mechanism is what T88 pins.
+
 ## v105.1 — two owner bug reports: the missing research buttons, and the missing turrets
 
 Both found by the owner playing v105. `tail_v105_1.js` (T87, 30 checks; the suite

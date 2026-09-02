@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-"""repin_v103.py - write the recut_v103 tables into the tails that pin them.
+"""repin_v106.py - write the recut_v106 tables into the tails that pin them.
 
-    cat shim_head.js game.js recut_v103.js > rc103.js && node rc103.js > cut_v103.json
-    python3 repin_v103.py cut_v103.json
+    cat shim_head.js game.js recut_v106.js > rc106.js && node rc106.js > cut_v106.json
+    python3 repin_v106.py cut_v106.json
 
-EIGHT tables across five files, and three of them are the LAYOUT pins - v103 is
-the release that changes map generation on purpose, so for once the 42-pin gate
-is a thing to recut rather than a thing to obey:
+FIVE tables across five files, and NO layout table - v106 teaches the bots six
+unit abilities, which moves every hash trail and must not move a single board.
+v103 was the exception that recut the layout pins too; recut_v106 walks all 42 of
+them as a refusal and would have cut nothing had one moved.
 
-    BASE43_LAYOUTS  tail_v43.js   the 15 layout pins
-    BASE62_LAYOUTS  tail_v62.js   the same 15, pinned a second time
-    V271_LAYOUTS    tail_v28.js   12 more: always dm, 3 opponents, no desk
     BASE45_TRAILS   tail_v43.js   T23.A
     BASE45_AI       tail_v44.js   T24.I, and tail_v44_1's T25.F reads the same one
     BASE43_DESK     tail_v45.js   T26.G
@@ -22,17 +20,17 @@ differs from the old, so a re-run against already-repinned tails fails loudly
 instead of silently doing nothing. Each file is read, rewritten in memory and
 only then written out, so a failure part-way leaves every tail untouched.
 
-The v76 repin cut two of the trail tables wrong because the recut assumed every table
-is captured by "boot a match and hash it" - BASE43_DESK is not, it needs the
-Gunner-at-90 fixture, and BASE45_AI needs the human seat handed to the AI first.
-recut_v103 reproduces both, and this script verifies the shape of what it was
-handed (key sets and sample counts) before writing a byte.
+The v76 repin cut two of the trail tables wrong because the recut assumed every
+table is captured by "boot a match and hash it" - BASE43_DESK is not, it needs
+the Gunner-at-90 fixture, and BASE45_AI needs the human seat handed to the AI
+first. recut_v106 reproduces both, and this script verifies the shape of what it
+was handed (key sets and sample counts) before writing a byte.
 """
 import json
 import re
 import sys
 
-CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v103.json'
+CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v106.json'
 cut = json.load(open(CUT, encoding='utf-8'))
 
 # ---- shape gate: refuse a cut that does not look like the tables it replaces --
@@ -57,7 +55,7 @@ if any(len(v) != 3 for v in cut['BASE45_AI'].values()):
 if len(cut['BASE43_DESK']) != 26:
     sys.exit('BASE43_DESK should hold 26 samples (2400/90), got %d' % len(cut['BASE43_DESK']))
 if cut['BASE45_TRAILS'] != cut['BASE62_TRAILS']:
-    sys.exit('the two tan tables disagree - recut_v103 should have caught this')
+    sys.exit('the two tan tables disagree - recut_v106 should have caught this')
 
 
 def obj(table, indent):
@@ -69,17 +67,7 @@ def arr(a):
     return '[' + ', '.join(str(n) for n in a) + ']'
 
 
-def flat(table):
-    """the layout tables are one line of JSON with double-quoted keys - keep that
-    shape exactly, because tail_v43 and tail_v62 must stay diffable line for line
-    against each other and against every release before this one."""
-    return '{' + ','.join('"%s":%d' % (k, v) for k, v in table.items()) + '}'
-
-
 EDITS = [
-    ('tail_v28.js', 'V271_LAYOUTS',   flat(cut['V271_LAYOUTS']),        'const'),
-    ('tail_v43.js', 'BASE43_LAYOUTS', flat(cut['BASE43_LAYOUTS']),      'const'),
-    ('tail_v62.js', 'BASE62_LAYOUTS', flat(cut['BASE62_LAYOUTS']),      'const'),
     ('tail_v43.js', 'BASE45_TRAILS', obj(cut['BASE45_TRAILS'], '  '), 'const'),
     ('tail_v44.js', 'BASE45_AI',     obj(cut['BASE45_AI'],     '  '), 'const'),
     ('tail_v45.js', 'BASE43_DESK',   arr(cut['BASE43_DESK']),         'const'),
@@ -89,24 +77,20 @@ EDITS = [
 
 # Tables this release is EXPECTED to leave alone, with the reason. Anything not
 # listed here that comes back unchanged is treated as a failed recut, not a no-op.
-# v103: ONE entry, and it was measured rather than assumed. Map generation moved,
-# so every table that hashes a board (the three layout tables) or hashes a match
-# played on one (the trail tables) is expected to move - except BASE43_DESK, which
-# is a single 2400-tick match on desk:surv:424243, and THAT BOARD GENERATES
-# IDENTICALLY: layout hash 3434555268 before and after, 22 props and 4 fields in
-# the same places. It is a Desk seed on which every retry this release added
-# happens to clear on its first roll, so no rnd() draw shifts. The one v103 change
-# that does reach it is the decoration prune (68 decorations down to 64), and a
-# decoration is art - not in pass, not in fld, not in hashState, not in the save.
-# The other five tables all carry desk rows too, but each is one row of seven, so
-# the table as a whole still moves.
-UNMOVED_OK = {'BASE43_DESK': 'desk:surv:424243 generates an identical board; only its decoration count moved, and deco is art'}
+# v106: EMPTY, and measured rather than assumed. The release changes how a CPU
+# army uses six unit abilities, and every one of the five tables is a real match
+# with CPU armies in it, so every one is expected to move. The desk trail is the
+# interesting case and it DOES move: its single CPU seat is an ALLY with no foes
+# to fight, but Full Throttle, Flat Out and Sprint are gated on "is anything I
+# could shoot within reach" - which is false on an empty board - so a Bull, a
+# bike or a Runner there charges where before it walked.
+UNMOVED_OK = {}
 
-# v103: tail_v43 and tail_v62 each carry TWO of these tables (a layout table and
-# a trail table), so the edits are applied CUMULATIVELY to one in-memory copy per
-# file. Reading each file fresh per edit - which is what this loop did while every
-# file held exactly one table - would have written the second edit over the first
-# and silently thrown a repinned layout away.
+# The edits are applied CUMULATIVELY to one in-memory copy per file. v106 happens
+# to put one table in each file, but v103 put two in tail_v43 and two in tail_v62,
+# and reading each file fresh per edit would have written the second edit over the
+# first and silently thrown one away. Keeping the cumulative shape costs nothing
+# and means the next release that pins two tables in one file cannot hit that.
 work = {}
 pending = []
 for path, name, body, kw in EDITS:
