@@ -389,6 +389,19 @@ function kill(e,attacker){
    if(G.sel.includes(e)){G.sel.splice(G.sel.indexOf(e),1);lastSelSig=''}
    return;
   }
+  /* v107: level art. The same lightweight teardown a wall gets, over the whole 2x2
+     footprint: no salvage (it cost nothing), no fireball, no elimination check
+     (the neutral owner is never eliminated), a burst of cardboard and dust. */
+  if(e.t.lvl){
+   G.blds.splice(G.blds.indexOf(e),1);const li=e.p.blds.indexOf(e);if(li>=0)e.p.blds.splice(li,1);
+   for(let y=0;y<e.sz;y++)for(let x=0;x<e.sz;x++)G.map.pass[(e.ty+y)*G.map.N+(e.tx+x)]=1;
+   pfDirty();
+   stampBits(e.x,e.y,'#a8845a',10);spawnShrapnel(e.x,e.y,'#c9a06a',18,1.6);spawnDust(e.x,e.y,1.4);
+   spawnSmoke(e.x,e.y,3,{rise:6,grow:5,life:1.4,r:3,col:'#8a7a60'});
+   shakeAt(e.x,e.y,3);sfxStructBreak(e.x,e.y);
+   if(G.sel.includes(e)){G.sel.splice(G.sel.indexOf(e),1);lastSelSig=''}
+   return;
+  }
   // if it was mid-research, release that project so it can be re-researched later
   if(e.techCur){const qi=e.p.techQ.indexOf(e.techCur);if(qi>=0)e.p.techQ.splice(qi,1);e.techCur=null;}
   G.blds.splice(G.blds.indexOf(e),1);e.p.blds.splice(e.p.blds.indexOf(e),1);

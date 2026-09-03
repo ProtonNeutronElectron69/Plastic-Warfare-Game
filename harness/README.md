@@ -1181,6 +1181,149 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v107 — the Bathroom Floor and The Attic (Roadmap 4 item 2, in part)
+
+**Two new battlefields**, `tail_v107.js` (T89, 113 checks), and one new kind of
+thing on a map: destructible level art. **No trail moved and no repin was due** —
+`triage.sh` reported "sim unchanged" and "all 30 pins hold" on every run, because
+every new rule is gated on the new maps' own flags (`t2v2`, `M.sides`, `M.tub`,
+`midJit`), and the recut gate's 42 pins were never asked to move.
+
+### What was built
+
+- **Bathroom Floor** (`bathroom`, N 72, theme `bath`): the shared economy
+  prologue and the shared lane passes, on a porcelain tile floor (a grout grid
+  every two tiles, every other tile a shade bluer, a gloss sweep). Its centrepiece
+  is a DRAINED BATHTUB: `M.tub`, an oval of `tubrim` props (block .50, the
+  fortress wall's) around the centre cache, rotated 45 degrees, with the two
+  long-axis ends open as gates. The floor, tide lines, drain and plug chain are
+  painted by `renderTerrain`; a `duck` stands inside. Hazards: `soap` (code 2, a
+  lavender GOO row) and `bathwater` (code 3, a pale LIQ row). A bath mat
+  (`M.mat`, a painted region with a fringe), a towel (a patch), a toilet roll,
+  shampoo bottles, a bar of soap, a sponge, a plunger, a toothbrush (line prop),
+  water droplets and stray hairs (decos).
+- **The Attic** (`attic`, N 72, theme `attic`, `t2v2:true`): floorboards two
+  tiles wide with staggered joints and knots. Its four starts are two PAIRS along
+  the north and south edges at a third and two thirds of the way across
+  (`c2v2`), and `M.sides=[[0,2],[1,3]]` names the pairs. Each pair sits inside a
+  compound: a front line at row 24 (and its point mirror at 47) built west to
+  east of solid crates to the rim, a gate, three hedgehog layers with random
+  holes, the centre gate (the north mid expansion's pocket makes it by itself),
+  crates then hedgehogs, a gate, two hedgehog layers with crates behind and a
+  crate on the rim. Two mirrored crate pairs stand loose in the field. Hazards:
+  `insulation` (code 2, pink) and `leak` (code 3, dark rainwater), picked in a
+  band across the middle by the map's own `fieldSpot` because the corner-lane
+  pickers assume four corner bases. Clutter: boxes, a steamer trunk, a lampshade,
+  a leaning picture frame, a rolled rug (line prop), a dust sheet (patch), dust
+  bunnies, mothballs, cobwebs. Roaches join the ants as mid-expansion guards.
+- **Destructible level art**: `B.crate` — `{hp:820 (the Bunker's, through the
+  same RESCALE pass), sz:2, cp:0, lvl:1}`. `makeMap` records footprints in
+  `M.lvl` and blocks their tiles itself, so mines, hedgehogs, hazards and
+  `sealPockets` all see them; `initNeutrals` turns each into a neutral structure
+  with `makeBuilding('crate', G.neutral, ...)`. `drawLevelArt` paints three looks
+  (stacked boxes, a trunk, a bale of magazines) chosen off `(tx*5+ty*7)%3` — no
+  new field, nothing to serialize — and a hurt state at half HP. `kill()` gives it
+  the wall's lightweight teardown over its 2x2, no salvage, no elimination check.
+  `nearestEnemy`'s neutral-hedgehog branch is `t.barr||t.lvl`: one rule, so a bot
+  clears a crate in its way at the same low priority and a player never
+  auto-targets one. Excluded, like the nest, from the texture roster (T71.A),
+  the dump script, the sprite bake and the Field Manual.
+- **The seating rule** (`newGame`, after the start shuffle every other map is
+  pinned to, gated on `G.map.sides`): effective teams are grouped by size, the
+  two sides shuffled, each side's two seats shuffled, and each team fills one side
+  before spilling into the next. Two srand draws, on a sided map alone.
+  `survivalSetup` deletes `M.sides` and prunes `M.lvl` inside the arena.
+- **The lobby preset** (`menuPickMap`): a `t2v2` map sets three opponents and
+  teams `[1,1,2,2]`; the chips stay clickable, another map leaves them alone,
+  spectate mode is left alone. The online lobby stays FFA (it always has).
+- **The tools**: `sim.sh` deals six maps (12 by default); `audit_maps.js` and
+  `map_shot.sh` walk seven; the audit exempts rim-to-rim art overlap by name.
+
+### The tub leaked three times, and the instrument that found each one is the test
+
+Block the two gate mouths, flood from a start with the pathfinder's own rule,
+ask whether any interior tile was reached. T89.E runs it on six seeds; the
+release ran it on 66.
+
+1. **The spacing.** The bucket fortress lays its wall at .15 rad on a circle of
+   8.6, ~1.3 tiles apart, and it is porous — nobody has needed it not to be.
+   `block()` takes tile centres within the prop's .5, so at the oval's flat ends
+   a .14 step left one passable tile between segments: 42-45 passable rim tiles
+   on every seed. The step is .10 now.
+2. **The gates.** An axis-aligned oval put its gates on the cardinal axes, where
+   the four contested mid expansions sit 14 tiles out and jitter 2.2 inward.
+   `prop()` refuses anything within 3.6 + r of an expansion centre, so the
+   segments beside the gates were refused on four seeds in seven and the ring
+   had holes next to its doors. The tub is on the (1,1) diagonal now: its reach
+   toward a cardinal expansion is 7.7-8.3, its gates face two corners, and that
+   diagonal is also the one that keeps every jittered cache node inside the oval
+   (the other does not - measured node by node).
+3. **The pocket.** With the rim laid by its own placer (refusal 3.45, not
+   `prop()`'s 3.61) one more seed leaked: the pocket-clearing pass at the foot of
+   `makeMap` hands back every tile within sqrt(11) of an expansion centre, and a
+   rim TILE overhangs its segment by up to .75. So a rim at reach 8.3 needs the
+   expansion at 12.4 or more, and 14 - 2.2 is 11.8. The Bathroom jitters its mid
+   expansions 1.0 instead of 2.2 (`MAPS.midJit`, same two rnd() draws), and the
+   66-seed flood is clean.
+
+**The lesson is the one the v103 map audit taught with numbers instead of a
+screenshot: a sealed ring is a CLAIM, and the shape that looks sealed at .42
+scale is not evidence.** The same flood fill, inverted, is T89.C's proof that the
+Attic's compounds are NOT sealed: every start reaches every other start on every
+seed.
+
+### Four more things a real frame caught (rule 7)
+
+- The bath mat and the towel lay across the tub floor: the tub was not a
+  region, so `patchAt` could not avoid it. Its square is `reg()`istered first
+  now, and the mat moved beside the tub's long side.
+- A hedgehog cluster stood IN the tub on most seeds: `barrCluster`'s annulus
+  (7..N*.42) crosses the interior. `barrTile` refuses `tubInside` - the Bathroom
+  alone, since `M.tub` exists nowhere else.
+- Every crate on a front row was the same look: `(tx*3+ty*7)%3` - a multiple of
+  3 on `tx` made the hash blind to x, and a row is one `ty`. `tx*5`.
+- The rim read as a dotted ring: the same spacing finding as leak 1, seen before
+  it was measured.
+
+### Two generator findings that are balance findings
+
+- **A pair is laid both or neither.** `lvlPair` laid each half on its own merits,
+  and a natural expansion's pocket refused one half on one seed in six - one
+  compound had a crate the other did not. Check both, then lay both.
+- **Art-aware picks on the Attic.** Laying the clutter first (so hedgehogs and
+  crates refuse prop art) cost the wall two crate pairs on one seed in six;
+  laying it after put boxes on hedgehogs (82 in the 20-seed audit). Now
+  `farPropArt` counts the crates and the compound hedgehogs as art ON THE ATTIC
+  (gated on `t2v2`: refusing more spots changes which pick a pass accepts, and
+  the other five layouts are pinned), the compound is laid first, and the crate
+  placer asks the props-only version so crates can stand shoulder to shoulder.
+  Audit: attic clean; bathroom 4 soap/bathwater clips in 20 seeds, the residual
+  the v103 audit accepted on the sandbox.
+
+### Three of this release's own checks were wrong first, all about the harness
+
+- The shim's `querySelectorAll` answers nothing, so "one card per map" read 0 of
+  7; `appendChild` keeps `children`, which is what the check reads now.
+- The shim's `querySelector` answers a stub for ANY selector, so
+  `refreshTeamRow`'s v35 survival snap-back fires under the shim on every refresh
+  and `SETUP.map` reads 'backyard' after the preset. A browser answers null there
+  unless the Desk card is lit. T89.G asserts the two fields the preset writes and
+  drives the map field through the non-preset path. Recorded as a shim asymmetry
+  beside the v71 ones.
+- The targeting fixture asked for `c2` by identity and put the bot's man 3.5
+  tiles east of it, where a shoulder-to-shoulder neighbour is nearer; and it made
+  the human's man while the bot's man stood there, so the human's scan found an
+  ENEMY. Both restated: any neutral crate, and one man at a time.
+
+### Verification actually run at v107
+
+`./triage.sh`: sim unchanged, all 30 layout pins hold, every trail reproduces.
+`QUIET=1 ./seg.sh all`: 6,716 checks, 0 failures, on the final bytes.
+`python3 verify_v58.py`: 32 passed. `../build.sh --check`: byte-identical.
+`node .audit.js 20`: attic clean; bathroom 4 clips. `./map_shot.sh` on both,
+plus 1.0-scale crops of the tub and both compounds, read as PNGs. The 66-seed
+tub flood is in the record above; T89.E keeps six of them.
+
 ## v106 — the unit abilities a bot never used (Roadmap 4 item 4)
 
 **Six abilities that a CPU army owned and never switched on are now driven.**

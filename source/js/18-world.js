@@ -61,6 +61,14 @@ function initNeutrals(){
   if(G.map.pass[ty*G.map.N+tx]!==1)continue; // tile already blocked by a prop/etc — skip
   makeBuilding('barricade',G.neutral,tx,ty,true);
  }
+ /* v107: the Attic's level art. Recorded by makeMap as 2x2 footprints (top-left
+    tile) with their tiles already blocked, so mines, hedgehogs and hazards kept
+    clear of them during generation; makeBuilding re-blocks the same four tiles. */
+ for(const lv of (G.map.lvl||[])){
+  const tx=lv.x|0,ty=lv.y|0;
+  if(tx<0||ty<0||tx+2>G.map.N||ty+2>G.map.N)continue;
+  makeBuilding('crate',G.neutral,tx,ty,true);
+ }
  // v25: every wildlife nest doubles as a destructible neutral structure. Smashing
  // it stops the swarm from respawning (survivors stay out, but lose home healing).
  G.map.nests.forEach((ns,i)=>{
@@ -213,6 +221,8 @@ function survivalSetup(s){
  M.fields=(M.fields||[]).filter(f=>dhyp(f.cx-c,f.cy-c)>=R);
  M.mines=(M.mines||[]).filter(m=>dhyp(m.x-c,m.y-c)>=R);
  M.barricades=(M.barricades||[]).filter(b=>dhyp((b.x|0)+.5-c,(b.y|0)+.5-c)>=R);
+ M.lvl=(M.lvl||[]).filter(b=>dhyp((b.x|0)+1-c,(b.y|0)+1-c)>=R+1.5); // v107: the Attic's crates clear the arena too (2x2, so measured from the block's centre)
+ delete M.sides; // v107: the starts below are the central cluster, not the Attic's two sides
  const addNodeAt=(t,wx,wy,amt)=>{const tx=Math.round(wx),ty=Math.round(wy);M.nodes.push({t,x:tx+.5,y:ty+.5,amt,max:amt});if(tx>=0&&ty>=0&&tx<N&&ty<N)M.pass[ty*N+tx]=0;};
  if(M.theme==='desk'){
   // v35: Desk survival economy — (players+1) plastic piles AND (players+1) batteries

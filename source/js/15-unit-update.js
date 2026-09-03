@@ -30,7 +30,7 @@ function nearestEnemy(u,r,cone){
    const d=(b.x-u.x)**2+(b.y-u.y)**2;if(d<NEST_AGGRO2&&d<bd&&(!cone||inCone(u,b.x,b.y))){bd=d;best=b}
    continue;
   }
-  if(b.t.barr){ // v88: t.barr
+  if(b.t.barr||b.t.lvl){ // v88: t.barr. v107: and the Attic's level art, on exactly the hedgehog's footing - a bot chews through a crate in its way, a player breaks one deliberately
    if(b.p===G.neutral){ // v83: a BOT clears the map's scattered hedgehogs; a player's units still never auto-target them
     if(!(u.p&&u.p.ai)||(u.id%BARR_CLEAR_SHARE))continue; // keyed on id, never on srand: reading the sim stream from a targeting scan would move every trail
     const d=(b.x-u.x)**2+(b.y-u.y)**2;

@@ -62,8 +62,9 @@ A few examples of what those abilities actually do:
 **💥 Deathmatch · 🚩 Capture the Flag · 👑 King of the Hill · 🛡️ Wave Survival**
 
 Played across *Backyard Brawl*, *Kitchen Counter*, *Sandbox Standoff*,
-*Living Room*, and *The Desk* (wave survival only). There is also a
-host/join mode for playing against another person.
+*Living Room*, *Bathroom Floor*, *The Attic* (built for two-against-two team
+battles) and *The Desk* (wave survival only). There is also a host/join mode for
+playing against another person.
 
 ---
 
@@ -77,7 +78,7 @@ host/join mode for playing against another person.
 | `assets/mus/` | The four soundtrack tracks as playable mp3 files, plus the loop points — they ride inside the game file too. |
 | `assets/img/` | The sprite textures as viewable webp images — same deal: they also ride inside the game file. |
 | `assets/nrm/` | The textures' normal maps — the per-pixel surface directions the lighting uses. |
-| `harness/` | The automated test suite: 89 test files that play the game headlessly and check nothing broke. |
+| `harness/` | The automated test suite: 90 test files that play the game headlessly and check nothing broke. |
 | `harness/README.md` | The full development record — the design decisions, the balance measurements, and the traps learned at every version. |
 | `tools/` | The offline pipelines that make the art and sound: the sound renderer, the music loop-cutter and packer, and the four steps that turn the game's own painters into textures and normal maps. |
 
@@ -86,7 +87,7 @@ host/join mode for playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v106 it makes **6,083
+that the results come out identical every time. As of v107 it makes **6,716
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -116,7 +117,27 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 106**.
+The game is at **version 107**.
+
+**v107 — two new battlefields: the Bathroom Floor and The Attic.** The Bathroom
+is a big four-corner board on cold porcelain tile. In the middle sits a drained
+bathtub: a ring of white rim you cannot cross, with the centre's plastic piles
+and batteries inside it and only two ways in, at the tub's two ends. Around it
+are slicks of soap that slow you and sting, pools of soapy bathwater that block
+the way outright, a bath mat, shampoo bottles, a plunger, a toothbrush, and a
+rubber duck.
+
+The Attic is the first map built for a **2v2**. Pick it and the setup screen
+deals two teams of two on the spot (you and CPU 1 against CPU 2 and CPU 3);
+allies always start side by side along one edge of the attic, and each pair
+begins inside a walled compound. The walls are stacked boxes, old trunks and
+bales of magazines mixed with rows of hedgehogs, and they belong to nobody: they
+can be shot down by either side, a box takes about as much punishment as a
+bunker, and there are three gaps in each wall to fight through. The middle of
+the attic has a roof leak and a burst bale of pink insulation to steer around.
+Both maps work in every mode; the tub and the compounds are cleared away for
+Wave Survival, as every map's centre is.
+
 
 **v106 — the computer players learned six abilities they had never used.** Every
 army has unit abilities you can switch on and off — a Bull that charges, a scout

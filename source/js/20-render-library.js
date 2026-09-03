@@ -341,6 +341,7 @@ function bakeSprites(){
   }
  }
  for(const k in B){
+  if(B[k].lvl)continue; // v107: level art is painter-only, like a wall - drawLevelArt is its own fallback
   if(B[k].barr){
    /* v96.1: the walls take a texture cell now (owner feedback) - but ONLY a
       texture: there is no procedural bake behind them, because drawBarricade
@@ -380,10 +381,12 @@ function propBox(p){
   plate:[-28,-26,28,10],mug:[-24,-46,30,10],salt:[-14,-44,14,10],toaster:[-36,-52,36,12],
   beachball:[-30,-52,30,14],dumptruck:[-46,-46,46,14],keep:[-70,-118,70,20],slipper:[-34,-22,34,12],
   remote:[-26,-18,26,12],books:[-34,-42,34,12],traincar:[-40,-44,40,14],
-  keyboard:[-42,-28,42,16],chips:[-26,-44,26,16],eraser:[-16,-18,16,10]}; // v35
+  keyboard:[-42,-28,42,16],chips:[-26,-44,26,16],eraser:[-16,-18,16,10],
+  tubrim:[-30,-42,30,14],duck:[-26,-44,26,12],tproll:[-40,-54,40,16],shampoo:[-20,-74,20,12],soapbar:[-28,-26,28,12],sponge:[-30,-32,30,12],plunger:[-22,-74,22,12], // v107 bathroom
+  box:[-46,-72,46,16],trunk:[-56,-66,56,18],lampshade:[-32,-78,32,12],frame:[-34,-62,34,12]}; // v35. v107 attic
  const S=p.sc||1; // v36: per-prop uniform scale (Desk clutter); byte-identical when unset
  if(B[t])return S!==1?B[t].map(v=>v*S):B[t];
- if(t==='stick'||t==='pencil'||t==='fork'||t==='spoon'||t==='shovel'||t==='rake'||t==='rack')return [-L*S,-L*S,L*S,L*S];
+ if(t==='stick'||t==='pencil'||t==='fork'||t==='spoon'||t==='shovel'||t==='rake'||t==='rack'||t==='toothbrush'||t==='rug')return [-L*S,-L*S,L*S,L*S]; // v107: the toothbrush and the rolled rug are line props too
  return null;
 }
 /* bake (or re-bake) one node cell for its current amount bucket */

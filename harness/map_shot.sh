@@ -3,7 +3,7 @@
 # cannot fail seg.sh (rule 7), so this is a LOOKING tool: nothing it draws is
 # pinned and it is not part of seg.sh.
 #
-#   ./map_shot.sh <outDir> [seed] [scale]      all five maps, whole board
+#   ./map_shot.sh <outDir> [seed] [scale]      all seven maps, whole board
 #   MAPS="livingroom" ./map_shot.sh out 500000 1.0
 #
 # It appends one <script> to a COPY of the shipped file. That script reads the
@@ -15,7 +15,7 @@ set -e
 OUT=${1:-map_out}; SEED=${2:-500000}; SC=${3:-0.42}
 SRC=$(cd "$(dirname "$0")/.." && pwd)/plastic-warfare.html
 CHROME=/opt/pw-browsers/chromium
-MAPS=${MAPS:-"backyard kitchen sandbox livingroom desk"}
+MAPS=${MAPS:-"backyard kitchen sandbox livingroom desk bathroom attic"}
 mkdir -p "$OUT"
 TMP="$OUT/_shotpage.html"
 cp "$SRC" "$TMP"

@@ -156,7 +156,7 @@ function cost63(k) { return (U[k] ? U[k].cp + U[k].ce : B[k].cp + B[k].ce); }
 {
   ok('T63.D every unit and every drawable structure is still in the gallery',
     INFO_UNITS.length === Object.keys(U).length &&
-    INFO_BLDS.length === Object.keys(B).length - 1 && !INFO_BLDS.includes('nest'));
+    INFO_BLDS.length === Object.keys(B).filter(k => k !== 'nest' && !B[k].lvl).length && !INFO_BLDS.includes('nest') && !INFO_BLDS.includes('crate')); // v107: level art (t.lvl) is scenery, not a card, on the nest's own footing
   ok('T63.D ...exactly once each',
     new Set(INFO_UNITS).size === INFO_UNITS.length && new Set(INFO_BLDS).size === INFO_BLDS.length);
 

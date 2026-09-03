@@ -106,6 +106,28 @@ function newGame(s){
  const order=slots.map(sl=>sl.fac);
  // shuffle start spots
  const spots=G.map.starts.slice();for(let i=spots.length-1;i>0;i--){const j=Math.floor(srand()*(i+1));[spots[i],spots[j]]=[spots[j],spots[i]]}
+ /* v107 SIDED MAPS. The Attic's four starts are two PAIRS - M.sides is a list of
+    index pairs into M.starts - and a team battle wants allies seated together.
+    The shuffle above is kept exactly as it is (its draws are what every trail on
+    every other map is pinned to); only a map that declares sides re-deals the
+    seats after it, and it draws from srand on that map alone. Teams are grouped
+    by size, the two sides shuffled, each side's two seats shuffled, and each
+    team fills one side before spilling into the next - so a 2v2 gets one side
+    per team, a 3v1 puts the trio on a side and a half, a free-for-all seats one
+    army per spot, and a 1v1 leaves the far seats empty. Survival never gets
+    here: survivalSetup rebuilds the starts in the middle and deletes M.sides. */
+ if(G.map.sides&&G.map.sides.length){
+  let eff=slots.map((sl,i)=>sl.team!=null?sl.team:i+1);
+  if(!G.test&&slots.length>1&&new Set(eff).size===1)eff=eff.map((_,i)=>i+1); // the all-one-team FFA fallback below, read the same way here
+  const groups=[];
+  for(let i=0;i<eff.length;i++){let g=groups.find(q=>q.team===eff[i]);if(!g){g={team:eff[i],idx:[]};groups.push(g)}g.idx.push(i)}
+  groups.sort((a,b)=>b.idx.length-a.idx.length||a.idx[0]-b.idx[0]);
+  const sides=G.map.sides.map(s=>s.slice());
+  if(srand()<.5)sides.reverse();
+  for(const s of sides)if(srand()<.5)s.reverse();
+  const seats=[].concat(...sides);
+  let k=0;for(const g of groups)for(const i of g.idx)if(k<seats.length)spots[i]=G.map.starts[seats[k++]];
+ }
  // --- assign each AI a distinct behavior PROFILE, drawn without replacement so a
  //     3-AI match always feels varied. Each profile tunes wave timing/size, how
  //     defensive they are, whether they scout/harass, and who they like to hit. ---

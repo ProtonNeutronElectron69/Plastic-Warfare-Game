@@ -759,6 +759,54 @@ function drawBarricade(c,b,sx,sy){
  if(hv){plSphere(c,shade(base,1.15),0,-15,2.6,1,false);} // the cap on the tall post
  c.restore();
 }
+/* v107 LEVEL ART - the Attic's destructible crates. Painted live at the
+   building's own footprint, the way drawBarricade paints a wall: there is no
+   baked cell and no texture behind it, so this IS the fallback. Three looks,
+   chosen off the footprint's own tile so a save needs no new field and the
+   choice cannot drift between clients: stacked cardboard boxes, a steamer
+   trunk, a bale of old magazines. Damage shows as the thing coming apart. */
+function lvlArtOf(b){return (b.tx*5+b.ty*7)%3}   // 5, not 3: a multiple of 3 on tx made a whole row the same look
+function drawLevelArt(c,b,sx,sy){
+ const S=b.sz*HW,HD=b.sz*HH,v=lvlArtOf(b),hurt=b.hp<b.mhp*.5;
+ plShadow(c,sx,sy+HD*.55,S*1.15,HD*1.1,.32);
+ c.save();c.translate(sx,sy+HD*.5);
+ if(v===0){
+  // two boxes side by side with a third on top, taped, the top one crushed when hurt
+  prism(c,'#b8905a',-S*.42,0,S*.5,HD*.5,34,{matte:1});
+  prism(c,'#c49a62',S*.42,-HD*.1,S*.5,HD*.5,30,{matte:1});
+  if(!hurt)prism(c,'#a8845a',0,-HD*.55-30,S*.42,HD*.42,26,{matte:1});
+  else{c.fillStyle='rgba(60,40,20,.5)';c.beginPath();c.ellipse(0,-HD*.55-30,S*.4,HD*.3,0,0,7);c.fill();}
+  c.save();c.globalAlpha=.55;c.strokeStyle='#d8c07a';c.lineWidth=4;
+  c.beginPath();c.moveTo(-S*.42-S*.25,-34-HD*.25);c.lineTo(-S*.42+S*.25,-34+HD*.25);c.stroke();
+  c.beginPath();c.moveTo(S*.42-S*.25,-HD*.1-30-HD*.25);c.lineTo(S*.42+S*.25,-HD*.1-30+HD*.25);c.stroke();c.restore();
+ } else if(v===1){
+  // a steamer trunk, its lid domed, brass corners; hurt: the lid thrown open
+  prism(c,'#5a3a2a',0,0,S*.92,HD*.92,30,{matte:1});
+  c.save();c.translate(0,-30);
+  (function(){const g=c.createLinearGradient(0,-18,0,4);g.addColorStop(0,'#8a6042');g.addColorStop(1,'#4e3222');c.fillStyle=g;
+   if(!hurt){c.beginPath();c.moveTo(-S*.92,0);c.quadraticCurveTo(-S*.2,-HD*.92-18,S*.92,0);c.lineTo(0,HD*.92);c.closePath();c.fill();}
+   else{c.beginPath();c.moveTo(-S*.92,0);c.lineTo(-S*.5,-HD-26);c.lineTo(S*.3,-HD-34);c.lineTo(0,HD*.92);c.closePath();c.fill();
+    c.fillStyle='#2a1a10';c.beginPath();c.moveTo(0,-HD*.92);c.lineTo(S*.92,0);c.lineTo(0,HD*.92);c.closePath();c.fill();}})();
+  c.strokeStyle='#c9a04a';c.lineWidth=2.4;for(const o of [-.55,0,.55]){c.beginPath();c.moveTo(o*S*.6-S*.3,HD*.3);c.lineTo(o*S*.45,-HD*.5-6);c.stroke();}
+  c.restore();
+  c.fillStyle='#d8b258';for(const q of [[-S*.92+3,-4],[S*.92-3,-4],[0,HD*.92-3]]){c.beginPath();c.arc(q[0],q[1],3.4,0,7);c.fill();}
+ } else {
+  // a bale of old magazines tied with string; hurt: the string gone, the stack slewed
+  const tilt=hurt?.18:0;
+  for(let i=0;i<5;i++){const yy=-i*7,dx=hurt?(i%2?4:-4)*i*.5:0;
+   c.save();c.translate(dx,yy);c.rotate(tilt*(i%2?1:-1));
+   prism(c,['#c8c0a8','#b6a888','#d0c8b0','#a89c80','#c4b898'][i],0,0,S*.8,HD*.8,6,{matte:1});
+   c.restore();}
+  if(!hurt){c.strokeStyle='#8a7a50';c.lineWidth=2;c.beginPath();c.moveTo(-S*.8,-HD*.05);c.lineTo(0,-HD*.85-35);c.lineTo(S*.8,-HD*.05);c.stroke();
+   c.beginPath();c.moveTo(0,HD*.8);c.lineTo(0,-35-HD*.8);c.stroke();}
+  // a cover with a faded photo on the top magazine
+  c.fillStyle='rgba(90,120,160,.55)';c.beginPath();c.moveTo(0,-35-HD*.55);c.lineTo(S*.45,-35-HD*.1);c.lineTo(0,-35+HD*.35);c.lineTo(-S*.45,-35-HD*.1);c.closePath();c.fill();
+ }
+ if(hurt){ // splinters and torn card around the foot
+  c.fillStyle='rgba(60,42,22,.6)';for(let i=0;i<6;i++){const a=i/6*6.28;c.beginPath();c.ellipse(Math.cos(a)*S*.9,Math.sin(a)*HD*.9+2,4,1.8,a,0,7);c.fill();}
+ }
+ c.restore();
+}
 function drawBld(c,b){
  const sx=isoX(b.x,b.y),sy=isoY(b.x,b.y);
  const col=FAC[b.p.fac].color,B0=hx2rgb(col),dk=shade(col,.68),lt=shade(col,1.3);
@@ -782,6 +830,12 @@ function drawBld(c,b){
  //     here we only add selection + a health bar so damage on the den reads clearly ---
  if(b.key==='nest'){
   if(b.sel||b.hp<b.mhp)drawHP(c,sx,sy-26,b.hp/b.mhp);
+  return;
+ }
+ // --- v107 level art: painted live at its footprint, like a wall ---
+ if(b.t.lvl){
+  drawLevelArt(c,b,sx,sy);
+  if(b.sel||b.hp<b.mhp)drawHP(c,sx,sy-52,b.hp/b.mhp);
   return;
  }
  // --- barricade: dark-gray (neutral) or team-colored Czech hedgehog, no molded base ---
@@ -831,7 +885,7 @@ function offsetSil(c,cell,gx,gy,al,rot){
  c.save();c.globalAlpha=al;c.translate(gx+3,gy+2.2);if(rot)c.rotate(rot);
  c.drawImage(cell.sil,-cell.ax,-cell.ay);c.restore();
 }
-const FLAT_SHADOW=new Set(['hose','stick','pencil','fork','spoon','shovel','rake','leaf','marble','star']);
+const FLAT_SHADOW=new Set(['hose','stick','pencil','fork','spoon','shovel','rake','leaf','marble','star','toothbrush','rug','soapbar']); // v107: the bathroom's flat things and the rolled rug
 function drawItemShadow(c,it){
  if(!SPR.done)return;
  const kind=it[3],o=it[2];
@@ -1269,6 +1323,131 @@ function propBody(c,p){
   for(let i=0;i<6;i++){c.fillStyle=bcols[i];c.beginPath();c.arc(-7+i*5,-1+(i%2?2.6:-2.6),1.9,0,7);c.fill();}
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.28)';rr(c,-20,-8,40,3,1.5);c.fill();c.restore();
   c.restore();
+ }
+ else if(t==='tubrim'){
+  // v107: one segment of the bathtub's porcelain rim - a rounded white block with a
+  // blue-grey underside, oriented along the ring so the segments read as one lip
+  plShadow(c,0,3,HW*.9,HH*.8,.26);
+  const a=screenAng(p.a!=null?p.a:0);c.rotate(a);   // p.a is the rim's world tangent at this segment
+  (function(){const g=c.createLinearGradient(0,-30,0,4);g.addColorStop(0,'#ffffff');g.addColorStop(.55,'#eef3f6');g.addColorStop(1,'#b9c8d2');c.fillStyle=g;rr(c,-15,-30,30,32,9);c.fill();})();
+  c.fillStyle='rgba(120,140,155,.35)';rr(c,-15,-6,30,8,4);c.fill();
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.5)';rr(c,-11,-28,22,5,2.5);c.fill();c.restore();
+  glint(c,-7,-24,2.2);
+ }
+ else if(t==='duck'){
+  // v107: the rubber duck, standing in the drained tub
+  plShadow(c,0,3,18,8,.3);c.rotate((p.rot||0)*.4);
+  (function(){const g=c.createRadialGradient(-6,-20,2,0,-14,20);g.addColorStop(0,'#fff2a0');g.addColorStop(.5,'#ffd23f');g.addColorStop(1,'#d9a412');c.fillStyle=g;
+   c.beginPath();c.ellipse(0,-12,17,11,0,0,7);c.fill();c.beginPath();c.arc(11,-27,8.5,0,7);c.fill();})();
+  c.fillStyle='#ff8a3c';c.beginPath();c.moveTo(18,-28);c.lineTo(29,-26);c.lineTo(18,-23);c.closePath();c.fill();
+  c.fillStyle='#23262b';c.beginPath();c.arc(14,-30,1.6,0,7);c.fill();
+  c.fillStyle='rgba(255,255,255,.75)';c.beginPath();c.arc(13.4,-30.6,.6,0,7);c.fill();
+  c.strokeStyle='rgba(180,120,20,.55)';c.lineWidth=1.4;c.beginPath();c.moveTo(-14,-12);c.quadraticCurveTo(-8,-22,2,-16);c.stroke(); // wing
+  glint(c,-6,-19,2.6);
+ }
+ else if(t==='tproll'){
+  // v107: a toilet roll on its side, the loose end trailing
+  plShadow(c,0,4,HW*1.5,HH*1.1,.3);
+  (function(){const g=c.createLinearGradient(-30,0,30,0);g.addColorStop(0,'#d8d4cc');g.addColorStop(.35,'#ffffff');g.addColorStop(.7,'#f2efe8');g.addColorStop(1,'#bfbab0');c.fillStyle=g;rr(c,-30,-44,60,44,12);c.fill();})();
+  c.fillStyle='#e8e4dc';c.beginPath();c.ellipse(30,-22,8,22,0,0,7);c.fill();
+  c.fillStyle='#8c8478';c.beginPath();c.ellipse(30,-22,3.4,11,0,0,7);c.fill();
+  c.strokeStyle='rgba(120,112,100,.4)';c.lineWidth=1;for(let i=0;i<4;i++){c.beginPath();c.ellipse(30,-22,4.6+i*.9,13+i*2.4,0,0,7);c.stroke();}
+  c.fillStyle='#faf8f4';c.beginPath();c.moveTo(-30,-2);c.lineTo(-52,4);c.lineTo(-50,10);c.lineTo(-28,2);c.closePath();c.fill();  // the trailing sheet
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.45)';rr(c,-22,-42,34,6,3);c.fill();c.restore();
+ }
+ else if(t==='shampoo'){
+  // v107: a tall shampoo bottle with a flip cap
+  plShadow(c,0,3,14,6,.3);const hue=p.hue!=null?p.hue:300;
+  (function(){const g=c.createLinearGradient(-13,0,13,0);g.addColorStop(0,`hsl(${hue},55%,34%)`);g.addColorStop(.4,`hsl(${hue},62%,58%)`);g.addColorStop(.6,`hsl(${hue},68%,70%)`);g.addColorStop(1,`hsl(${hue},55%,30%)`);c.fillStyle=g;rr(c,-13,-58,26,58,7);c.fill();})();
+  c.fillStyle='rgba(255,255,255,.82)';rr(c,-9,-42,18,20,2);c.fill();
+  c.fillStyle=`hsl(${hue},50%,45%)`;rr(c,-7,-38,14,3,1);c.fill();rr(c,-7,-33,10,2,1);c.fill();
+  c.fillStyle='#f2f2f0';rr(c,-9,-66,18,10,3);c.fill();c.fillStyle='#c8c8c4';rr(c,-4,-70,8,5,2);c.fill();
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.4)';rr(c,-10,-56,3,50,1.5);c.fill();c.restore();
+ }
+ else if(t==='soapbar'){
+  // v107: a worn bar of soap with suds on it
+  plShadow(c,0,3,24,9,.3);
+  (function(){const g=c.createLinearGradient(-22,-18,22,4);g.addColorStop(0,'#fffdf2');g.addColorStop(.5,'#e9e3c2');g.addColorStop(1,'#b8b08a');c.fillStyle=g;c.beginPath();c.ellipse(0,-9,24,12,0,0,7);c.fill();})();
+  c.fillStyle='rgba(120,112,80,.3)';c.beginPath();c.ellipse(0,-2,22,5,0,0,7);c.fill();
+  c.fillStyle='rgba(255,255,255,.85)';for(const q of [[-10,-16,3],[-4,-19,2.2],[6,-17,2.8],[12,-13,1.8]]){c.beginPath();c.arc(q[0],q[1],q[2],0,7);c.fill();}
+  glint(c,-8,-13,2.4);
+ }
+ else if(t==='sponge'){
+  // v107: a yellow kitchen sponge with a green scouring pad
+  plShadow(c,0,3,26,9,.3);
+  slab(c,'#3f8a2c',-24,-24,48,12,4,3);
+  slab(c,'#f2d24d',-24,-16,48,16,7,3);
+  c.fillStyle='rgba(120,90,20,.28)';for(let i=0;i<14;i++)c.fillRect(-20+(i*17)%42,-14+(i*11)%14,2,2);
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.35)';rr(c,-20,-15,20,3,1.5);c.fill();c.restore();
+ }
+ else if(t==='plunger'){
+  // v107: a plunger standing upright on its rubber cup
+  plShadow(c,0,3,20,8,.3);
+  (function(){const g=c.createRadialGradient(-6,-14,2,0,-10,22);g.addColorStop(0,'#e0604a');g.addColorStop(.7,'#9e2c26');g.addColorStop(1,'#5c1712');c.fillStyle=g;c.beginPath();c.ellipse(0,-8,20,10,0,0,7);c.fill();})();
+  c.fillStyle='#7a1f1a';c.beginPath();c.ellipse(0,-14,12,5,0,0,7);c.fill();
+  plLimb(c,'#c9a06a',0,-16,0,-68,7);
+  c.fillStyle='#8a6a40';c.beginPath();c.ellipse(0,-68,4.5,2.4,0,0,7);c.fill();
+  glint(c,-7,-12,2);
+ }
+ else if(t==='toothbrush'){const a=screenAng(p.ang);c.rotate(a);const L=p.len*HW*.9;
+  // v107: a toothbrush lying flat, handle then bristles
+  (function(){const g=c.createLinearGradient(0,-5,0,5);g.addColorStop(0,'#7fd4ff');g.addColorStop(.5,'#2f9fe0');g.addColorStop(1,'#1c6aa0');c.fillStyle=g;rr(c,0,-5,L*.72,10,4);c.fill();})();
+  c.fillStyle='#f4f8fb';rr(c,L*.7,-4.5,L*.3,9,3);c.fill();
+  c.fillStyle='#d9e6ee';for(let i=0;i<7;i++)c.fillRect(L*.72+i*(L*.26/7),-4,1.6,8);
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.5)';rr(c,3,-4,L*.6,2,1);c.fill();c.restore();
+ }
+ else if(t==='box'){
+  // v107: a taped cardboard box
+  plShadow(c,0,5,HW*1.6,HH*1.2,.32);const hue=p.hue!=null?p.hue:8;
+  const col=`hsl(${28+hue},45%,58%)`;
+  prism(c,col,0,0,HW*1.25,HH*1.25,40,{matte:1});
+  // packing tape down the middle of the lid, and a scrawled label on the front
+  c.save();c.globalAlpha=.6;c.strokeStyle='#d8c07a';c.lineWidth=5;c.beginPath();c.moveTo(-HW*1.25*.5,-40-HH*1.25*.5);c.lineTo(HW*1.25*.5,-40+HH*1.25*.5);c.stroke();c.restore();
+  c.fillStyle='rgba(250,246,236,.9)';c.save();c.transform(1,.5,0,1,0,0);rr(c,4,-32,16,9,1.5);c.fill();c.restore();
+  c.strokeStyle='rgba(40,30,20,.6)';c.lineWidth=1;c.save();c.transform(1,.5,0,1,0,0);for(let i=0;i<3;i++){c.beginPath();c.moveTo(6,-30+i*2.6);c.lineTo(17-i*3,-30+i*2.6);c.stroke();}c.restore();
+ }
+ else if(t==='trunk'){
+  // v107: a steamer trunk - a dark body with brass corners and a domed lid
+  plShadow(c,0,6,HW*1.9,HH*1.4,.34);
+  prism(c,'#5a3a2a',0,0,HW*1.55,HH*1.55,26,{matte:1});
+  c.save();c.translate(0,-26);
+  (function(){const g=c.createLinearGradient(0,-16,0,4);g.addColorStop(0,'#8a6042');g.addColorStop(1,'#4e3222');c.fillStyle=g;
+   c.beginPath();c.moveTo(-HW*1.55,0);c.quadraticCurveTo(-HW*1.55*.2,-HH*1.55-16,HW*1.55,0);c.lineTo(0,HH*1.55);c.closePath();c.fill();})();
+  c.strokeStyle='#c9a04a';c.lineWidth=2.2;for(const o of [-.6,0,.6]){c.beginPath();c.moveTo(-HW*1.55*.9+o*HW*1.55*.6,HH*1.55*.1);c.lineTo(o*HW*.4,-HH*1.55*.3-6);c.stroke();}
+  c.restore();
+  c.fillStyle='#d8b258';for(const q of [[-HW*1.55+3,-4],[HW*1.55-3,-4],[0,HH*1.55-3],[0,-26-HH*1.55+2]]){c.beginPath();c.arc(q[0],q[1],3,0,7);c.fill();}
+  c.fillStyle='#e6c86a';rr(c,-5,-HH*1.55*.2-16,10,7,1.5);c.fill();c.fillStyle='#4a3010';c.fillRect(-1.2,-HH*1.55*.2-13,2.4,3);
+ }
+ else if(t==='lampshade'){
+  // v107: an old standard lamp, its fringed shade tilted
+  plShadow(c,0,3,18,8,.28);
+  c.fillStyle='#4a4038';c.beginPath();c.ellipse(0,-2,15,7,0,0,7);c.fill();
+  plLimb(c,'#8a7a60',0,-4,0,-52,4);
+  c.save();c.translate(0,-52);c.rotate(-.12);
+  (function(){const g=c.createLinearGradient(-26,0,26,0);g.addColorStop(0,'#a88a58');g.addColorStop(.4,'#e6cf94');g.addColorStop(.6,'#f2e0aa');g.addColorStop(1,'#9c7f4e');c.fillStyle=g;c.beginPath();c.moveTo(-26,4);c.lineTo(-14,-22);c.lineTo(14,-22);c.lineTo(26,4);c.closePath();c.fill();})();
+  c.strokeStyle='rgba(120,90,40,.55)';c.lineWidth=1;for(let i=-24;i<=24;i+=4){c.beginPath();c.moveTo(i,4);c.lineTo(i,9);c.stroke();}
+  c.fillStyle='#6a5a40';c.fillRect(-15,-23,30,2.4);
+  c.restore();
+ }
+ else if(t==='frame'){
+  // v107: a picture frame leaning against nothing, a faded landscape inside
+  plShadow(c,0,3,22,8,.28);const hue=p.hue!=null?p.hue:120;
+  c.save();c.transform(1,-.28,0,1,0,0);
+  c.fillStyle='#7a5a30';rr(c,-24,-50,48,46,3);c.fill();
+  c.fillStyle='#c9a04a';rr(c,-21,-47,42,40,2);c.fill();
+  c.fillStyle=`hsl(${hue},35%,62%)`;rr(c,-17,-43,34,32,1);c.fill();
+  c.fillStyle=`hsl(${hue+40},40%,42%)`;c.beginPath();c.moveTo(-17,-16);c.quadraticCurveTo(-4,-30,6,-20);c.quadraticCurveTo(12,-26,17,-18);c.lineTo(17,-11);c.lineTo(-17,-11);c.closePath();c.fill();
+  c.fillStyle='#fff2a0';c.beginPath();c.arc(8,-36,3.4,0,7);c.fill();
+  c.restore();
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.25)';c.beginPath();c.moveTo(-18,-40);c.lineTo(-6,-46);c.lineTo(-2,-20);c.lineTo(-14,-14);c.closePath();c.fill();c.restore();
+ }
+ else if(t==='rug'){const a=screenAng(p.ang);c.rotate(a);const L=p.len*HW*.9;
+  // v107: a rolled-up rug, its pattern showing on the outer turn
+  (function(){const g=c.createLinearGradient(0,-9,0,9);g.addColorStop(0,'#c46a4a');g.addColorStop(.5,'#8e3f2a');g.addColorStop(1,'#5a2418');c.fillStyle=g;rr(c,0,-9,L,18,6);c.fill();})();
+  c.strokeStyle='rgba(240,200,120,.55)';c.lineWidth=1.4;for(let x=8;x<L-6;x+=9){c.beginPath();c.moveTo(x,-7);c.lineTo(x+4,0);c.lineTo(x,7);c.stroke();}
+  c.fillStyle='#e6c8a0';c.beginPath();c.ellipse(L,0,5,9,0,0,7);c.fill();c.fillStyle='#8e3f2a';c.beginPath();c.ellipse(L,0,2.4,4.6,0,0,7);c.fill();
+  c.strokeStyle='rgba(120,90,40,.5)';c.lineWidth=1;c.beginPath();c.ellipse(L,0,3.8,7,0,0,7);c.stroke();
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.28)';rr(c,3,-7,L-8,3,1.5);c.fill();c.restore();
  }
  else if(t==='books'){
   // a stack of three hardback picture books
