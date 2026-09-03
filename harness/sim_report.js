@@ -37,13 +37,14 @@ for (const k in U) units[k] = { n: U[k].n, cls: aiUnitClass(k), cp: U[k].cp, sup
 for (const k in B) blds[k] = { n: B[k].n, cp: B[k].cp, barr: !!B[k].barr };
 for (const f of F) fac[f] = { name: FAC[f].name, color: FAC[f].color, uu: FAC[f].uu, ub: FAC[f].ub, desc: FAC[f].desc };
 
-/* The game states no version constant - it lives only in comments, so parsing the
-   source for one picks whichever vNN a comment happened to mention first (an early
-   cut of this reported v58). The release IS marked, though: only the current
-   release's recut one-shot ships, so exactly one recut_vNN.js is the version. Two
-   of them means that rule has already been broken, so fall back rather than guess. */
+/* v107: the game HAS stated its version since v98 (GAME_VER, printed on the menu),
+   and this bundle is assembled after game.js, so that is the answer. The recut
+   rule below was the only mark before then and is the fallback: it names the
+   last release that had to REPIN, which is not the release you are running when
+   a release moves no trail - v107 read "v106" from the v106 pair. */
 function detectVersion() {
   if (process.env.PW_VERSION) return process.env.PW_VERSION;
+  if (typeof GAME_VER === 'string' && /^v\d/.test(GAME_VER)) return GAME_VER;
   const here = fs.readdirSync('.');
   const recut = here.filter(f => /^recut_v[\d_]+\.js$/.test(f));
   if (recut.length === 1) return 'v' + /^recut_v([\d_]+)\.js$/.exec(recut[0])[1].replace(/_/g, '.');
