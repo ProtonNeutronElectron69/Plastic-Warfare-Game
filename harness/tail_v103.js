@@ -396,7 +396,7 @@ try{SRC103=require('fs').readFileSync('pw.html','utf8')}catch(e){SRC103=null}
     isoX(0,i) it runs the board's full width at depth i, which is what a stripe
     is. The picture was read in Chromium; this pins the line that draws it. */
  ok('T80.I every banding pass is anchored on the (0,i) axis, not (i,0)',
-    !SRC103 || ((SRC103.match(/const sx=isoX\(0,i\),sy=isoY\(0,i\)/g)||[]).length===3 &&
+    !SRC103 || ((SRC103.match(/const sx=isoX\(0,i\),sy=isoY\(0,i\)/g)||[]).length===4 &&   // v107: four - the bathroom's gloss sweep is anchored the same way
                 !/const sx=isoX\(i,0\),sy=isoY\(i,0\)/.test(SRC103)));
  ok('T80.I the grass alternation counts BANDS, not tiles - the loop steps 3',
     !SRC103 || /\(\(i\/3\)\|0\)%2\?'#ffffff'/.test(SRC103));

@@ -52,9 +52,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v106, and what a fresh session does)
+## Where the game stands (v107, and what a fresh session does)
 
-The game is at **v106**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v107**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), **v104 is the first Roadmap 4 item
@@ -64,14 +64,18 @@ delivered** — the soundtrack, which then took four owner feedback passes
 painted on the same parade ground), with **v105.1** the owner's feedback pass on
 it — two bugs found by playing, one of which had let the BOTS research three
 structures the human could not. **v106 is the second Roadmap 4 item delivered**:
-the bots use the six unit abilities they owned and never switched on. There is no
-release in flight.
+the bots use the six unit abilities they owned and never switched on. **v107 is
+the third, in part** — two of Roadmap 4 item 2's battlefields: the Bathroom
+Floor (a four-corner 72 built around a drained bathtub) and The Attic, the game's
+first SIDED map, built for a 2v2 with each team's pair seated inside a walled
+compound of destructible level art. There is no release in flight.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
-ranked, written after a whole-game review at v103. **One of the twelve has
-shipped** — item 1's music half, as v104–v104.4; its barks half and the other
-eleven items are untouched. The
-headline of it: the systems layer is finished, and what is thin is content (four
+ranked, written after a whole-game review at v103. **Three of the twelve have
+shipped in whole or in part** — item 1's music half (v104–v104.4), item 4
+(v106) and two of item 2's boards (v107); the barks and the other nine items are
+untouched. The
+headline of it: the systems layer is finished, and what is thin is content (six
 PvP maps and one survival board) and balance (two of four armies do not work).
 Presentation was the third leg of that and is now half-answered — the game has a
 score, but the ground is still the one visual layer with no textures, and one
@@ -98,7 +102,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~320s: 6,083 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 6,716 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -166,7 +170,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~320s. 6,083 checks at v106.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,716 checks at v107.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -175,11 +179,11 @@ python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 
 ```sh
 cd harness
-./sim.sh                 # 8 all-AI deathmatches, 2 per map, ~2min. Writes a report page.
-./sim.sh 16              # a bigger batch; SEED0=900 ./sim.sh for a different run
+./sim.sh                 # 12 all-AI deathmatches, 2 per map (six maps since v107), ~3min. Writes a report page.
+./sim.sh 24              # a bigger batch; SEED0=900 ./sim.sh for a different run
 ```
 
-## Looking at the maps (v103)
+## Looking at the maps (v103; seven of them since v107)
 
 ```sh
 cd harness
@@ -339,7 +343,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 6,083 checks. What is thin is everything AROUND it — how
+recorded soundtrack, 6,716 checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -361,7 +365,12 @@ still empty; item 1 has since answered it.)
    unchanged, and `sfxBus` already exists to hang them off. It is the smallest
    unstarted job on this list.
    *Impact medium (barks only) · effort low · balance risk none.*
-2. **More battlefields.** Four PvP maps and ONE survival map, against 25 units
+2. **More battlefields.** **TWO DELIVERED at v107** — the Bathroom Floor and
+   The Attic, the latter the first 2v2 board and the first with destructible
+   level art; see the v107 chapter for what that took (three leaks in one
+   bathtub, all found by a flood fill). The small two-player board and the
+   second survival board named below are still open. The original note:
+   Four PvP maps and ONE survival map, against 25 units
    and four armies. Maps are the best value on the list: every one reuses the
    existing props, painters, hazards and wildlife; each is point-symmetric by
    construction so it carries almost no balance risk; and `makeMap` has just come
@@ -579,6 +588,75 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v107 — the Bathroom Floor and The Attic (Roadmap 4 item 2, in part)
+
+**Two new battlefields, and the first one built for a team battle.**
+`tail_v107.js` (T89, 113 checks; the suite is 6,716 now). Full evidence in
+the v107 section of `harness/README.md`. **No trail moved and no repin was due**
+— every existing layout is byte-identical (the 30- and 42-pin gates both held),
+because every new rule is gated on the new maps' own flags.
+
+- **Bathroom Floor** is a standard four-corner 72 on porcelain tile: the shared
+  economy and lane passes, and a DRAINED BATHTUB ringing the centre cache — a
+  sealed oval of rim segments with two gates at its long ends — plus soap slicks
+  (a burn hazard), soapy bathwater (impassable), a bath mat, toiletries, a duck.
+- **The Attic** is the game's first SIDED map. `MAPS.attic.t2v2` marks it: its
+  four starts are two pairs along the north and south edges (`M.sides`), picking
+  it deals the lobby a 2v2 (`menuPickMap`), and `newGame` seats allies on one
+  side. Each pair sits inside a partly enclosed COMPOUND: a front line of
+  destructible level art — 2x2 neutral `crate` structures, as tough as a Bunker,
+  drawn as boxes, a trunk or a bale of magazines — mixed with three staggered
+  layers of neutral hedgehogs, three gates a side.
+- **Level art that can be shot down is a B row with `lvl:1`**, owned by
+  `G.neutral` exactly as the nests and hedgehogs are, so `kill()`, targeting and
+  pathing already knew what to do with one. It is painter-only (no texture, no
+  baked cell, no manual card, never on a menu); `drawLevelArt` paints it live the
+  way `drawBarricade` paints a wall. A bot chews through one at the hedgehog's
+  low priority (`t.barr||t.lvl`, one rule); a player never auto-targets one.
+
+Five things worth carrying forward:
+
+- **THE TUB LEAKED THREE TIMES, AND ONLY A FLOOD FILL EVER SAW IT.** A ring of
+  blocking props at the bucket fortress's spacing left a passable tile between
+  segments at the oval's flat ends; an axis-aligned oval reached to within the
+  prop refusal of the mid expansions and lost a segment beside its gates on one
+  seed in seven; and the pocket-clearing pass at the foot of `makeMap` handed
+  back a rim tile that sat inside an expansion's pocket on one seed in six. Each
+  was found by the same instrument — block the gates, flood from a start, ask
+  whether the inside is reachable — and each fix is recorded on the rim itself.
+  The shipped tub is diagonal, laid by its own placer, and its map jitters the
+  mid expansions less (`MAPS.bathroom.midJit`), with the two rnd() draws
+  unchanged so nothing else moves. **A sealed ring is a claim, not a shape.**
+- **A SIDED MAP BREAKS THE LANE PASSES' QUIET ASSUMPTION.** `edgeClutter` and
+  `laneBarr` walk base-to-base PAIRS that on the Attic are TEAMMATES, so they
+  would lay a pond and a roadblock between two allies inside one compound. The
+  Attic skips them and lays its own lines; `laneClutter`'s "toward the centre"
+  walk is fine and is kept. The start ORDER still keeps `[0]<->[1]` and
+  `[2]<->[3]` as point mirrors, which is what every mirrored pass relies on.
+- **A pair is laid BOTH OR NEITHER.** Laying each crate of a mirrored pair on its
+  own merits gave one compound a crate the other did not have on one seed in six.
+  That is the v103 drowning rule again: an obstacle one army has and the other
+  does not is a balance change smuggled in as scenery.
+- **ART-AWARE PICKS, GATED ON THE MAP.** On the Attic, `farPropArt` counts the
+  crates and the compound hedgehogs as art, so the compound is laid FIRST and the
+  clutter builds around it — a box is never dropped on a wall and the wall is
+  never short a crate because a box got there first. Gated on `t2v2` because
+  refusing more spots changes which pick a pass accepts, and the other five
+  layouts are pinned. The crate placer asks the props-only version: crates stand
+  shoulder to shoulder and keep their own overlap rule.
+- **RULE 7, FOUR TIMES.** The rim read as a dotted ring (spacing), the bath mat
+  and the towel lay across the tub floor (the tub was not a region; now its
+  square is registered first), a hedgehog cluster stood IN the tub (the scatter
+  annulus crosses it; `barrTile` refuses the oval), and every crate on a front
+  row drew the same look (`(tx*3+ty*7)%3` — a multiple of 3 on `tx` made the hash
+  blind to x). None could fail a test; all four came out of real frames.
+
+**What sim.sh now measures.** It deals SIX deathmatch maps (12 matches by default,
+2 per map), so the balance table below — cut on four maps — is not reproduced by
+a default batch any more; `SEED0` and the per-map deal are what changed, not the
+matches themselves. On a sided map `sim_dm.js`'s free-for-all seats one army per
+spot.
 
 ## v106 — the unit abilities a bot never used (Roadmap 4 item 4)
 
@@ -1391,7 +1469,9 @@ all-CPU matches, every army in every match, so an even game is 25% wins each.**
 | gray | 2/16 | 1/16 | **9%** | 0.84 / 0.85 | 5,754 |
 | blue | 2/16 | 1/16 | **9%** | 0.69 / 0.51 | 7,005 |
 
-Reproduce with `cd harness && ./sim.sh 16` and `SEED0=4200 ./sim.sh 16`.
+Reproduce with `cd harness && ./sim.sh 16` and `SEED0=4200 ./sim.sh 16` — **on
+v106 or earlier**: since v107 `sim.sh` deals six maps, so the same seeds land on
+different boards. Pass the four-map deal by hand if you need the table again.
 
 **The four findings, restated against the new numbers.**
 

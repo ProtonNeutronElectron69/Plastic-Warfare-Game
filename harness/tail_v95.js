@@ -50,6 +50,7 @@ const fs71 = require('fs');
   }
   for (const k in B) {
     if (k === 'nest') continue;
+    if (B[k].lvl) continue;   // v107: level art (the Attic's crates) is painter-only, like the nest - drawLevelArt is its own fallback
     if (B[k].barr) { for (const f of (excl[k] ? [excl[k]] : facs.concat('neutral'))) want.push('bld_' + k + '_' + f); continue; }
     for (const f of facsOf(k)) want.push('bld_' + k + '_' + f);
   }

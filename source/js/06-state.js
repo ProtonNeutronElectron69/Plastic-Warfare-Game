@@ -104,7 +104,12 @@ const PROP_BLK={
  rock:.70, hose:.70, traincar:.70, shelf:.70, dumptruck:.75, wcan:.80,
  chair:.80, keep:.85, table:.95, pot:1.00, console:1.20, bowl:1.35, couch:1.50,
  /* line props: blockLine capsule radius */
- stick:.35, pencil:.32, fork:.15, rake:.40, shovel:.45, rack:1.10
+ stick:.35, pencil:.32, fork:.15, rake:.40, shovel:.45, rack:1.10,
+ /* v107 the Bathroom: the tub rim is the fortress wall's own .50 so the ring
+    closes tile-to-tile at the same spacing; the duck is a small blocker */
+ tubrim:.50, duck:.45, tproll:.90, shampoo:.50, soapbar:.45, sponge:.60, plunger:.55, toothbrush:.30,
+ /* v107 the Attic */
+ box:.95, trunk:1.20, lampshade:.60, frame:.45, rug:.50
 };
 /* collision radius for one placed prop: the table when it has an opinion, the
    call-site radius otherwise, scaled the same way the art is */

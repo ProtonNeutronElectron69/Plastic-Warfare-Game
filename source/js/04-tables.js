@@ -258,7 +258,16 @@ const B={
     tougher plastic per coin. */
  hbarricade:{cat:'def',n:'Heavy Barricade',hp:HBARR_HP,sz:1,cp:HBARR_COST,ce:0,bt:2.2,vi:0,barr:1,hbarr:1,req:'lab',tech:'b_hbarricade',d:`Reinforced wall, ${HBARR_HP} HP. Everything of yours on the tiles around it — units, structures, other walls — takes ${Math.round(HBARR_RED*100)}% less damage, and overlapping walls STACK to ${Math.round(HBARR_CAP*100)}%. A ${Math.round(HBARR_MINE_P*100)}% chance to bury a mine ${HBARR_MINE_D} tiles forward that only YOU see. Click-and-drag to lay a line.`},
  barricade:{cat:'def',n:'Barricade',hp:BARR_HP,sz:1,cp:BARR_COST,ce:0,bt:1.0,vi:0,barr:1,d:`Czech hedgehog: blocks ground movement, ${BARR_HP} HP, ${BARR_COST} ⬢ each. Click-and-drag to lay a line.`},
- nest:{n:'Wildlife Nest',hp:NEST_HP,sz:1,cp:0,ce:0,bt:1,vi:0,neutralNest:1,d:'A wild critter den. Smash it to stop the swarm from respawning.'}
+ nest:{n:'Wildlife Nest',hp:NEST_HP,sz:1,cp:0,ce:0,bt:1,vi:0,neutralNest:1,d:'A wild critter den. Smash it to stop the swarm from respawning.'},
+ /* v107 LEVEL ART THAT CAN BE SHOT DOWN. The Attic's compound walls are built of
+    these: a 2x2 neutral structure drawn as attic clutter (boxes, a trunk, a bale
+    of magazines), owned by G.neutral exactly as the scattered hedgehogs and the
+    nests are, so kill()/targeting/pathing already know what to do with one. It is
+    PAINTER-ONLY (`lvl`): no texture, no baked cell, no Field Manual card, never on
+    a build menu - drawLevelArt paints it live the way drawBarricade paints a wall.
+    The HP is the Bunker's own figure and goes through the same RESCALE pass, so
+    "as tough as a Bunker" stays true whatever that pass is set to. */
+ crate:{n:'Attic Clutter',hp:820,sz:2,cp:0,ce:0,bt:1,vi:0,lvl:1,d:'Stacked boxes and old trunks. Tough, but a few tanks or a mortar line will open a gap.'}
 };
 // keep the guard tower in step with the trimmed unit damage (combat-pacing pass)
 B.guardtower.dm=+(B.guardtower.dm*DMG_SCALE).toFixed(2);
@@ -515,6 +524,12 @@ const MAPS={
  kitchen:{n:'Kitchen Counter',N:72,theme:'tile',d:'Checkered tile, spilled milk, cutlery & sugar cubes'},
  sandbox:{n:'Sandbox Standoff',N:64,theme:'sand',d:'Bucket fortress, sand castles & a buried dino'},
  livingroom:{n:'Living Room',N:64,theme:'carpet',d:'Plush carpet, a sofa set, coffee table & toy-block forts'},
- desk:{n:'The Desk',N:72,theme:'desk',survOnly:true,d:'Wave-defense only: books, keyboard, pencils, spilled soda & coffee'}
+ desk:{n:'The Desk',N:72,theme:'desk',survOnly:true,d:'Wave-defense only: books, keyboard, pencils, spilled soda & coffee'},
+ /* v107: two more battlefields (Roadmap 4 item 2, in part). The Bathroom is a
+    standard four-corner 72; The Attic is the game's first SIDED map - t2v2 marks
+    it: makeMap seats its four starts as two pairs (M.sides), newGame keeps allies
+    on one side, and the setup screen switches to a 2v2 the moment it is picked. */
+ bathroom:{n:'Bathroom Floor',N:72,theme:'bath',midJit:1.0,d:'Porcelain tile, a drained bathtub, soap slicks, a bath mat & a rubber duck'},   // midJit: see the tub in makeMap
+ attic:{n:'The Attic',N:72,theme:'attic',t2v2:true,d:'2v2 team battle: two walled compounds of boxes & trunks, pink insulation & a roof leak'}
 };
 

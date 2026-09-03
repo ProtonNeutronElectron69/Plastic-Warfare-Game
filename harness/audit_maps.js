@@ -5,7 +5,7 @@
  *   cat shim_head.js game.js audit_maps.js > .audit.js && node .audit.js [nSeeds]
  */
 const NS = parseInt(process.argv[2] || '40', 10);
-const KEYS = ['backyard','kitchen','sandbox','livingroom','desk'];
+const KEYS = ['backyard','kitchen','sandbox','livingroom','desk','bathroom','attic']; // v107: the two new boards
 const rep = {}, ex = {};
 function hit(map, kind, detail, n){
   rep[map] = rep[map] || {}; rep[map][kind] = (rep[map][kind]||0)+(n==null?1:n);
@@ -46,7 +46,7 @@ for(const key of KEYS){
       hit(key,'prop off-board',tag+': '+p.t+' at '+qx.toFixed(1)+','+qy.toFixed(1)+' (N='+N+')');
   }
   {const R=[].concat(M.patches||[],M.board?[M.board]:[],M.sandPatch?[M.sandPatch]:[],
-                     M.rug?[M.rug]:[],M.blanket?[M.blanket]:[]);
+                     M.rug?[M.rug]:[],M.blanket?[M.blanket]:[],M.mat?[M.mat]:[]); // v107: the bath mat
    for(const r of R) if(r.x<0||r.y<0||r.x+r.w>N||r.y+r.h>N)
      hit(key,'region off-board',tag+': '+r.x.toFixed(1)+','+r.y.toFixed(1)+' '+r.w.toFixed(1)+'x'+r.h.toFixed(1));}
   for(const d of M.deco) if(d.x<0||d.y<0||d.x>=N||d.y>=N)
@@ -63,6 +63,7 @@ for(const key of KEYS){
   const bp=M.props.filter(p=>!p.len&&artR(p)>0);
   for(let i=0;i<bp.length;i++)for(let j=i+1;j<bp.length;j++){
    const a=bp[i],b=bp[j],d=dhyp(a.x-b.x,a.y-b.y),s2=artR(a)+artR(b);
+   if(a.t==='tubrim'&&b.t==='tubrim')continue;   // v107: the bathtub's rim segments are ONE lip, laid to touch on purpose
    if(d<s2*0.8) hit(key,'prop art overlap',tag+': '+a.t+' & '+b.t+' '+d.toFixed(2)+' apart, art '+s2.toFixed(2));
   }
   // a barricade standing inside a prop's ART (the bookshelf-over-hedgehogs case)
@@ -102,7 +103,7 @@ for(const key of KEYS){
    if(ts.length&&ts.every(i=>M.pass[i]===1))
     hit(key,'blocking prop that blocks nothing',tag+': '+p.t+' at '+p.x.toFixed(1)+','+p.y.toFixed(1));}
   {const R=[].concat(M.patches||[],M.board?[M.board]:[],M.sandPatch?[M.sandPatch]:[],
-                     M.rug?[M.rug]:[],M.blanket?[M.blanket]:[]);
+                     M.rug?[M.rug]:[],M.blanket?[M.blanket]:[],M.mat?[M.mat]:[]); // v107: the bath mat
    for(let i=0;i<R.length;i++)for(let j=i+1;j<R.length;j++){const a=R[i],b=R[j];
     if(a.x<b.x+b.w&&b.x<a.x+a.w&&a.y<b.y+b.h&&b.y<a.y+a.h)
      hit(key,'ground regions overlapping',tag+': '+R.length+' regions');}}

@@ -106,7 +106,12 @@ function hazStats67(M) {
     kitchen:    [4.0, 13.0],
     sandbox:    [4.0, 14.0],
     livingroom: [4.0, 13.0],
-    desk:       [2.0, 6.0]
+    desk:       [2.0, 6.0],
+    /* v107: measured over these seeds at 7.5-9.1% (bathroom) and 3.1-3.8% (attic).
+       The Attic is deliberately the sparsest board: two hazard kinds in the band
+       between the compounds, nothing inside them. */
+    bathroom:   [4.0, 13.0],
+    attic:      [2.0, 7.0]
   };
   for (const key of Object.keys(MAPS)) {
     let lo = 100, hi = 0;
@@ -148,7 +153,7 @@ function hazStats67(M) {
    taken before any hazard touched it, so handing it back would be wrong. That
    instrumented run is the proof; the bound here is its shipping form. */
 {
-  const ORPHAN_MAX = { backyard: 0, kitchen: 6, sandbox: 14, livingroom: 6, desk: 0 };
+  const ORPHAN_MAX = { backyard: 0, kitchen: 6, sandbox: 14, livingroom: 6, desk: 0, bathroom: 6, attic: 6 };   // v107: the two new boards, measured below
   for (const key of Object.keys(MAPS)) {
     let worst = 0, total = 0, bad = 0;
     for (const sd of S67) {

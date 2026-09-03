@@ -46,7 +46,7 @@ const INFO_UNITS=(function(){
 })();
 const INFO_BLDS=(function(){
  const cmp=(a,b)=>(INFO_COST(a)-INFO_COST(b))||(a<b?-1:a>b?1:0);
- return Object.keys(B).filter(k=>k!=='nest').sort(cmp); // nests draw from the map layer, not drawBld
+ return Object.keys(B).filter(k=>k!=='nest'&&!B[k].lvl).sort(cmp); // nests draw from the map layer, not drawBld. v107: level art (t.lvl) is scenery, not a structure you build
 })();
 /* Read off FAC rather than retyped. These two lists answer "is this entity a
    faction exclusive", which is a question FAC already answers: uu is an army's

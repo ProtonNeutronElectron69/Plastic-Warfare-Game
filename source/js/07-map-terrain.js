@@ -1,11 +1,16 @@
 /* ---------------- MAP / TERRAIN ---------------- */
+/* v107: where a sided map's two seats sit along an edge - a third and two thirds
+   of the way across, so each pair has its own home economy with room between. */
+function c2v2(N,k){return Math.round(N*k/3)}
+/* v107: is a world point inside the Bathroom's rotated tub oval (rim included)? */
+function tubInside(t,x,y){const wx=x-t.cx,wy=y-t.cy,ct=dcos(t.th||0),st=dsin(t.th||0),u=wx*ct+wy*st,v=-wx*st+wy*ct;return (u/t.rx)**2+(v/t.ry)**2<1.15}
 function makeMap(key,seed){
  const def=MAPS[key],N=def.N;
  // Per-game seed so resource jitter, decoration scatter, hazard shapes & neutral
  // placement vary between matches while overall per-location balance is preserved.
  if(seed==null)seed=(Math.random()*1e9)|0;   // v23: online matches pass the shared seed in
  const rnd=mulberry(seed);
- const M={N,theme:def.theme,seed,pass:new Uint8Array(N*N).fill(1),fld:new Uint8Array(N*N),props:[],nodes:[],starts:[],expos:[],deco:[],puddles:[],patches:[],fields:[],nests:[],mines:[],barricades:[]};
+ const M={N,theme:def.theme,seed,pass:new Uint8Array(N*N).fill(1),fld:new Uint8Array(N*N),props:[],nodes:[],starts:[],expos:[],deco:[],puddles:[],patches:[],fields:[],nests:[],mines:[],barricades:[],lvl:[]}; // v107: lvl = the Attic's 2x2 level-art footprints
  const inB=(x,y)=>x>=2&&y>=2&&x<N-2&&y<N-2;
  const block=(cx,cy,r)=>{for(let y=Math.floor(cy-r);y<=cy+r;y++)for(let x=Math.floor(cx-r);x<=cx+r;x++){if(x<0||y<0||x>=N||y>=N)continue;if(dhyp(x+.5-cx,y+.5-cy)<=r)M.pass[y*N+x]=0}};
  // v25: expansion pockets stay buildable — blocking props refuse to spawn inside one
@@ -20,8 +25,15 @@ function makeMap(key,seed){
     farField: is it already covered by a hazard of a DIFFERENT kind. Kind is part
     of the question because the per-map clusters are deliberately built out of
     overlapping lobes of ONE kind; two kinds crossing is the defect. */
- const farPropArt=(x,y,pad)=>!M.props.some(p=>{const r=propArtR(p.t,p.r,p.sc);
+ const farPropOnly=(x,y,pad)=>!M.props.some(p=>{const r=propArtR(p.t,p.r,p.sc);
   return r>0&&dhyp(p.x-x,p.y-y)<r+(pad||0)});
+ /* v107, the Attic only: its crates (2x2, art radius ~1.5) and its compound
+    hedgehogs are art too, laid BEFORE the clutter so a box is never dropped on a
+    wall. Gated on t2v2 because refusing more spots changes which pick a pass
+    accepts, and the other five layouts are pinned. The crate placer itself asks
+    farPropOnly - crates stand shoulder to shoulder and keep their own overlap rule. */
+ const farPropArt=(x,y,pad)=>farPropOnly(x,y,pad)
+  &&!(def.t2v2&&((M.lvl||[]).some(b=>dhyp(b.x+1-x,b.y+1-y)<1.5+(pad||0))||M.barricades.some(b=>dhyp(b.x+.5-x,b.y+.5-y)<.7+(pad||0))));
  /* fldGap: how much room to spare this spot has, in tiles, against the nearest
     hazard of a different kind. Positive is clear; the more negative, the deeper
     the two blobs cross. farField is the yes/no reading of it. Returning the
@@ -94,11 +106,12 @@ function makeMap(key,seed){
  // stamped as an irregular blob of base half-extents rx,ry centered at (cx,cy).
  // v66: every KIND is a re-skin of one of the two codes (the v35 soda principle),
  // so a themed hazard adds art and a name, never a new rule.
- const FLD={sand:2,soda:2,thorns:2,grease:2,glue:2,water:3,puddle:3,milk:3,juice:3,coffee:3};
+ const FLD={sand:2,soda:2,thorns:2,grease:2,glue:2,water:3,puddle:3,milk:3,juice:3,coffee:3,soap:2,insulation:2,bathwater:3,leak:3}; // v107: the bathroom's and the attic's kinds
  // v66: the two hazards each map is dressed with. H2 is its burn hazard, H3 its
  // impassable liquid; the shared lane passes below read these so a lane hazard is
  // always in theme. Per-map blocks name their kinds directly for legibility.
- const THEME_HAZ={backyard:{h2:'thorns',h3:'puddle'},kitchen:{h2:'grease',h3:'milk'},livingroom:{h2:'glue',h3:'juice'},sandbox:{h2:'sand',h3:'water'},desk:{h2:'soda',h3:'coffee'}};
+ const THEME_HAZ={backyard:{h2:'thorns',h3:'puddle'},kitchen:{h2:'grease',h3:'milk'},livingroom:{h2:'glue',h3:'juice'},sandbox:{h2:'sand',h3:'water'},desk:{h2:'soda',h3:'coffee'},
+  bathroom:{h2:'soap',h3:'bathwater'},attic:{h2:'insulation',h3:'leak'}}; // v107
  const HZP=THEME_HAZ[key]||THEME_HAZ.backyard, H2=HZP.h2, H3=HZP.h3;
  const field=(kind,cx,cy,rx,ry)=>{
   /* v67: the ONE hazard-size lever. Every field() call site funnels through
@@ -167,6 +180,12 @@ function makeMap(key,seed){
  };
  const margin=8;
  M.starts=[[margin,margin],[N-margin,N-margin],[N-margin,margin],[margin,N-margin]].map(s=>({x:s[0],y:s[1]}));
+ /* v107 A SIDED MAP. The Attic seats its four starts as two pairs a third of the
+    way in along the north and south edges, and names the pairs (M.sides, index
+    lists into M.starts) so newGame can keep allies together. The ORDER keeps the
+    point-mirror pairing every lane pass relies on: [0]<->[1] and [2]<->[3] are
+    mirrors, exactly as the corner layout's are. */
+ if(def.t2v2){M.starts=[{x:c2v2(N,1),y:margin},{x:c2v2(N,2),y:N-margin},{x:c2v2(N,2),y:margin},{x:c2v2(N,1),y:N-margin}];M.sides=[[0,2],[1,3]];}
  // resources near each start (2 close piles + 1 expansion pile + battery).
  // Per location the count/amount is fixed (balance) but exact tiles are jittered,
  // and the cluster is given a small random rotation so no two starts look identical.
@@ -213,10 +232,17 @@ function makeMap(key,seed){
  // (N/S/E/W of centre, off the main base->base diagonals), each guarded by a
  // destructible wildlife nest. Amounts match the old quadrant piles.
  const mq=Math.round((margin+c)/2);
- {const guard=(ex)=>{const gs=(def.theme==='grass'||def.theme==='sand')?(rnd()<.5?'ant':'bee'):'ant';
+ {const guard=(ex)=>{const gs=(def.theme==='grass'||def.theme==='sand')?(rnd()<.5?'ant':'bee'):def.theme==='attic'?(rnd()<.5?'ant':'roach'):'ant'; // v107: roaches under the rafters
    const ga=rnd()*6.283;nest(gs,ex.x+dcos(ga)*4.2,ex.y+dsin(ga)*4.2,5.6,gs==='ant'?4:3);};
+  /* v107: a map may ask for its mid expansions to be jittered LESS (MAPS.midJit).
+     The Bathroom does: its tub must seal, and the pocket-clearing pass at the foot
+     of makeMap hands back any rim tile within sqrt(11) of an expansion centre, so
+     an expansion jittered 2.2 inward reached the rim and the tub leaked at the
+     spot on one seed in six. Same two rnd() draws whatever the amount, so every
+     other map's layout is byte-identical. */
+  const mj=def.midJit!=null?def.midJit:2.2;
   for(const [ax,ay] of [[c,mq],[c,N-mq],[mq,c],[N-mq,c]]){
-   expoSite(jit(ax,2.2),jit(ay,2.2),1400,1300,false);
+   expoSite(jit(ax,mj),jit(ay,mj),1400,1300,false);
    guard(M.expos[M.expos.length-1]);
   }}
  }
@@ -514,6 +540,11 @@ function makeMap(key,seed){
      is drawn wider than it blocks - which is how hedgehogs ended up standing
      inside one on 65 of 40 Living Room seeds. Ask the art. */
   if(!farPropArt(tx+.5,ty+.5,0))return;
+  /* v107: nothing is laid INSIDE the bathtub. Its floor is open ground (that is the
+     point of the gates) and the scatter annulus crosses it, so a hedgehog cluster
+     landed in the tub on most seeds - read in a real frame. M.tub exists on the
+     Bathroom alone, so no other layout moves. */
+  if(M.tub&&tubInside(M.tub,tx+.5,ty+.5))return;
   if(M.barricades.some(b=>b.x===tx&&b.y===ty))return;
   M.barricades.push({x:tx,y:ty});
  };
@@ -826,6 +857,167 @@ function makeMap(key,seed){
   nestPairs('ant',1,5.2,4,8,15);
   // break up the direct base->base diagonals with extra hazards & a sand-wall blocker
   laneClutter('wall');
+}else if(key==='bathroom'){
+  // ===== BATHROOM FLOOR (v107) =====
+  // porcelain tile, and a DRAINED bathtub ringing the centre cache: an oval rim of
+  // blocking porcelain segments with the taps end and the far end left open as
+  // its two gates - the Sandbox's bucket fortress, rounded. The tub floor and its
+  // drain are painted by renderTerrain (M.tub); the rim is real cover.
+  /* THREE THINGS ABOUT THE RIM, all measured with a flood fill (gates blocked, is
+     the inside reachable?) and the map audit:
+     - the step is .10 rad, closer than the bucket fortress's .15, because a rim
+       has to SEAL: block() takes tile centres within the segment's .5 radius, and
+       at .14 the ellipse's flat ends left one passable tile between segments;
+     - the tub lies on the (1,1) DIAGONAL, long axis toward two of the corners,
+       because the four contested mid expansions sit 14 tiles out on the cardinal
+       lines and jitter 2.2 inward: an axis-aligned oval reached to within a prop
+       refusal of them (3.6 + r), lost its segments beside the gates on four seeds
+       in seven, and leaked. Diagonal, its cardinal reach is 7.9 and the rim
+       clears every pocket; and the diagonal is the one that keeps every jittered
+       cache node INSIDE the oval, which the other diagonal does not;
+     - the audit exempts tubrim-to-tubrim art overlap for the reason a pencil is
+       exempt from the drowning rule: the segments are one lip.
+     The two gates are the long-axis ends. */
+  /* 9.5 x 6.6, with the Bathroom's mid expansions jittered 1.0 rather than 2.2
+     (MAPS.bathroom.midJit): the rim's reach toward a cardinal expansion is up to
+     8.3 (it is a rotated oval, so the reach off-axis is more than the 7.66 on
+     it), a blocked tile overhangs the segment by up to .75, and the expansion's
+     pocket-clearing radius is 3.32 - which needs the expansion at 12.4 or more,
+     and 14 - 2.2 was not. Three leaks were found by one flood fill in turn: the
+     .14 step, the axis-aligned oval beside the gates, and this pocket. */
+  {const RX=9.5,RY=6.6,TH=Math.PI/4,off=rnd()*.25,ct=dcos(TH),st=dsin(TH);
+   const tubPt=a2=>{const u=RX*dcos(a2),v=RY*dsin(a2);return {x:c+u*ct-v*st,y:c+u*st+v*ct}};
+   const gate=a2=>{for(const g of [0,Math.PI]){let d2=Math.abs(a2-g);d2=Math.min(d2,Math.PI*2-d2);if(d2<.30)return true}return false};
+   /* laid by hand rather than through prop(): prop() refuses anything within 3.6
+      tiles of an expansion centre, a margin for clutter, and the E/W mid pockets
+      jittered inward reach 3.5 from the rim - which cost a segment beside a gate
+      on one seed in seven and the tub leaked there. The rule that MATTERS is the
+      pocket-clearing pass at the foot of makeMap (radius sqrt(11), 3.32): a rim
+      tile inside it would be handed back and the seal broken, so 3.45 is the
+      refusal here and the flood-fill in tail_v107 proves the seal. */
+   const rimSeg=(x,y,o)=>{if(M.expos.some(e=>dhyp(e.x-x,e.y-y)<3.45))return;M.props.push({t:'tubrim',x,y,r:.01,a:o});
+    const tx=Math.floor(x),ty=Math.floor(y);if(tx>=0&&ty>=0&&tx<N&&ty<N)M.pass[ty*N+tx]=0;block(x,y,propBlkR('tubrim',.01));};
+   for(let a=off;a<Math.PI*2+off;a+=.10){const aa=a%(Math.PI*2);if(gate(aa))continue;const q=tubPt(aa);
+    rimSeg(q.x,q.y,datan2(RY*dcos(aa),-RX*dsin(aa))+TH)}   // the tangent is the segment's long side
+   M.tub={cx:c,cy:c,rx:RX,ry:RY,th:TH,drainA:rnd()*6.28};KEEP.push({x:c,y:c,r:RX+2});   // no spill laid over the tub
+   // the rubber duck sits in the tub, on the first spot around the drain that is clear of the cache
+   {let put=false;for(let k2=0;k2<12&&!put;k2++){const a2=rnd()*6.28,u=RX*.5*dcos(a2),v=RY*.5*dsin(a2),dx2=c+u*ct-v*st,dy2=c+u*st+v*ct;
+     if(farNode(dx2,dy2,2.4)&&farPropArt(dx2,dy2,.6)){prop('duck',dx2,dy2,.6,{rot:rnd()*6.28});put=true}}
+    if(!put)prop('duck',c,c,0);}}   // never expected: draw it non-blocking rather than lose it
+  // the tub's own square goes into the region list first, so the mat and the towel are never laid across it
+  reg({x:c-10,y:c-10,w:20,h:20});
+  // the bath mat: a fixed fluffy rectangle beside the tub's long side, declared before the rolled patches
+  M.mat=reg({x:c+3,y:c-16,w:12,h:7,hue:rnd()<.5?200:340});
+  // toiletries as blocking cover, in mirrored pairs at randomized positions
+  propPairs('tproll',1,1.4,12,24);
+  propPairs('shampoo',2,.9,12,26,{hue:rnd()*360});
+  propPairs('soapbar',1,.8,10,22);
+  propPairs('sponge',1,.9,12,24);
+  propPairs('plunger',1,.9,14,26);
+  lineProps('toothbrush',1,6,.3,12,24);
+  // a dropped towel (cosmetic) somewhere off the beaten path
+  patchAt(()=>({x:8+rnd()*(N-24),y:8+rnd()*(N-22),w:10+rnd()*4,h:7+rnd()*3,fill:'rgba(246,240,228,.9)',stroke:'rgba(190,178,160,.8)',inset:1}));
+  // water droplets and a few stray hairs across the tile
+  scatter('droplet',46,{x0:6,x1:N-6,y0:6,y1:N-6,s0:.6,sr:.6});
+  scatter('hair',10,{x0:8,x1:N-8,y0:8,y1:N-8,s0:.8,sr:.6,extra:r=>({a:r()*6.28})});
+  // --- hazards (bathroom messes) ---
+  // the overflow: soapy bathwater pooled on the tile (impassable), overlapping lobes, mirrored
+  {const sp=pickSpot(13,20,5,14,{fld:{k:'bathwater',rx:6.5,ry:4.6}})||pickSpot(13,20,5,14)||{x:c+9,y:c+10};
+   const o2=LOBE.find(d=>farField(sp.x+d[0],sp.y+d[1],'bathwater',3.2,2.3))||LOBE[0];
+   field('bathwater',sp.x,sp.y,5.5+rnd(),3.6+rnd());field('bathwater',sp.x+o2[0],sp.y+o2[1],3.2+rnd(),2.3+rnd());
+   const m=mir(sp.x,sp.y);field('bathwater',m.x,m.y,5.5+rnd(),3.6+rnd());field('bathwater',m.x-o2[0],m.y-o2[1],3.2+rnd(),2.3+rnd());}
+  // a soap slick: slippery suds that bog and sting the eyes (code 2), mirrored pair
+  fieldPairs('soap',1,20,27,4.8,3.3);   // its own band, outside the bathwater's, so the two kinds seldom meet
+  // ants have found the damp (mirrored pair)
+  nestPairs('ant',1,5,4,9,15);
+  // break up the direct base->base diagonals with extra hazards & a toilet-roll blocker
+  laneClutter('tproll');
+ }else if(key==='attic'){
+  // ===== THE ATTIC (v107) - the game's first 2v2 battlefield =====
+  // Bare floorboards under the rafters. The four starts are two PAIRS along the
+  // north and south edges (M.sides, set above), and each pair sits inside a
+  // COMPOUND: a front line of destructible level art (2x2 neutral crates -
+  // boxes, trunks, magazine bales - drawn by drawLevelArt) mixed with several
+  // staggered layers of neutral hedgehogs, with three gates left open. The rest
+  // of the attic is clutter, a pink insulation bale and a roof leak.
+  M.lvl=[];
+  /* a 2x2 crate at top-left tile (tx,ty). Blocked HERE, in makeMap, so the mines,
+     the hedgehog passes, the hazard stamps and sealPockets all see it; initNeutrals
+     turns the record into a real neutral structure on the same four tiles. tx may
+     be 0: a crate on the very rim is what closes the two-tile strip a hedgehog
+     (barrTile refuses tx<2) cannot. */
+  const lvlOK=(tx,ty)=>{
+   if(tx<0||ty<0||tx+2>N||ty+2>N)return false;
+   const cx2=tx+1,cy2=ty+1;
+   if(tooCloseStart(cx2,cy2,9)||nearExpo(cx2,cy2,4.6)||!farNode(cx2,cy2,2.8)||!farPropOnly(cx2,cy2,1.3))return false;
+   for(let y=0;y<2;y++)for(let x=0;x<2;x++)if(M.pass[(ty+y)*N+(tx+x)]!==1)return false;
+   if(M.lvl.some(b=>Math.abs(b.x-tx)<2&&Math.abs(b.y-ty)<2))return false;
+   return true;
+  };
+  const lvlBlock=(tx,ty)=>{M.lvl.push({x:tx,y:ty});for(let y=0;y<2;y++)for(let x=0;x<2;x++)M.pass[(ty+y)*N+(tx+x)]=0;};
+  /* a 2x2 block and its point mirror - BOTH or NEITHER. Laying each half on its own
+     merits left one compound a crate the other did not have on one seed in six
+     (a natural expansion's pocket refused one half), and an obstacle one team has
+     and the other does not is a balance change, the v103 drowning rule again. */
+  const lvlPair=(tx,ty)=>{const mx=N-2-tx,my=N-2-ty;if(lvlOK(tx,ty)&&lvlOK(mx,my)){lvlBlock(tx,ty);lvlBlock(mx,my);return true}return false};
+  // a row of hedgehogs x0..x1 at ty with `skip` random holes, and its point mirror
+  const hedgeRow=(x0,x1,ty,skip)=>{
+   const holes=new Set();for(let k2=0;k2<skip;k2++)holes.add(x0+Math.floor(rnd()*(x1-x0+1)));
+   for(let tx=x0;tx<=x1;tx++){if(holes.has(tx))continue;barrTile(tx,ty);barrTile(N-1-tx,N-1-ty);}
+  };
+  /* THE FRONT LINE, north side (the south side is its point mirror). FRONT is the
+     row the line stands on; behind it (smaller y) is the compound. Gates: the
+     west one at x 14-17, the centre one at x 31-40 (the north mid expansion sits
+     there, and the crate and hedgehog guards refuse its pocket by themselves), the
+     east one at x 54-57. Reading west to east: crates, gate, three hedgehog
+     layers, gate, crates then hedgehogs, gate, hedgehogs with crates behind. */
+  const FRONT=24;
+  for(const tx of [0,2,4,6,8,10,12])lvlPair(tx,FRONT);          // west stretch: solid crates to the rim
+  hedgeRow(2,13,FRONT+3,2);                                      // ...with a hedgehog layer behind
+  hedgeRow(18,30,FRONT,3);hedgeRow(18,30,FRONT+2,2);hedgeRow(18,30,FRONT+4,3); // three layers, holes staggered
+  for(const tx of [41,43,45])lvlPair(tx,FRONT);                  // east-centre: crates...
+  hedgeRow(47,53,FRONT,1);hedgeRow(41,53,FRONT+3,3);              // ...then hedgehogs
+  hedgeRow(58,69,FRONT,2);hedgeRow(58,69,FRONT+2,2);              // east stretch: two hedgehog layers
+  lvlPair(70,FRONT);for(const tx of [59,63,67])lvlPair(tx,FRONT+4); // the rim crate, and crates behind the layers
+  // loose cover out in the field between the two lines: two mirrored crate pairs
+  for(let k2=0;k2<2;k2++){const sp=pickSpot(6,13,3,16,{art:1.6});if(sp)lvlPair(Math.round(sp.x)-1,Math.round(sp.y)-1);}
+  /* the clutter goes down AFTER the compound. farPropArt counts the Attic's crates
+     and hedgehogs as art (above), so a box is never dropped on a wall - the map
+     audit's "barricade inside prop art" - and the wall is never short a crate
+     because a box got there first, which is what laying the clutter first cost:
+     two crate pairs on one seed in six. */
+  // attic clutter: cardboard boxes, a steamer trunk, a lampshade, a leaning picture frame, a rolled rug
+  propPairs('box',3,1.2,12,28,{hue:rnd()*20});
+  propPairs('trunk',1,1.5,14,28);
+  propPairs('lampshade',1,.9,12,26);
+  propPairs('frame',1,1.0,12,28,{hue:rnd()*360});
+  lineProps('rug',1,6,.5,12,26);
+  // a dust sheet dropped over something (cosmetic), off in a corner
+  patchAt(()=>({x:8+rnd()*(N-28),y:8+rnd()*(N-24),w:12+rnd()*4,h:9+rnd()*3,fill:'rgba(228,224,214,.86)',stroke:'rgba(160,154,140,.7)',inset:1}));
+  // dust bunnies, mothballs and cobwebs
+  scatter('dust',90,{s0:.5,sr:.7});
+  scatter('mothball',18,{x0:8,x1:N-8,y0:8,y1:N-8,s0:.7,sr:.4});
+  scatter('cobweb',10,{x0:6,x1:N-6,y0:6,y1:N-6,s0:.8,sr:.7,extra:r=>({a:r()*6.28})});
+  // --- hazards (attic messes), picked in the FIELD between the two lines ---
+  /* the corner-lane pickers assume four corner bases, so this map picks its own
+     spots: a band across the middle, clear of the expansions and the cache */
+  const fieldSpot=(kind,rx,ry)=>{let best=null,bg=-1e9;
+   for(let k2=0;k2<40;k2++){const x=8+rnd()*(N-16),y=c-7+rnd()*14;
+    if(nearExpo(x,y,7)||nearExpo(N-x,N-y,7)||!farNode(x,y,4.5))continue;
+    const g=Math.min(fldGap(x,y,kind,rx,ry),fldGap(N-x,N-y,kind,rx,ry));
+    if(g>bg){bg=g;best={x,y}}
+    if(g>=0)return best;}
+   return best};
+  // the roof leak: rainwater pooled on the boards (impassable), two lobes, mirrored
+  {const rx=5+rnd(),ry=3.4+rnd();const sp=fieldSpot('leak',rx,ry);
+   if(sp){const o2=LOBE.find(d=>farField(sp.x+d[0],sp.y+d[1],'leak',3,2.2))||LOBE[0];
+    field('leak',sp.x,sp.y,rx,ry);field('leak',sp.x+o2[0],sp.y+o2[1],3+rnd(),2.2+rnd());
+    const m=mir(sp.x,sp.y);field('leak',m.x,m.y,rx,ry);field('leak',m.x-o2[0],m.y-o2[1],3+rnd(),2.2+rnd());}}
+  // a burst bale of pink insulation: itches and bogs (code 2), mirrored
+  {const rx=4.6+rnd(),ry=3.2+rnd();const sp=fieldSpot('insulation',rx,ry);
+   if(sp){field('insulation',sp.x,sp.y,rx,ry);const m=mir(sp.x,sp.y);field('insulation',m.x,m.y,rx,ry);}}
+  // ants in the field, guarding the gates (mirrored pair)
+  nestPairs('ant',1,5,4,9,14);
  }else if(key==='desk'){
   // ===== THE DESK (wave-survival only) =====
   // Wooden desktop battlefield. survivalSetup carves the central arena and lays the
@@ -870,7 +1062,11 @@ function makeMap(key,seed){
     scattered cover on tile, carpet and sand read as clutter there - the owner's
     note names that map. The other three keep the count they have always had. */
  if(key!=='desk'){const lawn=key==='backyard';
-  edgeClutter();mineField();barrCluster(lawn?3:7);laneBarr(lawn?[0.32,0.68]:[0.30,0.50,0.70]);}
+  /* v107: a sided map lays its own lines (the compounds, in its block above). The
+     corner-lane passes walk base-to-base pairs that on the Attic are TEAMMATES, so
+     they would lay a pond and a roadblock between two allies inside one compound. */
+  if(def.t2v2){mineField();barrCluster(3);}
+  else{edgeClutter();mineField();barrCluster(lawn?3:7);laneBarr(lawn?[0.32,0.68]:[0.30,0.50,0.70]);}}
  // never block starts (clear passability AND any field hazards in a wide ring)
  for(const s of M.starts)for(let y=-5;y<=5;y++)for(let x=-5;x<=5;x++){const tx=s.x+x,ty=s.y+y;if(tx>=0&&ty>=0&&tx<N&&ty<N){M.pass[ty*N+tx]=1;M.fld[ty*N+tx]=0;}}
  // drop any field/nest objects that overlap a start so the visuals match the cleared tiles
@@ -1054,6 +1250,10 @@ function renderTerrain(){
    ?{base:'#b6a890',alt:'#aca085',edge:'#857a62',side:'#968a70',sideD:'#776c54'}
    :th==='desk'
    ?{base:'#b98a4e',alt:'#ad7e42',edge:'#7c5528',side:'#8a6236',sideD:'#6b4a26'}
+   :th==='bath'   // v107: porcelain tile, a shade cooler and brighter than the kitchen's
+   ?{base:'#e6ecef',alt:'#d9e2e7',edge:'#9db1bd',side:'#b6c6cf',sideD:'#8ea3ae'}
+   :th==='attic'  // v107: dusty floorboards
+   ?{base:'#8c6a45',alt:'#805f3d',edge:'#4e3a22',side:'#5f4629',sideD:'#46331d'}
    :{base:'#ddbd7a',alt:'#d2af68',edge:'#a8884a',side:'#bfa066',sideD:'#9a7d48'};
 
  // ---- 1. south & east mat thickness: draw an extruded skirt so the whole
@@ -1205,6 +1405,37 @@ function renderTerrain(){
   c.restore();
  }
 
+ if(th==='bath'){ // v107: small porcelain tiles - a grout grid every two tiles, every other tile a shade bluer
+  c.save();c.globalAlpha=.16;c.fillStyle='#bcd3e0';
+  for(let ty=0;ty<N;ty+=2)for(let tx=((ty>>1)%2)*2;tx<N;tx+=4){
+   c.beginPath();c.moveTo(isoX(tx,ty),isoY(tx,ty));c.lineTo(isoX(tx+2,ty),isoY(tx+2,ty));c.lineTo(isoX(tx+2,ty+2),isoY(tx+2,ty+2));c.lineTo(isoX(tx,ty+2),isoY(tx,ty+2));c.closePath();c.fill();}
+  c.restore();
+  c.strokeStyle='rgba(120,138,150,.5)';c.lineWidth=1.6;
+  for(let i=0;i<=N;i+=2){c.beginPath();c.moveTo(isoX(i,0),isoY(i,0));c.lineTo(isoX(i,N),isoY(i,N));c.stroke();c.beginPath();c.moveTo(isoX(0,i),isoY(0,i));c.lineTo(isoX(N,i),isoY(N,i));c.stroke();}
+  // a soft gloss sweep, full width, as the kitchen's (v103: (0,i), never (i,0))
+  c.save();c.globalCompositeOperation='lighter';c.globalAlpha=.06;c.fillStyle='#ffffff';
+  for(let i=0;i<N;i+=10){const sx=isoX(0,i),sy=isoY(0,i);c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+HW*N,sy+HH*N);c.lineTo(sx+HW*N-HW*4,sy+HH*N+HH*4);c.lineTo(sx-HW*4,sy+HH*4);c.closePath();c.fill();}
+  c.restore();
+ }
+ if(th==='attic'){ // v107: floorboards running the board's x axis, two tiles wide, with staggered end joints and knots
+  c.save();
+  for(let i=0;i<N;i+=2){
+   c.globalAlpha=.10;c.fillStyle=((i>>1)%3)===0?'#000000':((i>>1)%3)===1?'#ffffff':'#3a2810';
+   c.beginPath();c.moveTo(isoX(0,i),isoY(0,i));c.lineTo(isoX(N,i),isoY(N,i));c.lineTo(isoX(N,i+2),isoY(N,i+2));c.lineTo(isoX(0,i+2),isoY(0,i+2));c.closePath();c.fill();
+  }
+  c.globalAlpha=1;c.strokeStyle='rgba(40,26,12,.55)';c.lineWidth=1.5;
+  for(let i=0;i<=N;i+=2){c.beginPath();c.moveTo(isoX(0,i),isoY(0,i));c.lineTo(isoX(N,i),isoY(N,i));c.stroke();}
+  // end joints, staggered board to board
+  c.strokeStyle='rgba(40,26,12,.45)';c.lineWidth=1.2;
+  for(let i=0;i<N;i+=2){const ph=((i*7)%11)/11*9;for(let x=ph;x<N;x+=9+((i>>1)%3)){c.beginPath();c.moveTo(isoX(x,i),isoY(x,i));c.lineTo(isoX(x,i+2),isoY(x,i+2));c.stroke();}}
+  // knots and grain
+  c.fillStyle='rgba(50,32,14,.35)';
+  for(let i=0;i<70;i++){const gx=rnd()*N,gy=rnd()*N,sx=isoX(gx,gy),sy=isoY(gx,gy);c.beginPath();c.ellipse(sx,sy,3+rnd()*3,1.4+rnd()*1.2,.3,0,7);c.fill();}
+  c.strokeStyle='rgba(60,40,18,.16)';c.lineWidth=1;
+  for(let i=0;i<260;i++){const gx=rnd()*N,gy=rnd()*N,ln=2+rnd()*5;c.beginPath();c.moveTo(isoX(gx,gy),isoY(gx,gy));c.lineTo(isoX(gx+ln,gy+rnd()*.2),isoY(gx+ln,gy+rnd()*.2));c.stroke();}
+  c.restore();
+ }
+
  // ---- 3b. v25 themed set-pieces (picnic blanket / moat / train track / open book / board veggies) ----
  if(G.map.blanket){const p=G.map.blanket;const hue=p.hue!=null?p.hue:4;
   c.save();
@@ -1220,6 +1451,36 @@ function renderTerrain(){
    c.fillStyle='#e8c988';c.beginPath();c.moveTo(px2-9,py2-2);c.lineTo(px2+9,py2-2);c.lineTo(px2,py2-11);c.closePath();c.fill();
    c.fillStyle='#3f8a2c';c.fillRect(px2-8,py2-3,16,1.6);
    c.fillStyle='#c4965a';for(let i=0;i<7;i++){c.beginPath();c.arc(px2+(rnd()-.5)*40,py2+8+(rnd()-.5)*12,1.4,0,7);c.fill();}}
+  c.restore();
+ }
+ if(G.map.tub){const tb=G.map.tub; // v107: the drained tub's floor - the rim is props. The oval is rotated in WORLD space, so it is walked as a polygon rather than drawn as a screen ellipse
+  const cx2=isoX(tb.cx,tb.cy),cy2=isoY(tb.cx,tb.cy),ct=dcos(tb.th||0),st=dsin(tb.th||0);
+  const tubPath=(k)=>{c.beginPath();for(let i=0;i<=48;i++){const a=i/48*6.283,u=tb.rx*k*dcos(a),v=tb.ry*k*dsin(a);const wx=tb.cx+u*ct-v*st,wy=tb.cy+u*st+v*ct;i?c.lineTo(isoX(wx,wy),isoY(wx,wy)):c.moveTo(isoX(wx,wy),isoY(wx,wy));}c.closePath();};
+  c.save();
+  const g=c.createRadialGradient(cx2-30,cy2-24,4,cx2,cy2,tb.rx*1.414*HW);g.addColorStop(0,'#f8fafb');g.addColorStop(.6,'#e4ebef');g.addColorStop(1,'#c3d0d8');
+  c.fillStyle=g;tubPath(.97);c.fill();
+  c.strokeStyle='rgba(130,150,162,.55)';c.lineWidth=3;tubPath(.91);c.stroke(); // the tide line
+  c.strokeStyle='rgba(150,170,182,.3)';c.lineWidth=1.4;tubPath(.8);c.stroke();
+  // the drain, off-centre, with its chrome plug on a chain
+  {const da=tb.drainA||1,dwx=tb.cx+dcos(da)*tb.rx*.28,dwy=tb.cy+dsin(da)*tb.ry*.28,dx2=isoX(dwx,dwy),dy2=isoY(dwx,dwy);
+   c.fillStyle='#8c9ba6';c.beginPath();c.ellipse(dx2,dy2,8,4.6,0,0,7);c.fill();
+   c.fillStyle='#2c3238';c.beginPath();c.ellipse(dx2,dy2,5.6,3.1,0,0,7);c.fill();
+   c.strokeStyle='#dfe6ea';c.lineWidth=1.2;for(let i=-1;i<=1;i++){c.beginPath();c.moveTo(dx2-4+i*.6,dy2+i*1.6);c.lineTo(dx2+4+i*.6,dy2+i*1.6);c.stroke();}
+   c.strokeStyle='#b9c4cc';c.lineWidth=1.6;c.setLineDash([2,2]);c.beginPath();c.moveTo(dx2+6,dy2-2);c.quadraticCurveTo(dx2+18,dy2-10,dx2+26,dy2-4);c.stroke();c.setLineDash([]);
+   c.fillStyle='#d8dfe4';c.beginPath();c.ellipse(dx2+27,dy2-3,4.5,2.6,0,0,7);c.fill();glint(c,dx2+25.5,dy2-4,1.4);}
+  c.restore();
+ }
+ if(G.map.mat){const p=G.map.mat;const hue=p.hue!=null?p.hue:200; // v107: the bath mat - a fluffy rectangle with a fringe
+  c.save();
+  c.fillStyle=`hsla(${hue},40%,62%,.92)`;pathRegion(c,p);c.fill();
+  c.strokeStyle=`hsla(${hue},38%,42%,.9)`;c.lineWidth=2.4;pathRegion(c,p);c.stroke();
+  c.save();pathRegion(c,p);c.clip();c.lineCap='round';c.lineWidth=1.4;
+  for(let i=0;i<p.w*p.h*4;i++){const wx=p.x+rnd()*p.w,wy=p.y+rnd()*p.h,sx=isoX(wx,wy),sy=isoY(wx,wy);
+   c.strokeStyle=rnd()<.5?`hsla(${hue},45%,80%,.55)`:`hsla(${hue},40%,44%,.4)`;
+   c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+(rnd()-.5)*3,sy-2-rnd()*2.5);c.stroke();}
+  c.restore();
+  c.strokeStyle=`hsla(${hue},30%,88%,.85)`;c.lineWidth=1.2;
+  for(let x=0;x<=p.w;x+=.5){for(const yy of [p.y,p.y+p.h]){const sx=isoX(p.x+x,yy),sy=isoY(p.x+x,yy),dy=yy===p.y?-1:1;c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+dy*2,sy+dy*4);c.stroke();}}
   c.restore();
  }
  if(G.map.moat){const mo=G.map.moat;
@@ -1339,7 +1600,10 @@ function renderTerrain(){
  // hazard is a row here plus a row in makeMap's FLD, and nothing else.
  const GOO={soda:{rim:'rgba(58,30,16,.5)',g0:'#37190d',g1:'#5c2f16',g2:'#8a4e22',fleck:'rgba(220,180,130,.5)',sheen:'rgba(255,208,150,.3)'},
             grease:{rim:'rgba(64,48,14,.5)',g0:'#5a4a12',g1:'#8a7220',g2:'#c2a63c',fleck:'rgba(255,238,178,.45)',sheen:'rgba(255,244,190,.34)'},
-            glue:{rim:'rgba(46,54,66,.45)',g0:'#d8dee6',g1:'#eef2f6',g2:'#fbfdff',fleck:'rgba(150,170,195,.4)',sheen:'rgba(255,255,255,.42)'}};
+            glue:{rim:'rgba(46,54,66,.45)',g0:'#d8dee6',g1:'#eef2f6',g2:'#fbfdff',fleck:'rgba(150,170,195,.4)',sheen:'rgba(255,255,255,.42)'},
+            // v107: lavender suds on the bathroom tile, and the attic's burst bale of pink fibreglass
+            soap:{rim:'rgba(140,128,156,.5)',g0:'#f6f0f8',g1:'#e4d6ec',g2:'#c9b5d6',fleck:'rgba(255,255,255,.75)',sheen:'rgba(255,255,255,.45)'},
+            insulation:{rim:'rgba(120,56,80,.5)',g0:'#f3a9c3',g1:'#e07fa4',g2:'#c25a86',fleck:'rgba(255,228,240,.6)',sheen:'rgba(255,220,236,.3)'}};
  /* v103 owner pass: the milk spill was PURE WHITE at the top of its ramp with a
     50% white sheen on top of that, on a #d6dde1 tile floor - so it clipped to a
     flat shape with no surface on it at all, brighter than anything else on the
@@ -1349,7 +1613,10 @@ function renderTerrain(){
     Kitchen's alone - juice and coffee are untouched. */
  const LIQ={milk:{rim:'rgba(104,110,120,.62)',g0:'#eef0f4',g1:'#dde1e8',g2:'#bcc3cf',ring:'rgba(132,140,154,.34)',sheen:'rgba(255,255,255,.26)'},
             juice:{rim:'rgba(38,10,42,.6)',g0:'#a84fc0',g1:'#7a2a92',g2:'#4c1560',ring:'rgba(226,170,240,.22)',sheen:'rgba(240,190,250,.42)'},
-            coffee:{rim:'rgba(26,14,6,.6)',g0:'#7a4a26',g1:'#4e2c14',g2:'#2a170a',ring:'rgba(196,150,104,.22)',sheen:'rgba(224,186,140,.34)'}};
+            coffee:{rim:'rgba(26,14,6,.6)',g0:'#7a4a26',g1:'#4e2c14',g2:'#2a170a',ring:'rgba(196,150,104,.22)',sheen:'rgba(224,186,140,.34)'},
+            // v107: soapy bathwater on the tile, and rainwater from the attic's roof leak
+            bathwater:{rim:'rgba(88,118,138,.58)',g0:'#dcedf5',g1:'#a8d0e6',g2:'#74accb',ring:'rgba(255,255,255,.34)',sheen:'rgba(255,255,255,.42)'},
+            leak:{rim:'rgba(28,24,18,.62)',g0:'#736a5a',g1:'#4c4437',g2:'#2b261e',ring:'rgba(200,190,170,.18)',sheen:'rgba(222,212,192,.3)'}};
  for(const fl of (G.map.fields||[])){
   if(fl.kind==='water'||fl.kind==='puddle'){ // v66: a garden rain puddle is water, drawn as water
    // recessed pool: dark rim, gradient body, sky glints, ripple rings
@@ -1467,6 +1734,22 @@ function renderTerrain(){
    for(let i=0;i<5;i++){const a=i/5*6.28+.4;
     c.beginPath();c.moveTo(dcos(a)*3.2*d.s,-1*d.s+dsin(a)*1.9*d.s);
     c.lineTo(dcos(a)*6.6*d.s,-1.6*d.s+dsin(a)*3.9*d.s);c.stroke();}
+   c.restore();}
+  else if(d.t==='droplet'){ // v107: a bead of water on the tile
+   const g=c.createRadialGradient(sx-1.2*d.s,sy-1.6*d.s,.4,sx,sy,4*d.s);g.addColorStop(0,'rgba(240,250,255,.95)');g.addColorStop(.6,'rgba(150,200,225,.8)');g.addColorStop(1,'rgba(90,140,170,.55)');
+   c.fillStyle=g;c.beginPath();c.ellipse(sx,sy,4.2*d.s,2.6*d.s,0,0,7);c.fill();
+   c.fillStyle='rgba(255,255,255,.86)';c.beginPath();c.ellipse(sx-1.4*d.s,sy-1*d.s,1.1*d.s,.6*d.s,-.5,0,7);c.fill();}
+  else if(d.t==='hair'){ // v107: a stray curl
+   c.save();c.translate(sx,sy);c.rotate(d.a||0);c.strokeStyle='rgba(40,28,16,.75)';c.lineWidth=1;c.lineCap='round';
+   c.beginPath();c.moveTo(-8*d.s,0);c.bezierCurveTo(-4*d.s,-6*d.s,0,5*d.s,4*d.s,-2*d.s);c.bezierCurveTo(6*d.s,-5*d.s,8*d.s,2*d.s,10*d.s,0);c.stroke();c.restore();}
+  else if(d.t==='mothball'){ // v107: a small white sphere
+   const g=c.createRadialGradient(sx-1.4*d.s,sy-2.6*d.s,.5,sx,sy-2*d.s,3.6*d.s);g.addColorStop(0,'#ffffff');g.addColorStop(.7,'#e4e4dc');g.addColorStop(1,'#a8a89c');
+   c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(sx,sy+.6,3.6*d.s,1.8*d.s,0,0,7);c.fill();
+   c.fillStyle=g;c.beginPath();c.arc(sx,sy-2*d.s,3.4*d.s,0,7);c.fill();}
+  else if(d.t==='cobweb'){ // v107: a faint radial web lying on the boards
+   c.save();c.translate(sx,sy);c.rotate(d.a||0);c.strokeStyle='rgba(235,232,222,.42)';c.lineWidth=.8;
+   const R=12*d.s;for(let i=0;i<6;i++){const a=i/6*6.28;c.beginPath();c.moveTo(0,0);c.lineTo(Math.cos(a)*R,Math.sin(a)*R*.55);c.stroke();}
+   for(let k2=1;k2<=3;k2++){const r=R*k2/3;c.beginPath();for(let i=0;i<=6;i++){const a=i/6*6.28;const px=Math.cos(a)*r,py=Math.sin(a)*r*.55;i?c.lineTo(px,py):c.moveTo(px,py)}c.stroke();}
    c.restore();}
   else if(d.t==='clover'){c.fillStyle='#4a8e2e';for(let i=0;i<3;i++){const a=i/3*6.28-1.57;c.beginPath();c.ellipse(sx+dcos(a)*3*d.s,sy+dsin(a)*1.6*d.s,2.4*d.s,1.8*d.s,a,0,7);c.fill();}c.strokeStyle='#3a6e22';c.lineWidth=1;c.beginPath();c.moveTo(sx,sy+1);c.lineTo(sx,sy+5*d.s);c.stroke();}
   else if(d.t==='flower'){c.fillStyle=`hsl(${d.hue},80%,62%)`;for(let i=0;i<5;i++){const a=i/5*6.28;c.beginPath();c.ellipse(sx+dcos(a)*3.2*d.s,sy+dsin(a)*1.8*d.s,2.2*d.s,1.5*d.s,a,0,7);c.fill();}c.fillStyle='#ffd24d';c.beginPath();c.arc(sx,sy,1.8*d.s,0,7);c.fill();}

@@ -31,7 +31,21 @@ for(const k in FAC){if(k==='bug')continue;const f=FAC[k];const c=document.create
  c.onclick=()=>{document.querySelectorAll('#facRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');SETUP.fac=k};facRow.appendChild(c)}
 const mapRow=document.getElementById('mapRow');
 for(const k in MAPS){const m=MAPS[k];const c=document.createElement('div');c.className='card mcard'+(k==='backyard'?' sel':'');c.dataset.map=k;if(m.survOnly){c.dataset.survonly='1';c.style.display='none';} /* v35: survival-only maps hidden outside Wave Survival */ c.innerHTML=`<div class="cname">${m.n}</div><div class="cdesc">${m.d}</div>`;
- c.onclick=()=>{document.querySelectorAll('#mapRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');SETUP.map=k};mapRow.appendChild(c)}
+ c.onclick=()=>{document.querySelectorAll('#mapRow .card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');menuPickMap(k)};mapRow.appendChild(c)}
+/* v107: one function owns "the map changed", named so the shim can drive it. A
+   map marked t2v2 (The Attic) is BUILT for two teams of two, so picking it deals
+   the lobby a 2v2 on the spot: three opponents, You + CPU 1 against CPU 2 + CPU 3.
+   The chips stay clickable afterwards - it is a starting position, not a lock -
+   and picking another map leaves whatever you set alone. */
+function menuPickMap(k){
+ SETUP.map=k;
+ const m=MAPS[k];
+ if(m&&m.t2v2&&!SETUP.watch){
+  SETUP.opp=3;SETUP.teams=[1,1,2,2];
+  document.querySelectorAll('[data-opp]').forEach(x=>x.classList.toggle('sel',+x.dataset.opp===3));
+  refreshTeamRow();
+ }
+}
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.mode=b.dataset.mode;refreshTeamRow()}); // v33
 document.querySelectorAll('[data-opp]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-opp]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.opp=+b.dataset.opp});
 document.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-diff]').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');SETUP.diff=b.dataset.diff});

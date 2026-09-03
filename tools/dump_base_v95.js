@@ -75,6 +75,7 @@ fs.mkdirSync(OUT, { recursive: true });
     }
     for (const k in B) {
       if (k === 'nest') continue;
+      if (B[k].lvl) continue;   // v107: level art is painter-only, never textured
       if (B[k].barr) {
         /* v96.1: the walls, live-painted since v88, joined the texture pass on
            the owner's ask. A shared wall also exists NEUTRAL on maps (dark
