@@ -235,5 +235,9 @@ section('T90.E a bot clears the enemy\'s wall and never its own');
 }
 
 /* ---------- F: the release stamp ---------- */
-section('T90.F the release stamp');
-ok('T90.F GAME_VER is v107.2', GAME_VER==='v107.2'); // v107.2: bumped with the constants
+/* v107.3: the version pin that used to stand here is DELETED, not bumped. T75.B
+   is the release stamp's designed check (v98 built it, and its own comment says
+   the next release must come there and say which version it is). v107.1 and
+   v107.2 each added a private copy, so stating one fact had grown to three
+   files. One conscious edit per release is the rule working; three copies of it
+   are just cost. */

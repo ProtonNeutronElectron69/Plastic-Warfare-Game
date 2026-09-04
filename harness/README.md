@@ -1181,6 +1181,91 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v107.3 — the tub and the towel (the third owner pass on v107)
+
+The owner played v107.2 and said the bathtub and the white bath mat are
+overexposed — essentially blank white. Both were, for different reasons.
+`tail_v107_3.js` (T92, 20 checks; the suite is **6,830**). **No trail
+moved and no repin was due**: two painters, `triage.sh` says "sim unchanged",
+all 30 layout pins hold, and T92.C re-cuts the Bathroom's own v107 layout
+hashes AND pins the towel's rectangle, because a patch is not in the layout
+hash and would otherwise be unguarded.
+
+### The tub: a gradient wider than the shape it fills has no shading in it
+
+The tub's floor was one radial gradient of radius `tb.rx*1.414*HW`. Measured on
+the shipped build:
+
+| | px |
+|---|---|
+| gradient radius | **430** |
+| tub's longest screen radius | 299 |
+| tub's shortest screen radius | 215 |
+
+So the entire basin sat inside the gradient's first stops. Three stops were
+declared, one was ever visible, and the tub came out a flat near-white disc —
+about **20 levels of light** from side to side. Nothing was wrong with the
+colours; the geometry never let them run.
+
+Two changes, and the first is the one to carry forward:
+
+- **Every radius is derived from the polygon actually walked.** `RRx`/`RRy` come
+  off the same 48 vertices `tubPath` draws, so the shading tracks the tub
+  whatever size, aspect or angle a future map gives it. T92.A asserts the new
+  radius lies inside even the SHORT axis (193 against 215) and that the old
+  formula was wider than the whole tub — the defect is pinned, not just fixed.
+- **The tub is painted as a BASIN, not a disc**: an inner wall ring in shadow
+  (a vertical gradient, lit across the far side), then the floor inside it at
+  `k=.78`, with the tide line on the joint and a second water line up the wall.
+  A shape-following ring shades an ellipse evenly where a radial gradient
+  cannot: hug the long ends and the short sides stay pale, hug the short sides
+  and the ends clip flat. The enamel now spans **75 levels** of light.
+
+Enamel wear arcs were added off `dth`, never off the terrain rng — a decoration
+must not move the decorations painted after it (the v97 rule).
+
+### The towel: the contrast is the check, not the colour
+
+The "white bath mat" is the dropped **towel**; the map's coloured mat is a
+different object and reads fine. The towel was a near-white rectangle with a
+thin outline — legible on v107's cool grey-blue tile, and a blank slab the
+moment v107.2 made the floor warm cream. Measured against the floor tone the
+game actually paints:
+
+| towel | levels of light off the floor |
+|---|---|
+| v107.2, `rgba(246,240,228,.9)` | **9** |
+| v107.3, `hsl(188,26%,63%)` | **65** |
+
+It paints as cloth now: a body, a fold with the far half catching more light,
+woven bands across each end, a hem, terry pile off `dth`, and a shadow on the
+tile. Its record carries no `fill`/`stroke`/`inset` any more — `drawTowel` owns
+every tone, and a dead field is a field the next reader believes.
+
+**THE FIRST CUT OF THE FIX CONTAINED THE BUG AGAIN.** The towel's hue was
+picked off `dth` from its own position, out of {teal, sand, blue} — and sand on
+warm cream porcelain is the same washed-out slab in a different hue. It came up
+on **three seeds in four**. `TOWEL_HUE` is one cool teal chosen against the
+floor, and **T92.B asserts the DISTANCE from the floor's own tone**, so a future
+palette change has to keep the towel readable rather than merely keep this
+number.
+
+### One cleanup
+
+v107.1 and v107.2 each added a private copy of the version pin, so stating one
+fact had grown to three files. Both are **deleted**, not bumped: `T75.B` is the
+check v98 designed for the release stamp, and its own comment already says the
+next release must come there and say which version it is. One conscious edit per
+release is rule 5 working; three copies of it are cost.
+
+### Verification actually run at v107.3
+
+`QUIET=1 ./seg.sh all`: 6,830 checks, 0 failures, on the final bytes.
+`./build.sh --check`: byte-identical. `verify_v58.py`: 32/32. `triage.sh`: sim
+unchanged, all 30 pins hold. 1:1 Chromium frames of the tub and towel before and
+after, and whole-board frames on two seeds — the complaint was about how
+something looks, so the frame is the evidence and the numbers explain it.
+
 ## v107.2 — the Bathroom Floor's own floor (the second owner pass on v107)
 
 The owner played v107.1 and said the Bathroom's basic tiles look too much like
