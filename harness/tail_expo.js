@@ -17,16 +17,26 @@ function open3x3(M,tx,ty){
 for(const mk of T_MAPS)for(const seed of EXPO_SEEDS){
  const M=makeMap(mk,seed),N=M.N,tag=`T5 ${mk}#${seed}`;
  const nats=M.expos.filter(e=>e.nat),mids=M.expos.filter(e=>!e.nat);
- ok(`${tag} 4 natural + 4 mid sites`,nats.length===4&&mids.length===4);
+ /* v107.1: a SIDED map (M.sides - the Attic) lays TWO home sites per start, both
+    OUTBOARD along its edge: the natural 8-9.5 tiles out and a second site 16-18,
+    because its walls stand nine rows from the bases and a natural aimed at the
+    centre would stand in them (tail_v107_1.js T90.C carries the rest). The
+    corner maps keep the v25 shape exactly. */
+ const sided=!!M.sides,homeN=sided?2:1;
+ ok(`${tag} ${4*homeN} natural + 4 mid sites`,nats.length===4*homeN&&mids.length===4);
  // each start owns exactly one natural, 10.5..15.7 tiles away, toward the interior
  for(const s of M.starts){
   const near=nats.filter(e=>dhyp(e.x-s.x,e.y-s.y)<18);
-  ok(`${tag} start(${s.x},${s.y}) has 1 natural in range`,near.length===1);
+  ok(`${tag} start(${s.x},${s.y}) has ${homeN} natural in range`,near.length===homeN);
   if(near.length===1){
    const e=near[0],d=dhyp(e.x-s.x,e.y-s.y);
    ok(`${tag} natural dist ${d.toFixed(1)} in [10.5,17.3]`,d>=10.5&&d<=17.3);
    const dC0=dhyp(s.x-N/2,s.y-N/2),dC1=dhyp(e.x-N/2,e.y-N/2);
    ok(`${tag} natural is interior-ward of start`,dC1<dC0);
+  }else if(sided&&near.length===2){
+   const ds=near.map(e=>Math.abs(e.x-s.x)).sort((a,b)=>a-b);
+   ok(`${tag} home sites ${ds[0].toFixed(1)} and ${ds[1].toFixed(1)} along the edge: natural in [7.5,10.5], corner site in [16,18]`,ds[0]>=7.5&&ds[0]<=10.5&&ds[1]>=16&&ds[1]<=18);
+   ok(`${tag} both home sites are outboard of the start, on its own edge`,near.every(e=>(e.x-s.x)*(s.x<N/2?1:-1)<0&&(e.y<N/2)===(s.y<N/2)));
   }
  }
  // mid expos hug the four cardinal side-lane anchors

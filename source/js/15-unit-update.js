@@ -33,6 +33,15 @@ function nearestEnemy(u,r,cone){
   if(b.t.barr||b.t.lvl){ // v88: t.barr. v107: and the Attic's level art, on exactly the hedgehog's footing - a bot chews through a crate in its way, a player breaks one deliberately
    if(b.p===G.neutral){ // v83: a BOT clears the map's scattered hedgehogs; a player's units still never auto-target them
     if(!(u.p&&u.p.ai)||(u.id%BARR_CLEAR_SHARE))continue; // keyed on id, never on srand: reading the sim stream from a targeting scan would move every trail
+    /* v107.1 (owner pass): on a SIDED map a bot never clears an obstacle on its OWN
+       half of the board. The compound it was seated in is its team's wall, and a
+       bot's clearing share was chewing through it from the inside - undoing the
+       map's defences while the enemy's stood. Half-of-the-board is the test rather
+       than "inside the compound" because it needs no geometry the map does not
+       already declare: sides exist only when the two compounds ARE the two halves.
+       Gated on G.map.sides, so no other map's trail moves; p.start is saved and
+       restored, so a loaded match answers the same. */
+    if(G.map.sides&&u.p.start&&((u.p.start.y<G.map.N/2)===(b.y<G.map.N/2)))continue;
     const d=(b.x-u.x)**2+(b.y-u.y)**2;
     if(d<nbd&&(!cone||inCone(u,b.x,b.y))){nbd=d;nbarr=b}
     continue;

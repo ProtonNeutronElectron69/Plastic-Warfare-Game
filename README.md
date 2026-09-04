@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v107 it makes **6,716
+that the results come out identical every time. As of v107.1 it makes **6,787
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -117,7 +117,17 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 107**.
+The game is at **version 107.1**.
+
+**v107.1 — the Attic, tightened up.** Five changes from playing it. The walls
+around each pair of bases have come in seven rows, so they are close enough to
+defend from the base itself, and every stretch of wall has one more layer of
+boxes or hedgehogs than before. Each base now has two expansions of its own
+inside the walls — a plastic pile and a battery apiece — out along the edge of
+the attic on the side away from your teammate. The computer players no longer
+shoot down the boxes and hedgehogs of their own compound (they still chew
+through yours), and there is a handful of extra hidden mines buried around the
+middle of the attic, where there used to be almost none.
 
 **v107 — two new battlefields: the Bathroom Floor and The Attic.** The Bathroom
 is a big four-corner board on cold porcelain tile. In the middle sits a drained

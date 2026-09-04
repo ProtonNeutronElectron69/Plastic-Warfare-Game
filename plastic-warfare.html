@@ -601,7 +601,7 @@ canvas{display:block}
   Gray's <b>Bunker</b>: right-click it with infantry to garrison (4 max, 6 when upgraded).<br><br>
   <b>⬢ Barricades</b> (build menu): cheap Czech-hedgehog walls, <span data-tune="barrCost"></span> ⬢ each, that block movement. Pick the tool, then <b>click-and-drag</b> to lay a whole line at once (the ghost shows how many you can afford; you can only build where you have vision). Enemies will smash through walls they run up against, so use them to funnel attacks, not to seal yourself in. Scattered dark-gray hedgehogs are neutral and just sit in the way.<br><br>
   <b>⭐ Veterancy</b>: kills promote a unit one rank at a time (gold chevrons) — <span data-tune="vetInf"></span> for infantry, <span data-tune="vetVeh"></span> for vehicles, aircraft and everything else. Each rank grants +10% damage and +10% max HP. <b>💰 Sell</b>: any completed structure except the HQ can be sold back for <span data-tune="sellPct"></span>% of its plastic cost (queued units are refunded in full). <b>🤝 Teams</b>: armies sharing a team number share vision, never harm each other, and win together.<br><br>
-  <b>💥 Landmines</b>: every map is seeded with ~<span data-tune="mines"></span> hidden mines. They're invisible until a ground unit steps on one. A direct hit destroys a tank; a jeep dies one tile away and a grunt about two tiles out. Aircraft fly over them safely. Scout carefully, or push expendable units first.<br><br>
+  <b>💥 Landmines</b>: every map is seeded with ~<span data-tune="mines"></span> hidden mines, and The Attic buries <span data-tune="midMines"></span> more around its middle. They're invisible until a ground unit steps on one. A direct hit destroys a tank; a jeep dies one tile away and a grunt about two tiles out. Aircraft fly over them safely. Scout carefully, or push expendable units first.<br><br>
   <b>🌙 Day &amp; Night</b>: the battlefield runs a full day/night cycle every <b><span data-tune="cycleMin"></span> minutes</b>, and every match starts at a random point in it (the top bar shows the current phase). The light steps through day, dusk, night and dawn. <b>At night every unit and structure — yours and theirs alike — sees only <span data-tune="nightViPct"></span>% as far</b>: the fog closes in, guns stop picking up targets they can no longer see, and sight-based auras shrink with the eye that carries them. Weapon <em>range</em> is untouched, so a unit ordered onto a target still shoots at full reach — night rewards the side that scouts and punishes the one that waits to be seen. Testing Mode stays at permanent noon.
 </div>
 <div id="overlayCenter"><div id="endBox"><h2 id="endTitle"></h2><div class="stats" id="endStats"></div><div id="chartTabs"></div><canvas id="endChart" width="560" height="230"></canvas><div id="chartToggles"></div><button id="againBtn" class="opt sel" style="font-size:18px">Play Again</button></div></div>
@@ -724,7 +724,7 @@ canvas{display:block}
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v107';
+const GAME_VER='v107.1';
 const GAME_DATE='2026-09-03';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
@@ -830,6 +830,7 @@ const MINE_DMG=360*HP_SCALE, MINE_R=3.2; // landmine dmg tracks HP so a direct h
 const MINE_TRIG=0.62;               // a ground unit within this many tiles of a mine sets it off
 const MINES_PER_MAP=20;             // ~20 mines scattered per map (laid as 10 mirrored pairs)
 const MINE_KEEPOUT=14;              // v67: tiles of clear ground around EVERY start before a mine may be buried
+const MID_MINE_PAIRS=3;             // v107.1: mirrored pairs the Attic buries WITHIN TEN TILES OF ITS CENTRE on top of MINES_PER_MAP (measured 0-2 there before; midMines in makeMap)
 /* v67: was 12, which is inside the natural-expansion ring (the site lands
    11.5-13.5 tiles out), so mines were being buried on the approach to your
    own second base. 14 still fills all 20 mines on every seed measured. */
@@ -1366,7 +1367,7 @@ const HELP_TUNE={
  hqR:()=>BUILD_R_HQ, opR:()=>BUILD_R_OUTPOST, foeR:()=>BUILD_R_FOEHQ,
  koth:()=>KOTH_TARGET, ctf:()=>CTF_TARGET, waves:()=>SURV_WAVE_N,
  salvagePct:()=>Math.round(SALVAGE_FRAC*100), sellPct:()=>Math.round(SELL_FRAC*100),
- barrCost:()=>BARR_COST, mines:()=>MINES_PER_MAP, gap:()=>BUILD_GAP,
+ barrCost:()=>BARR_COST, mines:()=>MINES_PER_MAP, midMines:()=>MID_MINE_PAIRS*2, gap:()=>BUILD_GAP,
  /* v69: the deathmatch limit and the entrench multiplier are slots for the same
     reason BUILD_GAP is - a balance edit must not leave stale prose behind. */
  dmMin:()=>Math.round(DM_TIME/60), entrench:()=>ENTRENCH_RATE,
@@ -5586,16 +5587,30 @@ function makeMap(key,seed){
   const rot=(rnd()-.5)*0.5; const ro=(ox,oy)=>({x:s.x+(ox*dcos(rot)-oy*dsin(rot)),y:s.y+(ox*dsin(rot)+oy*dcos(rot))});
   let p1=ro(6*dx,-2*dy),p2=ro(-2*dx,6*dy),bt=ro(7*dx,7*dy);
   // starting-base nodes carry 50% more than the baseline so home economies last longer
-  jnode('plastic',p1.x,p1.y,2550); jnode('plastic',p2.x,p2.y,2550);
-  jnode('battery',bt.x,bt.y,1950);
+  /* v107.1: on a sided map the three home nodes jitter 1.0 instead of 2.2. The
+     Attic's wall stands on row 17 now and the forward pile (p2) sits at row ~14:
+     jittered 2.2 it reached row 16.5, and a crate on row 17 refuses a node within
+     2.8 (lvlOK), so the crate wall across a base's front lost one to three of its
+     four pairs on half the seeds. Same two rnd() draws per node either way. */
+  const hj=def.t2v2?1.0:undefined;
+  jnode('plastic',p1.x,p1.y,2550,hj); jnode('plastic',p2.x,p2.y,2550,hj);
+  jnode('battery',bt.x,bt.y,1950,hj);
   // v25 NATURAL EXPANSION: a second base site just outside the main, on the way
   // toward the map centre — 1 plastic + 1 battery with a buildable pocket kept clear.
   // deterministic retry: the main battery shares this diagonal, so re-roll until
   // the site clears every already-placed node, else push it further out.
-  {const dxc=N/2-s.x,dyc=N/2-s.y,L=dhyp(dxc,dyc)||1,px=-dyc/L,py=dxc/L;
+  /* v107.1 (owner pass): on a SIDED map the natural aims OUTBOARD along the edge -
+     away from the teammate - and sits closer (8-9.5 tiles out instead of
+     11.5-13.5). The Attic's walls came in seven rows (FRONT 24 -> 17), and a
+     natural aimed at the centre stood at rows 18-22, IN the wall band: every layer
+     would have been breached at its pocket and the expansion would have been the
+     doorway. The pick takes the same two rnd() draws per try, so nothing after it
+     moves for that reason; the corner maps take the old aim untouched. */
+  {const sided=!!def.t2v2;
+   const dxc=sided?-dx*N:N/2-s.x,dyc=sided?0:N/2-s.y,L=dhyp(dxc,dyc)||1,px=-dyc/L,py=dxc/L;
    let ex=null;
    for(let k=0;k<12&&!ex;k++){
-    const d0=11.5+rnd()*2,side=(rnd()*2-1)*3;
+    const d0=(sided?8:11.5)+rnd()*(sided?1.5:2),side=(rnd()*2-1)*3;
     const cx2=s.x+dxc/L*d0+px*side,cy2=s.y+dyc/L*d0+py*side;
     if(M.nodes.every(nd=>dhyp(nd.x-cx2,nd.y-cy2)>4.2))ex={x:cx2,y:cy2};
    }
@@ -5613,7 +5628,16 @@ function makeMap(key,seed){
     }
    }
    if(!ex)ex={x:s.x+dxc/L*15,y:s.y+dyc/L*15}; // truly cornered: accept the crowding
-   expoSite(ex.x,ex.y,2250,1800,true);}
+   expoSite(ex.x,ex.y,2250,1800,true);
+   /* v107.1: and on a sided map a SECOND home site on the same flank, out toward
+      the corner - the owner's "1 battery / 1 plastic pile expansion to the side of
+      each starting base". A fixed ladder in y under the natural's own 4.2 node
+      clearance, no rnd() of its own (expoSite draws the pair's angle as ever). It
+      carries the mid expansions' amounts, not the natural's: it is the safest
+      ground on the map. */
+   if(sided){const fx=s.x-dx*17;let sx2=null;
+    for(const oy of [0,2,-2,3,-3,4,-4]){const cy2=s.y+oy;if(M.nodes.every(nd=>dhyp(nd.x-fx,nd.y-cy2)>4.2)){sx2={x:fx,y:cy2};break}}
+    if(sx2)expoSite(sx2.x,sx2.y,1400,1300,true);}}
  }
  // center cache (jittered around the middle, balance preserved)
  const c=N/2;
@@ -5910,6 +5934,27 @@ function makeMap(key,seed){
    if(!farMine(m.x,m.y))continue;
    if(M.pass[Math.floor(m.y)*N+Math.floor(m.x)]!==1)continue;
    occ.push({x:mx,y:my},{x:m.x,y:m.y});
+   M.mines.push({x:mx,y:my,live:true},{x:m.x,y:m.y,live:true});
+   placed++;
+  }
+ };
+ /* v107.1: a HANDFUL more around the middle, for a map that asks (the Attic).
+    mineField scatters over the whole board and the centre cache's five nodes
+    refuse most of the ground around the middle (farNode 2.6), so the Attic
+    measured 0-2 mines within ten tiles of its centre over 40 seeds, mean 1.8 -
+    the owner asked for some in the middle "if there aren't any already there",
+    and on some seeds there were none. Same rules as mineField (open tile, clear
+    of nodes and pockets, three tiles from every other mine, the mirror tested
+    too), picked in an annulus 4..10 around the centre, AFTER mineField so the
+    scatter is what it always was and these are added to it. */
+ const midMines=(pairs)=>{
+  const farMine=(x,y)=>!M.mines.some(o=>Math.abs(o.x-x)<3&&Math.abs(o.y-y)<3);
+  let placed=0,guard=0;
+  while(placed<pairs&&guard++<200){
+   const a=rnd()*6.283,r=4+rnd()*6,tx=Math.floor(c+dcos(a)*r),ty=Math.floor(c+dsin(a)*r),mx=tx+.5,my=ty+.5;
+   if(M.pass[ty*N+tx]!==1||nearExpo(mx,my,4.5)||!farNode(mx,my,2.6)||!farMine(mx,my))continue;
+   const m=mir(mx,my);
+   if((Math.abs(mx-m.x)<3&&Math.abs(my-m.y)<3)||!farMine(m.x,m.y)||M.pass[Math.floor(m.y)*N+Math.floor(m.x)]!==1)continue;
    M.mines.push({x:mx,y:my,live:true},{x:m.x,y:m.y,live:true});
    placed++;
   }
@@ -6358,19 +6403,35 @@ function makeMap(key,seed){
    for(let tx=x0;tx<=x1;tx++){if(holes.has(tx))continue;barrTile(tx,ty);barrTile(N-1-tx,N-1-ty);}
   };
   /* THE FRONT LINE, north side (the south side is its point mirror). FRONT is the
-     row the line stands on; behind it (smaller y) is the compound. Gates: the
-     west one at x 14-17, the centre one at x 31-40 (the north mid expansion sits
-     there, and the crate and hedgehog guards refuse its pocket by themselves), the
-     east one at x 54-57. Reading west to east: crates, gate, three hedgehog
-     layers, gate, crates then hedgehogs, gate, hedgehogs with crates behind. */
-  const FRONT=24;
+     row the INNERMOST layer stands on; behind it (smaller y) is the compound, and
+     the other layers stack OUTWARD from it. v107 stood it on row 24 with three
+     layers at most; v107.1 (owner pass) pulls it in seven rows to 17 and adds a
+     layer to every stretch, so the wall is rows 17-23 instead of 24-28.
+     Two things decide the shape of row 17. A hedgehog may not stand within ten
+     tiles of a start (barrTile), and at this row that is the six tiles in front
+     of each base - so those are CRATES, whose centre is a tile further out and
+     clears. And the base's own nodes jitter as far as rows 16-18, so a stretch
+     beside a battery is short a tile or a crate on some seeds; the layers outside
+     it are what the wall is for.
+     Gates, on every layer: the west one at x 14-17, the centre one at x 33-38 on
+     row 17 and 31-40 on the layers outside it (the north mid expansion sits just
+     OUTSIDE the wall now, at row ~22, and its pocket widens the gap on whichever
+     layers it touches), the east one at x 54-57. Reading west to east: crates
+     with two hedgehog layers outside them, gate, a crate wall across the west
+     base's front under three hedgehog layers and hedgehogs out to the centre
+     gate, gate, hedgehogs then a crate wall across the east base's front under
+     three layers, gate, three hedgehog layers with a crate row between them. */
+  const FRONT=17;
   for(const tx of [0,2,4,6,8,10,12])lvlPair(tx,FRONT);          // west stretch: solid crates to the rim
-  hedgeRow(2,13,FRONT+3,2);                                      // ...with a hedgehog layer behind
-  hedgeRow(18,30,FRONT,3);hedgeRow(18,30,FRONT+2,2);hedgeRow(18,30,FRONT+4,3); // three layers, holes staggered
-  for(const tx of [41,43,45])lvlPair(tx,FRONT);                  // east-centre: crates...
-  hedgeRow(47,53,FRONT,1);hedgeRow(41,53,FRONT+3,3);              // ...then hedgehogs
-  hedgeRow(58,69,FRONT,2);hedgeRow(58,69,FRONT+2,2);              // east stretch: two hedgehog layers
-  lvlPair(70,FRONT);for(const tx of [59,63,67])lvlPair(tx,FRONT+4); // the rim crate, and crates behind the layers
+  hedgeRow(2,13,FRONT+3,2);hedgeRow(2,13,FRONT+6,3);            // ...with two hedgehog layers outside it
+  for(const tx of [18,20,22,24])lvlPair(tx,FRONT);              // west base: a crate wall across its front...
+  hedgeRow(27,32,FRONT,1);                                       // ...closed out to the centre gate by hedgehogs
+  hedgeRow(18,30,FRONT+2,3);hedgeRow(18,30,FRONT+4,2);hedgeRow(18,30,FRONT+6,3); // three layers over it, holes staggered
+  hedgeRow(39,44,FRONT,1);                                       // east base: hedgehogs from the centre gate...
+  for(const tx of [46,48,50,52])lvlPair(tx,FRONT);              // ...then a crate wall across its front
+  hedgeRow(41,53,FRONT+2,3);hedgeRow(41,53,FRONT+4,3);hedgeRow(41,53,FRONT+6,2); // three layers over it
+  hedgeRow(58,69,FRONT,2);hedgeRow(58,69,FRONT+2,2);hedgeRow(58,69,FRONT+6,3);   // east stretch: three hedgehog layers...
+  lvlPair(70,FRONT);for(const tx of [59,63,67])lvlPair(tx,FRONT+4); // ...the rim crate, and a crate row between them
   // loose cover out in the field between the two lines: two mirrored crate pairs
   for(let k2=0;k2<2;k2++){const sp=pickSpot(6,13,3,16,{art:1.6});if(sp)lvlPair(Math.round(sp.x)-1,Math.round(sp.y)-1);}
   /* the clutter goes down AFTER the compound. farPropArt counts the Attic's crates
@@ -6457,7 +6518,7 @@ function makeMap(key,seed){
   /* v107: a sided map lays its own lines (the compounds, in its block above). The
      corner-lane passes walk base-to-base pairs that on the Attic are TEAMMATES, so
      they would lay a pond and a roadblock between two allies inside one compound. */
-  if(def.t2v2){mineField();barrCluster(3);}
+  if(def.t2v2){mineField();midMines(MID_MINE_PAIRS);barrCluster(3);} // v107.1: plus the handful around the middle
   else{edgeClutter();mineField();barrCluster(lawn?3:7);laneBarr(lawn?[0.32,0.68]:[0.30,0.50,0.70]);}}
  // never block starts (clear passability AND any field hazards in a wide ring)
  for(const s of M.starts)for(let y=-5;y<=5;y++)for(let x=-5;x<=5;x++){const tx=s.x+x,ty=s.y+y;if(tx>=0&&ty>=0&&tx<N&&ty<N){M.pass[ty*N+tx]=1;M.fld[ty*N+tx]=0;}}
@@ -10506,6 +10567,15 @@ function nearestEnemy(u,r,cone){
   if(b.t.barr||b.t.lvl){ // v88: t.barr. v107: and the Attic's level art, on exactly the hedgehog's footing - a bot chews through a crate in its way, a player breaks one deliberately
    if(b.p===G.neutral){ // v83: a BOT clears the map's scattered hedgehogs; a player's units still never auto-target them
     if(!(u.p&&u.p.ai)||(u.id%BARR_CLEAR_SHARE))continue; // keyed on id, never on srand: reading the sim stream from a targeting scan would move every trail
+    /* v107.1 (owner pass): on a SIDED map a bot never clears an obstacle on its OWN
+       half of the board. The compound it was seated in is its team's wall, and a
+       bot's clearing share was chewing through it from the inside - undoing the
+       map's defences while the enemy's stood. Half-of-the-board is the test rather
+       than "inside the compound" because it needs no geometry the map does not
+       already declare: sides exist only when the two compounds ARE the two halves.
+       Gated on G.map.sides, so no other map's trail moves; p.start is saved and
+       restored, so a loaded match answers the same. */
+    if(G.map.sides&&u.p.start&&((u.p.start.y<G.map.N/2)===(b.y<G.map.N/2)))continue;
     const d=(b.x-u.x)**2+(b.y-u.y)**2;
     if(d<nbd&&(!cone||inCone(u,b.x,b.y))){nbd=d;nbarr=b}
     continue;
