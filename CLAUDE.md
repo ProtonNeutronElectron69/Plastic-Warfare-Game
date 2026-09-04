@@ -52,9 +52,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v107.2, and what a fresh session does)
+## Where the game stands (v107.3, and what a fresh session does)
 
-The game is at **v107.2**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v107.3**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), **v104 is the first Roadmap 4 item
@@ -72,8 +72,9 @@ compound of destructible level art, and **v107.1** is the owner's feedback pass 
 it — the walls pulled in seven rows with a layer more, a second expansion per
 base, bots that spare their own compound, mines in the middle — and **v107.2**
 is the second, a floor of its own for the Bathroom (a hexagon mosaic in warm
-porcelain, because it had been wearing the Kitchen's square grid). There is no
-release in flight.
+porcelain, because it had been wearing the Kitchen's square grid), and
+**v107.3** is the third — the bathtub and the dropped towel, both of which read
+as blank white. There is no release in flight.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
 ranked, written after a whole-game review at v103. **Three of the twelve have
@@ -107,7 +108,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 6,810 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 6,830 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -175,7 +176,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,810 checks at v107.2.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,830 checks at v107.3.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -593,6 +594,38 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v107.3 — the tub and the towel (the third owner pass on v107)
+
+The owner said the bathtub and the white bath mat were overexposed — blank
+white. `tail_v107_3.js` (T92, 20 checks; the suite is 6,830 now); full
+evidence in the v107.3 section of `harness/README.md`. **No trail moved and no
+repin was due**: two painters, and T92.C re-cuts the Bathroom's layout hashes
+and pins the towel's rectangle, since a patch is not in the layout hash.
+
+- **A GRADIENT WIDER THAN THE SHAPE IT FILLS HAS NO SHADING IN IT.** The tub's
+  floor was one radial gradient of radius `rx*1.414*HW` — **430px** on a basin
+  whose own screen radius is **215–299px**. The whole shape sat in the first
+  stops, so of three declared stops one was ever visible: a flat white disc,
+  ~20 levels of light across it. Every radius is derived from the polygon
+  `tubPath` actually walks now (193px, inside even the short axis), and the tub
+  is painted as a BASIN — a wall ring in shadow, then the floor inside it —
+  because a shape-following ring shades an ellipse evenly where a radial
+  gradient cannot. **75 levels** now.
+- **The contrast is the check, not the colour.** The "white bath mat" is the
+  dropped TOWEL (the coloured mat is a different object and was fine). It stood
+  **9 levels of light** off the floor after v107.2 warmed the porcelain; it
+  stands **65** now, painted as cloth — body, fold, woven bands, hem, terry pile
+  off `dth`, and a shadow.
+- **THE FIRST CUT OF THAT FIX CONTAINED THE BUG AGAIN**: the towel's hue was
+  rolled off `dth` out of {teal, sand, blue}, and sand on warm cream is the same
+  washed-out slab in another hue — it came up on three seeds in four. One hue,
+  chosen against the floor, and T92.B asserts the DISTANCE from the floor's own
+  tone so a future palette change cannot quietly undo it.
+- **One cleanup:** v107.1 and v107.2 had each added a private copy of the
+  version pin. Both are deleted rather than bumped — `T75.B` is the one v98
+  designed for it. One conscious edit per release is rule 5 working; three
+  copies of it are cost.
 
 ## v107.2 — the Bathroom Floor's own floor (the second owner pass on v107)
 

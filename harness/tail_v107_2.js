@@ -195,6 +195,5 @@ section('T91.C only the floor changed');
  ok('T91.C no other map grew hexagons, grout or glaze: every change is gated on the bath theme', clean);
 }
 
-/* ---------- D: the release stamp ---------- */
-section('T91.D v107.2');
-ok('T91.D GAME_VER is v107.2', GAME_VER==='v107.2');
+/* v107.3: this release's version pin is deleted too - see the note in
+   tail_v107_1.js. T75.B carries the stamp for every release. */

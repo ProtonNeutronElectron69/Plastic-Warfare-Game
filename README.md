@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v107.2 it makes **6,810
+that the results come out identical every time. As of v107.3 it makes **6,830
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -117,7 +117,15 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 107.2**.
+The game is at **version 107.3**.
+
+**v107.3 — the bathtub and the towel.** Both were washing out to blank white.
+The tub is now shaded like a real basin, with a shadowed inner wall, a floor you
+can see the bottom of, a water line and a bit of worn enamel — before, a mistake
+in how the shading was sized meant none of it ever showed. The white towel
+dropped on the floor is now a proper teal bath towel, with woven bands, a fold
+and a shadow, so it stands out against the pale tiles instead of vanishing into
+them.
 
 **v107.2 — the Bathroom Floor gets a floor of its own.** It looked too much like
 the Kitchen Counter, and it genuinely was the same floor: both were a grid of

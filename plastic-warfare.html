@@ -724,7 +724,7 @@ canvas{display:block}
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v107.2';
+const GAME_VER='v107.3';
 const GAME_DATE='2026-09-03';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
@@ -6352,8 +6352,13 @@ function makeMap(key,seed){
   propPairs('sponge',1,.9,12,24);
   propPairs('plunger',1,.9,14,26);
   lineProps('toothbrush',1,6,.3,12,24);
-  // a dropped towel (cosmetic) somewhere off the beaten path
-  patchAt(()=>({x:8+rnd()*(N-24),y:8+rnd()*(N-22),w:10+rnd()*4,h:7+rnd()*3,fill:'rgba(246,240,228,.9)',stroke:'rgba(190,178,160,.8)',inset:1}));
+  /* a dropped towel (cosmetic) somewhere off the beaten path. v107.3: it is
+     painted as CLOTH now (the `towel` flag, drawTowel in renderTerrain) rather
+     than as a pale rectangle with an outline - on v107.2's warm porcelain it
+     read as a blank white slab, which is the second half of the owner's note.
+     The rolls are unchanged, so the map is byte-identical: same four rnd()
+     draws, same position, same size. */
+  patchAt(()=>({x:8+rnd()*(N-24),y:8+rnd()*(N-22),w:10+rnd()*4,h:7+rnd()*3,towel:1}));   // no fill/stroke/inset: drawTowel owns every tone, and a dead field is a field the next reader believes
   // water droplets and a few stray hairs across the tile
   scatter('droplet',46,{x0:6,x1:N-6,y0:6,y1:N-6,s0:.6,sr:.6});
   scatter('hair',10,{x0:8,x1:N-8,y0:8,y1:N-8,s0:.8,sr:.6,extra:r=>({a:r()*6.28})});
@@ -6967,10 +6972,45 @@ function renderTerrain(){
   const cx2=isoX(tb.cx,tb.cy),cy2=isoY(tb.cx,tb.cy),ct=dcos(tb.th||0),st=dsin(tb.th||0);
   const tubPath=(k)=>{c.beginPath();for(let i=0;i<=48;i++){const a=i/48*6.283,u=tb.rx*k*dcos(a),v=tb.ry*k*dsin(a);const wx=tb.cx+u*ct-v*st,wy=tb.cy+u*st+v*ct;i?c.lineTo(isoX(wx,wy),isoY(wx,wy)):c.moveTo(isoX(wx,wy),isoY(wx,wy));}c.closePath();};
   c.save();
-  const g=c.createRadialGradient(cx2-30,cy2-24,4,cx2,cy2,tb.rx*1.414*HW);g.addColorStop(0,'#f8fafb');g.addColorStop(.6,'#e4ebef');g.addColorStop(1,'#c3d0d8');
-  c.fillStyle=g;tubPath(.97);c.fill();
-  c.strokeStyle='rgba(130,150,162,.55)';c.lineWidth=3;tubPath(.91);c.stroke(); // the tide line
-  c.strokeStyle='rgba(150,170,182,.3)';c.lineWidth=1.4;tubPath(.8);c.stroke();
+  /* v107.3 (owner pass) THE TUB WAS BLOWN OUT, and the cause was arithmetic, not
+     colour. Its floor was one radial gradient of radius `rx*1.414*HW` - 430px on
+     a 9.5-tile oval whose painted screen radius is at most ~310px and, across
+     the short axis, half that. So the whole basin sat inside the gradient's
+     first stops and the dark end was never reached anywhere: three stops, one
+     visible, a flat near-white disc. A GRADIENT WIDER THAN THE SHAPE IT FILLS
+     HAS NO SHADING IN IT.
+     Two fixes, and the first is the one to carry: every radius here is DERIVED
+     from the polygon actually walked, so the shading tracks the tub whatever
+     size or angle a future map gives it. And the tub is painted as a BASIN
+     rather than as a disc - an inner wall in shadow, then the floor inside it -
+     because a shape-following ring gives an even rim on an ellipse where a
+     radial gradient cannot: hug the long ends and the short sides stay pale,
+     hug the short sides and the ends clip to flat dark. */
+  let RRx=0,RRy=0;
+  for(let i=0;i<48;i++){const a=i/48*6.283,u=tb.rx*dcos(a),v=tb.ry*dsin(a);
+   const wx=tb.cx+u*ct-v*st,wy=tb.cy+u*st+v*ct;
+   RRx=Math.max(RRx,Math.abs(isoX(wx,wy)-cx2));RRy=Math.max(RRy,Math.abs(isoY(wx,wy)-cy2));}
+  // the inner wall: lit across the far side, in shadow on the near one
+  {const wg=c.createLinearGradient(0,cy2-RRy,0,cy2+RRy);
+   wg.addColorStop(0,'#dfe8ed');wg.addColorStop(.45,'#c2d0d9');wg.addColorStop(1,'#9db0bd');
+   c.fillStyle=wg;tubPath(.97);c.fill();}
+  // the floor inside it, lit from the upper left, coming down to a real edge
+  {const fr=Math.min(RRx,RRy)*.9;
+   const fg=c.createRadialGradient(cx2-RRx*.22,cy2-RRy*.3,fr*.06,cx2,cy2,fr);
+   fg.addColorStop(0,'#f4f8fa');fg.addColorStop(.55,'#e0e9ee');fg.addColorStop(1,'#bfced8');
+   c.fillStyle=fg;tubPath(.78);c.fill();}
+  c.strokeStyle='rgba(130,150,162,.55)';c.lineWidth=3;tubPath(.78);c.stroke(); // the tide line, on the wall/floor joint
+  c.strokeStyle='rgba(150,170,182,.3)';c.lineWidth=1.4;tubPath(.88);c.stroke(); // a second, higher water line up the wall
+  /* enamel wear: a few faint arcs off dth, never rnd() - the terrain stream is
+     shared with every painter after this one, and a decoration must not move
+     the decorations below it (the v97 deterministic-detail rule) */
+  c.save();c.strokeStyle='rgba(120,142,156,.16)';c.lineWidth=1.2;
+  for(let i=0;i<7;i++){const k=.30+dth(i*4.1+tb.cx)*.42,a0=dth(i*9.3+tb.cy)*6.283,sw=.5+dth(i*2.7)*1.1;
+   c.beginPath();
+   for(let j=0;j<=14;j++){const a=a0+sw*j/14,u=tb.rx*k*dcos(a),v=tb.ry*k*dsin(a);
+    const wx=tb.cx+u*ct-v*st,wy=tb.cy+u*st+v*ct;j?c.lineTo(isoX(wx,wy),isoY(wx,wy)):c.moveTo(isoX(wx,wy),isoY(wx,wy));}
+   c.stroke();}
+  c.restore();
   // the drain, off-centre, with its chrome plug on a chain
   {const da=tb.drainA||1,dwx=tb.cx+dcos(da)*tb.rx*.28,dwy=tb.cy+dsin(da)*tb.ry*.28,dx2=isoX(dwx,dwy),dy2=isoY(dwx,dwy);
    c.fillStyle='#8c9ba6';c.beginPath();c.ellipse(dx2,dy2,8,4.6,0,0,7);c.fill();
@@ -7068,6 +7108,7 @@ function renderTerrain(){
 
  // ---- 4. flat patches (dirt, wet sand, napkin) ----
  for(const p of (G.map.patches||[])){
+  if(p.towel){drawTowel(c,p);continue}   // v107.3: the bathroom's towel paints as cloth, not as a filled rectangle
   c.fillStyle=p.fill;pathRegion(c,p);c.fill();
   if(p.stroke){c.strokeStyle=p.stroke;c.lineWidth=3;pathRegion(c,p);c.stroke();}
   if(p.inset){c.strokeStyle=p.stroke;c.lineWidth=1.5;pathRegion(c,{x:p.x+1.2,y:p.y+1.2,w:p.w-2.4,h:p.h-2.4});c.stroke();}
@@ -7331,6 +7372,47 @@ function renderTerrain(){
  G.mmTerr=mc;
 }
 function pathRegion(c,p){c.beginPath();c.moveTo(isoX(p.x,p.y),isoY(p.x,p.y));c.lineTo(isoX(p.x+p.w,p.y),isoY(p.x+p.w,p.y));c.lineTo(isoX(p.x+p.w,p.y+p.h),isoY(p.x+p.w,p.y+p.h));c.lineTo(isoX(p.x,p.y+p.h),isoY(p.x,p.y+p.h));c.closePath()}
+/* v107.3: a dropped bath towel. It was a near-white rectangle with a thin
+   outline, which on the v107.2 porcelain floor read as a blank white slab -
+   the owner's note. A towel is cloth: it has a COLOUR, woven bands across each
+   end, a fold with the far half catching more light, a hem and a shadow on the
+   floor.
+   ONE COLOUR, and it is chosen AGAINST THE FLOOR rather than rolled. The first
+   cut picked a hue off dth from the towel's position, out of {teal, sand, blue}
+   - and sand on v107.2's warm cream porcelain is the washed-out slab this
+   release exists to fix, drawn again in a different hue (it came up on three
+   seeds in four). TOWEL_HUE is a cool teal because the floor is warm, and
+   T92.B asserts the CONTRAST rather than the colour, so a future palette change
+   has to keep the towel readable and not merely keep this number. Rolling it
+   would also have consumed the terrain stream and moved every decoration
+   painted after it - the v97 deterministic-detail rule. */
+const TOWEL_HUE=188;
+function drawTowel(c,p){
+ const hue=TOWEL_HUE;
+ const sub=(x,y,w,h)=>({x:p.x+x,y:p.y+y,w,h});
+ c.save();
+ // the shadow it casts on the tile
+ c.fillStyle='rgba(60,54,44,.18)';pathRegion(c,sub(.35,.45,p.w,p.h));c.fill();
+ // the body, and the fold: the far half sits a shade lighter
+ c.fillStyle=`hsl(${hue},26%,63%)`;pathRegion(c,p);c.fill();
+ c.fillStyle=`hsla(${hue},30%,74%,.85)`;pathRegion(c,sub(0,0,p.w,p.h*.46));c.fill();
+ // woven bands across each end, the way a bath towel is made
+ c.fillStyle=`hsla(${hue},34%,46%,.55)`;
+ for(const oy of [p.h*.12,p.h*.20,p.h*.78,p.h*.86]){pathRegion(c,sub(.5,oy,p.w-1,p.h*.045));c.fill();}
+ // terry pile: short deterministic strokes, clipped to the cloth
+ c.save();pathRegion(c,p);c.clip();c.lineCap='round';c.lineWidth=1.1;
+ for(let i=0;i<Math.round(p.w*p.h*5);i++){
+  const wx=p.x+dth(i*1.7+p.x)*p.w,wy=p.y+dth(i*3.1+p.y)*p.h,sx=isoX(wx,wy),sy=isoY(wx,wy);
+  c.strokeStyle=dth(i*5.9)<.5?`hsla(${hue},30%,86%,.4)`:`hsla(${hue},30%,40%,.3)`;
+  c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+(dth(i*7.3)-.5)*2.4,sy-1.4-dth(i*11.1)*1.8);c.stroke();}
+ c.restore();
+ // the fold's own crease, and the hem all the way round
+ c.strokeStyle=`hsla(${hue},32%,40%,.5)`;c.lineWidth=2;
+ c.beginPath();c.moveTo(isoX(p.x,p.y+p.h*.46),isoY(p.x,p.y+p.h*.46));c.lineTo(isoX(p.x+p.w,p.y+p.h*.46),isoY(p.x+p.w,p.y+p.h*.46));c.stroke();
+ c.strokeStyle=`hsla(${hue},34%,38%,.85)`;c.lineWidth=2.4;pathRegion(c,p);c.stroke();
+ c.strokeStyle=`hsla(${hue},28%,82%,.6)`;c.lineWidth=1.2;pathRegion(c,sub(.55,.55,p.w-1.1,p.h-1.1));c.stroke();
+ c.restore();
+}
 
 /* ---------------- PATHFINDING ---------------- */
 let PF=null;
