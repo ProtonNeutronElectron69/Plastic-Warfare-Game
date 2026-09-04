@@ -114,7 +114,7 @@ section('T89.C the Attic\'s compounds enclose without sealing');
   /* the front row: a LINE with gates. Crates block it in pass; hedgehogs do not
      (barrTile never wrote pass), so read both: a tile is "wall" if pass is 0 or a
      barricade stands on it. The row must be mostly wall, and must have openings. */
-  const FRONT=24;
+  const FRONT=17; // v107.1: was 24; the owner pass pulled the wall in seven rows (T90.A carries the layers)
   for(const ty of [FRONT,N-1-FRONT]){
    let wall=0,open=0;
    for(let tx=0;tx<N;tx++){const w=M.pass[ty*N+tx]===0||M.barricades.some(b=>b.x===tx&&b.y===ty);if(w)wall++;else open++;}
@@ -123,8 +123,10 @@ section('T89.C the Attic\'s compounds enclose without sealing');
   }
  }
  ok('T89.C every start reaches every other start on every seed (the compounds have gates)', allConn);
- ok(`T89.C crates per map inside the band 26-32 (saw ${lvlLo}-${lvlHi}: 14 fixed pairs plus up to 2 rolled)`, lvlLo>=26&&lvlHi<=32);
- ok(`T89.C hedgehogs per map inside the band 120-210 (saw ${barrLo}-${barrHi}: the layers plus three scattered clusters)`, barrLo>=120&&barrHi<=210);
+ /* v107.1: 19 fixed pairs (was 14) and a layer more on every stretch; a jittered
+    home node refuses a pair on some seeds, so the crate floor is 30 not 38 */
+ ok(`T89.C crates per map inside the band 30-44 (saw ${lvlLo}-${lvlHi}: 19 fixed pairs plus up to 2 rolled)`, lvlLo>=30&&lvlHi<=44);
+ ok(`T89.C hedgehogs per map inside the band 200-280 (saw ${barrLo}-${barrHi}: the layers plus three scattered clusters)`, barrLo>=200&&barrHi<=280);
  ok('T89.C every crate has its point mirror - the two compounds are the same fortress', mirrored);
  ok('T89.C no two crates overlap, and none stands within 9 tiles of a start', !overlap&&!nearStart);
  ok('T89.C every crate footprint is blocked in pass by makeMap itself, so mines and hedgehogs kept clear', blocked);
@@ -133,7 +135,7 @@ section('T89.C the Attic\'s compounds enclose without sealing');
  // the shared corner-lane passes are skipped on a sided map, and say so
  const MM=nocmt107(makeMap);
  ok('T89.C a sided map skips edgeClutter and laneBarr (they walk teammate pairs) and keeps mines and the scattered clusters',
-    /if\(def\.t2v2\)\{mineField\(\);barrCluster\(3\);\}/.test(MM));
+    /if\(def\.t2v2\)\{mineField\(\);midMines\(MID_MINE_PAIRS\);barrCluster\(3\);\}/.test(MM)); // v107.1: plus the handful around the middle (T90.D)
 }
 
 /* ---------- D: the crate is a neutral structure on the hedgehog's footing ---------- */
@@ -167,7 +169,10 @@ section('T89.D the Attic Clutter structure');
   /* the compounds mix crates and hedgehogs, and the clearing scan answers the
      NEAREST neutral obstacle whichever kind - so the hedgehogs beside this crate
      are cleared first, and the field is emptied of units */
-  const c2=G.neutral.blds.find(b=>b.key==='crate');
+  /* v107.1: a crate on the ENEMY half - a bot spares the obstacles on its own half
+     of a sided map now (T90.E), so the first crate in the list is no longer a
+     target the bot will take */
+  const c2=G.neutral.blds.find(b=>b.key==='crate'&&(b.y<G.map.N/2)!==(G.players.find(p=>p.ai).start.y<G.map.N/2));
   for(const q of G.neutral.blds.slice())if(q.key!=='crate'&&dhyp(q.x-c2.x,q.y-c2.y)<9)kill(q);
   for(const u of G.units.slice())kill(u);   // a clear field
   const near=nearestFit(c2.x+3.5,c2.y,.4,6)||{x:c2.x+3.5,y:c2.y};
@@ -355,7 +360,9 @@ section('T89.H the two generators are pinned: change one, and say so here');
   for(const b of (M.lvl||[])){h=hI(h,b.x);h=hI(h,b.y)}
   return h>>>0;
  }
- const BASE107_LAYOUTS={"bathroom:11":2389414214,"bathroom:22":3961821753,"bathroom:33":1983128978,"attic:11":1000779115,"attic:22":3455092182,"attic:33":1472841718};
+ /* v107.1: the three Attic pins recut (the wall came in seven rows, the home sites
+    moved, the mines grew); the Bathroom's three held */
+ const BASE107_LAYOUTS={"bathroom:11":2389414214,"bathroom:22":3961821753,"bathroom:33":1983128978,"attic:11":4047237124,"attic:22":1049638336,"attic:33":1806456085};
  for(const m of ['bathroom','attic'])for(const sd of [11,22,33]){
   const got=layoutHash107(makeMap(m,sd)),want=BASE107_LAYOUTS[m+':'+sd];
   ok(`T89.H layout ${m}:${sd} unchanged (${got})`, got===want);

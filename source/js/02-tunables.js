@@ -468,7 +468,7 @@ const HELP_TUNE={
  hqR:()=>BUILD_R_HQ, opR:()=>BUILD_R_OUTPOST, foeR:()=>BUILD_R_FOEHQ,
  koth:()=>KOTH_TARGET, ctf:()=>CTF_TARGET, waves:()=>SURV_WAVE_N,
  salvagePct:()=>Math.round(SALVAGE_FRAC*100), sellPct:()=>Math.round(SELL_FRAC*100),
- barrCost:()=>BARR_COST, mines:()=>MINES_PER_MAP, gap:()=>BUILD_GAP,
+ barrCost:()=>BARR_COST, mines:()=>MINES_PER_MAP, midMines:()=>MID_MINE_PAIRS*2, gap:()=>BUILD_GAP,
  /* v69: the deathmatch limit and the entrench multiplier are slots for the same
     reason BUILD_GAP is - a balance edit must not leave stale prose behind. */
  dmMin:()=>Math.round(DM_TIME/60), entrench:()=>ENTRENCH_RATE,

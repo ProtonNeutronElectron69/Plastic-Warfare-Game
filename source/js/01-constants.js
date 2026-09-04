@@ -6,7 +6,7 @@
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v107';
+const GAME_VER='v107.1';
 const GAME_DATE='2026-09-03';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
@@ -112,6 +112,7 @@ const MINE_DMG=360*HP_SCALE, MINE_R=3.2; // landmine dmg tracks HP so a direct h
 const MINE_TRIG=0.62;               // a ground unit within this many tiles of a mine sets it off
 const MINES_PER_MAP=20;             // ~20 mines scattered per map (laid as 10 mirrored pairs)
 const MINE_KEEPOUT=14;              // v67: tiles of clear ground around EVERY start before a mine may be buried
+const MID_MINE_PAIRS=3;             // v107.1: mirrored pairs the Attic buries WITHIN TEN TILES OF ITS CENTRE on top of MINES_PER_MAP (measured 0-2 there before; midMines in makeMap)
 /* v67: was 12, which is inside the natural-expansion ring (the site lands
    11.5-13.5 tiles out), so mines were being buried on the approach to your
    own second base. 14 still fills all 20 mines on every seed measured. */

@@ -1181,6 +1181,123 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v107.1 — the Attic, pulled in (the owner's feedback pass on v107)
+
+The owner played v107's Attic and came back with five asks in one message. All
+five landed as a change AND a check: `tail_v107_1.js` (T90, 35 checks; the suite
+is **6,787**). **No trail moved and no repin was due** — `triage.sh` reported
+"sim unchanged" and "all 30 pins hold" on every run, because every change is
+gated on the sided map's own flags (`def.t2v2` in the generator, `G.map.sides` in
+the bot). The Attic's three layout pins in T89.H were recut as a conscious edit;
+the Bathroom's three held.
+
+### The five asks, and what each took
+
+1. **"The blocking barricades/clutter are too far towards the map center, pull
+   them back towards the starting bases by about 7 tiles."** `FRONT` 24 → 17:
+   the innermost layer stands nine rows from the bases instead of sixteen, the
+   wall is rows 17-23 instead of 24-28. Two consequences decided the shape of
+   row 17, and both were found by measuring the row, not by reading the code:
+   - `barrTile` refuses a hedgehog within ten tiles of a start, and on row 17
+     that is the six tiles directly in front of each base. Those are CRATES
+     now — a crate's centre is a tile further out and clears — so each base has
+     a crate wall across its front under three hedgehog layers.
+   - **The base's own forward pile stood in the crate wall.** The home nodes
+     jitter ±2.2 and the forward pile sits at row ~14, so it reached row 16.5,
+     and a crate refuses a node within 2.8: the crate wall lost one to three of
+     its four pairs on half the seeds (measured 34-42 crates per map, 2 of 4
+     pairs on seeds 11 and 500000, 1 of 4 on seed 33). A sided map jitters its
+     three home nodes 1.0 now — same two `rnd()` draws per node — and the band
+     is **38-42**.
+   - **The natural expansion had to move.** Aimed at the map centre it stood at
+     rows 18-22, squarely in the new wall band, and every layer would have been
+     breached at its pocket (`nearExpo` 4.6 for a crate, 5 for a hedgehog) —
+     the expansion would have been the doorway. On a sided map the natural aims
+     OUTBOARD along the edge, away from the teammate, 8-9.5 tiles out.
+   - The four contested mid expansions, at row ~22, are OUTSIDE the walls now
+     (T90.B pins that). Their pockets still widen the centre gate on whichever
+     layers they touch, as they made it at v107; the gate is explicit on every
+     layer as well (x 33-38 on row 17, 31-40 outside it), so it cannot seal.
+2. **"Add an additional layer of clutter/barricades."** Every stretch gained
+   one: the west rim 2 → 3 layers, both base fronts 3 → 4 (the east-centre
+   stretch was 2 → 4), the east rim 3 → 4. Hedgehogs per map **141-170 →
+   230-254**, crates **24-32 → 38-42** (19 fixed pairs, was 14). T90.A asserts
+   the rows per stretch, and that row 24 — the old front — carries under 20
+   wall tiles now.
+3. **"Add a 1 battery/1 plastic pile expansion to the side of each starting
+   base."** A second home site per base on the same flank as the natural, 17
+   tiles out toward the corner, off a fixed ladder in y under the natural's own
+   4.2 node clearance (no `rnd()` of its own). It carries the contested sites'
+   amounts (1400/1300, i.e. 2800/2600 on the node) rather than the natural's
+   2250/1800: it is the safest ground on the map. Twelve expansion sites and 41
+   nodes on every seed; both home sites of every base sit at rows ≤ 12 from
+   the base's edge, so no pocket reaches the wall.
+4. **"Modify the AI logic so they don't attack their own base's neutral
+   barricades/clutter."** One line in `nearestEnemy`'s neutral branch: on a
+   map that declares sides, a bot's clearing share skips any neutral obstacle
+   on its OWN half of the board. Half-of-the-board rather than "inside the
+   compound" because it needs no geometry the map does not already declare —
+   sides exist only when the two compounds ARE the two halves — and `p.start`
+   is in the snapshot, so a loaded match answers the same. T90.E drives it
+   both ways: the same clearer answers nothing beside its own crate or
+   hedgehog, an enemy soldier there is still acquired, beside the ENEMY's
+   crate it targets it; an idle clearer beside its own wall fires on nothing in
+   300 ticks; Backyard Brawl (no sides) still clears on its own half.
+5. **"Add a handful of hidden mines in the middle of the map if there aren't
+   any already there."** MEASURED first: 40 seeds, mines within ten tiles of the
+   Attic's centre **min 0, mean 1.8** (within seven: min 0, mean 0.55) — the
+   scatter is board-wide and the centre cache's five nodes refuse most of the
+   ground around the middle. So `midMines(MID_MINE_PAIRS)` lays three more
+   mirrored pairs in an annulus 4..10 around the centre, AFTER `mineField` and
+   under its rules; **6-12** within ten tiles now, 26 per map. The manual reads
+   the number off `HELP_TUNE.midMines` (a new `data-tune` slot on the Landmines
+   line); every other map keeps `MINES_PER_MAP` exactly.
+
+### Three checks were wrong first
+
+- **The fixture killed its own clearer.** `clearField` emptied the board of
+  units on the second call — including the bot's grunt made after the first —
+  and the save/load step then went looking for a unit that had been dead for
+  four assertions. It kept "passing" the enemy-half check because a dead unit
+  object still has a position. `clearField(around, keep)`.
+- **Hedgehogs are not mirrored, and never were.** T90.B's first cut demanded a
+  point mirror for every hedgehog; 5-15 per seed have none, at v107 as well —
+  `hedgeRow` lays each tile on its own merits and the two compounds' home
+  nodes roll separately. Crates ARE mirrored (both or neither, the v107 rule);
+  the claim is stated for crates.
+- **A mine's mirror was never tested against nodes.** `mineField` tests the
+  primary of a pair and mirrors it blind (since v67); the corner maps' nodes are
+  not point-symmetric either, so 1-2 mines per seed sit within 2.6 of a node
+  on the mirror side. `midMines` does exactly what `mineField` does; the claim
+  is the one the generator makes — one of each pair clears.
+
+### Two older checks took conscious edits
+
+- `T89.C` carries `FRONT` (17) and the crate/hedgehog bands (30-44, 200-280).
+- `T89.D`'s targeting fixture took "the first crate in the list", which on the
+  v107.1 rule may be on the bot's own half; it takes one on the enemy half.
+- `T89.C`'s source-text pin on the shared pass and `T89.H`'s three Attic
+  layout pins were re-stated.
+- `T5` (`tail_expo.js`) assumed one natural per start, aimed at the interior,
+  on every map; on a sided map it now asks for the v107.1 shape (two home
+  sites per start, outboard, 7.5-10.5 and 16-18 tiles out). `T75.B` is the
+  transcribed version pin and took its bump.
+
+### Rule 7
+
+Whole-board and full-scale crops of the north compound in real Chromium, before
+and after the jitter change. The first crop is what found the short crate wall
+in front of the base (one pair where four were laid); the numbers above were
+taken to explain the frame, not the other way round. Resource nodes are not
+painted by `map_shot.sh` (it paints terrain, props and structures), so the home
+sites are asserted numerically (T90.C), not seen.
+
+### Verification actually run at v107.1
+
+`QUIET=1 ./seg.sh all`: 6,787 checks, 0 failures, on the final bytes.
+`./build.sh --check`: byte-identical. `verify_v58.py`: 32/32. `triage.sh`: sim
+unchanged, all 30 pins hold.
+
 ## v107 — the Bathroom Floor and The Attic (Roadmap 4 item 2, in part)
 
 **Two new battlefields**, `tail_v107.js` (T89, 113 checks), and one new kind of

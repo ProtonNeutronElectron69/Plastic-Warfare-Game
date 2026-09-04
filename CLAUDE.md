@@ -52,9 +52,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v107, and what a fresh session does)
+## Where the game stands (v107.1, and what a fresh session does)
 
-The game is at **v107**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v107.1**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), **v104 is the first Roadmap 4 item
@@ -68,7 +68,10 @@ the bots use the six unit abilities they owned and never switched on. **v107 is
 the third, in part** — two of Roadmap 4 item 2's battlefields: the Bathroom
 Floor (a four-corner 72 built around a drained bathtub) and The Attic, the game's
 first SIDED map, built for a 2v2 with each team's pair seated inside a walled
-compound of destructible level art. There is no release in flight.
+compound of destructible level art, and **v107.1** is the owner's feedback pass on
+it — the walls pulled in seven rows with a layer more, a second expansion per
+base, bots that spare their own compound, mines in the middle. There is no
+release in flight.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
 ranked, written after a whole-game review at v103. **Three of the twelve have
@@ -102,7 +105,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 6,716 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 6,787 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -170,7 +173,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,716 checks at v107.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,787 checks at v107.1.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -588,6 +591,49 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v107.1 — the Attic, pulled in (the owner's feedback pass on v107)
+
+Five asks from playing v107's Attic, each a change AND a check. `tail_v107_1.js`
+(T90, 35 checks; the suite is 6,787 now); full evidence in the v107.1 section of
+`harness/README.md`. **No trail moved and no repin was due** — every change is
+gated on the sided map's own flags (`def.t2v2`, `G.map.sides`); the Attic's
+three T89.H layout pins were recut as a conscious edit and the Bathroom's held.
+
+- **The walls came in seven rows** (`FRONT` 24 → 17, the wall rows 17-23) **and
+  every stretch gained a layer**: hedgehogs 141-170 → 230-254 per map, crates
+  24-32 → 38-42. Directly in front of each base the innermost row is CRATES,
+  because a hedgehog may not stand within ten tiles of a start and at row 17
+  that is exactly the six tiles in front of it.
+- **Each base has a second home expansion** on its flank, 17 tiles out toward
+  the corner (the contested sites' 1400/1300), and **the natural moved to the
+  same flank** — aimed at the centre it stood in the new wall band and would
+  have been the doorway. Both sit at rows ≤ 12, so no pocket reaches the wall;
+  the four contested mid expansions are outside the walls now.
+- **A bot never clears its own half's neutral obstacles on a sided map** — one
+  line in `nearestEnemy`, read off `p.start`, which is in the snapshot.
+- **Three more mirrored pairs of mines around the middle** (`MID_MINE_PAIRS`,
+  `midMines`): measured first at 0-2 within ten tiles of the centre, mean 1.8,
+  on some seeds none; 6-12 now. The manual spends it through `data-tune`.
+
+Three things worth carrying forward:
+
+- **A WALL PULLED TOWARD A BASE MEETS THE BASE'S OWN NODES.** The forward pile
+  jitters to row 16.5, a crate on row 17 refuses a node within 2.8, and the
+  crate wall in front of each base lost one to three of its four pairs on half
+  the seeds — read in a frame first, then measured (34-42 crates). The sided
+  map's home nodes jitter 1.0 instead of 2.2 now (same draws) and the band is
+  38-42. **When you move a line, list what the line's placer refuses and ask
+  what now stands inside that radius.**
+- **"To the side of each base" and "pull the walls in" were one geometry
+  problem.** With the wall at row 17 and the base's own nodes at rows 6-16,
+  the only room inside a compound is along the edge, outboard of each base —
+  which is also where the natural had to go. The natural on a sided map is
+  aimed by the same ladder with a different vector, not by a second placer.
+- **A fixture that kills "every unit" twice kills its own subject.** T90.E's
+  clearer was dead for four assertions and they all passed, because a dead
+  unit object still has a position. The save/load step was the one that
+  noticed. Give the sweep a `keep`.
 
 ## v107 — the Bathroom Floor and The Attic (Roadmap 4 item 2, in part)
 
