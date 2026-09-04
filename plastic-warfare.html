@@ -724,7 +724,7 @@ canvas{display:block}
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v107.1';
+const GAME_VER='v107.2';
 const GAME_DATE='2026-09-03';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
@@ -6703,8 +6703,16 @@ function renderTerrain(){
    ?{base:'#b6a890',alt:'#aca085',edge:'#857a62',side:'#968a70',sideD:'#776c54'}
    :th==='desk'
    ?{base:'#b98a4e',alt:'#ad7e42',edge:'#7c5528',side:'#8a6236',sideD:'#6b4a26'}
-   :th==='bath'   // v107: porcelain tile, a shade cooler and brighter than the kitchen's
-   ?{base:'#e6ecef',alt:'#d9e2e7',edge:'#9db1bd',side:'#b6c6cf',sideD:'#8ea3ae'}
+   /* v107.2 (owner pass): "the basic tiles look too similar to the kitchen counter
+      map". They did: v107 gave the bathroom the kitchen's own cool grey-blue
+      (#d6dde1 against #e6ecef) under a square grout grid, so the two floors
+      differed only in brightness and in how often the grid ran. The bathroom is
+      WARM porcelain now - a cream white over a mushroom-grey skirt - and its
+      floor is a hexagon mosaic rather than a square grid (see th==='bath' in the
+      theme painters). Nothing else on the map moved: the tub, the mat and every
+      hazard keep their own colours, which is what makes them read against it. */
+   :th==='bath'
+   ?{base:'#ece6dc',alt:'#e0d8cb',edge:'#a2968a',side:'#c0b5a6',sideD:'#988d7f'}
    :th==='attic'  // v107: dusty floorboards
    ?{base:'#8c6a45',alt:'#805f3d',edge:'#4e3a22',side:'#5f4629',sideD:'#46331d'}
    :{base:'#ddbd7a',alt:'#d2af68',edge:'#a8884a',side:'#bfa066',sideD:'#9a7d48'};
@@ -6747,6 +6755,11 @@ function renderTerrain(){
   let col;
   if(th==='grass'){const v=.92+rnd()*.16;col=shade(((x*7+y*5)%9<2)?PAL.alt:PAL.base,v);}
   else if(th==='tile'){const big=((x>>2)+(y>>2))%2;col=shade(big?PAL.alt:PAL.base,.97+rnd()*.06);}
+  /* v107.2: the bathroom's tone is nearly flat. The square tile diamond is the
+     KITCHEN's unit of pattern; here it is only the ground the mosaic is laid on,
+     and a +/-9% per-tile wobble under a hex grid reads as a second, square grid
+     showing through - which is the very thing the owner saw. */
+  else if(th==='bath'){col=shade(PAL.base,.985+rnd()*.03);}
   else{col=shade(PAL.base,.9+rnd()*.18);}
   paintIsoTile(c,sx,sy,col);
  }
@@ -6771,6 +6784,12 @@ function renderTerrain(){
    c.beginPath();c.moveTo(px,py);c.lineTo(px+dcos(a)*l,py+dsin(a)*l*.5);c.stroke();}
   c.restore();
   c.save();c.globalAlpha=.35;for(let i=0;i<160;i++){const gx=rnd()*N,gy=rnd()*N;c.fillStyle='rgba(60,52,38,.5)';c.beginPath();c.ellipse(isoX(gx,gy),isoY(gx,gy)+HH,1.6,1,0,0,7);c.fill();}c.restore();
+ } else if(th==='bath'){
+  // v107.2: fine porcelain grain, cool against the warm glaze. It reads THROUGH
+  // the mosaic, which is drawn with a translucent glaze pass rather than an
+  // opaque fill - a flat fill made the floor look like paper.
+  for(let i=0;i<N*N;i++){const gx=rnd()*N,gy=rnd()*N,px=isoX(gx,gy),py=isoY(gx,gy)+HH;
+   c.fillStyle=rnd()<.5?'rgba(255,255,255,.07)':'rgba(120,110,96,.06)';c.fillRect(px,py,1.5,1.5);}
  } else if(th==='desk'){
   // v35: wood-grain streaks + speckle so the desktop reads as timber
   for(let i=0;i<N*N;i++){const gx=rnd()*N,gy=rnd()*N,px=isoX(gx,gy),py=isoY(gx,gy)+HH;
@@ -6858,16 +6877,54 @@ function renderTerrain(){
   c.restore();
  }
 
- if(th==='bath'){ // v107: small porcelain tiles - a grout grid every two tiles, every other tile a shade bluer
-  c.save();c.globalAlpha=.16;c.fillStyle='#bcd3e0';
-  for(let ty=0;ty<N;ty+=2)for(let tx=((ty>>1)%2)*2;tx<N;tx+=4){
-   c.beginPath();c.moveTo(isoX(tx,ty),isoY(tx,ty));c.lineTo(isoX(tx+2,ty),isoY(tx+2,ty));c.lineTo(isoX(tx+2,ty+2),isoY(tx+2,ty+2));c.lineTo(isoX(tx,ty+2),isoY(tx,ty+2));c.closePath();c.fill();}
-  c.restore();
-  c.strokeStyle='rgba(120,138,150,.5)';c.lineWidth=1.6;
-  for(let i=0;i<=N;i+=2){c.beginPath();c.moveTo(isoX(i,0),isoY(i,0));c.lineTo(isoX(i,N),isoY(i,N));c.stroke();c.beginPath();c.moveTo(isoX(0,i),isoY(0,i));c.lineTo(isoX(N,i),isoY(N,i));c.stroke();}
-  // a soft gloss sweep, full width, as the kitchen's (v103: (0,i), never (i,0))
-  c.save();c.globalCompositeOperation='lighter';c.globalAlpha=.06;c.fillStyle='#ffffff';
-  for(let i=0;i<N;i+=10){const sx=isoX(0,i),sy=isoY(0,i);c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+HW*N,sy+HH*N);c.lineTo(sx+HW*N-HW*4,sy+HH*N+HH*4);c.lineTo(sx-HW*4,sy+HH*4);c.closePath();c.fill();}
+ if(th==='bath'){
+  /* v107.2 (owner pass) THE HEXAGON MOSAIC. v107 drew this floor the way the
+     Kitchen Counter is drawn - a square grout grid with every other square a
+     shade off - and the owner read the two as the same floor. They were: the
+     only differences were the grid's pitch (2 tiles against 4) and a slightly
+     brighter grey-blue. A pattern that merely runs at a different pitch is the
+     same pattern.
+     So the bathroom gets the floor a bathroom actually has: a mosaic of small
+     hexagons, warm-white glaze, dark grout, with a scattered share of grey
+     accent tiles. Nothing about the square tile grid can be confused with it -
+     six sides meeting three to a corner is not a grid at any pitch.
+     THE HEXES ARE LAID IN WORLD SPACE, NOT ON THE SCREEN. The projection is
+     linear, so a regular world hexagon comes out a skewed screen hexagon that
+     still tiles perfectly, and the mosaic lies DOWN with the board the way the
+     kitchen's grout does. A screen-space hex grid would have been regular and
+     would have read as a flat sticker over an isometric board.
+     R is the hexagon's circumradius in world tiles; a hexagon is 1.73*R across
+     the flats, so at .8 the mosaic runs finer than the two-tile grid it
+     replaces, which is what a mosaic is. */
+  const BR=.8, BSX=1.7320508*BR, BSY=1.5*BR;
+  c.save();
+  /* clipped to the slab: unlike a tile loop, a lattice does not stop at the
+     board's edge by construction, and anything drawn past it hangs in the air
+     off the side of the mat (which is what map_shot.sh's magenta rim is for). */
+  c.beginPath();matCorners.forEach((p2,i)=>i?c.lineTo(p2[0],p2[1]):c.moveTo(p2[0],p2[1]));c.closePath();c.clip();
+  const hexAt=(wx,wy,k)=>{c.beginPath();
+   for(let i=0;i<6;i++){const a=1.5707963+i*1.0471976,px=wx+dcos(a)*BR*k,py=wy+dsin(a)*BR*k;
+    const sx=isoX(px,py),sy=isoY(px,py);i?c.lineTo(sx,sy):c.moveTo(sx,sy);}
+   c.closePath();};
+  c.lineJoin='round';
+  for(let j=-1,jn=Math.ceil(N/BSY)+1;j<=jn;j++)for(let i=-1,inn=Math.ceil(N/BSX)+1;i<=inn;i++){
+   const wx=i*BSX+((j&1)?BSX*.5:0), wy=j*BSY;
+   /* dth, the painters' own deterministic hash - never rnd(). A mosaic drawn
+      off the terrain rng would shear against itself the day another painter is
+      added above it, and the v97 rule already says detail in a painter must be
+      deterministic. */
+   const h=dth(i*13.7+j*57.3), h2=dth(j*29.1-i*7.9);
+   const accent=h<.085;                       // the scattered grey tiles of a vintage floor
+   c.fillStyle=accent?shade('#b9b2a7',.97+h2*.08):shade('#f4f0e8',.965+h2*.055);
+   hexAt(wx,wy,.995);c.fill();
+   // the glaze: a smaller hexagon set up and to the left, so each tile domes
+   c.fillStyle='rgba(255,255,255,.165)';
+   hexAt(wx-BR*.13,wy-BR*.13,.66);c.fill();
+  }
+  // the grout, walked as one stroke pass so a shared edge is drawn once per tile
+  c.strokeStyle='rgba(122,110,96,.55)';c.lineWidth=1.5;
+  for(let j=-1,jn=Math.ceil(N/BSY)+1;j<=jn;j++)for(let i=-1,inn=Math.ceil(N/BSX)+1;i<=inn;i++){
+   hexAt(i*BSX+((j&1)?BSX*.5:0),j*BSY,1);c.stroke();}
   c.restore();
  }
  if(th==='attic'){ // v107: floorboards running the board's x axis, two tiles wide, with staggered end joints and knots

@@ -295,7 +295,11 @@ section('T89.F the painters put something down');
   return recd;
  }
  const RIM107={soap:'rgba(140,128,156,.5)',insulation:'rgba(120,56,80,.5)',bathwater:'rgba(88,118,138,.58)',leak:'rgba(28,24,18,.62)'};
- const THEME107={bath:'rgba(120,138,150,.5)',attic:'rgba(40,26,12,.55)'};
+ /* v107.2: the bath floor's grout moved with its palette - the square grid became
+    a hexagon mosaic and the cool grey-blue became warm porcelain. A conscious edit,
+    on T45.C's precedent: a painter's colour is pinned so a palette change has to be
+    declared here. tail_v107_2.js (T91) carries the mosaic itself. */
+ const THEME107={bath:'rgba(122,110,96,.55)',attic:'rgba(40,26,12,.55)'};
  const DECO107={droplet:'rgba(255,255,255,.86)',hair:'rgba(40,28,16,.75)',mothball:'rgba(0,0,0,.18)',cobweb:'rgba(235,232,222,.42)'};
  const TUB107='rgba(130,150,162,.55)';
  const bath=bakeColours107('bathroom',660107),attic=bakeColours107('attic',660107),lawn=bakeColours107('backyard',660107);

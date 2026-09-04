@@ -52,9 +52,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v107.1, and what a fresh session does)
+## Where the game stands (v107.2, and what a fresh session does)
 
-The game is at **v107.1**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v107.2**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), **v104 is the first Roadmap 4 item
@@ -70,7 +70,9 @@ Floor (a four-corner 72 built around a drained bathtub) and The Attic, the game'
 first SIDED map, built for a 2v2 with each team's pair seated inside a walled
 compound of destructible level art, and **v107.1** is the owner's feedback pass on
 it — the walls pulled in seven rows with a layer more, a second expansion per
-base, bots that spare their own compound, mines in the middle. There is no
+base, bots that spare their own compound, mines in the middle — and **v107.2**
+is the second, a floor of its own for the Bathroom (a hexagon mosaic in warm
+porcelain, because it had been wearing the Kitchen's square grid). There is no
 release in flight.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
@@ -105,7 +107,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 6,787 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 6,810 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -173,7 +175,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,787 checks at v107.1.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,810 checks at v107.2.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -591,6 +593,45 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v107.2 — the Bathroom Floor's own floor (the second owner pass on v107)
+
+The owner asked for the Bathroom's basic tile design to be changed: it looked
+too much like the Kitchen Counter. `tail_v107_2.js` (T91, 22 checks; the suite is
+6,810 now); full evidence in the v107.2 section of `harness/README.md`.
+**No trail moved and no repin was due** — this is a painter, and T91.C re-cuts
+the Bathroom's own v107 layout hashes to prove the map itself is byte-identical.
+
+- **It WAS the kitchen's floor.** Same pattern (a square grout grid), same
+  second-tone checkerboard, same gloss sweeps, same cool grey-blue family
+  (`#e6ecef` against `#d6dde1`); only the grid's pitch differed, 2 tiles against
+  4. **A pattern that differs only in pitch is the same pattern**, so a finer
+  grid would have earned the same note a third time.
+- **The floor is a HEXAGON MOSAIC now** — 3,465 small hexagons, warm porcelain
+  (`#ece6dc`), dark grout, a scattered 8.9% of taupe accent tiles, each tile
+  domed by a smaller offset hexagon so it reads as glaze. The ground tiles under
+  it went nearly flat (±1.5% from ±9%), because a per-tile wobble under a hex
+  grid shows through as a second SQUARE grid.
+
+Three things worth carrying forward:
+
+- **LAY A PATTERN IN WORLD SPACE, NOT ON THE SCREEN.** The iso projection is
+  linear, so a regular world hexagon comes out skewed on screen and still tiles
+  perfectly — and the mosaic lies DOWN with the board. A screen-space hex grid
+  would have been regular and would have read as a sticker over an isometric
+  board. The TEST had to learn it too: T91.A's first cut measured neighbour
+  spacing in pixels, found three different distances because the projection
+  halves y, and called the mosaic irregular. Inverting the projection is the
+  whole fix, and it turns the check into the design claim.
+- **A lattice has no idea where the mat ends.** Every other floor painter walks
+  `0..N` and is bounded for free; this one overruns on all four sides and is
+  clipped to the slab. T91.A attributes the clip to the board's own four corners
+  rather than counting clips — the bake makes 14, so a count would have passed
+  on somebody else's.
+- **A recorder that carries stale state answers about the wrong path.** T91's
+  canvas proxy tagged each path with the standing fill colour and only updated
+  the tag for STRINGS, so the tub's gradient-filled floor inherited the last
+  glaze colour and read as one extra hexagon. A non-string must clear the tag.
 
 ## v107.1 — the Attic, pulled in (the owner's feedback pass on v107)
 
