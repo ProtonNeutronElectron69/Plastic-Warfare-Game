@@ -396,7 +396,15 @@ try{SRC103=require('fs').readFileSync('pw.html','utf8')}catch(e){SRC103=null}
     isoX(0,i) it runs the board's full width at depth i, which is what a stripe
     is. The picture was read in Chromium; this pins the line that draws it. */
  ok('T80.I every banding pass is anchored on the (0,i) axis, not (i,0)',
-    !SRC103 || ((SRC103.match(/const sx=isoX\(0,i\),sy=isoY\(0,i\)/g)||[]).length===4 &&   // v107: four - the bathroom's gloss sweep is anchored the same way
+    /* v107: four - the bathroom's gloss sweep was anchored the same way.
+       v107.2: THREE. The bathroom has no banding sweep any more: its floor is a
+       hexagon mosaic and every tile carries its own glaze highlight, so the
+       full-width sweep it inherited from the kitchen went with the square grid
+       it was drawn over. A conscious edit and a smaller count, not a loosened
+       one - the half of this check that catches the DEFECT (nothing anywhere is
+       anchored at (i,0)) is untouched, and a fourth sweep re-appearing on the
+       wrong axis still fires here. */
+    !SRC103 || ((SRC103.match(/const sx=isoX\(0,i\),sy=isoY\(0,i\)/g)||[]).length===3 &&
                 !/const sx=isoX\(i,0\),sy=isoY\(i,0\)/.test(SRC103)));
  ok('T80.I the grass alternation counts BANDS, not tiles - the loop steps 3',
     !SRC103 || /\(\(i\/3\)\|0\)%2\?'#ffffff'/.test(SRC103));

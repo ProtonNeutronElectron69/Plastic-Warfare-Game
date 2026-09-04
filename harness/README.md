@@ -1181,6 +1181,104 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v107.2 — the Bathroom Floor's own floor (the second owner pass on v107)
+
+The owner played v107.1 and said the Bathroom's basic tiles look too much like
+the Kitchen Counter's, and asked for a different basic design. They were right,
+and the reason is worth stating plainly because it is a design rule, not a
+palette accident. `tail_v107_2.js` (T91, 22 checks; the suite is **6,810**).
+**No trail moved and no repin was due** — `renderTerrain` is a bake and nothing
+here is simulation; `triage.sh` said "sim unchanged" and all 30 layout pins held,
+and T91.C re-cuts the Bathroom's three v107 layout hashes and asserts they are
+byte-identical.
+
+### Why the two floors read the same
+
+v107 gave the bathroom **the kitchen's pattern in the kitchen's colour family**:
+
+| | Kitchen Counter | Bathroom Floor (v107) |
+|---|---|---|
+| pattern | square grout grid | square grout grid |
+| pitch | every 4 tiles | every 2 tiles |
+| second tone | every other 4x4 square | every other 2x2 square |
+| floor tone | `#d6dde1` cool grey-blue | `#e6ecef` cool grey-blue |
+| gloss | full-width diagonal sweeps | full-width diagonal sweeps |
+
+Every row but the pitch is the same, and **a pattern that differs only in pitch
+is the same pattern.** Making the bathroom's grid finer again, or bluer again,
+would have produced the same complaint a third time.
+
+### The hexagon mosaic
+
+The floor is what a bathroom floor actually is: a mosaic of small hexagons —
+warm porcelain glaze, dark grout, a scattered 8.9% of taupe accent tiles.
+Nothing about a square grid can be confused with it, because six sides meeting
+three to a corner is not a grid at any pitch. Measured on the shipped build,
+seed 771072:
+
+- **3,465 hexagons** per board, circumradius **0.796 world tiles** (`BR` .8).
+- Neighbour spacing **1.386 tiles** = √3 × .8, so the ratio of spacing to
+  circumradius is **1.741** against the 1.732 a regular hexagon demands — the
+  residue is the centroid of a discretised polygon, and T91.A's band is
+  1.70–1.76.
+- Each tile is filled, given a smaller offset hexagon as a glaze highlight so it
+  domes like ceramic, and grouted in a **second pass** — a shared edge would
+  otherwise be painted over by the next tile's fill.
+- The palette went warm: the floor tone is **`#ece6dc`** against the kitchen's
+  **`#d8dfe3`**, both derived by T91.B off the tones actually painted rather
+  than transcribed. The skirt moved with it, so the slab's edge reads warm too.
+- The ground tiles under the mosaic are nearly flat now (±1.5% against ±9%).
+  A per-tile wobble under a hex grid shows through as a second, SQUARE grid —
+  which is the very thing being fixed.
+
+### Three things worth carrying forward
+
+- **THE HEXAGONS ARE LAID IN WORLD SPACE, NOT ON THE SCREEN.** The iso
+  projection is linear, so a regular world hexagon comes out a skewed screen
+  hexagon that still tiles perfectly, and the mosaic lies DOWN with the board
+  the way the kitchen's grout does. A screen-space hex grid would have been
+  regular on screen and would have read as a flat sticker over an isometric
+  board. **The test had to learn the same lesson**: the first cut of T91.A
+  measured neighbour spacing in PIXELS, found three different distances (the
+  projection halves y), and called the mosaic irregular. `unIso1072` inverts the
+  projection and the six neighbours come out identical.
+- **A lattice does not stop at the board's edge by construction, the way a tile
+  loop does.** Every other floor painter walks `0..N` and is bounded for free;
+  this one is asked for tiles past the mat on all four sides and is clipped to
+  the slab. T91.A asserts BOTH halves — that the lattice overruns, so the clip is
+  load-bearing, and that one of the run's clip paths is the slab's own four
+  corners. Counting clips would have passed on somebody else's clip: the bake
+  makes 14.
+- **A RECORDER THAT CARRIES STALE STATE ANSWERS ABOUT THE WRONG PATH.** T91's
+  canvas proxy tags each completed path with the fill colour standing at the
+  time. Its first cut only updated the tag when `fillStyle` was set to a STRING,
+  so the tub's gradient-filled floor inherited the last glaze colour and was
+  counted as one more glaze hexagon — 3,466 against 3,465, an off-by-one that
+  looked like a missing grout stroke. A non-string must CLEAR the tag.
+
+### What it costs
+
+`renderTerrain` is called once per match, from `newGame`, and nowhere else. The
+mosaic takes it from ~17ms to ~27ms of JS per bake (headless, three bakes per
+map), on a page that already spends seconds decoding its assets. Nothing draws
+per frame.
+
+### Conscious edits
+
+`T89.F` pins the bath theme's grout colour so a palette change has to be
+declared (T45.C's precedent); it now carries `rgba(122,110,96,.55)`, and its own
+uniqueness check proves that string belongs to one painter. `T90.F` took the
+version bump. The old grid's colour is gone from the shipped file entirely,
+which T91.B asserts rather than assuming.
+
+### Verification actually run at v107.2
+
+`QUIET=1 ./seg.sh all`: 6,810 checks, 0 failures, on the final bytes.
+`./build.sh --check`: byte-identical. `verify_v58.py`: 32/32. `triage.sh`: sim
+unchanged, all 30 pins hold. Whole-board and 1:1 frames of the Bathroom in real
+Chromium, before and after (rule 7 — a floor is exactly the kind of change no
+assertion can judge).
+
 ## v107.1 — the Attic, pulled in (the owner's feedback pass on v107)
 
 The owner played v107's Attic and came back with five asks in one message. All

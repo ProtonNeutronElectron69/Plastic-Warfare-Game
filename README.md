@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v107.1 it makes **6,787
+that the results come out identical every time. As of v107.2 it makes **6,810
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -117,7 +117,15 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 107.1**.
+The game is at **version 107.2**.
+
+**v107.2 — the Bathroom Floor gets a floor of its own.** It looked too much like
+the Kitchen Counter, and it genuinely was the same floor: both were a grid of
+square tiles with grout between them, in the same cold blue-grey, differing only
+in how big the squares were. The bathroom now has the floor a bathroom actually
+has — a mosaic of small **hexagons** in a warm creamy porcelain, with dark grout
+and the odd taupe tile scattered through it. Nothing else about the map changed:
+the bathtub, the mat, the soap and the bathwater are all exactly where they were.
 
 **v107.1 — the Attic, tightened up.** Five changes from playing it. The walls
 around each pair of bases have come in seven rows, so they are close enough to

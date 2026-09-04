@@ -235,5 +235,5 @@ section('T90.E a bot clears the enemy\'s wall and never its own');
 }
 
 /* ---------- F: the release stamp ---------- */
-section('T90.F v107.1');
-ok('T90.F GAME_VER is v107.1', GAME_VER==='v107.1');
+section('T90.F the release stamp');
+ok('T90.F GAME_VER is v107.2', GAME_VER==='v107.2'); // v107.2: bumped with the constants
