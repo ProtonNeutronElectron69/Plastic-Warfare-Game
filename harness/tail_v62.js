@@ -7,7 +7,8 @@
 
    A: hash trails and map layouts byte-identical to v61.
    B: the dead tracer path is gone at BOTH ends (emitter and renderer branch).
-   C: paintIsoTile draws the exact five-fill recipe both call sites used to inline.
+   C: groundLay lays one flat diamond per tile for both call sites (v108: it
+      replaced paintIsoTile's bevelled five-fill recipe - see the section).
    D: researchBtn reproduces both of refreshSelPanel's research buttons.
    E: lobSetRosBlock builds the settings + roster block for host and joiner alike.
    F: the FILE MAP lint - every banner in the file is listed, in file order.
@@ -89,56 +90,56 @@ ok('T41.B tracer2() is untouched and still the live bullet streak',typeof tracer
     !/p\.t===['"]tr['"]/.test(renderCore.toString()));
 }
 
-/* ---------- C: paintIsoTile ---------- */
-section('T41.C paintIsoTile: one recipe, two call sites');
-function recCtx(){
- const trace=[];let fill='#000';
- return{trace,
-  set fillStyle(v){fill=v},get fillStyle(){return fill},
-  beginPath(){trace.push(['begin'])},
-  moveTo(x,y){trace.push(['move',x,y])},
-  lineTo(x,y){trace.push(['line',x,y])},
-  closePath(){trace.push(['close'])},
-  fill(){trace.push(['fill',fill])}};
+/* ---------- C: groundLay ---------- */
+/* v108: A CONSCIOUS REWRITE, not a repin. Through v107 this section pinned
+   paintIsoTile's five-fill recipe - a diamond and four bevel facets per tile -
+   and that recipe IS the molded-plastic look the owner asked to lose: every
+   board's floor read as a sheet of bevelled diamonds. The painter is deleted,
+   not loosened; the seam it guarded (one ground recipe, two call sites - the
+   board's bake and the Field Manual's swatch) survives as groundLay, and this
+   section states the same claim against it: one FLAT diamond per tile, no
+   facets, full-tile geometry derived off the constants, both callers reaching
+   it and neither inlining a tile of its own. tail_v108.js carries the material
+   itself. */
+section('T41.C groundLay: one ground recipe, two call sites');
+function recGround(){ // a path-and-colour recorder over the shim's own permissive context
+ const base=document.createElement('canvas').getContext('2d');
+ const trace=[];let cur=null,fill='';
+ const c=new Proxy(base,{get(t,k){
+   if(k==='beginPath')return()=>{cur=[]};
+   if(k==='moveTo'||k==='lineTo')return(x,y)=>{if(cur)cur.push([x,y])};
+   if(k==='closePath')return()=>{};
+   if(k==='fill')return()=>{if(cur&&cur.length)trace.push({pts:cur.slice(),col:fill})};
+   const v=t[k];return typeof v==='function'?v.bind(t):v;},
+  set(t,k,v){if(k==='fillStyle')fill=typeof v==='string'?v:'';t[k]=v;return true}});
+ return {c,trace};
 }
 {
- const c=recCtx();paintIsoTile(c,100,50,'#123456');
- const t=c.trace;
- const fills=t.filter(o=>o[0]==='fill').map(o=>o[1]);
- ok('T41.C five fills, in the documented order',
-    fills.length===5 &&
-    fills[0]==='#123456' &&
-    fills[1]==='rgba(255,255,255,.10)' && fills[2]==='rgba(255,255,255,.06)' &&
-    fills[3]==='rgba(14,22,10,.12)'   && fills[4]==='rgba(14,22,10,.06)');
- /* geometry, derived from the tile constants rather than restated as literals */
- const seg=[];let cur=null;
- for(const o of t){
-  if(o[0]==='begin')cur=[];
-  else if(o[0]==='move'||o[0]==='line')cur.push([o[1],o[2]]);
-  else if(o[0]==='fill')seg.push(cur);
- }
- const eq=(a,b)=>a.length===b.length&&a.every((p,i)=>p[0]===b[i][0]&&p[1]===b[i][1]);
- ok('T41.C body diamond spans the full tile',
-    eq(seg[0],[[100,50],[100+HW,50+HH],[100,50+TH],[100-HW,50+HH]]));
- ok('T41.C both lit facets meet at the tile mid-height',
-    eq(seg[1],[[100,50],[100-HW,50+HH],[100,50+HH*.5]]) &&
-    eq(seg[2],[[100,50],[100+HW,50+HH],[100,50+HH*.5]]));
- ok('T41.C both shaded facets hang off the south point',
-    eq(seg[3],[[100,50+TH],[100+HW,50+HH],[100,50+HH*1.5]]) &&
-    eq(seg[4],[[100,50+TH],[100-HW,50+HH],[100,50+HH*1.5]]));
- /* non-vacuity: the recorder must actually record, and a different tile must
-    produce a different trace */
- const c2=recCtx();paintIsoTile(c2,200,50,'#123456');
- ok('T41.C the recorder distinguishes two tiles',
-    c2.trace.length===t.length && !eq(seg[0],
-      (()=>{const s=[];let k=null;for(const o of c2.trace){if(o[0]==='begin')k=[];else if(o[0]==='move'||o[0]==='line')k.push([o[1],o[2]]);else if(o[0]==='fill'){s.push(k);break}}return s[0]})()));
+ const eq=(a,b)=>a.length===b.length&&a.every((p,i)=>Math.abs(p[0]-b[i][0])<1e-9&&Math.abs(p[1]-b[i][1])<1e-9);
+ const lay=(th)=>{const r=recGround();groundLay(r.c,th,2,mulberry(1),100,50,7);return r.trace};
+ const t=lay('grass');
+ const diamonds=t.filter(p=>p.pts.length===4&&/^#[0-9a-f]{6}$/i.test(p.col));
+ ok('T41.C one flat diamond per tile, and NO bevel facets: the molded look is gone (v108)',
+    diamonds.length===4 && !t.some(p=>p.pts.length===3));
+ /* geometry, derived from the tile constants rather than restated as literals:
+    tile (0,0) sits on the origin the caller passes, tile (1,0) one tile east */
+ ok('T41.C the diamond spans the full tile',
+    eq(diamonds[0].pts,[[100,50],[100+HW,50+HH],[100,50+TH],[100-HW,50+HH]]));
+ ok('T41.C the second tile lands exactly one tile over',
+    eq(diamonds[1].pts,[[100+HW,50+HH],[100+2*HW,50+2*HH],[100+HW,50+HH+TH],[100,50+2*HH]]));
+ /* non-vacuity: a different theme paints the same geometry in its own palette */
+ const s=lay('sand').filter(p=>p.pts.length===4&&/^#[0-9a-f]{6}$/i.test(p.col));
+ ok('T41.C another theme lays the same four tiles in a different palette',
+    s.length===4 && eq(s[0].pts,diamonds[0].pts) && s[0].col!==diamonds[0].col);
+ ok('T41.C the bevel recipe is deleted from the shipped file, not orphaned',
+    (()=>{const src=require('fs').readFileSync('pw.html','utf8');return !src.includes("'rgba(14,22,10,.12)'")&&!src.includes('paintIsoTile(')})());
 }
 {
  const rt=renderTerrain.toString(), ig=infoGround.toString();
- ok('T41.C renderTerrain calls the painter and inlines no diamond of its own',
-    rt.includes('paintIsoTile(c,sx,sy,col)') && !rt.includes("'rgba(14,22,10,.12)'"));
- ok('T41.C infoGround calls the painter and inlines no diamond of its own',
-    ig.includes('paintIsoTile(c,') && !ig.includes("'rgba(14,22,10,.12)'"));
+ ok('T41.C renderTerrain lays its ground and its edge through the shared painters and inlines no tile of its own',
+    rt.includes('groundLay(c,th,N,rnd,G.orgX,0,') && rt.includes('groundSkirt(c,th,N,rnd,G.orgX,0,DEPTH)') && !rt.includes('lineTo(sx+HW,sy+HH);c.lineTo(sx,sy+TH)'));
+ ok('T41.C infoGround does the same at miniature scale, and inlines no tile of its own',
+    ig.includes("groundLay(c,'grass',NP,rnd,ox,oy,") && ig.includes("groundSkirt(c,'grass',NP,rnd,ox,oy,INFO_G_DEPTH)") && !ig.includes('lineTo('));
  /* and both still run end to end under the shim */
  G=null;newGame(cfg62('backyard','dm',777001,3));
  let ranT=true,ranI=true;

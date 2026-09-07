@@ -22,7 +22,7 @@ section.
 The game is **assembled from `source/`** into one file, `plastic-warfare.html`
 (~8.7MB), by `./build.sh` at the repo root. Everything — simulation, rendering,
 audio, UI, netcode — is still one `<script>` block in the shipped file; it is
-written as 36 files listed in `source/order.txt`. There are no dependencies.
+written as 37 files listed in `source/order.txt`. There are no dependencies.
 The recorded sound set (25 voices in 35 mp3 takes, `assets/snd/`, since v92 —
 the voices that repeat fastest carry alternates, which is why takes outnumber
 voices), the full sprite texture set (218 WebP files, `assets/img/`, since v95)
@@ -52,9 +52,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v107.3, and what a fresh session does)
+## Where the game stands (v108, and what a fresh session does)
 
-The game is at **v107.3**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v108**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), **v104 is the first Roadmap 4 item
@@ -74,26 +74,34 @@ base, bots that spare their own compound, mines in the middle — and **v107.2**
 is the second, a floor of its own for the Bathroom (a hexagon mosaic in warm
 porcelain, because it had been wearing the Kitchen's square grid), and
 **v107.3** is the third — the bathtub and the dropped towel, both of which read
-as blank white. There is no release in flight.
+as blank white. **v108 is Roadmap 4 item 5, in the form the owner asked for**:
+every board's ground repainted as the real surface it is (turf, ceramic,
+carpet, varnished wood, sand in a plank frame, porcelain, bare boards) by a
+per-pixel material swatch tiled in world space — NOT the sprite pipeline's
+textured plastic, by instruction. **Two follow-ons are agreed and not yet
+built**: v108.1, the ground catching light from explosions and fire (a renderer
+change — see the v108 chapter for why the roadmap's "for free" was wrong), and
+v109, a detail pass over every decorative prop's painter.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
-ranked, written after a whole-game review at v103. **Three of the twelve have
+ranked, written after a whole-game review at v103. **Four of the twelve have
 shipped in whole or in part** — item 1's music half (v104–v104.4), item 4
-(v106) and two of item 2's boards (v107); the barks and the other nine items are
-untouched. The
+(v106), two of item 2's boards (v107) and item 5's ground (v108, minus the
+lighting); the barks and the other eight items are untouched. The
 headline of it: the systems layer is finished, and what is thin is content (six
 PvP maps and one survival board) and balance (two of four armies do not work).
-Presentation was the third leg of that and is now half-answered — the game has a
-score, but the ground is still the one visual layer with no textures, and one
-sound is still the browser's own text-to-speech voice. (v105 repainted the MENU's
+Presentation was the third leg of that and is mostly answered — the game has a
+score and, since v108, real floors; what is left is the ground catching light
+(v108.1) and one sound that is still the browser's own text-to-speech voice. (v105 repainted the MENU's
 parade ground and gave the Field Manual the same backdrop; neither is the
 in-match ground, so item 5 is untouched by it.)
 
-- **Map ART, as opposed to map LAYOUT** — Roadmap 4 item 5. The owner deferred
-  map art from v97's detail pass ("maps/map art will be handled separately") and
-  v103 did NOT close it: v103 fixed where things are PUT, not how they are drawn.
-  Terrain (`G.terr`), props and ground art are still the one visual layer fully
-  procedural at base resolution — no textures, no normal maps, no lighting.
+- **Map ART, as opposed to map LAYOUT** — Roadmap 4 item 5, and **v108 painted
+  the ground half of it**. The owner deferred map art from v97's detail pass and
+  v103 fixed where things are PUT, not how they are drawn. Since v108 the ground
+  (`G.terr`) is a per-pixel material per theme, still procedural and still
+  unlit: the two halves left are the lighting (v108.1, agreed) and the props'
+  painters (v109, agreed).
 - **Balance** — Roadmap 4 item 3, and it is **re-measured at v103**: the
   balance section below now carries 32 fresh matches instead of the eleven-release-old
   v90 percentages. Short version: Green 47%, Tan 34%, Gray 9%, Blue 9%.
@@ -108,7 +116,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 6,830 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 6,862 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -122,7 +130,7 @@ whatever the owner asks for next is a fresh vNN starting from `origin/main`. If
 they are NOT green, stop and read the failure before touching anything: every
 check in this suite was put there by a release that paid for it.
 
-**The map generator was audited at v103 and nothing has touched it since**
+**The map generator was audited at v103 and nothing has touched it since** (v108 repainted the ground and touched no placement)
 (the v103 section below). If you touch `makeMap`, run `harness/audit_maps.js` before and
 after — it counts every defect class the audit found, and the residual it should
 report is: 3-4 decor-sized art grazes, 2 line props lying in a spill, and one
@@ -176,7 +184,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,830 checks at v107.3.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,862 checks at v108.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -420,7 +428,13 @@ still empty; item 1 has since answered it.)
 
 ### Band 2 — worth doing
 
-5. **Texture the ground.** The one visual layer roadmap 3 never reached, and the
+5. ~~**Texture the ground.**~~ **DELIVERED at v108 — as a repaint, not as
+   textures**, because the owner did not want the floor to read as the units'
+   textured plastic. And the note below is WRONG on one point: the ground would
+   NOT "pick up the existing lighting for free" — the per-pixel lights live in
+   the sprite band pass and the terrain is composited beneath it, so lighting
+   the ground is a renderer change (v108.1). The original note, kept for its
+   reasoning: The one visual layer roadmap 3 never reached, and the
    largest surface on screen. The four-script pipeline (`dump_base_v95.js` →
    `material_v95.py` → `normal_v96.py` → `embed_img.py`) points at ground tiles
    with no new machinery — five themes, a handful of variants each — and they
@@ -594,6 +608,47 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v108 — the floors are real surfaces (Roadmap 4 item 5, in the owner's form)
+
+The owner asked for the map-graphics pass the roadmap had carried since v103,
+with one instruction that reshaped it: the floor must NOT look like the units'
+textured plastic, "just better". `tail_v108.js` (T93, 32 checks; the suite is
+6,862 now); full evidence in the v108 section of `harness/README.md`. **No
+trail moved and no repin was due**: `renderTerrain` is a bake.
+
+- **The diagnosis was one function.** Every board's ground was `paintIsoTile`:
+  a diamond with two lit and two shaded facets — a bevel on EVERY tile, which is
+  what molded plastic looks like whatever colour it is. The sandbox drew a
+  diamond grid on "sand"; the desk drew its grain through the bevels.
+- **The ground is three coats and an edge now** (`07b-ground.js`, a new source
+  file): a flat base coat per tile; a 512px MATERIAL SWATCH generated per pixel
+  at bake time (periodic value noise, plus a stroke pass for blades and pile)
+  and tiled over the board as a canvas pattern UNDER THE ISO TRANSFORM, so it
+  lies down with the board; soft world-space BLOTCHES off the terrain stream so
+  the repeat never grids; and a SKIRT painted as the material's own edge —
+  turf over soil, tile over mortar, carpet over jute, a plank sandbox frame with
+  a corner post, a desk's end grain, board ends over joists.
+- **Two themes are OVERLAYS.** The kitchen's ceramic and the bathroom's
+  porcelain tile a luminance-only swatch with the `overlay` blend, so the
+  checker and the v107.2 mosaic keep their own colours and gain the glaze.
+- **One seam, two call sites.** `groundLay`/`groundSkirt` serve `renderTerrain`
+  AND the Field Manual's `infoGround`, so the manual's lawn is the board's.
+
+Three things worth carrying forward:
+
+- **A PHASE THAT DOES NOT COME ROUND TO A WHOLE CYCLE IS A SEAM.** Noise wraps
+  by construction; a sine's argument must advance by an integer across the
+  swatch. And the check that guards the wrap compares it to the swatch's
+  LARGEST interior step, because a floorboard seam and a pillowed tile edge are
+  hard edges by design and the first cut called them defects.
+- **A test's filter must say what it means.** T91.B selected "ground tiles" as
+  any four-point hex-colour fill, and the new skirt's bands are exactly that.
+  Rule 5 both ways: restated to tile-shaped paths, not loosened.
+- **The roadmap's "lighting for free" was wrong**, and the release says so
+  rather than delivering it quietly: the lights live in the sprite band, the
+  terrain is composited beneath it. v108.1 is that renderer change, kept apart
+  so a compositing problem cannot be confused with a paint one.
 
 ## v107.3 — the tub and the towel (the third owner pass on v107)
 
