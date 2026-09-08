@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v109 it makes **6,895
+that the results come out identical every time. As of v110 it makes **6,923
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -117,7 +117,24 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 109**.
+The game is at **version 110**.
+
+**v110 — the keyboard shortcuts make sense now.** Every tile in a build menu
+carries a letter you can press instead of clicking it, and until now that letter
+was simply "the next one along" — so the Barricade was **M** when you built it
+from your HQ and **C** from an Outpost, the Dump Truck **Z** in one place and
+**I** in the other, and the letters even shifted depending on which army you had
+picked. Now the letter belongs to the thing: the Barricade is **C** everywhere,
+the Dump Truck is **R** everywhere, and it is the same for all four armies. The
+letters were also re-dealt so that the things you build most often sit under
+your left hand while your right hand stays on the mouse — the Dump Truck,
+Barricade, Supply Depot, Generator, Guard Tower, Barracks, Outpost and Garage
+are all one reach away now, and across the whole game two thirds of the letters
+are on the left of the keyboard instead of half. The harmless "preview an
+explosion" key moved from **B** to the **`** key left of the **1**, which is
+what freed **B** for the Barracks. The quick Help box was also telling you that
+control groups lived on the number row; they have been on **F1–F9** since
+version 98, and it says so now.
 
 **v109 — the floors catch the light, and every prop is worth a look.** An
 explosion, a napalm fire or a muzzle flash now lights the ground under it — a

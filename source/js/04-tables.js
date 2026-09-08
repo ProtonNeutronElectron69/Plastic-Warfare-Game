@@ -16,8 +16,8 @@ const FAC={
 const U0AURA=0.15; // v82: the Chinook's infantry aura, named ABOVE the table so its own info card can state the figure the row sets rather than a retyped copy of it
 const MEDIC_HEAL_RADIUS=2; // tiles. v88.1: MOVED up here from below the table, on U0AURA's rule - the Medic's own info card could not read it from inside the table it is declared after, which is the temporal-dead-zone trap the v86 note records
 const U={
- grunt:{n:'Grunt',a:'inf',hp:62,dm:6,rg:3.6,rt:.8,sp:2.3,vi:6,cp:36,ce:0,bt:2.5,w:'b',d:'Basic rifleman'},
- grenadier:{n:'Grenadier',a:'inf',hp:64,dm:9,rg:3.7,rt:1.15,sp:2.25,vi:6,cp:55,ce:0,bt:6,w:'g',spl:1.125,ex:1,tech:'u_grenadier',d:'Lobs frag grenades; minor splash'},
+ grunt:{hk:'g',n:'Grunt',a:'inf',hp:62,dm:6,rg:3.6,rt:.8,sp:2.3,vi:6,cp:36,ce:0,bt:2.5,w:'b',d:'Basic rifleman'},
+ grenadier:{hk:'e',n:'Grenadier',a:'inf',hp:64,dm:9,rg:3.7,rt:1.15,sp:2.25,vi:6,cp:55,ce:0,bt:6,w:'g',spl:1.125,ex:1,tech:'u_grenadier',d:'Lobs frag grenades; minor splash'},
  // v69: cp 115 -> 140. At 115 the Gunner held the best effective DPS per plastic
  // against inf/light/medium/bldg AND, entrenched, beat the Bazooka against heavy
  // armor (14.85 vs 10.76), which is the Bazooka's whole job. The counter matrix
@@ -51,8 +51,8 @@ const U={
     table - the Flamethrower is TAN-EXCLUSIVE, so three armies in four cannot field
     the per-supply leader at all, and his lead over the Bazooka is 1.06x against the
     Gunner's 1.11x. Measured before the edit; see tail_v88_1 T63.A. */
- gunner:{n:'Machine Gunner',a:'inf',hp:100,dm:12,rg:4,rt:.5,sp:1.9,vi:6,cp:125,ce:0,bt:9,w:'b',entrench:1,tech:'u_gunner',d:`Tough, heavy MG. Entrench to fire ${Math.round((ENTRENCH_RATE-1)*100)}% faster in a frontal cone`},
- bazooka:{n:'Bazooka Man',a:'inf',hp:55,dm:30,rg:4.6,rt:2.2,sp:2.1,vi:6,cp:90,ce:0,bt:7,w:'r',spl:.75,ex:1,tech:'u_bazooka',d:'Anti-armour rockets; needs an escort'},
+ gunner:{hk:'c',n:'Machine Gunner',a:'inf',hp:100,dm:12,rg:4,rt:.5,sp:1.9,vi:6,cp:125,ce:0,bt:9,w:'b',entrench:1,tech:'u_gunner',d:`Tough, heavy MG. Entrench to fire ${Math.round((ENTRENCH_RATE-1)*100)}% faster in a frontal cone`},
+ bazooka:{hk:'z',n:'Bazooka Man',a:'inf',hp:55,dm:30,rg:4.6,rt:2.2,sp:2.1,vi:6,cp:90,ce:0,bt:7,w:'r',spl:.75,ex:1,tech:'u_bazooka',d:'Anti-armour rockets; needs an escort'},
  /* v85 BLUE, Barracks slot. Under a Grunt on both of the numbers that matter -
     46 HP against 62 and 5.0 DPS against 7.5 - and priced ABOVE him at 62, which is
     the shape the owner asked for: what you buy is the two auras, not the pistol.
@@ -60,9 +60,9 @@ const U={
     a shorter 3.2 range; a tenth weapon row for one sidearm would have widened every
     damage table in the file to say nothing new.
     noPace keeps him out of MEDIC_HEAL_RATE's floor - see the note there. */
- runner:{n:'Signal Runner',a:'inf',hp:46,dm:4.5,rg:3.2,rt:.9,sp:2.5,vi:7,cp:62,ce:0,bt:4,w:'b',noPace:1,rnet:1,sprint:1,tech:'u_runner',d:`Signals rather than fights, and is weaker than a Grunt for it. Radio Net: friendly infantry within ${RNET_R} tiles gain +${RNET_VI} sight. Sprint: all of them gain ${Math.round(SPRINT_SPD*100)}% speed, but none may fire`},
- truck:{n:'Dump Truck',a:'truck',hp:130,dm:0,rg:0,rt:0,sp:2.7,vi:5,cp:20,ce:0,bt:8,w:0,d:'Harvests resources'},
- medic:{n:'Medic Truck',a:'truck',hp:135,dm:0,rg:0,rt:0,sp:2.3,vi:6,cp:150,ce:20,bt:11,w:0,heal:1,healR:2,tech:'u_medic',d:`Unarmed. Heals allied units and buildings within ${MEDIC_HEAL_RADIUS} tiles`}, // v29: paces the grunt
+ runner:{hk:'v',n:'Signal Runner',a:'inf',hp:46,dm:4.5,rg:3.2,rt:.9,sp:2.5,vi:7,cp:62,ce:0,bt:4,w:'b',noPace:1,rnet:1,sprint:1,tech:'u_runner',d:`Signals rather than fights, and is weaker than a Grunt for it. Radio Net: friendly infantry within ${RNET_R} tiles gain +${RNET_VI} sight. Sprint: all of them gain ${Math.round(SPRINT_SPD*100)}% speed, but none may fire`},
+ truck:{hk:'r',n:'Dump Truck',a:'truck',hp:130,dm:0,rg:0,rt:0,sp:2.7,vi:5,cp:20,ce:0,bt:8,w:0,d:'Harvests resources'},
+ medic:{hk:'m',n:'Medic Truck',a:'truck',hp:135,dm:0,rg:0,rt:0,sp:2.3,vi:6,cp:150,ce:20,bt:11,w:0,heal:1,healR:2,tech:'u_medic',d:`Unarmed. Heals allied units and buildings within ${MEDIC_HEAL_RADIUS} tiles`}, // v29: paces the grunt
  // v78: hp 115 -> 132.25 (+15%, effective hull 88 -> 101) and rt .5 -> .425
  // (-15% reload, DPS 7.26 -> 8.54). 132.25 is the exact +15% rather than a
  // rounded 132 - both round to the same effective hull, and the exact figure
@@ -77,27 +77,27 @@ const U={
     the right class for a soft-skinned lorry, and it is listed in ARMOR_OF_A so the
     row says so rather than relying on a default.
     Priced at 145+20 so the supply quartiles do not move - see the note there. */
- cmdtruck:{n:'Command Truck',a:'cmd',hp:210,dm:0,rg:0,rt:0,sp:2,vi:7,cp:145,ce:20,bt:12,w:0,fwdcmd:1,bcast:1,tech:'u_cmdtruck',d:''}, // d is written in the post-table pass below B, because it names structures and B is declared after U
- jeep:{n:'MG Jeep',a:'jeep',hp:132.25,dm:9,rg:4,rt:.425,sp:3.7,vi:7,cp:130,ce:10,bt:9,w:'b',tech:'u_jeep',d:'Fast machine-gun car'},
+ cmdtruck:{hk:'n',n:'Command Truck',a:'cmd',hp:210,dm:0,rg:0,rt:0,sp:2,vi:7,cp:145,ce:20,bt:12,w:0,fwdcmd:1,bcast:1,tech:'u_cmdtruck',d:''}, // d is written in the post-table pass below B, because it names structures and B is declared after U
+ jeep:{hk:'e',n:'MG Jeep',a:'jeep',hp:132.25,dm:9,rg:4,rt:.425,sp:3.7,vi:7,cp:130,ce:10,bt:9,w:'b',tech:'u_jeep',d:'Fast machine-gun car'},
  // v51: air defence. sal/srt are the salvo shape (4 missiles 0.22s apart) and rt is the
  // RELOAD that follows it, so DPS is dm*sal/(rt+(sal-1)*srt) - see unitDPS(). aaOnly is
  // the target filter; weapon row 'a' is zero against every ground class as a second lock.
- aatruck:{n:'AA Missile Truck',a:'aa',hp:185,dm:40.8,rg:7,rt:3,sp:2.5,vi:6,cp:180,ce:30,bt:11,w:'a',spl:1.125,ex:1,aaOnly:1,sal:4,srt:.22,tech:'u_aatruck',d:'Air only: a 4-missile salvo, then a 3s reload. Cannot touch a ground target at all'},
- tank:{n:'Tank',a:'tank',hp:270,dm:42,rg:5,rt:2.4,sp:2.4,vi:6,cp:220,ce:40,bt:14,w:'s',spl:1,ex:1,tech:'u_tank',d:'Main battle tank'},
- heli:{n:'Huey',a:'heli',hp:155,dm:12,rg:4.6,rt:.55,sp:4.2,vi:8,cp:200,ce:70,bt:13,w:'b',fly:1,tech:'u_heli',d:'Fast flying gunner'},
- sarge:{n:'Sarge',a:'inf',hp:210,dm:15,rg:4.2,rt:.42,sp:2.6,vi:7,cp:260,ce:60,bt:16,w:'b',lim:1,rally:1,regen:1,tech:'u_sarge',d:`Hero commando, 1 max. Regenerates ${SARGE_REGEN} HP/s after ${SARGE_CALM}s unhit. "On Me!": allied infantry within ${SARGE_AURA_R} tiles gain +${Math.round(SARGE_AURA*100)}% damage, at half his own`},
- mortar:{n:'Mortar Squad',a:'inf',hp:52,dm:36,rg:7.5,mrg:2,rt:3.4,sp:1.9,vi:6,cp:150,ce:0,bt:9,w:'m',spl:1.5,ex:1,wf:1,smokeCap:1,tech:'u_mortar',d:`Arcing shells from far off. Walking Fire ramps consecutive hits on one target +${Math.round(MORT_WF_STEP*100)}% each, to +${Math.round(MORT_WF_CAP*100)}%. Smoke Rounds shell friendlies instead, cutting their damage taken ${Math.round(SMOKE_RED*100)}%`},
- flamer:{n:'Flamethrower',a:'inf',hp:72,dm:13,rg:2.3,rt:.5,sp:2.2,vi:5,cp:120,ce:0,bt:8,w:'f',spl:.625,ex:1,cook:1,valve:1,tech:'u_flamer',d:`Melts infantry up close. Cook-Off leaves what he touches burning at ${COOK_DPS}/s. Pressure Valve: +${Math.round(VALVE_DMG*100)}% damage and +${VALVE_RG} range, at ${Math.round(VALVE_BACK*100)}% of it back on him`},
- bulltank:{n:'"Bull" Heavy Tank',a:'tank',hp:430,dm:60,rg:5,rt:3,sp:1.9,vi:6,cp:391,ce:80.5,bt:18,w:'s',spl:1.25,ex:1,big:1,plate:1,throttle:1,sec:{w:'f',wc:'f',k:.15,rt:.55,rg:2.6,spl:.625},tech:'u_bulltank',d:`Rolling fortress. The hull flamer takes infantry and wildlife, the cannon takes everything else, both at once. Ablative plate ignores small arms outright. Full Throttle adds ${Math.round(THROTTLE_SPD*100)}% speed and crushes infantry and barricades, but silences both guns`},
- sniper:{n:'Sniper',a:'inf',hp:46,dm:55,rg:7.2,rt:3,sp:2.1,vi:9,cp:170,ce:0,bt:9,w:'b',camo:1,cshot:1,tech:'u_sniper',d:`Kills infantry from a long way off. Camouflaged: cannot be targeted until he fires, and is unseen again ${CAMO_T}s after his last shot. Called Shot adds ${Math.round(CS_DMG*100)}% damage but limits him to enemy infantry`},
- arty:{n:'Rocket Artillery',a:'arty',hp:95,dm:70,rg:9,mrg:3,rt:5,sp:1.7,vi:6,cp:320,ce:90,bt:18,w:'m',spl:2.8125,ex:1,shock:1,ripple:1,tech:'u_arty',d:`Siege rockets. Shell Shock adds ${SHOCK_SET}s to the reload of anyone who survives the blast. Ripple Fire trades the shell for ${RIPPLE_N} rockets at ${Math.round(RIPPLE_DM*100)}% each over a wider box, for ${Math.round((RIPPLE_RT-1)*100)}% more reload`},
+ aatruck:{hk:'k',n:'AA Missile Truck',a:'aa',hp:185,dm:40.8,rg:7,rt:3,sp:2.5,vi:6,cp:180,ce:30,bt:11,w:'a',spl:1.125,ex:1,aaOnly:1,sal:4,srt:.22,tech:'u_aatruck',d:'Air only: a 4-missile salvo, then a 3s reload. Cannot touch a ground target at all'},
+ tank:{hk:'t',n:'Tank',a:'tank',hp:270,dm:42,rg:5,rt:2.4,sp:2.4,vi:6,cp:220,ce:40,bt:14,w:'s',spl:1,ex:1,tech:'u_tank',d:'Main battle tank'},
+ heli:{hk:'e',n:'Huey',a:'heli',hp:155,dm:12,rg:4.6,rt:.55,sp:4.2,vi:8,cp:200,ce:70,bt:13,w:'b',fly:1,tech:'u_heli',d:'Fast flying gunner'},
+ sarge:{hk:'r',n:'Sarge',a:'inf',hp:210,dm:15,rg:4.2,rt:.42,sp:2.6,vi:7,cp:260,ce:60,bt:16,w:'b',lim:1,rally:1,regen:1,tech:'u_sarge',d:`Hero commando, 1 max. Regenerates ${SARGE_REGEN} HP/s after ${SARGE_CALM}s unhit. "On Me!": allied infantry within ${SARGE_AURA_R} tiles gain +${Math.round(SARGE_AURA*100)}% damage, at half his own`},
+ mortar:{hk:'m',n:'Mortar Squad',a:'inf',hp:52,dm:36,rg:7.5,mrg:2,rt:3.4,sp:1.9,vi:6,cp:150,ce:0,bt:9,w:'m',spl:1.5,ex:1,wf:1,smokeCap:1,tech:'u_mortar',d:`Arcing shells from far off. Walking Fire ramps consecutive hits on one target +${Math.round(MORT_WF_STEP*100)}% each, to +${Math.round(MORT_WF_CAP*100)}%. Smoke Rounds shell friendlies instead, cutting their damage taken ${Math.round(SMOKE_RED*100)}%`},
+ flamer:{hk:'t',n:'Flamethrower',a:'inf',hp:72,dm:13,rg:2.3,rt:.5,sp:2.2,vi:5,cp:120,ce:0,bt:8,w:'f',spl:.625,ex:1,cook:1,valve:1,tech:'u_flamer',d:`Melts infantry up close. Cook-Off leaves what he touches burning at ${COOK_DPS}/s. Pressure Valve: +${Math.round(VALVE_DMG*100)}% damage and +${VALVE_RG} range, at ${Math.round(VALVE_BACK*100)}% of it back on him`},
+ bulltank:{hk:'b',n:'"Bull" Heavy Tank',a:'tank',hp:430,dm:60,rg:5,rt:3,sp:1.9,vi:6,cp:391,ce:80.5,bt:18,w:'s',spl:1.25,ex:1,big:1,plate:1,throttle:1,sec:{w:'f',wc:'f',k:.15,rt:.55,rg:2.6,spl:.625},tech:'u_bulltank',d:`Rolling fortress. The hull flamer takes infantry and wildlife, the cannon takes everything else, both at once. Ablative plate ignores small arms outright. Full Throttle adds ${Math.round(THROTTLE_SPD*100)}% speed and crushes infantry and barricades, but silences both guns`},
+ sniper:{hk:'r',n:'Sniper',a:'inf',hp:46,dm:55,rg:7.2,rt:3,sp:2.1,vi:9,cp:170,ce:0,bt:9,w:'b',camo:1,cshot:1,tech:'u_sniper',d:`Kills infantry from a long way off. Camouflaged: cannot be targeted until he fires, and is unseen again ${CAMO_T}s after his last shot. Called Shot adds ${Math.round(CS_DMG*100)}% damage but limits him to enemy infantry`},
+ arty:{hk:'r',n:'Rocket Artillery',a:'arty',hp:95,dm:70,rg:9,mrg:3,rt:5,sp:1.7,vi:6,cp:320,ce:90,bt:18,w:'m',spl:2.8125,ex:1,shock:1,ripple:1,tech:'u_arty',d:`Siege rockets. Shell Shock adds ${SHOCK_SET}s to the reload of anyone who survives the blast. Ripple Fire trades the shell for ${RIPPLE_N} rockets at ${Math.round(RIPPLE_DM*100)}% each over a wider box, for ${Math.round((RIPPLE_RT-1)*100)}% more reload`},
  // v78: fire rate -20%, which is rt .5 -> .625 (= .5/0.8, exact in binary64),
  // not a 20% cut to the reload. DPS 5.66 -> 4.53. He drops out of three
  // competitive pools he was marginal in (T26.C light and medium 9 -> 8, bldg
  // 9 -> 8 against the widened jeep); intended, and Blue-exclusive.
- bike:{n:'Scout Bike',a:'bike',hp:70,dm:7,rg:3.5,rt:.625,sp:5.1,vi:9,cp:90,ce:5,bt:6,w:'b',evade:1,flat:1,tech:'u_bike',d:`Blazing scout. Evasive: ${Math.round(EVADE_RED*100)}% less damage on any tick he actually moved. Flat Out adds ${Math.round(FLAT_SPD*100)}% speed and +${FLAT_VI} sight, but he cannot fire or be given a target`},
+ bike:{hk:'b',n:'Scout Bike',a:'bike',hp:70,dm:7,rg:3.5,rt:.625,sp:5.1,vi:9,cp:90,ce:5,bt:6,w:'b',evade:1,flat:1,tech:'u_bike',d:`Blazing scout. Evasive: ${Math.round(EVADE_RED*100)}% less damage on any tick he actually moved. Flat Out adds ${Math.round(FLAT_SPD*100)}% speed and +${FLAT_VI} sight, but he cannot fire or be given a target`},
  // v30 additions - table values are pre-load-scale baselines; effective (in-game) numbers in the comments
- apache:{n:'Apache',a:'heli',hp:244,dm:66.9,rg:4.8,rt:1.7,sp:3.8,vi:8,cp:300,ce:110,bt:16,w:'r',spl:.75,ex:1,fly:1,tech:'u_apache',d:'Rocket attack chopper'}, // 170 HP / 30 dmg effective
+ apache:{hk:'c',n:'Apache',a:'heli',hp:244,dm:66.9,rg:4.8,rt:1.7,sp:3.8,vi:8,cp:300,ce:110,bt:16,w:'r',spl:.75,ex:1,fly:1,tech:'u_apache',d:'Rocket attack chopper'}, // 170 HP / 30 dmg effective
  /* v88 GRAY, Helipad slot - the last empty cell in FAC_INF/FAC_VEH/FAC_AIR, and
     the last unit roadmap 2 adds. It is the FIRST unit in the file to carry two
     weapons that are both ordinary guns: the Bull has carried a `sec` since v80,
@@ -116,7 +116,7 @@ const U={
     supply rank - and moves three existing units down one rank, which is
     unavoidable for ANY 25th trainable unit priced above the Machine Gunner. That
     was measured before the row went in; see the SUP_U note and tail_v88 T62.A. */
- choktaw:{n:'Choktaw Heli',a:'heli',hp:265,dm:58,rg:4.8,rt:1.9,sp:3.5,vi:9,cp:330,ce:120,bt:17,w:'r',spl:.75,ex:1,fly:1,fobs:1,paint:1,abCd:PAINT_CD,sec:{w:'b',wc:'b',k:.22,rt:.5,rg:4.2},tech:'u_choktaw',d:`Two weapons at once: rocket pods for armour and structures, a door gun for infantry. Forward Observer gives friendly arcing weapons +${FOB_RG} tiles against anything it can see. Paint marks a ${PAINT_BOX}×${PAINT_BOX} area for +${Math.round(PAINT_DMG*100)}% damage from EVERY source, ${PAINT_T}s. ${PAINT_CD}s cooldown`},
+ choktaw:{hk:'k',n:'Choktaw Heli',a:'heli',hp:265,dm:58,rg:4.8,rt:1.9,sp:3.5,vi:9,cp:330,ce:120,bt:17,w:'r',spl:.75,ex:1,fly:1,fobs:1,paint:1,abCd:PAINT_CD,sec:{w:'b',wc:'b',k:.22,rt:.5,rg:4.2},tech:'u_choktaw',d:`Two weapons at once: rocket pods for armour and structures, a door gun for infantry. Forward Observer gives friendly arcing weapons +${FOB_RG} tiles against anything it can see. Paint marks a ${PAINT_BOX}×${PAINT_BOX} area for +${Math.round(PAINT_DMG*100)}% damage from EVERY source, ${PAINT_T}s. ${PAINT_CD}s cooldown`},
  /* v87 TAN, Helipad slot. Weapon row 'f', which is the row Tan already lives on -
     the Flamethrower's hose and the Bull's hull flamer both score there - so the
     Firebomb reads as the same army's idea carried into the air rather than as a
@@ -126,13 +126,13 @@ const U={
     shoving anything below it across a boundary - see the note on SUP_U.
     abCd is the first entry of its kind in this table: a UNIT ability with a clock.
     See the machinery note at updateUnit. */
- firebomb:{n:'Firebomb Heli',a:'heli',hp:210,dm:52,rg:4.2,rt:1.6,sp:3.6,vi:8,cp:280,ce:90,bt:17,w:'f',spl:1,ex:1,fly:1,scorch:1,fbomb:1,abCd:FB_CD,tech:'u_firebomb',d:`Sows fire from the air. Scorched Earth leaves the ground burning ${SCORCH_T}s under every hit. Napalm Blast drops ${FB_N} bombs within ${FB_R} tiles, each burning ${FB_BURN}s — and the fire takes YOUR men too. ${FB_CD}s cooldown`},
- apc:{n:'APC',a:'apc',hp:287,dm:0,rg:0,rt:0,sp:2.3,vi:6,cp:260,ce:40,bt:14,w:0,rad:.46,cap:10,shield:1,tech:'u_apc',d:'Carries 10 infantry (right-click to load, U to unload). Shields itself and nearby infantry −25%; the squad bails at 85% HP if it dies'}, // 220 HP effective
+ firebomb:{hk:'b',n:'Firebomb Heli',a:'heli',hp:210,dm:52,rg:4.2,rt:1.6,sp:3.6,vi:8,cp:280,ce:90,bt:17,w:'f',spl:1,ex:1,fly:1,scorch:1,fbomb:1,abCd:FB_CD,tech:'u_firebomb',d:`Sows fire from the air. Scorched Earth leaves the ground burning ${SCORCH_T}s under every hit. Napalm Blast drops ${FB_N} bombs within ${FB_R} tiles, each burning ${FB_BURN}s — and the fire takes YOUR men too. ${FB_CD}s cooldown`},
+ apc:{hk:'c',n:'APC',a:'apc',hp:287,dm:0,rg:0,rt:0,sp:2.3,vi:6,cp:260,ce:40,bt:14,w:0,rad:.46,cap:10,shield:1,tech:'u_apc',d:'Carries 10 infantry (right-click to load, U to unload). Shields itself and nearby infantry −25%; the squad bails at 85% HP if it dies'}, // 220 HP effective
  // v46: Blue's exclusive, replacing the Gunship. Unarmed tandem-rotor transport - the
  // APC's hull literal (220 effective), the fastest chopper in the game, 15 seats, and a
  // non-stacking +15% damage aura for allied infantry within auraR tiles. It carries no
  // shield flag, so unlike the APC it grants no damage reduction. w:0 pins it to row 'x'.
- chinook:{n:'Chinook',a:'heli',hp:287,dm:0,rg:0,rt:0,sp:4.5,vi:8,cp:300,ce:100,bt:15,w:0,fly:1,cap:15,aura:U0AURA,auraR:3,assault:1,tech:'u_chinook',d:`Unarmed transport: 15 infantry (right-click to load, U to unload). Nearby infantry hit ${Math.round(U0AURA*100)}% harder. Air Assault lets the squad fire from the hold, but pins the aircraft`},
+ chinook:{hk:'k',n:'Chinook',a:'heli',hp:287,dm:0,rg:0,rt:0,sp:4.5,vi:8,cp:300,ce:100,bt:15,w:0,fly:1,cap:15,aura:U0AURA,auraR:3,assault:1,tech:'u_chinook',d:`Unarmed transport: 15 infantry (right-click to load, U to unload). Nearby infantry hit ${Math.round(U0AURA*100)}% harder. Air Assault lets the squad fire from the hold, but pins the aircraft`},
  /* v86 GREEN, Helipad slot, and it REPLACES the observation helicopter the
     roadmap first proposed. The highest sight in the game (above the Radar Tent's
     13, so it beats the buildings as well as the units), unarmed, and drifting at
@@ -142,7 +142,7 @@ const U={
     It has no unit limit by decision, and BALLOON_FUEL is the brake instead - it
     comes down on its own after three minutes whether or not anyone shot at it,
     and the crash takes the crew with it. Bail is the only way to get them back. */
- balloon:{n:'Observation Balloon',a:'balloon',hp:120,dm:0,rg:0,rt:0,sp:1.2,vi:BALLOON_VI,cp:250,ce:60,bt:14,w:0,fly:1,balloon:1,highg:1,bail:1,tech:'u_balloon',d:''}, // d is written in the post-table pass below B, on the same rule as the Command Truck's
+ balloon:{hk:'b',n:'Observation Balloon',a:'balloon',hp:120,dm:0,rg:0,rt:0,sp:1.2,vi:BALLOON_VI,cp:250,ce:60,bt:14,w:0,fly:1,balloon:1,highg:1,bail:1,tech:'u_balloon',d:''}, // d is written in the post-table pass below B, on the same rule as the Command Truck's
  para:{n:'Paratrooper',a:'inf',hp:171.75,dm:13.35,rg:3.8,rt:.35,sp:2.4,vi:6,cp:0,ce:0,bt:1,w:'b',noTrain:1,d:'Elite drop infantry; swaps SMG / AT / HE by target'} // v42: -25% hp & dps (was 229/17.8); ~132 HP effective under v42 pacing; paradrop-only
 };
 // Combat pacing: inflate HP and trim damage so engagements run longer (see HP_SCALE/
@@ -202,31 +202,31 @@ const BUNK_GAR=4; // the Bunker's garrison, named ABOVE the table on the same ru
    to be guarded separately because aiTick calls placeBuilding directly and never
    goes through execCmd - the same surface v87's Napalm gate hid behind. */
 const B={
- hq:{cat:'misc',n:'HQ',hp:1500,sz:3,cp:500,ce:100,bt:25,vi:8,prod:['truck'],drop:1,anywhere:1,sup:10,lim:1,d:`Command centre and drop-off; anchors a ${BUILD_R_HQ}-tile build zone. One at a time — rebuild it from the 🏛 button over the minimap if it falls`},
- barracks:{cat:'prod',n:'Barracks',hp:620,sz:2,cp:160,ce:0,bt:10,vi:5,prod:['grunt','grenadier','bazooka','gunner'],d:'Trains infantry'},
- lab:{cat:'misc',n:'Research Lab',hp:640,sz:2,cp:260,ce:60,bt:14,vi:5,req:'barracks',lab:1,d:''},
- garage:{cat:'prod',n:'Garage',hp:720,sz:3,cp:240,ce:20,bt:14,vi:5,req:'barracks',tech:'b_garage',prod:['jeep','tank','aatruck','medic','apc'],d:'Builds vehicles'},
- helipad:{cat:'prod',n:'Helipad',hp:520,sz:3,cp:220,ce:60,bt:12,vi:5,req:'garage',tech:'b_helipad',prod:['heli','apache'],d:'Builds helicopters'},
- generator:{cat:'eco',n:'Generator',hp:360,sz:2,cp:140,ce:0,bt:8,vi:4,tech:'b_generator',eps:1.6,d:'+1.6 ⚡/sec'},
- supply:{cat:'eco',n:'Supply Depot',hp:420,sz:2,cp:120,ce:0,bt:9,vi:4,sup:DEPOT_SUP,d:`Supply yard: +${DEPOT_SUP} 🪖 supply. No research needed.`},
- guardtower:{cat:'def',n:'Guard Tower',hp:540,sz:1,cp:170,ce:30,bt:10,vi:9,req:'barracks',tech:'b_guardtower',dm:15,rg:7,rt:.6,tower:1,d:'Auto-cannon tower: long sight and reach, fires on its own'},
- radar:{cat:'misc',n:'Radar Tent',hp:420,sz:2,cp:200,ce:50,bt:10,vi:13,req:'barracks',tech:'b_radar',uplink:1,d:`Huge sight, plus enemy blips on the minimap. Target Uplink: +${UPLINK_RG} range and +${UPLINK_VI} sight army-wide for ${UPLINK_T}s`},
- radiotower:{cat:'misc',n:'Radio Tower',hp:588,sz:2,cp:60,ce:200,bt:12,vi:12,req:'barracks',tech:'b_radiotower',lim:1,radio:1,d:'Opens the call-down panel on the right, 1 max. Long sight'}, // v30: 293 HP effective; inverted cost (mostly ⚡)
- dump:{cat:'misc',n:'Munitions Dump',hp:520,sz:2,cp:220,ce:40,bt:10,vi:5,req:'barracks',tech:'b_dump',scuttle:1,d:'+'+Math.round(DUMP_AURA*100)+'% damage to friends within '+DUMP_R+' tiles. Scuttle detonates it for '+SCUTTLE_DM+' over '+SCUTTLE_R+' tiles, '+Math.round(SCUTTLE_FF*100)+'% of it onto your own'},
+ hq:{hk:'y',cat:'misc',n:'HQ',hp:1500,sz:3,cp:500,ce:100,bt:25,vi:8,prod:['truck'],drop:1,anywhere:1,sup:10,lim:1,d:`Command centre and drop-off; anchors a ${BUILD_R_HQ}-tile build zone. One at a time — rebuild it from the 🏛 button over the minimap if it falls`},
+ barracks:{hk:'b',cat:'prod',n:'Barracks',hp:620,sz:2,cp:160,ce:0,bt:10,vi:5,prod:['grunt','grenadier','bazooka','gunner'],d:'Trains infantry'},
+ lab:{hk:'l',cat:'misc',n:'Research Lab',hp:640,sz:2,cp:260,ce:60,bt:14,vi:5,req:'barracks',lab:1,d:''},
+ garage:{hk:'g',cat:'prod',n:'Garage',hp:720,sz:3,cp:240,ce:20,bt:14,vi:5,req:'barracks',tech:'b_garage',prod:['jeep','tank','aatruck','medic','apc'],d:'Builds vehicles'},
+ helipad:{hk:'i',cat:'prod',n:'Helipad',hp:520,sz:3,cp:220,ce:60,bt:12,vi:5,req:'garage',tech:'b_helipad',prod:['heli','apache'],d:'Builds helicopters'},
+ generator:{hk:'e',cat:'eco',n:'Generator',hp:360,sz:2,cp:140,ce:0,bt:8,vi:4,tech:'b_generator',eps:1.6,d:'+1.6 ⚡/sec'},
+ supply:{hk:'v',cat:'eco',n:'Supply Depot',hp:420,sz:2,cp:120,ce:0,bt:9,vi:4,sup:DEPOT_SUP,d:`Supply yard: +${DEPOT_SUP} 🪖 supply. No research needed.`},
+ guardtower:{hk:'t',cat:'def',n:'Guard Tower',hp:540,sz:1,cp:170,ce:30,bt:10,vi:9,req:'barracks',tech:'b_guardtower',dm:15,rg:7,rt:.6,tower:1,d:'Auto-cannon tower: long sight and reach, fires on its own'},
+ radar:{hk:'n',cat:'misc',n:'Radar Tent',hp:420,sz:2,cp:200,ce:50,bt:10,vi:13,req:'barracks',tech:'b_radar',uplink:1,d:`Huge sight, plus enemy blips on the minimap. Target Uplink: +${UPLINK_RG} range and +${UPLINK_VI} sight army-wide for ${UPLINK_T}s`},
+ radiotower:{hk:'o',cat:'misc',n:'Radio Tower',hp:588,sz:2,cp:60,ce:200,bt:12,vi:12,req:'barracks',tech:'b_radiotower',lim:1,radio:1,d:'Opens the call-down panel on the right, 1 max. Long sight'}, // v30: 293 HP effective; inverted cost (mostly ⚡)
+ dump:{hk:'m',cat:'misc',n:'Munitions Dump',hp:520,sz:2,cp:220,ce:40,bt:10,vi:5,req:'barracks',tech:'b_dump',scuttle:1,d:'+'+Math.round(DUMP_AURA*100)+'% damage to friends within '+DUMP_R+' tiles. Scuttle detonates it for '+SCUTTLE_DM+' over '+SCUTTLE_R+' tiles, '+Math.round(SCUTTLE_FF*100)+'% of it onto your own'},
  /* mult (v85): a bot builds this exclusive in NUMBERS rather than as a single
     signature piece, so it leads the build wish list and gets second and third
     entries later on. It was a name check on 'bunker' and 'turbine' inside aiTick
     until ub became a list; as a table flag the row states its own habit. */
- bunker:{cat:'def',n:'Bunker',hp:820,sz:2,cp:200,ce:0,bt:10,vi:6,req:'barracks',tech:'b_bunker',gar:BUNK_GAR,lock:1,mult:1,d:`Garrisons ${BUNK_GAR} infantry, who fire out and are safe from splash. Lockdown silences them but cuts damage taken ${Math.round(LOCK_RED*100)}% for ${LOCK_T}s`},
- outpost:{cat:'eco',n:'Outpost',hp:780,sz:2,cp:240,ce:20,bt:13,vi:7,req:'barracks',prod:['truck'],drop:1,anywhere:1,expand:1,sup:4,d:`Forward base: builds and refuels Dump Trucks anywhere, and opens a ${BUILD_R_OUTPOST}-tile build zone`},
- turbine:{cat:'eco',n:'Wind Turbine',hp:260,sz:1,cp:110,ce:0,bt:6,vi:4,tech:'b_turbine',eps:2.2,over:1,mult:1,d:`+2.2 ⚡/sec, cheap. Overdrive runs it at ×${OVER_MUL} for ${OVER_T}s, then it makes nothing for ${OVER_OFF}s`},
+ bunker:{hk:'n',cat:'def',n:'Bunker',hp:820,sz:2,cp:200,ce:0,bt:10,vi:6,req:'barracks',tech:'b_bunker',gar:BUNK_GAR,lock:1,mult:1,d:`Garrisons ${BUNK_GAR} infantry, who fire out and are safe from splash. Lockdown silences them but cuts damage taken ${Math.round(LOCK_RED*100)}% for ${LOCK_T}s`},
+ outpost:{hk:'z',cat:'eco',n:'Outpost',hp:780,sz:2,cp:240,ce:20,bt:13,vi:7,req:'barracks',prod:['truck'],drop:1,anywhere:1,expand:1,sup:4,d:`Forward base: builds and refuels Dump Trucks anywhere, and opens a ${BUILD_R_OUTPOST}-tile build zone`},
+ turbine:{hk:'n',cat:'eco',n:'Wind Turbine',hp:260,sz:1,cp:110,ce:0,bt:6,vi:4,tech:'b_turbine',eps:2.2,over:1,mult:1,d:`+2.2 ⚡/sec, cheap. Overdrive runs it at ×${OVER_MUL} for ${OVER_T}s, then it makes nothing for ${OVER_OFF}s`},
  /* v85 BLUE, second structure. The passive is the point: NOTHING repaired aircraft
     before this - the Medic Truck heals ground units and buildings, and a damaged
     Huey stayed damaged until it died. So Blue's second building is the only field
     hospital in the game that an aircraft can use, which suits the fastest air force
     in the game. Scramble is the timed half, on the building's existing upT and
     abilityCool exactly as Overdrive and Lockdown already are. */
- fwdpad:{cat:'misc',n:'Forward Pad',hp:480,sz:2,cp:230,ce:70,bt:12,vi:6,req:'garage',tech:'b_fwdpad',pad:1,scram:1,d:`Repairs friendly aircraft within ${PAD_R} tiles at ${PAD_REP} HP/s — nothing else in the game repairs them. Scramble: +${Math.round(SCRAM_SPD*100)}% speed to every aircraft you own for ${SCRAM_T}s`},
+ fwdpad:{hk:'m',cat:'misc',n:'Forward Pad',hp:480,sz:2,cp:230,ce:70,bt:12,vi:6,req:'garage',tech:'b_fwdpad',pad:1,scram:1,d:`Repairs friendly aircraft within ${PAD_R} tiles at ${PAD_REP} HP/s — nothing else in the game repairs them. Scramble: +${Math.round(SCRAM_SPD*100)}% speed to every aircraft you own for ${SCRAM_T}s`},
  /* v87 TAN, second structure. The passive is a PRODUCTION buff rather than an
     aura, which is what "produced while it stands" means: the hull is baked in at
     makeUnit and the vehicle keeps it if the Foundry burns down an hour later. It
@@ -234,7 +234,7 @@ const B={
     it - the upgrade is a Garage that builds better, the Foundry is an army that
     does. Pour is the timed half, on the abilityCool every other structure ability
     already uses, and it is instantaneous, so it writes no upT. */
- foundry:{cat:'misc',n:'Foundry',hp:660,sz:2,cp:260,ce:50,bt:13,vi:5,req:'garage',tech:'b_foundry',foundry:1,pour:1,d:`Vehicles built while it stands keep +${Math.round(FOUNDRY_HP*100)}% hull for good. Pour finishes the front vehicle in every Garage at once, at +${Math.round(POUR_COST*100)}% plastic each. ${POUR_CD}s cooldown`},
+ foundry:{hk:'n',cat:'misc',n:'Foundry',hp:660,sz:2,cp:260,ce:50,bt:13,vi:5,req:'garage',tech:'b_foundry',foundry:1,pour:1,d:`Vehicles built while it stands keep +${Math.round(FOUNDRY_HP*100)}% hull for good. Pour finishes the front vehicle in every Garage at once, at +${Math.round(POUR_COST*100)}% plastic each. ${POUR_CD}s cooldown`},
  /* v86 GREEN, second structure. Both halves are the same radius and the same
     scan, which is why they share CPOST_R: a post is a place your army gets better
     at being, not two overlapping effects with different reaches. The passive is a
@@ -244,7 +244,7 @@ const B={
     a desync. Regroup is the timed half, on the same abilityCool every other
     structure ability already uses, and is instantaneous rather than a duration:
     there is nothing to run down, so it writes no upT. */
- cmdpost:{cat:'misc',n:'Command Post',hp:640,sz:2,cp:250,ce:60,bt:13,vi:7,req:'barracks',tech:'b_cmdpost',cpost:1,regroup:1,d:`Promotions within ${CPOST_R} tiles cost ${Math.round((1-CPOST_VET)*100)}% fewer kills. Regroup returns ${Math.round(REGROUP_HP*100)}% of maximum HP to everything in that radius. ${REGROUP_CD}s cooldown`},
+ cmdpost:{hk:'m',cat:'misc',n:'Command Post',hp:640,sz:2,cp:250,ce:60,bt:13,vi:7,req:'barracks',tech:'b_cmdpost',cpost:1,regroup:1,d:`Promotions within ${CPOST_R} tiles cost ${Math.round((1-CPOST_VET)*100)}% fewer kills. Regroup returns ${Math.round(REGROUP_HP*100)}% of maximum HP to everything in that radius. ${REGROUP_CD}s cooldown`},
  /* v88 GRAY, second structure and the last of roadmap 2. It is a `barr` row, and
     that one flag hands it the ordinary wall's entire life at once: click-and-drag
     laying, the 1x1 footprint, the passability block, the lightweight teardown in
@@ -256,8 +256,8 @@ const B={
     Priced at three times the wall for three times the hull, which makes HP per
     plastic identical - what the extra 40 buys is the aura and the mine, not
     tougher plastic per coin. */
- hbarricade:{cat:'def',n:'Heavy Barricade',hp:HBARR_HP,sz:1,cp:HBARR_COST,ce:0,bt:2.2,vi:0,barr:1,hbarr:1,req:'lab',tech:'b_hbarricade',d:`Reinforced wall, ${HBARR_HP} HP. Everything of yours on the tiles around it — units, structures, other walls — takes ${Math.round(HBARR_RED*100)}% less damage, and overlapping walls STACK to ${Math.round(HBARR_CAP*100)}%. A ${Math.round(HBARR_MINE_P*100)}% chance to bury a mine ${HBARR_MINE_D} tiles forward that only YOU see. Click-and-drag to lay a line.`},
- barricade:{cat:'def',n:'Barricade',hp:BARR_HP,sz:1,cp:BARR_COST,ce:0,bt:1.0,vi:0,barr:1,d:`Czech hedgehog: blocks ground movement, ${BARR_HP} HP, ${BARR_COST} ⬢ each. Click-and-drag to lay a line.`},
+ hbarricade:{hk:'m',cat:'def',n:'Heavy Barricade',hp:HBARR_HP,sz:1,cp:HBARR_COST,ce:0,bt:2.2,vi:0,barr:1,hbarr:1,req:'lab',tech:'b_hbarricade',d:`Reinforced wall, ${HBARR_HP} HP. Everything of yours on the tiles around it — units, structures, other walls — takes ${Math.round(HBARR_RED*100)}% less damage, and overlapping walls STACK to ${Math.round(HBARR_CAP*100)}%. A ${Math.round(HBARR_MINE_P*100)}% chance to bury a mine ${HBARR_MINE_D} tiles forward that only YOU see. Click-and-drag to lay a line.`},
+ barricade:{hk:'c',cat:'def',n:'Barricade',hp:BARR_HP,sz:1,cp:BARR_COST,ce:0,bt:1.0,vi:0,barr:1,d:`Czech hedgehog: blocks ground movement, ${BARR_HP} HP, ${BARR_COST} ⬢ each. Click-and-drag to lay a line.`},
  nest:{n:'Wildlife Nest',hp:NEST_HP,sz:1,cp:0,ce:0,bt:1,vi:0,neutralNest:1,d:'A wild critter den. Smash it to stop the swarm from respawning.'},
  /* v107 LEVEL ART THAT CAN BE SHOT DOWN. The Attic's compound walls are built of
     these: a 2x2 neutral structure drawn as attic clutter (boxes, a trunk, a bale
@@ -381,37 +381,44 @@ const RESEARCH={};
 // --- unit unlocks (everything except grunt + dump truck) ---
 for(const k in U){
  const t=U[k];if(!t.tech)continue;
- RESEARCH[t.tech]={kind:'unlock',name:t.n,icon:'🔬',
+ RESEARCH[t.tech]={kind:'unlock',name:t.n,icon:'🔬',hk:t.hk,
   cp:rscale(t.cp+t.ce*0.5),ce:rscale(Math.max(t.ce, t.cp*0.45)),time:rtime(t.cp+t.ce),
   d:'Unlock production of the '+t.n+'.'};
 }
 // --- building unlocks (everything except HQ, outpost, barracks, lab) ---
 for(const k in B){
  const t=B[k];if(!t.tech)continue;
- RESEARCH[t.tech]={kind:'unlock',name:t.n,icon:'🏗️',bkey:k,
+ RESEARCH[t.tech]={kind:'unlock',name:t.n,icon:'🏗️',bkey:k,hk:t.hk,
   cp:rscale(t.cp*0.85+t.ce*0.5),ce:rscale(Math.max(t.ce, t.cp*0.4)),time:rtime(t.cp+t.ce),
   d:'Unlock construction of the '+t.n+'.'};
 }
 // --- building upgrades (one global per type; excludes HQ, outpost, radar) ---
+// v110: `hk` is the tile's hotkey (see MENU_KEYS). An upgrade takes the letter of
+// the building it improves WHERE THAT LETTER IS FREE on the panel it appears on -
+// which is true of the three producers, whose own tile is never on their own panel,
+// and false in the Research Lab, where the unlock tile is standing beside it. So
+// barracks/garage/helipad/lab restate their building's letter and the four the Lab
+// shows carry their own; the three exclusive ones can share 'v' because no army can
+// ever see two of them.
 // each upgrade lists the building key it improves and the unlock it requires
 // first ('' = no unlock needed, e.g. barracks). hp = max-HP multiplier; for
 // producing buildings, unitBuff = +HP/+DMG fraction applied to NEW units; for
 // non-producing buildings, eff = effect multiplier; guard tower uses dm/hp.
 const UPGRADES={
- barracks:  {req:'',           hp:1.30, unitBuff:0.20, name:'Barracks Upgrade',   d:'Tougher barracks; trains infantry with +20% HP & damage.'},
- garage:    {req:'b_garage',   hp:1.30, unitBuff:0.20, name:'Garage Upgrade',     d:'Tougher garage; builds vehicles with +20% HP & damage.'},
- helipad:   {req:'b_helipad',  hp:1.30, unitBuff:0.20, name:'Helipad Upgrade',    d:'Tougher helipad; builds choppers with +20% HP & damage.'},
- guardtower:{req:'b_guardtower',hp:1.12, dm:1.12,       name:'Guard Tower Upgrade',d:'Guard towers gain +12% HP & +12% damage.'},
- generator: {req:'b_generator',hp:1.30, eff:1.5,        name:'Generator Upgrade',  d:'Sturdier generators producing 50% more electricity.'},
- turbine:   {req:'b_turbine',  hp:1.30, eff:1.5,        name:'Turbine Upgrade',    d:'Sturdier turbines producing 50% more electricity.'},
- dump:      {req:'b_dump',     hp:1.30,                 name:'Munitions Upgrade',  d:'Sturdier dump; damage aura raised from +'+Math.round(DUMP_AURA*100)+'% to +'+Math.round(DUMP_AURA_UP*100)+'%.'},
- bunker:    {req:'b_bunker',   hp:1.30, eff:1.5,        name:'Bunker Upgrade',     d:'Sturdier bunker; garrison capacity raised from 4 to 6.'},
- lab:       {req:'',           hp:1.30, labSpeed:0.6,   name:'Lab Upgrade',        d:'Sturdier lab; research completes 40% faster.'}
+ barracks:  {hk:'b', req:'',           hp:1.30, unitBuff:0.20, name:'Barracks Upgrade',   d:'Tougher barracks; trains infantry with +20% HP & damage.'},
+ garage:    {hk:'g', req:'b_garage',   hp:1.30, unitBuff:0.20, name:'Garage Upgrade',     d:'Tougher garage; builds vehicles with +20% HP & damage.'},
+ helipad:   {hk:'i', req:'b_helipad',  hp:1.30, unitBuff:0.20, name:'Helipad Upgrade',    d:'Tougher helipad; builds choppers with +20% HP & damage.'},
+ guardtower:{hk:'r', req:'b_guardtower',hp:1.12, dm:1.12,       name:'Guard Tower Upgrade',d:'Guard towers gain +12% HP & +12% damage.'},
+ generator: {hk:'c', req:'b_generator',hp:1.30, eff:1.5,        name:'Generator Upgrade',  d:'Sturdier generators producing 50% more electricity.'},
+ turbine:   {hk:'v', req:'b_turbine',  hp:1.30, eff:1.5,        name:'Turbine Upgrade',    d:'Sturdier turbines producing 50% more electricity.'},
+ dump:      {hk:'v', req:'b_dump',     hp:1.30,                 name:'Munitions Upgrade',  d:'Sturdier dump; damage aura raised from +'+Math.round(DUMP_AURA*100)+'% to +'+Math.round(DUMP_AURA_UP*100)+'%.'},
+ bunker:    {hk:'v', req:'b_bunker',   hp:1.30, eff:1.5,        name:'Bunker Upgrade',     d:'Sturdier bunker; garrison capacity raised from 4 to 6.'},
+ lab:       {hk:'l', req:'',           hp:1.30, labSpeed:0.6,   name:'Lab Upgrade',        d:'Sturdier lab; research completes 40% faster.'}
 };
 // register each upgrade as a research entry keyed up_<bld>
 for(const bk in UPGRADES){
  const ug=UPGRADES[bk], base=B[bk];
- RESEARCH['up_'+bk]={kind:'upgrade',bkey:bk,reqTech:ug.req,name:ug.name,icon:'⬆️',
+ RESEARCH['up_'+bk]={kind:'upgrade',bkey:bk,reqTech:ug.req,name:ug.name,icon:'⬆️',hk:ug.hk,
   cp:rscale(base.cp*0.6+base.ce*0.5),ce:rscale(Math.max(base.ce,base.cp*0.35)+30),time:rtime(base.cp*0.7+base.ce),
   d:ug.d};
 }

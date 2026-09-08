@@ -457,10 +457,23 @@ section('T50.D build-menu hotkeys');
      (the panel gate is e.p.human and a watch match has no human player), so the
      registry and that binding can never be live together. That premise is pinned
      just above, in the widest-menu block, rather than assumed here. */
-  ok('T50.D fourteen distinct keys', MENU_KEYS.length === 14 && new Set(MENU_KEYS).size === 14);
+  /* v110: FIFTEEN. 'b' joined the alphabet because the blast-effects preview,
+     which is a documented toy, was holding it while the HQ's own menu used all
+     fourteen letters with nothing spare; that binding moved to the backtick,
+     which no menu can want. The count is a conscious edit, not a loosened one:
+     the disjointness claims below are what make the number legal. */
+  ok('T50.D fifteen distinct keys', MENU_KEYS.length === 15 && new Set(MENU_KEYS).size === 15);
   ok('T50.D none of them is a movement key or the space bar',
      !MENU_KEYS.some(k => 'wasd '.indexOf(k) >= 0));
-  const taken = ['b', 'f', 'h', 'j', 'p', 'q', 'u', 'x'];
+  const taken = ['f', 'h', 'j', 'p', 'q', 'u', 'x'];
+  /* the release of 'b' is read out of the HANDLER, not asserted from this list:
+     the blast preview must name the backtick and must not name b/B any more, or
+     'b' would mean two live things at once - the rule the alphabet exists under */
+  {
+    const src = require('fs').readFileSync('pw.html', 'utf8');
+    ok('T50.D ...and \'b\' was released by the binding that had it, which now names the backtick',
+       src.indexOf("k==='`'||k==='~'") > 0 && src.indexOf("k==='b'||k==='B'") < 0);
+  }
   ok('T50.D none of them collides with an in-match binding that can be live beside a menu',
      !MENU_KEYS.some(k => taken.indexOf(k) >= 0));
   ok('T50.D ...and the one overlap is the watch-only key, declared rather than accidental',
@@ -478,9 +491,10 @@ section('T50.D build-menu hotkeys');
   ok('T50.D hotNext walks the alphabet in order and then returns null',
      (() => {
        hotReset();
-       const got = []; for (let i = 0; i < 16; i++) got.push(hotNext());
+       const got = []; for (let i = 0; i < MENU_KEYS.length + 2; i++) got.push(hotNext());
        hotReset();
-       return got.slice(0, 14).join('') === MENU_KEYS.join('') && got[14] === null && got[15] === null;
+       return got.slice(0, MENU_KEYS.length).join('') === MENU_KEYS.join('') &&
+              got[MENU_KEYS.length] === null && got[MENU_KEYS.length + 1] === null;
      })());
 }
 {
@@ -492,10 +506,14 @@ section('T50.D build-menu hotkeys');
   const hq = p.blds.find(b => b.key === 'hq');
   setSel([hq]);
   const n = Object.keys(MENU_HOT).length;
-  ok(`T50.D the HQ panel is the widest menu and it fits the alphabet exactly (${n})`,
-     n === MENU_KEYS.length && n === constructRoster('hq').length + fullRoster(p, 'hq').length);
-  ok('T50.D every alphabet letter is claimed on it',
-     MENU_KEYS.every(k => !!MENU_HOT[k]));
+  /* v110: it fits INSIDE the alphabet now, with exactly one letter to spare -
+     the first spare this menu has had since v85, and the reason a fifteenth tile
+     is possible at all. Still stated as "one tile, one key": the registry's size
+     is the tile count, which is what catches a tile shipping with no key. */
+  ok(`T50.D the HQ panel is the widest menu and every tile on it has its own key (${n})`,
+     n === constructRoster('hq').length + fullRoster(p, 'hq').length && n === MENU_KEYS.length - 1);
+  ok('T50.D ...and the one letter it does not claim is the spare, not a lost tile',
+     MENU_KEYS.filter(k => !MENU_HOT[k]).join('') === 'k');
 
   /* every OTHER host fits with room to spare, checked across all four factions
      so a faction-exclusive cannot push one over without this firing */
@@ -516,15 +534,15 @@ section('T50.D build-menu hotkeys');
     }
   }
   ok(`T50.D no host x faction menu outgrows the alphabet (widest ${worst} at ${worstAt})`,
-     worst === 14 && worst <= MENU_KEYS.length);
+     worst === 14 && worst < MENU_KEYS.length);
   /* the fourteenth key is 'v', which the spectator box also uses. The two can
      never be live together, and this is the premise rather than the prose: a watch
      match has no human player, and the Construct menu is built only under
      e.p.human, so the registry is empty for every match in which 'v' means
      anything. Asserted here rather than in tail_v86 because this is the section
      that owns the alphabet. */
-  ok('T50.D the fourteenth key is the one no menu-bearing match can also bind',
-     MENU_KEYS.length === 14 && MENU_KEYS.includes('v') &&
+  ok('T50.D the one key a menu shares with anything is the one no menu-bearing match can also bind',
+     MENU_KEYS.length === 15 && MENU_KEYS.includes('v') &&
      refreshSelPanel.toString().indexOf("e.p.human&&e.prog>=1") > 0);
   {
     const keep = G;
@@ -549,7 +567,11 @@ section('T50.D build-menu hotkeys');
   G.placing = null;
   ok('T50.D on the HQ, C starts a placement', menuHotkey('c') === true && !!G.placing);
   const placed = G.placing.key;
-  ok('T50.D ...of the first Construct entry', placed === constructRoster('hq')[0]);
+  /* v110: of the structure whose ROW declares 'c', which is the Barricade, and no
+     longer of whatever happened to sort first. Read off the table rather than
+     transcribed, so this states the design instead of the outcome. */
+  ok('T50.D ...of the structure that declares C, wherever it sits in the menu',
+     placed === 'barricade' && B[placed].hk === 'c' && constructRoster('hq').indexOf(placed) > 0);
   G.placing = null;
 
   setSel([bar]);
@@ -560,8 +582,21 @@ section('T50.D build-menu hotkeys');
   ok('T50.D ...and the same letter now means something else entirely',
      menuHotkey('c') === true && !G.placing);
   execCmds();
-  ok('T50.D ...specifically the first trainable in its roster',
-     bar.queue.length === 1 && bar.queue[0] === fullRoster(p, 'barracks')[0]);
+  /* v110: 'c' is the Machine Gunner's tile now, not the Grunt's - and at match
+     start he is still locked, so the ONE tile that trains and unlocks (v71) sends
+     a research command rather than a train. Both arms are driven, because the
+     claim is "the key is the tile's, whichever face the tile is wearing". */
+  ok('T50.D ...specifically the trainable that declares C, not the first in its roster',
+     U[fullRoster(p, 'barracks').find(k => U[k].hk === 'c')].hk === 'c' &&
+     fullRoster(p, 'barracks').findIndex(k => U[k].hk === 'c') > 0 &&
+     bar.queue.length === 0 && bar.techCur === U.gunner.tech);
+  {
+    p.tech.add(U.gunner.tech); bar.techCur = null; bar.techT = 0;   // p.tech is a Set
+    lastSelSig = ''; refreshSelPanel();
+    ok('T50.D ...and once he is unlocked the same key trains him',
+       menuHotkey('c') === true && (execCmds(), bar.queue.length === 1 && bar.queue[0] === 'gunner'));
+    bar.queue.length = 0;
+  }
 
   /* a key with no tile behind it is refused rather than swallowed */
   ok('T50.D an unbound letter is refused', menuHotkey('q') === false && menuHotkey('9') === false);
@@ -619,8 +654,11 @@ section('T50.D build-menu hotkeys');
   ok('T50.D every one carries a printed badge', badged === tiles);
   ok('T50.D ...and every one advertises the key in its tooltip, researchBtn included',
      tipped === tiles);
+  /* v110: walked off the REGISTRY rather than off the head of the alphabet - the
+     lab's letters are declared now and are not a prefix of MENU_KEYS. */
   ok('T50.D the badge letter matches the registry',
-     MENU_KEYS.slice(0, tiles).every(k => {
+     Object.keys(MENU_HOT).length === tiles &&
+     Object.keys(MENU_HOT).every(k => {
        const b = MENU_HOT[k];
        return b && typeof b.innerHTML === 'string' &&
               b.innerHTML.indexOf('>' + k.toUpperCase() + '<') >= 0;

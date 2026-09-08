@@ -268,7 +268,13 @@ addEventListener('keydown',e=>{
  else if(k==='f'||k==='F'){if(G.sel.some(s=>s.kind==='unit'&&s.p===G.human))G.amove=true}
  else if(k==='h'||k==='H'){const ids=G.sel.filter(u=>u.kind==='unit'&&u.p===G.human).map(u=>u.id);if(ids.length){submitCmd('hold',{ids});msg('Holding position.')}} // v29: hold position
  else if(k==='u'||k==='U'){const car=G.sel.filter(s=>s.kind==='unit'&&s.p===G.human&&s.t.cap&&s.garrison&&s.garrison.length);const ids=car.filter(dropOk).map(s=>s.id);if(ids.length){submitCmd('unloadu',{ids});msg('Unloading.')}else if(car.length)msg('No clear ground below.')} // v30: unload a transport; v46: refuse over open water
- else if(k==='b'||k==='B'){ // preview the blast FX at the cursor (no damage); player-facing, documented in Help
+ /* v110: the blast preview moved off 'b'. It is a toy - harmless fireworks at
+    the cursor - and it was holding the best unclaimed letter the left hand owns
+    while the HQ's Construct menu was using all fourteen of the alphabet's with
+    nothing spare. The backtick is a key no build menu can ever want, so this is
+    the one binding in the file that can never come under pressure again. Shift
+    still asks for the big one: shift+` is '~', which is why both are matched. */
+ else if(k==='`'||k==='~'){ // preview the blast FX at the cursor (no damage); player-facing, documented in Help
   const w=screenToWorld(MOUSE.x,MOUSE.y);
   spawnExplosion(w.x,w.y,e.shiftKey?2.2:1.2);stampScorch(w.x,w.y,e.shiftKey?22:12);G.shake=Math.max(G.shake,e.shiftKey?6:3);sfxBoom(w.x,w.y,e.shiftKey?'huge':'big');
  }

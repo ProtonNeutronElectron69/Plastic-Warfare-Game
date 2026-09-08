@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v109)
+# Plastic Warfare headless test harness (updated at v110)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -9,7 +9,7 @@ It grew by prepending, so the newest release sits in the MIDDLE rather than at
 the top, and the roadmap chapters below are HISTORY, not work in flight — the
 last of the three landed at v97 and nothing is outstanding. Practical route:
 
-- **What shipped recently:** the `## v109`, `## v108` and `## v107` sections
+- **What shipped recently:** the `## v110`, `## v109` and `## v108` sections
   (v107 has three owner passes of its own; `## v104` covers v104 through
   v104.4 in one chapter). Each one is the finding, the change, and what it
   measured.
@@ -1181,6 +1181,111 @@ error a reader would see as anything but an odd blank report. `sim_report.js` no
 compiles the page's script block with `new Function` before writing (compiles, does
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
+
+## v110 — the hotkey pass (not part of a roadmap)
+
+The owner asked for a review of the hotkey assignments, with two goals: keep as
+many keys as possible **within reach of the left hand**, and make sure a thing
+reachable from more than one host — the Dump Truck, the Barricade — **keeps one
+key**. Both turned out to be the same defect, and the review found a third
+nobody had asked about. `tail_v110.js` (T95, 26 checks; the suite is **6,923**),
+plus eleven restatements in `T50.D`. **No trail moved and no repin was due**:
+the selection panel is client-local and T95.F drives every panel in the game
+between two hash reads.
+
+### The measurement, before anything was touched
+
+Every tile took the next letter of `MENU_KEYS` in the order the panel happened
+to build it, so **a letter belonged to a SLOT, not to a thing**. Read off v109
+(`harness` probe, all four armies, six hosts):
+
+| | HQ | Outpost | note |
+|---|---|---|---|
+| Barricade | `m` (Tan/Green/Gray), `n` (Blue) | `c` | the owner's ask |
+| Guard Tower | `n` / `o` | `e` | |
+| HQ | `r` / `t` | `g` | |
+| Dump Truck | `z` | `i` | the owner's ask |
+| Garage | `e` to build | — | `c` to research, in the Lab |
+
+The per-army half is the finding nobody was looking for: **Blue has a fourth
+economy structure**, so everything below it in the sorted roster shifted one
+along and the same tile answered to a different key depending on which army you
+had picked. All three are one bug.
+
+### The change: `hk` is a field on the row
+
+`B`, `U` and `UPGRADES` each declare `hk`; `RESEARCH` **derives** its own from
+whatever the tech unlocks, so researching the Garage is `g` because building it
+is. `hotFor(pref)` honours a declared letter while it is free on this panel and
+falls back to `hotNext()` otherwise — the fallback is what stops a row that
+forgets its letter from shipping keyless (the v86 failure from the other
+direction), and T95.D drives both arms by blanking a row's `hk` at runtime and
+then by making it collide.
+
+**The alphabet is fifteen letters now, and `b` is the new one.** It was held by
+the blast-effects preview — a documented toy — while the HQ's own menu was using
+all fourteen with nothing spare. That binding moved to the **backtick**, a key no
+build menu can ever want, so it is the one binding in the file that cannot come
+under pressure again. `k` is now spare: the first spare letter this menu has had
+since v85.
+
+**Left hand first, mnemonic second.** Eight of the fifteen (`b c e g r t v z`)
+sit on the left half of the keyboard, and they go to the eight most-pressed
+tiles — Dump Truck `r`, Barricade `c`, Supply Depot `v`, Generator `e`, Guard
+Tower `t`, Barracks `b`, Outpost `z`, Garage `g`. Six of those eight are also
+mnemonics for free. **The Outpost is the one place the two rules pulled apart**:
+it gave up `o` to take the eighth left-hand key, and that trade is stated here
+rather than hidden, because it is the only letter in the set a player might
+reasonably have expected elsewhere.
+
+### Measured
+
+| | v109 | v110 |
+|---|---|---|
+| left-half share of every key on every host × faction panel | **95/184 (51.6%)** | **120/184 (65.2%)** |
+| HQ panel | 7/14 left, on whatever sorted there | **8/14**, on the eight most-pressed |
+| Barracks panel | 3/6–7 left | **6/6–7** |
+| a structure's key across the four armies | 2 different letters for 6 rows | **one letter, all four** |
+| spare letters in the alphabet | 0 | **1 (`k`)** |
+
+The v109 column was measured with the base checked out in a **`git worktree`**
+and its own `GAME_VER` printed beside the number — the v106 lesson, because
+`harness/build.sh` chains to the root build and would otherwise have measured
+this release against itself.
+
+### Traps, all paid for
+
+- **THE QUICK-REFERENCE HELP BOX HAD BEEN WRONG SINCE v98.** It still told the
+  player `Ctrl+1-9` saved a control group and `1-9` recalled it — eleven
+  releases after the abilities took the number row and the groups moved to
+  F1–F9 — while the line **two rows below it** said the right thing the whole
+  time. Nothing could have failed: no check reads help prose against the
+  handler. T95.E does now, both ways.
+- **A FIXTURE THAT PRESSES A KEY MAY BE PRESSING A DIFFERENT TILE.** `T50.D`
+  asserted that `c` on the Barracks queues "the first trainable in its roster",
+  which passed only because `c` was the Grunt. `c` is the Machine Gunner now,
+  and at match start he is still locked — so the v71 one-tile-does-both sends a
+  **research** command and the queue stays empty. Both faces are driven now.
+- **`p.tech` is a Set, not a map.** `p.tech[key]=1` writes a property nothing
+  reads and `hasTech` keeps answering false; the fixture looked like a hotkey
+  bug for one run.
+- **Measure the panel, not the fixture that built it.** T95.F's first cut called
+  `makeBuilding` between its two `G.rngS` reads, which is a simulation call: the
+  hosts are made first now and only the panel work sits inside the window.
+- **A collision test must compare the DECLARED set to the LIVE one.** Counting
+  the registry proves nothing: a duplicate declaration is silently pushed onto a
+  fallback letter and the count still matches the tile count. T95.B builds the
+  expected letters the way `refreshSelPanel` picks them and demands set
+  equality, over 48 panels (4 armies × 6 hosts × with and without research).
+
+### Verification actually run at v110
+
+`QUIET=1 ./seg.sh all`: 6,923 checks, 0 failures, on the final bytes.
+`./build.sh --check`: byte-identical. `verify_v58.py`: 32/32. `triage.sh`: sim
+unchanged, all 30 pins hold. Real Chromium frames of the Gray HQ panel (14
+badges, `B G I E Z V C N T M Y O L` + `R` on the Dump Truck) and the Green
+Barracks (`G E Z C R M`) — the badges are what the player reads, so the frames
+are the evidence.
 
 ## v109 — the ground catches the light, and every prop gets its detail (Roadmap 4 item 5, finished)
 
