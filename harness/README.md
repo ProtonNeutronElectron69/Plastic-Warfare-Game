@@ -5,9 +5,11 @@ actually cost, and the traps learned. If you are new to the project, read
 `../CLAUDE.md` first — it is the short orientation and points back here.
 
 **How to read this file, because it is not in release order and it is long.**
-It grew by prepending, so the newest release sits in the MIDDLE rather than at
-the top, and the roadmap chapters below are HISTORY, not work in flight — the
-last of the three landed at v97 and nothing is outstanding. Practical route:
+It grew by prepending onto the MIDDLE: about a sixth of the way down (search for
+`## v110`) the per-release chapters begin and run newest-first back to v88, under
+~1,100 lines of finished roadmap history plus `## Assembly` and `## Running`. The
+roadmap chapters are HISTORY, not work in flight — the last of the three landed
+at v97 and nothing is outstanding. Practical route:
 
 - **What shipped recently:** the `## v110`, `## v109` and `## v108` sections
   (v107 has three owner passes of its own; `## v104` covers v104 through
@@ -18,13 +20,18 @@ last of the three landed at v97 and nothing is outstanding. Practical route:
 - **Where the balance stands:** `## v103 POST-MERGE MEASUREMENT` — 32 matches on
   the current build. `## v90 BALANCE BASELINE` below it keeps the reasoning.
 - **What each release's tail covers:** `## Contents`, near the foot of the file.
+  Bring it forward with your release; it went six versions stale once.
+- **How to SEE the game:** `## Running`, and `harness/hud_shot.sh` for one
+  in-match frame. Rule 7 is load-bearing and a drawing bug can never fail the
+  suite.
 - **The roadmap chapters (immediately below):** the record of what each phase was
   told to build and what it cost. Useful when you touch a subsystem one of them
   built; not a to-do list.
 - **What could come NEXT:** `## Roadmap 4` in `../CLAUDE.md` — a tentative,
   unagreed shortlist written at v103, four of whose twelve items rest on the
-  measurement section below. Item 1 (music) shipped as v104; the other eleven are
-  untouched. It is the only forward-looking chapter either file carries.
+  measurement section below. Four of the twelve have since shipped in whole or in
+  part (1 bar its barks at v104, 4 at v106, two of 2's boards at v107, 5 whole at
+  v108–v109). It is the only forward-looking chapter either file carries.
 
 Everything in here is written as a claim someone paid for. When a section and a
 heading disagree, the section is usually the one that was updated - and both are
@@ -905,6 +912,18 @@ file without puppeteer, without a node package, and without a server:
     /opt/pw-browsers/chromium --headless=new --no-sandbox --disable-gpu \
       --window-size=1600,900 --virtual-time-budget=20000 \
       --screenshot=/tmp/frame.png "file:///abs/path/to/plastic-warfare.html"
+
+**`./hud_shot.sh out/frame.png` is that recipe kept** (v110), because the command
+above only gets you the MENU and every release from v107 to v110 then hand-rolled
+the same boot-and-inject script to see a real match. It takes a map, an army, a
+building to select, a time of day and an arbitrary JS hook, and its header
+records the four traps — the missing trailing newline, the `load` event, the fog
+that does not exist until you tick, and testing mode's permanent noon. The other
+LOOKING tools, none of them pinned and none part of `seg.sh`: `map_shot.sh`
+(whole-board pictures of all seven maps), `audit_maps.js` (its numeric half),
+`sim.sh` (whole bot matches + a report page) and the three probes
+(`probe_v89.sh` production decisions, `probe_v99.sh` order churn,
+`probe_v106.sh` per-ability usage).
 
 Then READ the png. Two things it catches that the suite structurally cannot:
 the "A drawing error was suppressed" toast (a throw inside `renderCore` that
@@ -6047,13 +6066,66 @@ now runs each table from its own cfg and asserts both the equality that should h
 
 ## Contents
 
+**This index stopped being updated at v104 and was six releases stale until the
+v110 documentation pass caught it** — v105 through v110 had no entry and the
+check count still read 5,973. That is the failure mode this section exists to
+prevent, so: **a release that adds a tail adds a paragraph HERE as well as its
+own chapter above.**
+
+**The suite stands at 6,923 checks** (6,895 at v109, 6,862 at v108, 6,830 at
+v107.3, 6,810 at v107.2, 6,787 at v107.1, 6,716 at v107, 6,083 at v106, 6,039 at
+v105.1, 6,009 at v105, 5,973 at v104.4, 5,766 at v103, 5,694 at v102, 5,638 at
+v101, 5,587 at v100).
+
+v110 adds `tail_v110.js` (T95, 26 checks), riding segment 3. A is the alphabet —
+fifteen letters, eight of them left-half, and the roster of rows that must
+declare one is DERIVED so a new unit or structure fails until it does. B walks
+all 48 host × faction panels and demands the LIVE registry equal the letters the
+rows declare, which is what proves no fallback fired. C is the owner's ask (one
+thing, one key, across hosts and across armies). D drives the fallback both ways
+by blanking a row's `hk` and then by making it collide. E reads the two help
+surfaces against the handler. F is the client-local claim. It also RESTATED
+eleven assertions in `T50.D`, each a claim v110 changes on purpose. No trail
+moved.
+
+v109 adds `tail_v109.js` (T94, 33 checks), riding segment 3. A pins the ground
+glow's falloff against the GLSL strings it mirrors; B the shared light collector
+and its fog gate on the 2d path; C the compositing order and the hue-preserving
+clamp; D all 60 prop painters — they run, they are deterministic, they carry
+detail, and none of them names `Math.random` or `srand`; E that `propBox` and
+`PROP_BLK` did not move. No trail moved.
+
+v108 adds `tail_v108.js` (T93, 32 checks), riding segment 3, plus a conscious
+rewrite of `T41.C` (which pinned the deleted `paintIsoTile`) and a restated
+filter in `T91.B`. It covers the material swatch's seamless wrap, the skirt, the
+two overlay themes and the one-seam/two-call-sites claim. No trail moved.
+
+v107 and its three owner passes add four tails, all riding segment 3:
+`tail_v107.js` (T89, 113 checks — the two new boards, the sealed tub proved by a
+flood fill, the sided-map rules and destructible level art), `tail_v107_1.js`
+(T90, 35 — the Attic pulled in), `tail_v107_2.js` (T91, 22 — the hexagon mosaic
+laid in world space) and `tail_v107_3.js` (T92, 20 — the tub and the towel, both
+pinned on CONTRAST rather than colour). No trail moved at any of the four: every
+new rule is gated on the new maps' own flags.
+
+v106 adds `tail_v106.js` (T88, 42 checks), riding segment 3, and
+`harness/probe_v106.sh` beside it. T88.A DERIVES the ability inventory off
+`UNIT_TOGGLES`, so a twelfth toggle cannot ship unwired. **Every hash trail moved
+and all five trail tables were recut** — `recut_v106` / `repin_v106` are the pair
+in the tree, and the last release that had to repin.
+
+v105 and v105.1 add `tail_v105.js` (T86, 36 checks — the whole roster on parade,
+the manual on the same ground, and the z-index order scraped out of the
+stylesheet) and `tail_v105_1.js` (T87, 30 — the derived research catalog, proved
+by splicing a key out of `LAB_ORDER` at runtime, and the one turret painter).
+Neither moved a trail.
+
 v104 and its four feedback passes add five tails, all riding segment 3 and
 listed last in tails.txt: `tail_v104.js` (T81, the soundtrack itself),
 `tail_v104_1.js` (T82, the warm/unlock/duck/mop-up pass), `tail_v104_2.js` (T83,
 the effects bus and the two faders), `tail_v104_3.js` (T84, victory as a fourth
 loop with its Schmitt gap and dwell) and `tail_v104_4.js` (T85, the sequenced
-handover and the FOV scoping). **The suite stands at 5,973 checks** (5,939 at
-v104.3, 5,766 at v103, 5,694 at v102, 5,638 at v101, 5,587 at v100). None of the
+handover and the FOV scoping). None of the
 five moved a hash trail: music is presentation, and every one of the five ran
 `triage.sh` to "sim unchanged" before it was believed.
 
