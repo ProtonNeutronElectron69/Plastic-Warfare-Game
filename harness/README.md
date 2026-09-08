@@ -1,4 +1,4 @@
-# Plastic Warfare headless test harness (updated at v104.4)
+# Plastic Warfare headless test harness (updated at v109)
 
 This is the development record: every release, what it was told to build, what it
 actually cost, and the traps learned. If you are new to the project, read
@@ -9,9 +9,10 @@ It grew by prepending, so the newest release sits in the MIDDLE rather than at
 the top, and the roadmap chapters below are HISTORY, not work in flight — the
 last of the three landed at v97 and nothing is outstanding. Practical route:
 
-- **What shipped recently:** the `## v104`, `## v103` and `## v102` sections
-  (search for `## v104` — it covers v104 through v104.4 in one chapter). Each one
-  is the finding, the change, and what it measured.
+- **What shipped recently:** the `## v109`, `## v108` and `## v107` sections
+  (v107 has three owner passes of its own; `## v104` covers v104 through
+  v104.4 in one chapter). Each one is the finding, the change, and what it
+  measured.
 - **How to build and run the suite:** `## Assembly` and `## Running`, about a
   fifth of the way down. `../CLAUDE.md` has the two commands; these have the why.
 - **Where the balance stands:** `## v103 POST-MERGE MEASUREMENT` — 32 matches on
@@ -1180,6 +1181,128 @@ error a reader would see as anything but an odd blank report. `sim_report.js` no
 compiles the page's script block with `new Function` before writing (compiles, does
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
+
+## v109 — the ground catches the light, and every prop gets its detail (Roadmap 4 item 5, finished)
+
+v108 left two follow-ons agreed and unbuilt — the ground catching light from
+explosions and fire (it called that v108.1) and a detail pass over every
+decorative prop's painter (v109) — and the owner asked for both in one pass. So
+this is one release with two chapters. `tail_v109.js` (T94, 33 checks; the
+suite is **6,895**), plus the conscious version bump in `T75.B`. **No trail
+moved and no repin was due**: `triage.sh` reported "sim unchanged, all 30 pins
+hold" — the ground pass is compositing, the props are painters, and
+`propBox`/`PROP_BLK` (what the layout reads) are byte-for-byte what v108 left
+(T94.E asserts neither names the release).
+
+### Chapter 1 — the ground glow
+
+**The problem the roadmap got wrong.** Item 5 said textured ground "would pick
+up the v96 band lighting for free". It would not: the per-pixel lights are
+applied by the band shader to the SPRITE canvas, and the terrain is a separate
+canvas blitted beneath it in `renderCore`. The floor under a burning tank was
+as flat at midnight as at noon; only the tank lit up.
+
+**The mechanism.** `groundGlow(c,L)` in `25b-webgl.js`, called from
+`renderCore` at exactly one place: after `c.drawImage(G.terr,0,0)` and before
+the ground-plane FX loop — so the glow sits under the puddles, the craters, the
+sprite band, the fog and the v101 night tint, which is where a lit floor
+belongs. Three decisions:
+
+- **The light list is the shader's own.** `bandLightsCollect(cx,cy,zz,into)`
+  gained one optional argument: handed an array it fills that instead of
+  `GLB.lights`. So the ground pass reads the SAME explosions, burn buckets and
+  muzzle flashes the sprites are lit by, in the same canvas pixels, with the
+  same vision gate (`fogAt===2`, `visibleToHuman`) — light through fog would be
+  a wallhack, and the ground inherits the rule rather than restating it.
+  Because the fill needs no GL stage, **the 2d fallback gets the glow too**;
+  under the headless shim `GLB` is null and T94.B asserts it stays null.
+- **The falloff is the shader's own.** `ptLightK(h,r,z)` is the GLSL term in
+  JS — `at=(1-dist/r)²` on the 3D distance, times the cosine `z/dist` — walked
+  in nine stops into a radial gradient. T94.A pins both GLSL strings still in
+  `GLSL_BAND` and checks the JS against them at three points, so the ground and
+  the sprites cannot drift apart in how far a light reaches.
+- **The disc is squashed to the board.** `scale(1,LIGHTV.ground.sq)` (.5, the
+  iso ratio) so a glow is an ellipse lying on the floor, not a circle standing
+  on it; `LIGHTV.ground.k` (.85) is the one gain.
+
+### Measured
+
+| | |
+|---|---|
+| `LIGHTV.ground.k` first cut / shipped | 1.15 / .85 (read off frames — below) |
+| lights per frame, ceiling | `LIGHTV.max` (10), unchanged; the ground pass draws the same ten |
+| gradient stops per disc | 9, last stop `rgba(0,0,0,1)` (T94.C) |
+| a hot light `c:[4,2.2,.8]` at the centre | 255,140,51 — hue kept, ratio .55 ± .02 (T94.C) |
+| collector on the 2d path | returns the array it was handed, `GLB` untouched (T94.B) |
+| a fogged explosion, either path | 0 lights (T94.B) |
+
+**The frames** (real Chromium, the shipped file, `renderCore()` after spawning
+an explosion at `hq.x+3,hq.y-3`, a nine-cell napalm burn cluster and one muzzle
+flash inside the HQ's vision, at day and at night): the burn cluster lays a
+warm pool on the lawn with the blades showing through it, the explosion a
+smaller one, and at night both survive the multiply tint as lighter patches
+under the sprites. At `k` 1.15 the napalm pool was a WHITE spotlight — which
+is the first trap below.
+
+### Chapter 2 — the props
+
+**Sixty painters, one seed.** Every `propBody` branch gained detail, in the
+v97 idiom (deterministic, off `dth`, never a stream): `const sd=Math.floor(p.x*7.3+p.y*11.9)` is the prop's own seed, so two rocks at
+different tiles crack differently and one rock cracks the same on every bake
+(T94.D drives both). Seven small helpers carry the shared shapes — `pSpeck`
+(grit, crumbs, pores), `pGrain` (wood), `pCyl` (a shaded cylinder), `pEdge`
+(a wear line), `pLabel` (a printed label with text bands), `pStitch`, `pStuds`
+— and T94.D asserts none of them, nor `propBody`, nor `drawLevelArt`, names
+`Math.random` or `srand`. Three painters DID: the sugar cube's facets, the
+keep's brick speckle and the slipper's fuzz rolled `Math.random`, which meant a
+prop that redrew differently on every bake and could never be pinned; all
+three are on `dth` now. The Attic's level art (`drawLevelArt`) got the same
+pass: corrugation and a FRAGILE stencil on the boxes, studded straps and a
+hasp on the trunk, page edges on the bale.
+
+**What did not change:** `propBox` (the bake's cell size) and `PROP_BLK` (the
+collision table), because a bigger painting in the same cell is art and a
+bigger cell is layout, and every layout pin in the suite says the layout held.
+
+### Traps, all paid for
+
+- **CLAMP BY THE BRIGHTEST CHANNEL, NOT PER CHANNEL.** A burn bucket of six
+  cells is intensity 4+ before the falloff. Clipping each channel at 1 sends
+  the centre to (1,1,1) — white — and a white disc on grass reads as a
+  spotlight aimed at the lawn. Dividing all three by the maximum keeps the
+  fire's own orange to full brightness. Rule 7 found it: the first day frame
+  had a searchlight where the napalm was, and no assertion would ever have.
+- **A FIXTURE THAT DOES NOT TICK HAS NO VISION.** T94.B's first cut spawned an
+  explosion beside the HQ and collected nothing — `fogAt` is 0 everywhere
+  until the stamp runs (v104.4 recorded exactly this). Twelve ticks first, then
+  clear the particles the ticks made, then spawn.
+- **A SEALED COLOUR IS A RESERVED WORD.** T89.F pins seven colour strings as
+  unique in the shipped file so its decoration checks mean what they say;
+  `rgba(0,0,0,.18)` is the attic mothball's and the mug's contact shadow used
+  it. v108 hit the very same string in the mortar. It is `.2` here.
+- **A RECORDER'S FIRST OP IS NOT THE ONE YOU WANT.** `groundGlow` opens with
+  `setTransform`, so `log[0]` is the transform and not the gradient; the hot
+  light check reads `find(op==='rgrad')`.
+- **STATE THE FLOOR YOU MEASURED.** T94.D counts distinct fill/stroke pairs
+  per painter and every gradient collapses to one. The first cut demanded six;
+  the stick, fork, star and tubrim carry five, honestly — a stick has one
+  colour of bark. The floor is five, the comment says which four sit on it,
+  and the TOTAL (633 across the set, floor 600) is the claim that carries.
+- **`node --check` under the shim is not the suite.** `tail_v98` alone throws
+  on `audioReset` because an earlier segment-3 tail supplies that stub; run
+  the neighbours through `seg.sh 3`, not one at a time, before believing a
+  standalone failure there.
+
+### Verification actually run at v109
+
+`QUIET=1 ./seg.sh all`: 6,895 checks, 0 failures, on the final bytes.
+`./build.sh --check`: byte-identical. `verify_v58.py`: 32/32. `triage.sh`: sim
+unchanged, all 30 pins hold. Real Chromium frames on the shipped file: the
+Backyard by day and the Kitchen by night with an explosion, a burn cluster and
+a flash inside vision; and a gallery of all 61 prop kinds (the traincar's
+engine variant included) painted by `propBody` on a neutral ground, read at
+1200×1240 and again at 2× — the ask was about how things look, so the frames
+are the evidence.
 
 ## v108 — the ground as a real surface (Roadmap 4 item 5, in the form the owner asked for)
 

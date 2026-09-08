@@ -161,7 +161,15 @@ function renderCore(){
  const shx=(Math.random()-.5)*G.shake,shy=(Math.random()-.5)*G.shake,cx=G.cam.x+shx,cy=G.cam.y+shy;
  // everything in the world is drawn in a single scaled+translated space
  c.setTransform(z,0,0,z,-cx*z,-cy*z);c.imageSmoothingEnabled=true;
- c.drawImage(G.terr,0,0);c.save();
+ c.drawImage(G.terr,0,0);
+ /* v109: the floor catches the frame's lights - explosions, burning ground,
+    muzzle flashes, flame - laid straight onto the terrain before anything
+    stands on it, on EVERY renderer (the band's per-pixel pass is GL-only; the
+    2d fallback gets the same discs). Collected into a private list so the
+    fallback, which has no GLB, never touches it; the lit path collects again
+    below into GLB.lights, which is what the shader reads. */
+ groundGlow(c,bandLightsCollect(cx,cy,z,[]));
+ c.save();
  // ---- ground-plane FX (drawn on the deck, beneath all sprites) ----
  for(const p of G.parts){
   const gp=fxGatePos(p); // v27.1: tracers gate by segment midpoint

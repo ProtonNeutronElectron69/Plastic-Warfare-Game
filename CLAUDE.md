@@ -52,9 +52,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v108, and what a fresh session does)
+## Where the game stands (v109, and what a fresh session does)
 
-The game is at **v108**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v109**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), **v104 is the first Roadmap 4 item
@@ -78,30 +78,35 @@ as blank white. **v108 is Roadmap 4 item 5, in the form the owner asked for**:
 every board's ground repainted as the real surface it is (turf, ceramic,
 carpet, varnished wood, sand in a plank frame, porcelain, bare boards) by a
 per-pixel material swatch tiled in world space — NOT the sprite pipeline's
-textured plastic, by instruction. **Two follow-ons are agreed and not yet
-built**: v108.1, the ground catching light from explosions and fire (a renderer
-change — see the v108 chapter for why the roadmap's "for free" was wrong), and
-v109, a detail pass over every decorative prop's painter.
+textured plastic, by instruction. **v109 is the two follow-ons v108 left agreed,
+delivered in one pass by the owner's instruction**: the ground catches the
+light of explosions, burning ground and muzzle flashes (the renderer change the
+v108 chapter said the roadmap's "for free" was wrong about — a 2d additive pass
+off the SAME light list the sprite shader uses, so it works on the WebGL stage
+and the 2d fallback alike), and every one of the 60 decorative props' painters
+gained a detail pass, plus the Attic's level art. Nothing about how any map
+plays changed and no trail moved.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
 ranked, written after a whole-game review at v103. **Four of the twelve have
 shipped in whole or in part** — item 1's music half (v104–v104.4), item 4
-(v106), two of item 2's boards (v107) and item 5's ground (v108, minus the
-lighting); the barks and the other eight items are untouched. The
+(v106), two of item 2's boards (v107) and item 5 whole (v108 the ground, v109
+the lighting and the props); the barks and the other eight items are untouched. The
 headline of it: the systems layer is finished, and what is thin is content (six
 PvP maps and one survival board) and balance (two of four armies do not work).
 Presentation was the third leg of that and is mostly answered — the game has a
-score and, since v108, real floors; what is left is the ground catching light
-(v108.1) and one sound that is still the browser's own text-to-speech voice. (v105 repainted the MENU's
+score, since v108 real floors and since v109 floors that catch the light and
+props with real detail; what is left is one sound that is still the browser's
+own text-to-speech voice. (v105 repainted the MENU's
 parade ground and gave the Field Manual the same backdrop; neither is the
 in-match ground, so item 5 is untouched by it.)
 
-- **Map ART, as opposed to map LAYOUT** — Roadmap 4 item 5, and **v108 painted
-  the ground half of it**. The owner deferred map art from v97's detail pass and
-  v103 fixed where things are PUT, not how they are drawn. Since v108 the ground
-  (`G.terr`) is a per-pixel material per theme, still procedural and still
-  unlit: the two halves left are the lighting (v108.1, agreed) and the props'
-  painters (v109, agreed).
+- **Map ART, as opposed to map LAYOUT** — Roadmap 4 item 5, **finished at
+  v109**. The owner deferred map art from v97's detail pass and v103 fixed
+  where things are PUT, not how they are drawn. Since v108 the ground (`G.terr`)
+  is a per-pixel material per theme; since v109 it is lit by the frame's lights
+  (`groundGlow`, `LIGHTV.ground`) and every prop painter carries its detail.
+  Still procedural throughout, by instruction. Nothing on this front is open.
 - **Balance** — Roadmap 4 item 3, and it is **re-measured at v103**: the
   balance section below now carries 32 fresh matches instead of the eleven-release-old
   v90 percentages. Short version: Green 47%, Tan 34%, Gray 9%, Blue 9%.
@@ -116,7 +121,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 6,862 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 6,895 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -130,7 +135,7 @@ whatever the owner asks for next is a fresh vNN starting from `origin/main`. If
 they are NOT green, stop and read the failure before touching anything: every
 check in this suite was put there by a release that paid for it.
 
-**The map generator was audited at v103 and nothing has touched it since** (v108 repainted the ground and touched no placement)
+**The map generator was audited at v103 and nothing has touched it since** (v108 and v109 repainted the ground and the props and touched no placement)
 (the v103 section below). If you touch `makeMap`, run `harness/audit_maps.js` before and
 after — it counts every defect class the audit found, and the residual it should
 report is: 3-4 decor-sized art grazes, 2 line props lying in a spill, and one
@@ -184,7 +189,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,862 checks at v108.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,895 checks at v109.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -433,7 +438,8 @@ still empty; item 1 has since answered it.)
    textured plastic. And the note below is WRONG on one point: the ground would
    NOT "pick up the existing lighting for free" — the per-pixel lights live in
    the sprite band pass and the terrain is composited beneath it, so lighting
-   the ground is a renderer change (v108.1). The original note, kept for its
+   the ground was a renderer change — **delivered at v109**, along with the
+   props' detail pass, which closes this item. The original note, kept for its
    reasoning: The one visual layer roadmap 3 never reached, and the
    largest surface on screen. The four-script pipeline (`dump_base_v95.js` →
    `material_v95.py` → `normal_v96.py` → `embed_img.py`) points at ground tiles
@@ -609,6 +615,54 @@ landed with the trails untouched; a render change that moves a trail has a bug.
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
 
+## v109 — the ground catches the light, and every prop gets its detail (Roadmap 4 item 5, finished)
+
+The two follow-ons v108 left agreed, delivered in one pass because the owner
+asked for them together. `tail_v109.js` (T94, 33 checks; the suite is 6,895
+now); full evidence in the v109 section of `harness/README.md`. **No trail
+moved and no repin was due**: a 2d compositing pass and sixty painters, and
+`propBox`/`PROP_BLK` are untouched so every layout pin held.
+
+- **The ground is lit by the frame's own lights.** `groundGlow(c,L)` in
+  `25b-webgl.js` lays one additive radial disc per light onto the world canvas
+  right after the terrain blit and before the ground-plane FX — so the glow is
+  UNDER the ground effects, the sprite band, the fog and the night tint, the
+  way a lit floor is. The list `L` comes from `bandLightsCollect`, the v96
+  collector the sprite shader already uses, given a new optional `into`
+  argument so it can fill a plain array with no GL stage: **the 2d fallback
+  gets the same glow**, and the vision gate (light through fog is a wallhack)
+  is inherited rather than re-implemented. Each disc walks the shader's own
+  falloff (`ptLightK`, the `(1-d/r)²·cosθ` term of `GLSL_BAND` in JS) in nine
+  stops, squashed to the board by `LIGHTV.ground.sq` and scaled by
+  `LIGHTV.ground.k`.
+- **Every decorative prop paints its detail** — all 60 kinds in `propBody`:
+  the hose's brass coupling, the pot's lime bloom, the can's pull tab and
+  printed bands, the pencil's hexagonal facets, the bucket's embossed star, the
+  gnome's belt buckle, the toaster's dial, the keyboard's staggered rows, the
+  traincar's spoked wheels — seven small deterministic helpers (`pSpeck`,
+  `pGrain`, `pCyl`, `pEdge`, `pLabel`, `pStitch`, `pStuds`) and one seed per
+  prop off its own position, so two rocks differ and each rock is the same
+  every bake. The Attic's crates, trunk and bale got the same treatment
+  (`drawLevelArt`).
+
+Three things worth carrying forward:
+
+- **CLAMP A HOT LIGHT BY ITS BRIGHTEST CHANNEL, NOT CHANNEL BY CHANNEL.** A
+  napalm field's light is intensity 4+; clipped per channel it goes white at
+  the centre, and a white disc on a lawn is a spotlight, not a fire. Scaling
+  the three channels together keeps the source's own hue to full brightness
+  (T94.C pins the ratio). And `k` came down from 1.15 to .85 by reading the
+  frame, not the number — rule 7.
+- **A FIXTURE THAT DOES NOT TICK HAS NO VISION**, again (the v104.4 trap): the
+  collector is vision-gated and T94.B's first cut collected nothing because
+  the fog was 0 everywhere. Twelve ticks first.
+- **A colour string another tail pins as unique is a reserved word.**
+  `rgba(0,0,0,.18)` is the attic mothball's (T89.F), and a prop's contact
+  shadow used it; v108 hit the same string once already. The recorder in T94.D
+  counts fill/stroke pairs, and a gradient collapses to one — the four
+  smallest props (stick, fork, star, tubrim) sit at exactly five styles, which
+  is where the floor was measured and stated.
+
 ## v108 — the floors are real surfaces (Roadmap 4 item 5, in the owner's form)
 
 The owner asked for the map-graphics pass the roadmap had carried since v103,
@@ -647,8 +701,8 @@ Three things worth carrying forward:
   Rule 5 both ways: restated to tile-shaped paths, not loosened.
 - **The roadmap's "lighting for free" was wrong**, and the release says so
   rather than delivering it quietly: the lights live in the sprite band, the
-  terrain is composited beneath it. v108.1 is that renderer change, kept apart
-  so a compositing problem cannot be confused with a paint one.
+  terrain is composited beneath it. v109 is that renderer change (the owner
+  asked for it and the props' pass in one release).
 
 ## v107.3 — the tub and the towel (the third owner pass on v107)
 

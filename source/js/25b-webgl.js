@@ -211,8 +211,42 @@ const LIGHTV={
  ex:{r:170,c:[1.0,.62,.28],i:1.05},   // explosion core flash, by remaining life
  fire:{r:90,c:[1.0,.55,.20],i:.75},   // one burning ground cell (clusters sum). v96.1: owner heard it right - .34/64 read as nothing
  flame:{r:120,c:[1.0,.52,.18],i:.85}, // v96.1: a flame WEAPON mid-stream - flamethrower, firebomb heli - lit at the stream's midpoint
- flash:{r:80,c:[1.0,.78,.42],i:.5}    // a muzzle flash, by remaining flash time
+ flash:{r:80,c:[1.0,.78,.42],i:.5},   // a muzzle flash, by remaining flash time
+ /* v109: THE GROUND CATCHES THE SAME LIGHTS. The terrain is not in the band -
+    it is a separate canvas composited BENEATH it - so through v108 an
+    explosion lit the tank and not the lawn under it. groundGlow() lays each
+    collected light on the world canvas as an additive disc, foreshortened to
+    the board (ry = sq * r), with the SHADER'S OWN falloff for a flat surface
+    (ptLightK below). k scales the ground against the sprites - read off frames
+    at .85: a lawn under a napalm field was a white spotlight at 1.15. */
+ ground:{k:.85,sq:.5}
 };
+/* the band shader's point-light term for a FLAT pixel (normal straight up):
+   attenuation (1-dist/r)^2 on the 3D distance, times the cosine z/dist. One
+   function, so the ground's gradient stops and the sprites' per-pixel light
+   are the same curve - T94 asserts the GLSL carries the same two terms. */
+function ptLightK(h,r,z){const dist=Math.sqrt(h*h+z*z);if(dist>=r)return 0;const at=1-dist/r;return at*at*z/dist}
+/* the ground pass: every light in `L` (canvas pixels, as bandLightsCollect
+   returns them) as an additive radial disc on the world canvas. Drawn under
+   the identity transform because the list is already in canvas pixels; the
+   caller restores its own. Pure render: reads LIGHTV, writes nothing. */
+function groundGlow(c,L){
+ if(!L||!L.length)return;
+ const gk=LIGHTV.ground.k,sq=LIGHTV.ground.sq;
+ c.save();c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='lighter';
+ for(const l of L){
+  const g=c.createRadialGradient(0,0,0,0,0,l.r);
+  for(let i=0;i<=8;i++){const t=i/8,k=ptLightK(t*l.r,l.r,l.z)*gk;
+   /* clamped by the BRIGHTEST channel, not per channel: a napalm field's light
+      (intensity 4+) clipped channel by channel goes white at the centre, and a
+      white disc on a lawn reads as a spotlight, not a fire. Scaling the three
+      together keeps the source's own hue up to full brightness. */
+   let r=l.c[0]*k,g2=l.c[1]*k,b=l.c[2]*k;const m=Math.max(r,g2,b);if(m>1){r/=m;g2/=m;b/=m}
+   g.addColorStop(t,'rgba('+Math.round(255*r)+','+Math.round(255*g2)+','+Math.round(255*b)+',1)');}
+  c.save();c.translate(l.x,l.y);c.scale(1,sq);c.fillStyle=g;c.beginPath();c.arc(0,0,l.r,0,7);c.fill();c.restore();
+ }
+ c.restore();
+}
 const GLSL_BAND='precision mediump float;varying vec2 uv;'+
  'uniform sampler2D uTex,uNrm;uniform vec2 uRes;'+
  'uniform vec3 uLdir;uniform float uAmb,uKd,uKs,uShin;'+
@@ -316,8 +350,10 @@ function bandPresent(){
    cluster by 4x4 tile buckets so a napalm field is a few steady lights
    rather than a lottery over the cap. Flicker rides G.tick (shared, but
    render-only); no srand, no Math.random, nothing written to G. */
-function bandLightsCollect(cx,cy,zz){
- const L=GLB.lights=[];
+function bandLightsCollect(cx,cy,zz,into){
+ /* v109: `into` collects WITHOUT a GL stage - the ground pass runs on every
+    renderer, the 2d fallback included, where GLB is null */
+ const L=into||(GLB.lights=[]);
  const put=(wx,wy,r,c,i)=>{
   if(L.length>=LIGHTV.max||i<=0)return;
   const x=(isoX(wx,wy)-cx)*zz,y=(isoY(wx,wy)-cy)*zz,rr=r*zz;
@@ -356,6 +392,7 @@ function bandLightsCollect(cx,cy,zz){
   }
   put(u.x,u.y,LIGHTV.flash.r,LIGHTV.flash.c,LIGHTV.flash.i*Math.min(1,u.flash/.1));
  }
+ return L;
 }
 function glTex(gl){
  const t=gl.createTexture();
