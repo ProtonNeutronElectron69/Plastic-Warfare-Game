@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v108 it makes **6,862
+that the results come out identical every time. As of v109 it makes **6,895
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -117,7 +117,21 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 108**.
+The game is at **version 109**.
+
+**v109 — the floors catch the light, and every prop is worth a look.** An
+explosion, a napalm fire or a muzzle flash now lights the ground under it — a
+warm glow spreading over the lawn or the tiles and fading with the blast —
+where before only the soldiers and vehicles caught the light and the floor
+stayed flat. It respects the fog: a fire you cannot see does not light the
+ground you cannot see. And all sixty of the decorative props scattered over the
+seven battlefields were redrawn with real detail: the garden hose has a brass
+coupling, the soda can a pull tab and printed label, the pencil its six facets
+and a stamped name, the bucket an embossed star, the gnome a belt buckle and
+boots, the toaster a dial and a crumb tray, the toy train spoked wheels and
+couplings. Two rocks or two sugar cubes on one map are no longer identical.
+The Attic's crates, trunk and bale of magazines got the same treatment. Nothing
+about how any map plays changed.
 
 **v108 — the floors are real.** Every battlefield's ground used to be drawn as
 a sheet of little bevelled diamonds — the same molded-plastic look on a lawn, a
