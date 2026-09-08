@@ -25,6 +25,7 @@
 05-setup-lobby.js
 06-state.js
 07-map-terrain.js
+07b-ground.js
 08-pathfinding.js
 09-entities.js
 10-newgame.js

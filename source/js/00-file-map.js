@@ -38,7 +38,8 @@
        host ...................................................... lobHostPanel and the host side of the flow
        join ...................................................... lobJoinPanel and the joiner side
      GAME STATE .................................................. G, iso<->screen transforms
-     MAP / TERRAIN ............................................... makeMap, paintIsoTile, renderTerrain, decorations
+     MAP / TERRAIN ............................................... makeMap, renderTerrain, decorations
+     GROUND MATERIALS ............................................ v108: groundLay / groundTex / groundSkirt - the floor as a real surface
      PATHFINDING ................................................. A* (findPath), LOS smoothing, clearance grid, depenetration
      ENTITIES .................................................... makeUnit / makeBuilding, cost helpers
      NEW GAME .................................................... makeAIBrain(), newGame()

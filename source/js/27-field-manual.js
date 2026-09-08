@@ -75,43 +75,20 @@ function infoFacOf(kind,key){ // faction exclusives show in their home army's co
  return INFO_COMMON_FAC;
 }
 function infoStub(fn){const real=G;G=INFO.stub;try{fn()}finally{G=real}}
-/* --- 5x5 backyard grass patch, baked once. Mirrors renderTerrain's grass tile
-       fill, bevel facets, flock and slab skirt at miniature scale, with a LOCAL
-       mulberry rng (never the sim stream). --- */
+/* --- 5x5 backyard grass patch, baked once, by renderTerrain's own ground
+       painters at miniature scale, with a LOCAL mulberry rng (never the sim
+       stream). --- */
 const INFO_G_DEPTH=18,INFO_G_PAD=4;
 function infoGround(){
  if(INFO.ground)return INFO.ground;
  const NP=5,gw=NP*TW+8,gh=INFO_G_PAD+NP*TH+INFO_G_DEPTH+14;
  const cv=document.createElement('canvas');cv.width=gw;cv.height=gh;
  const c=cv.getContext('2d'),rnd=mulberry(0x5eed);
- const PAL={base:'#5d9440',alt:'#558a38',side:'#2f4d20',sideD:'#223a17'};
+ /* v108: the board's own three calls (07b-ground.js), at miniature scale - so
+    the manual's lawn is the Backyard's lawn, cut turf edge and all */
  const ox=gw/2,oy=INFO_G_PAD;
- const ix=(x,y)=>(x-y)*HW+ox, iy=(x,y)=>(x+y)*HH+oy;
- const E=[ix(NP,0),iy(NP,0)],S=[ix(NP,NP),iy(NP,NP)],Wp=[ix(0,NP),iy(0,NP)];
- // contact shadow cast onto the "table" below the mini slab
- {const sg=c.createLinearGradient(0,S[1]+INFO_G_DEPTH,0,S[1]+INFO_G_DEPTH+12);
-  sg.addColorStop(0,'rgba(0,0,0,.28)');sg.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=sg;
-  c.beginPath();c.moveTo(Wp[0],Wp[1]+INFO_G_DEPTH);c.lineTo(S[0],S[1]+INFO_G_DEPTH+5);c.lineTo(E[0],E[1]+INFO_G_DEPTH);
-  c.lineTo(E[0]+9,E[1]+INFO_G_DEPTH+9);c.lineTo(S[0],S[1]+INFO_G_DEPTH+14);c.lineTo(Wp[0]-9,Wp[1]+INFO_G_DEPTH+9);c.closePath();c.fill();}
- // SW slab face (catches fill light) then deeper SE face
- {const g=c.createLinearGradient(0,Wp[1],0,Wp[1]+INFO_G_DEPTH);g.addColorStop(0,PAL.side);g.addColorStop(1,PAL.sideD);c.fillStyle=g;
-  c.beginPath();c.moveTo(Wp[0],Wp[1]);c.lineTo(S[0],S[1]);c.lineTo(S[0],S[1]+INFO_G_DEPTH);c.lineTo(Wp[0],Wp[1]+INFO_G_DEPTH);c.closePath();c.fill();}
- {const g=c.createLinearGradient(0,E[1],0,E[1]+INFO_G_DEPTH);g.addColorStop(0,PAL.sideD);g.addColorStop(1,shade(PAL.sideD,.72));c.fillStyle=g;
-  c.beginPath();c.moveTo(S[0],S[1]);c.lineTo(E[0],E[1]);c.lineTo(E[0],E[1]+INFO_G_DEPTH);c.lineTo(S[0],S[1]+INFO_G_DEPTH);c.closePath();c.fill();}
- c.save();c.globalCompositeOperation='lighter';c.strokeStyle='rgba(255,255,255,.22)';c.lineWidth=2;
- c.beginPath();c.moveTo(Wp[0],Wp[1]);c.lineTo(S[0],S[1]);c.lineTo(E[0],E[1]);c.stroke();c.restore();
- // ground tiles: the board's own painter, at miniature scale
- for(let y=0;y<NP;y++)for(let x=0;x<NP;x++){
-  const v=.92+rnd()*.16;
-  paintIsoTile(c,ix(x,y),iy(x,y),shade(((x*7+y*5)%9<2)?PAL.alt:PAL.base,v));
- }
- // grass flock + a few blades
- for(let i=0;i<70;i++){const gx=rnd()*NP,gy=rnd()*NP,px=ix(gx,gy),py=iy(gx,gy)+HH*rnd()*.5;
-  c.fillStyle=rnd()<.5?'rgba(214,240,150,.16)':'rgba(22,42,14,.18)';c.fillRect(px,py,1.4,1.4);}
- c.lineWidth=1.1;c.lineCap='round';
- for(let i=0;i<12;i++){const gx=.3+rnd()*(NP-.6),gy=.3+rnd()*(NP-.6),px=ix(gx,gy),py=iy(gx,gy)+HH*.5;
-  c.strokeStyle=rnd()<.5?'rgba(56,104,32,.5)':'rgba(126,188,74,.45)';
-  c.beginPath();c.moveTo(px,py);c.quadraticCurveTo(px+(rnd()*2-1)*2,py-3,px+(rnd()*2-1)*3,py-4-rnd()*3);c.stroke();}
+ groundSkirt(c,'grass',NP,rnd,ox,oy,INFO_G_DEPTH);
+ groundLay(c,'grass',NP,rnd,ox,oy,0x5eed);
  INFO.ground=cv;return cv;
 }
 /* --- fake showcase entities: the minimal field set the painters read --- */

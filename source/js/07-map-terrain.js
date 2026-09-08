@@ -1293,127 +1293,23 @@ function blockLine(M,x,y,len,ang,r){const cx=dcos(ang),cy=dsin(ang),R=Math.ceil(
    the recipe was duplicated line-for-line between them until v62. Caller owns
    the tone: `col` is already shaded, and the facet alphas are fixed so every
    tile in the game catches the light the same way. */
-function paintIsoTile(c,sx,sy,col){
- c.fillStyle=col;c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+HW,sy+HH);c.lineTo(sx,sy+TH);c.lineTo(sx-HW,sy+HH);c.closePath();c.fill();
- c.fillStyle='rgba(255,255,255,.10)';c.beginPath();c.moveTo(sx,sy);c.lineTo(sx-HW,sy+HH);c.lineTo(sx,sy+HH*.5);c.closePath();c.fill();
- c.fillStyle='rgba(255,255,255,.06)';c.beginPath();c.moveTo(sx,sy);c.lineTo(sx+HW,sy+HH);c.lineTo(sx,sy+HH*.5);c.closePath();c.fill();
- c.fillStyle='rgba(14,22,10,.12)';c.beginPath();c.moveTo(sx,sy+TH);c.lineTo(sx+HW,sy+HH);c.lineTo(sx,sy+HH*1.5);c.closePath();c.fill();
- c.fillStyle='rgba(14,22,10,.06)';c.beginPath();c.moveTo(sx,sy+TH);c.lineTo(sx-HW,sy+HH);c.lineTo(sx,sy+HH*1.5);c.closePath();c.fill();
-}
 function renderTerrain(){
  const N=G.map.N;
  const w=N*TW+TW, h=N*TH+TH+72; // deeper south skirt so the board reads as a thick molded slab
  const cv=document.createElement('canvas');cv.width=w;cv.height=h;const c=cv.getContext('2d');
  G.terr=cv;G.tctx=c;
  const th=G.map.theme, rnd=mulberry((G.map.seed||99)^0x9e37);
- // ---- palettes per theme (richer, multi-tone) ----
- const PAL=th==='grass'
-   ?{base:'#5d9440',alt:'#558a38',edge:'#3a5e26',side:'#2f4d20',sideD:'#223a17'}
-   :th==='tile'
-   ?{base:'#d6dde1',alt:'#c2cace',edge:'#9aa3a8',side:'#aeb6bb',sideD:'#878f94'}
-   :th==='carpet'
-   ?{base:'#b6a890',alt:'#aca085',edge:'#857a62',side:'#968a70',sideD:'#776c54'}
-   :th==='desk'
-   ?{base:'#b98a4e',alt:'#ad7e42',edge:'#7c5528',side:'#8a6236',sideD:'#6b4a26'}
-   /* v107.2 (owner pass): "the basic tiles look too similar to the kitchen counter
-      map". They did: v107 gave the bathroom the kitchen's own cool grey-blue
-      (#d6dde1 against #e6ecef) under a square grout grid, so the two floors
-      differed only in brightness and in how often the grid ran. The bathroom is
-      WARM porcelain now - a cream white over a mushroom-grey skirt - and its
-      floor is a hexagon mosaic rather than a square grid (see th==='bath' in the
-      theme painters). Nothing else on the map moved: the tub, the mat and every
-      hazard keep their own colours, which is what makes them read against it. */
-   :th==='bath'
-   ?{base:'#ece6dc',alt:'#e0d8cb',edge:'#a2968a',side:'#c0b5a6',sideD:'#988d7f'}
-   :th==='attic'  // v107: dusty floorboards
-   ?{base:'#8c6a45',alt:'#805f3d',edge:'#4e3a22',side:'#5f4629',sideD:'#46331d'}
-   :{base:'#ddbd7a',alt:'#d2af68',edge:'#a8884a',side:'#bfa066',sideD:'#9a7d48'};
-
- // ---- 1. south & east mat thickness: draw an extruded skirt so the whole
- //         board reads as a thick slab of molded plastic sitting on a table ----
+ /* v108: the palette, the slab's edge and the ground itself are the shared
+    ground-material painters (07b-ground.js) - the same three calls the Field
+    Manual's swatch makes, so the manual's lawn is this lawn. Through v107 this
+    was ~80 lines here: a molded-plastic skirt, then paintIsoTile's bevelled
+    diamond per tile, then a speckle pass per theme. The floor is a real surface
+    now; see the header of that file for the three coats. */
+ const PAL=groundPal(th);
  const matCorners=[[0,0],[N,0],[N,N],[0,N]].map(([x,y])=>[isoX(x,y),isoY(x,y)]);
- const E=matCorners[1],So=matCorners[2],Wp=matCorners[3];
  const DEPTH=46; // slab thickness in screen px
- // soft contact shadow cast onto the "table" below the slab
- (function(){const sg=c.createLinearGradient(0,So[1]+DEPTH,0,So[1]+DEPTH+26);sg.addColorStop(0,'rgba(0,0,0,.28)');sg.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=sg;
-  c.beginPath();c.moveTo(Wp[0],Wp[1]+DEPTH);c.lineTo(So[0],So[1]+DEPTH+8);c.lineTo(E[0],E[1]+DEPTH);c.lineTo(E[0]+18,E[1]+DEPTH+18);c.lineTo(So[0],So[1]+DEPTH+30);c.lineTo(Wp[0]-18,Wp[1]+DEPTH+18);c.closePath();c.fill();})();
- // SW vertical face (west->south edge): catches a little fill light
- (function(){const g=c.createLinearGradient(0,Wp[1],0,Wp[1]+DEPTH);g.addColorStop(0,PAL.side);g.addColorStop(1,PAL.sideD);c.fillStyle=g;
-  c.beginPath();c.moveTo(Wp[0],Wp[1]);c.lineTo(So[0],So[1]);c.lineTo(So[0],So[1]+DEPTH);c.lineTo(Wp[0],Wp[1]+DEPTH);c.closePath();c.fill();})();
- // SE vertical face (south->east edge): deeper shade
- (function(){const g=c.createLinearGradient(0,E[1],0,E[1]+DEPTH);g.addColorStop(0,PAL.sideD);g.addColorStop(1,shade(PAL.sideD,.72));c.fillStyle=g;
-  c.beginPath();c.moveTo(So[0],So[1]);c.lineTo(E[0],E[1]);c.lineTo(E[0],E[1]+DEPTH);c.lineTo(So[0],So[1]+DEPTH);c.closePath();c.fill();})();
- // crisp molded corner seam at the south point + subtle vertical mold lines
- c.save();c.globalAlpha=.5;c.strokeStyle=shade(PAL.sideD,.6);c.lineWidth=1.2;c.beginPath();c.moveTo(So[0],So[1]);c.lineTo(So[0],So[1]+DEPTH);c.stroke();c.restore();
- c.save();c.globalAlpha=.16;c.strokeStyle='#000';c.lineWidth=1;
- for(let i=1;i<6;i++){const t=i/6;c.beginPath();c.moveTo(Wp[0]+(So[0]-Wp[0])*t,Wp[1]+(So[1]-Wp[1])*t);c.lineTo(Wp[0]+(So[0]-Wp[0])*t,Wp[1]+(So[1]-Wp[1])*t+DEPTH);c.stroke();
-  c.beginPath();c.moveTo(So[0]+(E[0]-So[0])*t,So[1]+(E[1]-So[1])*t);c.lineTo(So[0]+(E[0]-So[0])*t,So[1]+(E[1]-So[1])*t+DEPTH);c.stroke();}c.restore();
- // beveled molded lip running along the top of the skirt (lit edge)
- c.save();c.globalCompositeOperation='lighter';c.strokeStyle='rgba(255,255,255,.22)';c.lineWidth=2;
- c.beginPath();c.moveTo(Wp[0],Wp[1]);c.lineTo(So[0],So[1]);c.lineTo(E[0],E[1]);c.stroke();c.restore();
- // worn chips along the molded lip: toy plastic scuffs where hands grab it
- c.save();c.globalCompositeOperation='lighter';
- for(let i=0;i<26;i++){const t=rnd(),onW=rnd()<.5;
-  const x0=onW?Wp[0]+(So[0]-Wp[0])*t:So[0]+(E[0]-So[0])*t;
-  const y0=onW?Wp[1]+(So[1]-Wp[1])*t:So[1]+(E[1]-So[1])*t;
-  c.fillStyle='rgba(255,255,255,'+(0.10+rnd()*0.16).toFixed(3)+')';
-  c.fillRect(x0,y0,1.5+rnd()*3,1+rnd()*1.4);}
- c.restore();
-
- // ---- 2. ground tiles. Each diamond gets a subtle raised-bevel so the surface
- //         reads as molded, plus per-tile tonal variation and theme features ----
- for(let y=0;y<N;y++)for(let x=0;x<N;x++){
-  const sx=isoX(x,y),sy=isoY(x,y);
-  let col;
-  if(th==='grass'){const v=.92+rnd()*.16;col=shade(((x*7+y*5)%9<2)?PAL.alt:PAL.base,v);}
-  else if(th==='tile'){const big=((x>>2)+(y>>2))%2;col=shade(big?PAL.alt:PAL.base,.97+rnd()*.06);}
-  /* v107.2: the bathroom's tone is nearly flat. The square tile diamond is the
-     KITCHEN's unit of pattern; here it is only the ground the mosaic is laid on,
-     and a +/-9% per-tile wobble under a hex grid reads as a second, square grid
-     showing through - which is the very thing the owner saw. */
-  else if(th==='bath'){col=shade(PAL.base,.985+rnd()*.03);}
-  else{col=shade(PAL.base,.9+rnd()*.18);}
-  paintIsoTile(c,sx,sy,col);
- }
-
- // ---- 2b. micro-detail: baked once into the terrain canvas, so density is
- //          free at runtime. Grass flock, tile speckle, carpet pile, sand grain.
- if(th==='grass'){
-  for(let i=0;i<N*N*2;i++){const gx=rnd()*N,gy=rnd()*N,px=isoX(gx,gy),py=isoY(gx,gy)+HH;
-   c.fillStyle=rnd()<.5?'rgba(214,240,150,.16)':'rgba(22,42,14,.18)';c.fillRect(px,py,1.4,1.4);}
-  c.lineWidth=1.1;c.lineCap='round';
-  for(let i=0;i<Math.floor(N*N*.14);i++){const gx=rnd()*N,gy=rnd()*N,px=isoX(gx,gy),py=isoY(gx,gy)+HH,s=.7+rnd()*.8;
-   c.strokeStyle=rnd()<.5?'rgba(56,104,32,.5)':'rgba(126,188,74,.45)';
-   c.beginPath();for(let k2=0;k2<3;k2++){const a=-1.57+(k2-1)*.55+(rnd()-.5)*.3;c.moveTo(px,py);c.lineTo(px+dcos(a)*5.5*s,py+dsin(a)*5.5*s);}c.stroke();}
- } else if(th==='tile'){
-  for(let i=0;i<N*N;i++){const gx=rnd()*N,gy=rnd()*N,px=isoX(gx,gy),py=isoY(gx,gy)+HH;
-   c.fillStyle=rnd()<.5?'rgba(255,255,255,.05)':'rgba(60,70,78,.05)';c.fillRect(px,py,1.6,1.6);}
- } else if(th==='carpet'){
-  c.save();c.globalAlpha=.45;c.lineCap='round';c.lineWidth=1;
-  for(let i=0;i<1800;i++){const gx=rnd()*N,gy=rnd()*N,px=isoX(gx,gy),py=isoY(gx,gy)+HH;
-   const a=rnd()*6.28,l=1.5+rnd()*2.5;
-   c.strokeStyle=rnd()<.5?'rgba(210,196,168,.6)':'rgba(96,86,64,.6)';
-   c.beginPath();c.moveTo(px,py);c.lineTo(px+dcos(a)*l,py+dsin(a)*l*.5);c.stroke();}
-  c.restore();
-  c.save();c.globalAlpha=.35;for(let i=0;i<160;i++){const gx=rnd()*N,gy=rnd()*N;c.fillStyle='rgba(60,52,38,.5)';c.beginPath();c.ellipse(isoX(gx,gy),isoY(gx,gy)+HH,1.6,1,0,0,7);c.fill();}c.restore();
- } else if(th==='bath'){
-  // v107.2: fine porcelain grain, cool against the warm glaze. It reads THROUGH
-  // the mosaic, which is drawn with a translucent glaze pass rather than an
-  // opaque fill - a flat fill made the floor look like paper.
-  for(let i=0;i<N*N;i++){const gx=rnd()*N,gy=rnd()*N,px=isoX(gx,gy),py=isoY(gx,gy)+HH;
-   c.fillStyle=rnd()<.5?'rgba(255,255,255,.07)':'rgba(120,110,96,.06)';c.fillRect(px,py,1.5,1.5);}
- } else if(th==='desk'){
-  // v35: wood-grain streaks + speckle so the desktop reads as timber
-  for(let i=0;i<N*N;i++){const gx=rnd()*N,gy=rnd()*N,px=isoX(gx,gy),py=isoY(gx,gy)+HH;
-   c.fillStyle=rnd()<.5?'rgba(255,226,176,.12)':'rgba(96,64,32,.16)';c.fillRect(px,py,1.4,1.4);}
-  c.save();c.globalAlpha=.16;c.strokeStyle='rgba(80,52,26,.9)';c.lineWidth=1;
-  for(let i=0;i<Math.floor(N*1.6);i++){const gy=rnd()*N,gx0=rnd()*N*.4,len=6+rnd()*10;
-   c.beginPath();c.moveTo(isoX(gx0,gy),isoY(gx0,gy)+HH);c.lineTo(isoX(gx0+len,gy+(rnd()-.5)*.5),isoY(gx0+len,gy+(rnd()-.5)*.5)+HH);c.stroke();}
-  c.restore();
- } else {
-  for(let i=0;i<N*N*2;i++){const gx=rnd()*N,gy=rnd()*N,px=isoX(gx,gy),py=isoY(gx,gy)+HH;
-   c.fillStyle=rnd()<.5?'rgba(255,240,200,.14)':'rgba(120,90,44,.16)';c.fillRect(px,py,1.3,1.3);}
- }
+ groundSkirt(c,th,N,rnd,G.orgX,0,DEPTH);
+ groundLay(c,th,N,rnd,G.orgX,0,G.map.seed||99);
 
  // ---- 3. theme regions ----
  if(G.map.sandPatch){const p=G.map.sandPatch;
@@ -1538,6 +1434,8 @@ function renderTerrain(){
   for(let j=-1,jn=Math.ceil(N/BSY)+1;j<=jn;j++)for(let i=-1,inn=Math.ceil(N/BSX)+1;i<=inn;i++){
    hexAt(i*BSX+((j&1)?BSX*.5:0),j*BSY,1);c.stroke();}
   c.restore();
+  // v108: the porcelain's glaze mottle, over the tiles AND their grout, as a luminance overlay
+  groundOverlay(c,'bath',N,G.orgX,0,G.map.seed||99,.6);
  }
  if(th==='attic'){ // v107: floorboards running the board's x axis, two tiles wide, with staggered end joints and knots
   c.save();

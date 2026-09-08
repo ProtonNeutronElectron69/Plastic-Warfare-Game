@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v107.3 it makes **6,830
+that the results come out identical every time. As of v108 it makes **6,862
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -117,7 +117,20 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 107.3**.
+The game is at **version 108**.
+
+**v108 — the floors are real.** Every battlefield's ground used to be drawn as
+a sheet of little bevelled diamonds — the same molded-plastic look on a lawn, a
+sandbox and a wooden desk alike. Now each floor is painted as the surface it is:
+the Backyard is turf with blades, mowed stripes and a cut edge showing soil; the
+Kitchen Counter is glazed ceramic with pillowed tiles over a mortar bed; the
+Living Room is plush carpet on a jute backing; The Desk is varnished wood with
+wandering grain and a knot or two; the Sandbox is real sand with wind ripples
+inside a plank frame with nail heads; the Bathroom's mosaic gained a porcelain
+glaze; and The Attic's boards each have their own grain, a dark seam and a film
+of dust, over the joists. The soldiers are still toy plastic — that is the
+point: they are fighting on the real house. The Field Manual's little lawn is
+painted by the same brush. Nothing about how any map plays changed.
 
 **v107.3 — the bathtub and the towel.** Both were washing out to blank white.
 The tub is now shaded like a real basin, with a shadowed inner wall, a floor you

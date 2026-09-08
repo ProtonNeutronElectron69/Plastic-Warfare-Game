@@ -1181,6 +1181,133 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v108 — the ground as a real surface (Roadmap 4 item 5, in the form the owner asked for)
+
+The owner asked for the map graphics pass the roadmap had been carrying since
+v103 — with one instruction that reshaped it: the floor must NOT look like the
+units' textured plastic, "just better". So this is item 5 delivered as a
+procedural repaint rather than as the sprite pipeline pointed at ground tiles:
+the units stay toy plastic on purpose, and the floor they stand on is the real
+house. `tail_v108.js` (T93, 32 checks; the suite is **6,862**), plus a
+conscious rewrite of `T41.C` and a filter restated in `T91.B`. **No trail moved
+and no repin was due**: `renderTerrain` is a bake, nothing here is simulation,
+and every layout pin held.
+
+### The diagnosis, in one function
+
+Every board's ground was laid by `paintIsoTile`: a diamond of the theme colour
+with two lit facets and two shaded ones — a raised bevel on EVERY tile. That is
+what a sheet of molded plastic looks like whatever colour it is painted, and it
+was the same on the lawn, the sandbox, the carpet, the desk and the attic's
+floorboards; the seven boards differed only in palette and in what was
+scattered on top. Read in 1:1 Chromium crops of all seven before anything was
+touched: the sandbox was the worst (a diamond grid on "sand"), the desk drew its
+grain THROUGH the bevels, and the kitchen's four-tile ceramic squares each held
+sixteen bevelled diamonds.
+
+### The mechanism: three coats and an edge (`07b-ground.js`, a new source file)
+
+- **The base coat.** One FLAT diamond per tile in the theme palette, a ±4% tone
+  wobble, no bevel. It is kept as a real fill per tile rather than one rectangle
+  for two reasons that are both about the fallback: under the headless shim
+  (which has no canvas that paints) this coat IS the floor the recorders count,
+  and a browser with no pattern support still gets a floor in the right colour.
+- **The material swatch.** A 512px square of the surface generated PER PIXEL at
+  bake time (`groundTex`): periodic value noise for the mottle — the lattice
+  wraps, so the swatch tiles seamlessly — and a stroke pass on top for the
+  lawn's blades and the carpet's pile, each stroke laid again one swatch over
+  when it crosses an edge. It is tiled over the board as a canvas pattern
+  **under the iso transform** (`setTransform(HW·k, HH·k, −HW·k, HH·k, orgX, 0)`,
+  one swatch pixel = k world tiles), so it lies DOWN with the board the way
+  v107.2's hexagons do: a blade drawn "up" in the swatch (direction (−1,−1))
+  stands up on the screen, and a growth ring runs along the desk. Eight tiles
+  per repeat. Five themes are colour swatches laid at .94 alpha; the kitchen's
+  ceramic and the bathroom's porcelain are **luminance overlays** centred on mid
+  grey and tiled with the `overlay` blend, so the checker and the mosaic keep
+  their own colours and gain the glaze.
+- **The blotches.** A few dozen soft radial gradients per board, in world space,
+  off the terrain's own stream — a lawn's dry patch, damp sand, a carpet's worn
+  path — so the eight-tile repeat never lines up into a grid.
+- **The skirt.** The slab's "molded plastic" edge (two gradient faces, mold
+  lines, a lit lip, scuffs) is the material's own edge now: cut turf over soil
+  with roots and stones; a tile's thickness over its mortar bed; carpet pile
+  over cross-woven jute; a varnished desk edge with long grain on one face and
+  end grain on the other; the sandbox's plank frame, two courses with nail heads
+  and a corner post; the attic's board ends over the joists. The contact shadow
+  onto the table stays — the board is still a section of floor sitting in the
+  dark.
+
+**One seam, two call sites.** `groundLay` + `groundSkirt` are called by
+`renderTerrain` and by the Field Manual's `infoGround`, so the manual's lawn is
+the Backyard's lawn, cut edge and all. `infoGround` no longer carries a private
+copy of the grass palette; `GROUND_PAL` is the one table.
+
+### Measured
+
+| | |
+|---|---|
+| swatch generation, per theme (Node, the JS loop) | 71–163 ms |
+| whole bake, JS half (Node; the canvas fills are Chromium's) | 100–140 ms |
+| seam step across the wrap / largest interior step, worst theme | ≤ 1.1 (T93.A) |
+| luminance sd of the seven swatches | 10.5 / 8.0 / 11.9 / 11.0 / 16.7 / 4.5 / 12.7 |
+| attic: seam rows vs mid-board | > 14 levels darker (T93.B) |
+| kitchen: lit edge > face > shaded edge, per 4-tile square | > 6 levels each way (T93.B) |
+
+The bake is still a one-time cost in `newGame`. The swatch is a pure function
+of `(theme, seed)`; it runs on its own mulberry stream, so the terrain stream is
+drawn the same number of times with and without it (T93.D measures that by
+stubbing `groundTex` and counting), and `srand()`/`hashState()` are untouched
+across a bake on all seven maps.
+
+### Traps, all paid for
+
+- **A PHASE THAT DOES NOT COME ROUND TO A WHOLE CYCLE IS A SEAM.** The sand's
+  ripples and the two wood grains each carried a `+u*.6`/`+u*.25`/`+u*.4` slant
+  term for wander. Noise wraps by construction; a sine does not unless its
+  argument advances by an integer across the swatch. Every slant is a whole
+  cycle now, and T93.A asserts the wrap against the swatch's LARGEST interior
+  step — because the first cut of that check compared the wrap to a mid-board
+  row and called the attic's own board seam a defect (ratio 38). The claim on
+  those two themes is precisely that the wrap lands on a hard edge the material
+  already has.
+- **Chromium's virtual clock does not advance through synchronous work.**
+  `performance.now()` around the bake under `--virtual-time-budget` reads 0 ms.
+  The JS half is timed under Node instead, where the shim makes the canvas free;
+  the numbers above are that.
+- **Two pinned strings collided.** `rgba(0,0,0,.18)` for the mortar's grit is
+  the attic mothball's own colour, and T89.F pins that string as unique in the
+  shipped file; it is `.17` now. And T91.B's "the bathroom's tiles are near
+  flat" filter selected every four-point hex-colour fill — which the new skirt's
+  bands are — and read 37 levels of "tile" spread off a mortar bed. The filter
+  says which paths are tiles now (one tile wide, one tile tall); a conscious
+  restatement, not a loosening.
+- **A recorder that records `col` on one op and `fill` on another answers with
+  the wrong one.** T93.E's first cut asked every fill for `.fill` and every
+  theme came back with no signature colour at all.
+- **`paintIsoTile` is deleted, not orphaned.** T41.C pinned its five-fill
+  recipe; it now pins the same seam (one ground recipe, two call sites) against
+  `groundLay` — one flat diamond per tile, no three-point facet anywhere, the
+  bevel colour gone from the shipped file.
+
+### Not in this release, on purpose
+
+The ground does not yet catch light from explosions and fire. The roadmap's
+"they would pick up the existing lighting for free" was wrong as the game
+stands: the per-pixel lights live in the sprite band pass, and the terrain is a
+separate canvas composited BENEATH it. That is a renderer change with its own
+risk in the compositing seam, and the owner chose to have it — it is the next
+version (v108.1), kept apart so a problem there cannot be confused with a paint
+problem. The props' detail pass (v109) is likewise separate.
+
+### Verification actually run at v108
+
+`QUIET=1 ./seg.sh all`: 6,862 checks, 0 failures, on the final bytes.
+`./build.sh --check`: byte-identical. `verify_v58.py`: 32/32. `triage.sh`: sim
+unchanged, all 30 pins hold. Whole-board Chromium frames of all seven maps
+before and after, 1:1 crops of all seven, 2× crops of the lawn and the mosaic,
+and the sandbox's corner post — the ask was about how the floor looks, so the
+frames are the evidence and the numbers explain them.
+
 ## v107.3 — the tub and the towel (the third owner pass on v107)
 
 The owner played v107.2 and said the bathtub and the white bath mat are

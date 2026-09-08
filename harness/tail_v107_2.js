@@ -153,8 +153,14 @@ section('T91.B the owner\'s complaint, stated as a measurement');
  ok('T91.B the bathroom\'s old square grid is gone from the shipped file, not merely overdrawn',
     !require('fs').readFileSync('pw.html','utf8').includes("rgba(120,138,150,.5)"));
  // and the bathroom's ground tiles no longer carry the kitchen's two-tone checker
- const bt=BATH1072.paths.filter(p=>p.op==='fill'&&p.pts.length===4&&/^#[0-9a-f]{6}$/i.test(p.col));
- const kt=KIT1072.paths.filter(p=>p.op==='fill'&&p.pts.length===4&&/^#[0-9a-f]{6}$/i.test(p.col));
+ /* v108: the ground TILES - a four-point path one tile wide. The slab's edge is
+    painted as the floor's own material now (groundSkirt), and its bands are
+    four-point hex-colour fills too; the first cut of this filter counted them
+    and read 37 levels of "tile" spread off a mortar bed. Conscious edit: the
+    claim is about the tiles, so the filter says which paths are tiles. */
+ const isTile=p=>p.op==='fill'&&p.pts.length===4&&/^#[0-9a-f]{6}$/i.test(p.col)&&Math.abs((p.pts[1][0]-p.pts[3][0])-TW)<1e-6&&Math.abs((p.pts[2][1]-p.pts[0][1])-TH)<1e-6;
+ const bt=BATH1072.paths.filter(isTile);
+ const kt=KIT1072.paths.filter(isTile);
  const spread=(a)=>{const l=a.map(p=>{const n=parseInt(p.col.slice(1),16);return (n>>16&255)});return Math.max(...l)-Math.min(...l)};
  ok(`T91.B the bathroom's ground tiles are near-flat (${spread(bt)} levels), so no square grid shows through the mosaic`, spread(bt)<=12);
  ok(`T91.B the kitchen's are not (${spread(kt)} levels): that IS its checkerboard, and it is untouched`, spread(kt)>=14);
