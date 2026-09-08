@@ -2,20 +2,23 @@
 
 Read this first. It is the orientation; `harness/README.md` is the detail.
 
-**Map of this file.** The first six sections are the ones you need before you
+**Map of this file.** The first SEVEN sections are the ones you need before you
 touch anything — what the project is, where it stands, how to build, how to
-test, how to watch the bots, and the rules that are load-bearing. Everything
+test, how to watch the bots, how to LOOK at a frame (rule 7's tools), and the
+rules that are load-bearing. Everything
 after that is the record: the roadmap chapters, then one section per standalone
-release NEWEST FIRST (v106 down to v89), then the balance baseline, then the
+release NEWEST FIRST (v110 down to v89), then the balance baseline, then the
 patterns worth copying. Read the record when you are about to touch the
 subsystem it describes; do not read it front to back.
 
 **The one exception to "it is all record":** `## Roadmap 4` is the only
 FORWARD-looking chapter in this file. Roadmaps 1-3 are finished history; roadmap
-4 is a tentative, unagreed menu of what could come next, written at v103 — one
-of its twelve items has since been delivered (item 1, music, at v104) and the
-rest are untouched. If the owner asks "what should I build", that is the
-section.
+4 is a tentative, unagreed menu of what could come next, written at v103. Four
+of its twelve items have since shipped in whole or in part — 1 (music, bar its
+barks) at v104, 4 at v106, two of 2's boards at v107, and 5 whole at v108–v109 —
+and each of those carries a DELIVERED banner naming the release. The other eight
+are untouched. If the owner asks "what should I build", that is the section, and
+the ranking at the foot of it is restated against what is actually left.
 
 ## The shape of the project
 
@@ -54,42 +57,28 @@ lead with implementation detail unless asked.
 
 ## Where the game stands (v110, and what a fresh session does)
 
-The game is at **v110**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
-abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
-(v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
-v103 are standalone owner passes (below), **v104 is the first Roadmap 4 item
-delivered** — the soundtrack, which then took four owner feedback passes
-(v104.1–v104.4) before it was right — and **v105 is a standalone menu pass**
-(the whole roster parades behind the setup screen, and the Field Manual is
-painted on the same parade ground), with **v105.1** the owner's feedback pass on
-it — two bugs found by playing, one of which had let the BOTS research three
-structures the human could not. **v106 is the second Roadmap 4 item delivered**:
-the bots use the six unit abilities they owned and never switched on. **v107 is
-the third, in part** — two of Roadmap 4 item 2's battlefields: the Bathroom
-Floor (a four-corner 72 built around a drained bathtub) and The Attic, the game's
-first SIDED map, built for a 2v2 with each team's pair seated inside a walled
-compound of destructible level art, and **v107.1** is the owner's feedback pass on
-it — the walls pulled in seven rows with a layer more, a second expansion per
-base, bots that spare their own compound, mines in the middle — and **v107.2**
-is the second, a floor of its own for the Bathroom (a hexagon mosaic in warm
-porcelain, because it had been wearing the Kitchen's square grid), and
-**v107.3** is the third — the bathtub and the dropped towel, both of which read
-as blank white. **v108 is Roadmap 4 item 5, in the form the owner asked for**:
-every board's ground repainted as the real surface it is (turf, ceramic,
-carpet, varnished wood, sand in a plank frame, porcelain, bare boards) by a
-per-pixel material swatch tiled in world space — NOT the sprite pipeline's
-textured plastic, by instruction. **v109 is the two follow-ons v108 left agreed,
-delivered in one pass by the owner's instruction**: the ground catches the
-light of explosions, burning ground and muzzle flashes (the renderer change the
-v108 chapter said the roadmap's "for free" was wrong about — a 2d additive pass
-off the SAME light list the sprite shader uses, so it works on the WebGL stage
-and the 2d fallback alike), and every one of the 60 decorative props' painters
-gained a detail pass, plus the Attic's level art. Nothing about how any map
-plays changed and no trail moved. **v110 is a standalone hotkey pass**: the
-build-menu letters are declared on the table row instead of handed out by
-position, so a thing carries one key everywhere it can be reached from (the
-Barricade was `m` on the HQ and `c` on the Outpost), and the left half of the
-keyboard now carries 65% of every key in the game instead of 52%.
+The game is at **v110**, and every chapter below is finished work. All three
+roadmaps are COMPLETE: roadmap 1 (v79–v82, abilities), roadmap 2 (v85–v88.1,
+full faction-exclusive sets), roadmap 3 (v91–v96 + follow-ups v92.1/v96.1/v97,
+real art and real sound). Since then the releases are standalone owner passes and
+Roadmap 4 items, and this is the ledger — each row has its own chapter further
+down, newest first, and the chapter is where the reasoning lives.
+
+| release | what it was | one line |
+|---|---|---|
+| v98–v103 | owner passes | a re-price + the number row (v98), AI order discipline (v99), three bug fixes (v100), the day/night cycle (v101), the unit stat card (v102), the map layout audit (v103) |
+| **v104**–v104.4 | **Roadmap 4 item 1** | the soundtrack — four Old Guard tracks, and four owner feedback passes before it was right. Its BARKS are the only part still open |
+| v105 | owner pass | the whole roster parades behind the setup screen, and the Field Manual is painted on the same ground |
+| v105.1 | feedback | two bugs found by playing — one had let the BOTS research three structures the human could not, for nineteen releases |
+| **v106** | **Roadmap 4 item 4** | the bots use the six unit abilities they owned and never switched on |
+| **v107** | **item 2, in part** | two of five battlefields: the Bathroom Floor (a drained bathtub round the centre cache) and The Attic — the game's first SIDED map, a 2v2 with each pair walled into a compound of destructible level art |
+| v107.1/.2/.3 | feedback ×3 | the Attic's walls pulled in seven rows; a hexagon mosaic so the Bathroom stopped wearing the Kitchen's floor; the bathtub and the towel, both reading as blank white |
+| **v108** | **item 5, ground** | every board's floor repainted as the real surface it is, by a per-pixel material swatch tiled in world space — NOT the sprite pipeline's textured plastic, by instruction |
+| **v109** | **item 5, finished** | the ground catches the light of explosions, fire and muzzle flashes (the renderer change v108 proved the roadmap wrong about), and all 60 decorative props got a detail pass |
+| v110 | owner pass | the hotkey review: build-menu letters are declared on the table row instead of handed out by position, so a thing carries one key everywhere; left-half keys 52% → 65% |
+
+**Nothing above is in flight.** Each shipped as its own PR and merged, so a
+fresh session starts from `origin/main` with no handover state to reconstruct.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
 ranked, written after a whole-game review at v103. **Four of the twelve have
@@ -156,7 +145,9 @@ this file, then push and open a **draft** PR into `main`.
 
 **Four documents move with a release and the fourth is the one that gets
 forgotten**: `source/js/01-constants.js` (the two numbers), `harness/README.md`
-(the evidence), this file (the orientation), and **`README.md` at the repo root
+(the evidence — **two places in it: your own chapter AND the `## Contents`
+index at the foot**, which went six releases stale before the v110 pass caught
+it), this file (the orientation), and **`README.md` at the repo root
 — the page a PLAYER reads**. It carries the version number, the suite's check
 count and a plain-language paragraph per release, and it sat three releases
 behind (still saying "version 97") until the post-v100 documentation pass. It is
@@ -206,13 +197,27 @@ cd harness
 ./sim.sh 24              # a bigger batch; SEED0=900 ./sim.sh for a different run
 ```
 
-## Looking at the maps (v103; seven of them since v107)
+## Looking at the game (rule 7's tools)
 
 ```sh
 cd harness
+./hud_shot.sh out/f.png                       # ONE IN-MATCH FRAME, then READ it
+SELECT=hq FAC=gray ./hud_shot.sh out/hq.png   # ...with a building's panel open
+DAY=night JS='spawnExplosion(hq.x+3,hq.y-3,2.4)' ./hud_shot.sh out/n.png
 ./map_shot.sh out 500000 0.42     # one whole-board PNG per map, then READ them
 cat shim_head.js game.js audit_maps.js > .audit.js && node .audit.js 40
 ```
+
+**`hud_shot.sh` was added at v110 because four releases in a row rebuilt it.**
+The npm-free Chromium recipe has been in `harness/README.md` since v100, but it
+only reaches the MENU; every release from v107 to v110 then hand-rolled the same
+boot-and-inject script and re-paid the same traps. Its header records four: the
+shipped file ends with `</html>` and NO trailing newline (so `head -c -1` eats
+the `>` and the injection silently never runs); do not wait on `load` (poll
+`ASSETS_STATE`); **a fixture that does not tick has `fog===0` everywhere**, so
+anything vision-gated reads as absent for the wrong reason, which is why the JS
+hook runs AFTER the ticks; and testing mode is pinned to permanent noon inside
+`dayPhase`, so `DAY=` switches it off for you.
 
 `map_shot.sh` boots a real match per map in headless Chromium, paints the baked
 terrain canvas plus every prop into one canvas sized to the WHOLE board, outlines
@@ -337,23 +342,30 @@ having walked fewer, and clean is the answer that stops an investigation.
    nobody checked.** `renderGuard` wraps `renderCore` precisely so a render
    throw cannot crash a live match — which also means it cannot go red in
    `seg.sh`. If you touched anything that draws, open the shipped file in a real
-   Chromium and READ the screenshot; the recipe (no npm, no server) is in the
-   Running section of `harness/README.md`. v100 paid for this rule twice in one
-   release.
+   Chromium and READ the screenshot: **`cd harness && ./hud_shot.sh out/f.png`**
+   is one in-match frame with no npm and no server (`SELECT=`, `DAY=`, `JS=` and
+   `MAP=` pose it), `./map_shot.sh` is the whole board, and the bare recipe is in
+   the Running section of `harness/README.md`. v100 paid for this rule twice in
+   one release; v107 paid four times in one release.
 8. **Measure the mechanism, not the outcome.** Every AI pass that got this wrong
    drew the wrong conclusion: a class share, a win rate and a mean unit cost are
    all outcomes, and each is consistent with a dozen causes. The probes exist
    because `sim.sh`'s outcomes could not distinguish "never chose air" from
    "chose air and could not pay for it".
 
-## Roadmap 4 — the tentative shortlist (proposed at v103; item 1 delivered)
+## Roadmap 4 — the tentative shortlist (proposed at v103; four items shipped)
 
 **Nothing here is agreed and nothing here is in flight.** This is the menu that
 came out of a whole-game review at v103, written when the owner said they were
-running out of ideas. TWO items have since shipped: item 1 (v104–v104.4, bar its
-barks) and **item 4 (v106)**. The rest are exactly as written — and item 4 is a
-warning about how they were written, because its own inventory of the code was
-out of date by two releases when the review made it. Measure before you build.
+running out of ideas. FOUR of the twelve have since shipped in whole or in part:
+item 1 (v104–v104.4, bar its barks), **item 4 (v106)**, two of item 2's five
+boards (v107) and **item 5 whole** (v108 the ground, v109 the lighting and the
+props). The other eight are exactly as written — and item 4 is a warning about
+how they were written, because its own inventory of the code was out of date by
+two releases when the review made it, and item 9 below was simply wrong about
+half of what it asked for. **Measure before you build**: every item here is
+eighteen months of releases old, and two of the twelve have now been caught
+describing a game that had already moved.
 
 It is ranked by return on effort, and four of the twelve items rest on
 measurements taken at the time rather than on opinion — those are
@@ -366,7 +378,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 6,716 checks. What is thin is everything AROUND it — how
+recorded soundtrack, 6,923 checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -473,12 +485,21 @@ still empty; item 1 has since answered it.)
    a draught through the carpet fibres. Keep it COSMETIC — the moment rain slows
    movement it is a second day/night cycle to balance, and this is meant to be
    the cheap one. *Impact medium · effort low · risk none if cosmetic.*
-9. **Two missing keys.** There is no "select my idle Dump Truck" and no "select
-   my whole army". Both are reflexes every RTS player has, and the idle-worker
-   one pays for itself constantly because a truck that finishes a pile and stands
-   still is invisible until income quietly stops. There is keyboard room: after
-   v98 the number row is abilities and F1–F9 are groups. *Impact small but daily ·
-   effort low · risk none.*
+9. **One missing key — and this item was HALF WRONG when it was written.** It
+   asked for "select my idle Dump Truck" and "select my whole army". **The second
+   one has existed since v42**: Space selects your whole army (trucks stay put,
+   medics come along), the Field Manual documents it, and `23-net-input.js` has
+   the branch. Corrected at the v110 documentation pass; the item is a warning
+   about the whole chapter, which was compiled from a v103 reading of the code
+   and has now been caught wrong twice (see item 4).
+   What IS still missing is the idle-worker key, and it pays for itself
+   constantly because a truck that finishes a pile and stands still is invisible
+   until income quietly stops.
+   **The keyboard room this item claimed is gone**: after v110 the build-menu
+   alphabet is fifteen letters with exactly ONE spare (`k`), and every other
+   letter of a–z is bound — so a new global command needs a letter freed, the way
+   v110 freed `b` by moving the blast preview to the backtick, or a non-letter
+   key. *Impact small but daily · effort low · risk none.*
 
 ### Band 3 — big swings (each a project, not a release)
 
@@ -509,18 +530,27 @@ still empty; item 1 has since answered it.)
     that block line of sight, so cover means something without the ground moving.
     *Impact transformative · effort very high · balance risk destabilising.*
 
-**The order proposed, if the owner wants one.** The music half of item 1 is
-done and needed no repin, as this section predicted. What was next in that plan,
-unchanged:
+**The order proposed, RESTATED at v110 against what is actually left.** The
+original plan was barks → maps → armies. Item 4 shipped at v106, two of item 2's
+boards at v107 and item 5 whole at v108–v109, so what remains of that plan is:
 
-- **the barks** — the rest of item 1, and small enough to ride with anything else;
-- **two new battlefields plus a second survival board** (item 2), the best
-  value-per-effort left, and the one thing every mode benefits from at once;
-- **the armies pass** (items 3 and 4) — Blue, then Gray, then the eight unit
-  abilities the bots never use, which raises the ceiling on Hard and shows off
-  the fixes at the same time.
+- **the armies pass (item 3)** — Blue, then Gray. This is now the top of the
+  list on the original ranking's own terms: it is the highest-impact item left,
+  it is the one you can MEASURE, and half the armies have been unpickable since
+  the v103 baseline with nothing aimed at them in seven releases. Read the
+  balance chapter below and run `probe_v89.sh` before touching a price.
+- **the barks** — the rest of item 1, still the smallest unstarted job on the
+  list, and small enough to ride with anything else;
+- **the rest of item 2** — a small two-player board (the shortest match the game
+  can currently offer is a four-corner 64) and a second survival board, because
+  Wave Survival is still one board wide.
+- **items 6 and 7 together** — a stalemate needs a way to end and `turtle` needs
+  a way to win, and the v103 review already noticed those are the same problem
+  from two sides.
 
-None of that is agreed; it is what the v103 review would have done next.
+None of that is agreed; it is what the v103 review would do next if it were
+re-run today. **Re-measure before acting on any of it** — the balance table is
+seven releases old and the class-share numbers predate two new maps.
 
 ## Roadmap 3 — real art and real sound (COMPLETE, v91–v97)
 
