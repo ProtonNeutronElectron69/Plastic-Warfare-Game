@@ -110,7 +110,46 @@ function v71Fills(){
    registry is empty for the whole of every match in which 'v' means anything. That
    is the registry-IS-the-gate argument applied to a key rather than to a tile, and
    tail_v86 pins the premise rather than leaving it as prose here. */
-const MENU_KEYS=['c','e','g','i','k','l','m','n','o','r','t','v','y','z'];
+/* --- v110: THE LETTER IS DECLARED ON THE ROW, NOT HANDED OUT BY POSITION ---
+   Through v109 a tile took the next letter off this list in the order the panel
+   happened to build it, so a letter belonged to a SLOT rather than to a thing.
+   Three consequences, all measured before this was touched, none of them
+   intended by any release:
+     - the Barricade was 'm' on the HQ and 'c' on the Outpost, and the Dump Truck
+       'z' on the HQ and 'i' on the Outpost - the same button, two keys, which is
+       what the owner asked to have fixed;
+     - the letters MOVED BETWEEN ARMIES: Blue has a fourth economy structure, so
+       everything below it in the sorted roster shifted one along and the HQ was
+       'r' for Tan and Green and 't' for Gray and Blue;
+     - building the Garage was 'e' and researching it was 'c'.
+   Every one of those is the same bug, so all three are fixed by the same move:
+   `hk` is a field on the B row, the U row and the UPGRADES row, and RESEARCH
+   derives its own from whatever the tech unlocks. A structure now carries one
+   letter everywhere it can be reached from, an unlock carries the letter of the
+   thing it unlocks, and adding a fifth army or a fourth economy building moves
+   nothing.
+
+   THE ALPHABET IS FIFTEEN NOW and 'b' is the new letter: the blast-effects
+   preview had it, and that is a documented toy on the best free key the left
+   hand owns while the widest menu in the game was using all fourteen letters
+   with nothing spare. It moved to the backtick, which no menu can ever want.
+
+   LEFT HAND FIRST, then a mnemonic. Eight of the fifteen letters sit on the left
+   half of the keyboard (b c e g r t v z) and they are handed to the tiles a
+   player presses most, because the other hand is on the mouse: the Dump Truck,
+   the Barricade, the Supply Depot, the Generator, the Guard Tower, the Barracks,
+   the Outpost and the Garage. Where the two agree the mnemonic wins for free
+   (b Barracks, c barriCade, e gEnerator, g Garage, r tRuck, t guard Tower); the
+   Outpost gives up its 'o' to take the eighth left-hand key, which is the one
+   place the two rules pulled apart. 'k' is spare - the first spare letter this
+   menu has had since v85.
+
+   A LETTER MAY REPEAT ACROSS PANELS AND MUST NOT REPEAT WITHIN ONE. The registry
+   is still the gate, so 'g' is the Garage under the HQ and the Grunt inside the
+   Barracks; what would be a bug is two tiles of ONE panel declaring the same
+   letter, which is what hotFor's fallback catches and T95.B proves cannot
+   happen for any host x faction in the game. */
+const MENU_KEYS=['b','c','e','g','i','k','l','m','n','o','r','t','v','y','z'];
 let MENU_HOT=Object.create(null),MENU_HOT_N=0;
 /* v98: the ABILITY registry is declared here, beside the menu's, rather than
    down beside the functions that use it. hotReset clears both, and a `let`
@@ -121,7 +160,18 @@ let MENU_HOT=Object.create(null),MENU_HOT_N=0;
 const ABIL_KEYS=['1','2','3','4','5','6','7','8','9'];
 let ABIL_HOT=Object.create(null),ABIL_HOT_N=0;
 function hotReset(){MENU_HOT=Object.create(null);MENU_HOT_N=0;ABIL_HOT=Object.create(null);ABIL_HOT_N=0}
-function hotNext(){return MENU_HOT_N<MENU_KEYS.length?MENU_KEYS[MENU_HOT_N++]:null}
+/* the FALLBACK allocator: the next letter of the alphabet nothing has claimed.
+   It exists so a row that forgets its `hk`, or one whose declared letter is
+   already spoken for on this panel, still gets a key instead of shipping with
+   none - the failure v86 records from the other direction. Skipping claimed
+   letters is the only change from v73's version: with declared keys the walk is
+   no longer the only claimant. */
+function hotNext(){while(MENU_HOT_N<MENU_KEYS.length){const k=MENU_KEYS[MENU_HOT_N++];if(!MENU_HOT[k])return k}return null}
+/* what a tile asks for. A declared letter is honoured while it is free on THIS
+   panel; anything else falls back. Both arms are exercised by the suite. */
+function hotFor(pref){
+ return (pref&&MENU_HOT[pref]===undefined&&MENU_KEYS.indexOf(pref)>=0)?pref:hotNext();
+}
 /* Fires the tile's OWN onclick, dimmed or not, so a key and a click are one code
    path. Every one of those handlers already validates downstream. */
 function menuHotkey(k){
@@ -659,7 +709,7 @@ function refreshSelPanel(){
    //      in reduced form, under the Outpost ----
    if(e.key==='hq'||e.key==='outpost'){
     const g=grp(pb,'Construct',true);
-    for(const key of constructRoster(e.key))g.add(structTile(key,hotNext()));
+    for(const key of constructRoster(e.key))g.add(structTile(key,hotFor(B[key].hk)));
    }
    // ---- RESEARCH LAB: flat catalog of unlocks + upgrades ----
    if(e.t.lab){
@@ -673,7 +723,7 @@ function refreshSelPanel(){
     const emit=(list,head)=>{
      if(!list.length)return;
      const g=grp(pb,head);
-     for(const key of list)g.add(researchBtn(e,key,` — ~${researchTime(e,key)|0}s`,hotNext()));
+     for(const key of list)g.add(researchBtn(e,key,` — ~${researchTime(e,key)|0}s`,hotFor(RESEARCH[key].hk)));
     };
     emit(unl,'Unlock structure');emit(upg,'Upgrade');
     if(!unl.length&&!upg.length){const d=document.createElement('div');d.className='qItem';d.style.opacity=.7;d.textContent='All research complete.';qr.appendChild(d);}
@@ -690,7 +740,7 @@ function refreshSelPanel(){
       const limFull=U[k].lim&&unitCapCount(e.p,k)>=U[k].lim;
       const poorP=e.p.res.p<c.p,poorE=e.p.res.e<c.e,poorS=supFree(e.p)<supOf(k);
       const ok=!poorP&&!poorE&&!poorS&&e.queue.length<5&&!limFull;
-      gTrain.add(tile({kind:'unit',art:k,fac:e.p.fac,name:U[k].n,dis:!ok,hk:hotNext(),
+      gTrain.add(tile({kind:'unit',art:k,fac:e.p.fac,name:U[k].n,dis:!ok,hk:hotFor(U[k].hk),
        c:[['⬢',c.p,tz(c.p,'cp'),poorP],['⚡',c.e,tz(c.e,'ce'),poorE],
           ['🪖',supOf(k),'cs',poorS]],
        card:unitCardPop(k,e.p,U[k].d),
@@ -699,7 +749,7 @@ function refreshSelPanel(){
       const rc=rcost(e.p,tk),busy=(e.techCur===tk);
       const elsewhere=e.p.techQ.includes(tk)&&!busy;
       const poorP=e.p.res.p<rc.p,poorE=e.p.res.e<rc.e;
-      gTrain.add(tile({kind:'unit',art:k,fac:e.p.fac,name:U[k].n,locked:true,hk:hotNext(),
+      gTrain.add(tile({kind:'unit',art:k,fac:e.p.fac,name:U[k].n,locked:true,hk:hotFor(U[k].hk),
        dis:!busy&&(elsewhere||!!e.techCur||poorP||poorE),
        c:[['⬢',rc.p,'cp',poorP&&!busy],['⚡',rc.e,'ce',poorE&&!busy],
           ['⏱',(researchTime(e,tk)|0)+'s','ctm',false]],
@@ -714,7 +764,7 @@ function refreshSelPanel(){
        &&!hasTech(e.p,key)&&(!e.p.techQ.includes(key)||e.techCur===key));
      if(ups.length){
       const g=grp(pb,'Research');
-      for(const key of ups)g.add(researchBtn(e,key,` — ~${researchTime(e,key)|0}s, runs while you keep producing`,hotNext()));
+      for(const key of ups)g.add(researchBtn(e,key,` — ~${researchTime(e,key)|0}s, runs while you keep producing`,hotFor(RESEARCH[key].hk)));
      }
     }
     // ---- production queue: a rising ARMY-COLOUR wash over the sprite, no percentage.

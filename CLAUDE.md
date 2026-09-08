@@ -52,9 +52,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v109, and what a fresh session does)
+## Where the game stands (v110, and what a fresh session does)
 
-The game is at **v109**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
+The game is at **v110**. All three roadmaps are COMPLETE: roadmap 1 (v79–v82,
 abilities), roadmap 2 (v85–v88.1, full faction-exclusive sets), roadmap 3
 (v91–v96 + follow-ups v92.1/v96.1/v97, real art and real sound). v98 through
 v103 are standalone owner passes (below), **v104 is the first Roadmap 4 item
@@ -85,7 +85,11 @@ v108 chapter said the roadmap's "for free" was wrong about — a 2d additive pas
 off the SAME light list the sprite shader uses, so it works on the WebGL stage
 and the 2d fallback alike), and every one of the 60 decorative props' painters
 gained a detail pass, plus the Attic's level art. Nothing about how any map
-plays changed and no trail moved.
+plays changed and no trail moved. **v110 is a standalone hotkey pass**: the
+build-menu letters are declared on the table row instead of handed out by
+position, so a thing carries one key everywhere it can be reached from (the
+Barricade was `m` on the HQ and `c` on the Outpost), and the left half of the
+keyboard now carries 65% of every key in the game instead of 52%.
 
 **Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
 ranked, written after a whole-game review at v103. **Four of the twelve have
@@ -121,7 +125,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 6,895 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 6,923 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -135,7 +139,7 @@ whatever the owner asks for next is a fresh vNN starting from `origin/main`. If
 they are NOT green, stop and read the failure before touching anything: every
 check in this suite was put there by a release that paid for it.
 
-**The map generator was audited at v103 and nothing has touched it since** (v108 and v109 repainted the ground and the props and touched no placement)
+**The map generator was audited at v103 and nothing has touched it since** (v108/v109 repainted the ground and the props and v110 touched only the UI)
 (the v103 section below). If you touch `makeMap`, run `harness/audit_maps.js` before and
 after — it counts every defect class the audit found, and the residual it should
 report is: 3-4 decor-sized art grazes, 2 line props lying in a spill, and one
@@ -189,7 +193,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,895 checks at v109.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,923 checks at v110.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -614,6 +618,52 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v110 — the hotkey pass (not part of a roadmap)
+
+The owner asked for a review of the hotkey assignments: keep as many keys as
+possible within reach of the left hand, and make sure a thing reachable from
+more than one host keeps one key. `tail_v110.js` (T95, 26 checks; the suite is
+6,923 now), plus eleven restatements in `T50.D`; full evidence in the v110
+section of `harness/README.md`. **No trail moved and no repin was due** — the
+selection panel is client-local.
+
+- **THE LETTER IS DECLARED ON THE ROW NOW, not handed out by position.** `hk` is
+  a field on `B`, `U` and `UPGRADES`; `RESEARCH` derives its own from whatever
+  the tech unlocks. `hotFor(pref)` honours it while it is free on this panel and
+  falls back to the old walk otherwise, so a row that forgets a letter still
+  gets one instead of shipping keyless.
+- **Eight of the fifteen letters are left-half now and they go to the eight
+  most-pressed tiles** — Dump Truck `r`, Barricade `c`, Supply Depot `v`,
+  Generator `e`, Guard Tower `t`, Barracks `b`, Outpost `z`, Garage `g`.
+  Measured across all 24 host × faction panels: **51.6% → 65.2%** left-half.
+- **`b` joined the alphabet and the blast-effects preview moved to the
+  backtick** — a documented toy was holding the best free left-hand letter while
+  the widest menu used all fourteen with nothing spare.
+
+Four things worth carrying forward:
+
+- **A POSITIONAL KEY IS A KEY THAT BELONGS TO A SLOT.** The owner named two
+  symptoms (the Dump Truck and the Barricade differing between the HQ and the
+  Outpost); the same defect had a third the review found on its own — the
+  letters MOVED BETWEEN ARMIES, because Blue has a fourth economy structure and
+  everything below it in the sorted roster shifted one along. One fix answered
+  all three. Same shape as v105.1's `LAB_ORDER`: **when a hand-ordered list sits
+  between a correct table and the player, ask what else it decides.**
+- **THE QUICK-REFERENCE HELP BOX HAD BEEN WRONG SINCE v98** — it still said
+  `Ctrl+1-9` saved a control group and `1-9` recalled it, eleven releases after
+  the groups moved to F1–F9, while the line two rows below it was right the
+  whole time. No check reads help prose against the handler; T95.E does now.
+- **A COLLISION TEST MUST COMPARE THE DECLARED SET TO THE LIVE ONE.** Counting
+  the registry proves nothing — a duplicate declaration is pushed onto a
+  fallback letter and the count still matches the tile count. T95.B builds the
+  expected letters the way `refreshSelPanel` picks them and demands set equality
+  over 48 panels.
+- **A fixture that presses a key may be pressing a different tile.** `T50.D`
+  asserted `c` on the Barracks queues "the first trainable in its roster", which
+  passed only because `c` was the Grunt; `c` is the Machine Gunner now and he is
+  locked at match start, so the v71 one-tile-does-both sends a research command
+  and the queue stays empty. Both faces are driven now.
 
 ## v109 — the ground catches the light, and every prop gets its detail (Roadmap 4 item 5, finished)
 
@@ -1808,11 +1858,12 @@ Facts a roster change must respect:
   duration lives on the table row as `t.abCd`; `makeUnit` writes the clock only
   onto rows that declare one, `updateUnit` ticks it, and it is hashed, serialized
   and zeroed by testing mode. A third ability needs a row and nothing else.
-- **The build menu has one key spare.** `MENU_KEYS` holds fourteen and every
-  army's Construct menu is thirteen tiles. A fifteenth tile would need a
-  fifteenth letter and there is no unclaimed one left. See the v86 note in
-  `harness/README.md`. v90.1 SORTED that menu but did not resize it: the keys
-  are handed out positionally, so a tile's letter follows its shelf.
+- **The build menu has one key spare, and it is `k`** (v110). `MENU_KEYS` holds
+  fifteen letters; the widest menu in the game is the HQ's fourteen tiles.
+  A sixteenth tile has no letter left — the blast preview's `b` was the last one
+  that could be freed, and v110 spent it. Since v110 the letter is DECLARED on
+  the row (`hk` on `B`/`U`/`UPGRADES`, derived for `RESEARCH`), so a new row must
+  declare one and T95.A fails until it does.
 - **A new unit or building now also fails T71.A** until the texture pipeline is
   re-run — the conscious step a textured game demands (see the standing traps
   under Roadmap 3).
