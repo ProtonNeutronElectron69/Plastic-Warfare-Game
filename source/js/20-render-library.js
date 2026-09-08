@@ -1099,11 +1099,13 @@ function bldBody(c,k,col,sz){
   c.fillStyle='#2a2e34';quadPatch(c,wallCorners(bow,-1),.18,.05,.6,.7);c.fill();
   c.strokeStyle='rgba(30,30,36,.75)';c.lineWidth=1.4;c.lineCap='round';
   c.beginPath();c.moveTo(-S*.38,py-HD*.12);c.quadraticCurveTo(-S*.2,py+HD*.1,-S*.06,py+HD*.04);c.stroke();c.lineCap='butt';
-  // windsock on a mast at the far corner, so the pad reads as an airfield
+  // windsock MAST at the far corner, so the pad reads as an airfield (the sock is live, v111)
   c.strokeStyle=rgb(mixc(B0,WHITE,.3).r,mixc(B0,WHITE,.3).g,mixc(B0,WHITE,.3).b);c.lineWidth=1.6;
   c.beginPath();c.moveTo(S*.5,py-HD*.1);c.lineTo(S*.5,py-HD*.1-16);c.stroke();
-  c.fillStyle='#e8663a';c.beginPath();c.moveTo(S*.5,py-HD*.1-16);c.lineTo(S*.5+9,py-HD*.1-13.6);c.lineTo(S*.5+9,py-HD*.1-10.4);c.lineTo(S*.5,py-HD*.1-11);c.closePath();c.fill();
-  c.fillStyle='rgba(245,245,245,.85)';c.beginPath();c.moveTo(S*.5+4.4,py-HD*.1-14.8);c.lineTo(S*.5+6.4,py-HD*.1-14.3);c.lineTo(S*.5+6.4,py-HD*.1-10.8);c.lineTo(S*.5+4.4,py-HD*.1-11.2);c.closePath();c.fill();
+  /* v111: the SOCK itself is painted in bldLive now, so it can fill and droop
+     with the shared breeze - the mast stays here because it does not move. The
+     texture was re-rendered for this (the v95 pipeline, one file), because a
+     sock baked into the hull would show through under a live one that drooped. */
   /* v97: field-strip clutter - a tool crate and a spares box by the bowser */
   crateAt(c,-S*.24,py+HD*.62,4.6,3.2,4.4,'#8a6f46');
   c.fillStyle='#3a3e34';rr(c,-S*.06-4,py+HD*.68-3.4,8,3.4,1);c.fill();
@@ -1482,19 +1484,106 @@ function bldBody(c,k,col,sz){
  }
 }
 /* animated building parts drawn live over the baked hull */
+/* v111 EVERY FACTION BUILDING MOVES A LITTLE. Through v110 ten of the
+   seventeen had a live part (flags, blinkers, a dish, blades, a turret) and
+   seven had none - the Barracks, Garage, Supply Depot, Radio Tower, Munitions
+   Dump, Bunker (a garrison count is text, not motion) and Forward Pad stood
+   perfectly still. Every one carries a small
+   animation now, and the ones that already moved carry a second idea. Three
+   rules, all of them the render layer's standing ones:
+     - the clock is G.tick and the building's own id, NEVER srand() (rule 2);
+       a puff of smoke that consumed the seeded stream would desync a match
+     - nothing here is a real light source: a glow is a painted disc, so there
+       is nothing new to fog-gate (light through fog is a wallhack, v96) and
+       the night pass is untouched
+     - ONE breeze. bldWind() is the wind every flag, the tarp and the windsock
+       read, so a base leans together instead of each pennant on its own clock.
+   Fixtures matter: the manual paints these through INFO.stub (tick, an empty
+   units list, no human) and three older tails hand bldLive a bare {key,sz,id},
+   so every read of b.queue / b.garrison / b.p / G.units is guarded. */
+function bldWind(b){ // -1..1: a slow swell, a slower gust, and a per-building ripple so two flags never clone
+ const t=G.tick,id=b.id||0;
+ return Math.sin(t*.11)*.62+Math.sin(t*.037)*.28+Math.sin(t*.31+id)*.10;
+}
+function bldBlink(per,on,ph){return ((G.tick+(ph||0))%per)<on} // a lamp that is ON for `on` ticks of every `per`
+/* rising puffs: n of them share one `per`-tick cycle, staggered, each born at
+   (x,y), growing from r0 to r1 and fading, leaning with `wind` as it climbs.
+   Deterministic off G.tick + seed, so two clients draw the same smoke. */
+function bldSmoke(c,x,y,n,seed,o){
+ o=o||{};const per=o.per||80,rise=o.rise||20,wind=o.wind||0,r0=o.r0||1.5,r1=o.r1||4,a0=o.a0||.3,col=o.col||'150,146,142';
+ for(let i=0;i<n;i++){
+  const ph=((G.tick+seed*7+Math.floor(i*per/n))%per)/per;   // 0..1 of this puff's life
+  const yy=y-ph*rise, xx=x+wind*ph*ph*7+Math.sin(ph*6.28+i*1.7)*1.1;
+  const r=r0+(r1-r0)*ph, a=a0*(1-ph)*Math.min(1,ph*5);
+  c.fillStyle=`rgba(${col},${a.toFixed(3)})`;c.beginPath();c.ellipse(xx,yy,r,r*.8,0,0,7);c.fill();
+ }
+}
 function bldLive(c,b,col){
  const k=b.key,sz=b.sz,S=sz*HW,HD=sz*HH;
  const B0=hx2rgb(col),deep=mixc(B0,AMB,.55);
+ const wind=bldWind(b);
  if(k==='hq'){
   const mx=-S*.5, mtop=HD*.55-60;
- const wv=Math.sin(G.tick*.12+b.id)*2.5;c.fillStyle=col;c.beginPath();c.moveTo(mx,mtop);c.quadraticCurveTo(mx+13,mtop+2+wv,mx+21,mtop+6+wv);c.lineTo(mx+19,mtop+12+wv);c.quadraticCurveTo(mx+11,mtop+9,mx,mtop+10);c.closePath();c.fill();
+ const wv=wind*2.5;c.fillStyle=col;c.beginPath();c.moveTo(mx,mtop);c.quadraticCurveTo(mx+13,mtop+2+wv,mx+21,mtop+6+wv);c.lineTo(mx+19,mtop+12+wv);c.quadraticCurveTo(mx+11,mtop+9,mx,mtop+10);c.closePath();c.fill();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.25)';c.beginPath();c.moveTo(mx,mtop);c.quadraticCurveTo(mx+13,mtop+2+wv,mx+21,mtop+6+wv);c.lineTo(mx+20,mtop+8+wv);c.quadraticCurveTo(mx+11,mtop+5,mx,mtop+4);c.closePath();c.fill();c.restore();
+  // v111: an obstruction lamp on the mast tip - a short red wink, slower than the Radio Tower's
+  if(bldBlink(90,6,b.id*11)){c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,70,50,.95)';c.beginPath();c.arc(mx,mtop-1,1.5,0,7);c.fill();c.fillStyle='rgba(255,90,60,.35)';c.beginPath();c.arc(mx,mtop-1,4.2,0,7);c.fill();c.restore();}
+ }
+ else if(k==='barracks'){
+  // v111: the stovepipe through the SW slope draws. The pipe's cap is baked at
+  // (spx, spy0-13.5) in bldBody; the smoke starts just above it and leans with the wind.
+  const spx=-S*.34,spy=(HD*.55-12)-HD*.1-14.5;
+  bldSmoke(c,spx,spy,4,b.id,{per:96,rise:24,wind,r0:1.6,r1:5.2,a0:.44,col:'212,206,198'}); // v111 rule 7: .26 grey read as nothing in a frame; pale and .44 reads as a chimney
  }
  else if(k==='lab'){
   const body={topY:HD*.55-20};
   c.save();c.globalCompositeOperation='lighter';const gl=.4+Math.sin(G.tick*.13+b.id)*.28;c.globalAlpha=gl;
   c.fillStyle='#9fe8ff';c.beginPath();c.ellipse(0,body.topY-1,S*.3,HD*.3,0,0,7);c.fill();c.restore();
   const bk=.5+Math.sin(G.tick*.22+b.id)*.5;c.save();c.globalCompositeOperation='lighter';c.fillStyle=`rgba(120,230,255,${.4+bk*.5})`;c.beginPath();c.arc(S*.5,body.topY-14,2.4,0,7);c.fill();c.restore();
+ }
+ else if(k==='garage'){
+  // v111: the work lamp over the lintel is on a bad wire - a soft hum with the
+  // odd dip - and the roof stack breathes exhaust ONLY while the shop is busy,
+  // so a puffing Garage is a Garage with something on the bench.
+  const seW=wallCorners({cx:0,baseY:HD*.55,hw:S*.84,hd:HD*.84,H:24},1),lp=qp(seW,.53,.86),lx=lp.x+4.6,ly=lp.y-3.4;
+  const dip=((G.tick*7+b.id*13)%97)<3?.3:1;
+  const la=(.2+.08*Math.sin(G.tick*.9+b.id))*dip;
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle=`rgba(255,232,160,${la.toFixed(3)})`;c.beginPath();c.arc(lx,ly,4.6,0,7);c.fill();c.restore();
+  if(b.queue&&b.queue.length&&(b.prog==null||b.prog>=1))bldSmoke(c,S*.26,-31,3,b.id+1,{per:42,rise:17,wind,r0:1.4,r1:4.4,a0:.55,col:'168,168,176'}); // v111 rule 7: a dark exhaust vanished against the off-board black
+ }
+ else if(k==='supply'){
+  // v111: the tarp's front hem lifts in the breeze. The baked skirt hangs 6px off
+  // the two front eaves; this hem is painted OVER its lower part and always
+  // reaches past it (base 8.4, ripple +-2.2), so the straight baked edge never shows.
+  const cex=S*.86,cey=HD*.86,ey=HD*.55-34;
+  const tE={x:cex,y:ey},tS={x:0,y:ey+cey},tW={x:-cex,y:ey};
+  const sk=mixc(B0,AMB,.36),hm=mixc(B0,AMB,.5);
+  const hem=(A,Bp,ph0)=>{
+   const N=7;c.beginPath();c.moveTo(A.x,A.y+3.5);c.lineTo(Bp.x,Bp.y+3.5);
+   for(let i=N;i>=0;i--){const u=i/N,x=A.x+(Bp.x-A.x)*u,y=A.y+(Bp.y-A.y)*u+8.4+Math.sin(u*8.5+G.tick*.23+ph0)*2.2*(.55+.45*Math.abs(wind));c.lineTo(x,y);}
+   c.closePath();
+  };
+  c.fillStyle=rgb(sk.r,sk.g,sk.b);hem(tE,tS,b.id);c.fill();hem(tS,tW,b.id+2.1);c.fill();
+  c.save();c.globalAlpha=.55;c.strokeStyle=rgb(hm.r,hm.g,hm.b);c.lineWidth=1;hem(tE,tS,b.id);c.stroke();hem(tS,tW,b.id+2.1);c.stroke();c.restore();
+ }
+ else if(k==='radiotower'){
+  // v111: an aircraft-warning strobe on the mast tip - dark most of the cycle,
+  // one sharp red flash every two seconds. The Helipad's corner lights PULSE;
+  // this one WINKS, so the two towers read differently at a glance.
+  const mtop=(HD*.55-10)-52;
+  if(bldBlink(60,5,b.id*7)){c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,60,50,1)';c.beginPath();c.arc(0,mtop,2.1,0,7);c.fill();c.fillStyle='rgba(255,80,60,.4)';c.beginPath();c.arc(0,mtop,5.5,0,7);c.fill();c.restore();}
+ }
+ else if(k==='dump'){
+  // v111: a rotating amber hazard lamp on top of the warning sign - a road-works
+  // beacon, restrained on purpose: the building's job is to look dangerous, not busy.
+  const topY=HD*.55-12,ly=topY-35;
+  const ph=G.tick*.16+b.id,beam=Math.max(0,Math.cos(ph));
+  c.fillStyle='#b8741a';c.beginPath();c.ellipse(0,ly,3.2,2.3,0,0,7);c.fill();
+  c.fillStyle='#e8a030';c.beginPath();c.ellipse(-.7,ly-.6,1.7,1.2,0,0,7);c.fill();
+  c.save();c.globalCompositeOperation='lighter';
+  c.fillStyle=`rgba(255,180,60,${(beam*beam*beam*.6).toFixed(3)})`;c.beginPath();c.arc(0,ly,6,0,7);c.fill();
+  c.fillStyle=`rgba(255,190,80,${(beam*.32).toFixed(3)})`;c.beginPath();c.ellipse(Math.sin(ph)*6,ly+.5,4.5,1.1,0,0,7);c.fill(); // the sweep, a streak that slides across
+  c.restore();
  }
  else if(k==='helipad'){
   const py=HD*.55-9;
@@ -1520,6 +1609,17 @@ function bldLive(c,b,col){
   plLimb(c,rgb(barc.r,barc.g,barc.b),0,gy-1,Math.cos(a2)*16,gy-1+Math.sin(a2)*8,3.6);
   c.fillStyle='#1a1a1c';c.beginPath();c.ellipse(Math.cos(a2)*16,gy-1+Math.sin(a2)*8,1.4,1.6,0,0,7);c.fill();
   glint(c,-2,gy-2,.8);
+  // v111: the spotlight under the eave (baked at -S*.6, plat.topY+5) sweeps a
+  // narrow cone across the front at NIGHT only - by day it is a lamp nobody has
+  // switched on. A painted wedge, not a light source: nothing to fog-gate.
+  if(nightNow()){
+   const lx=-S*.6,ly=plat.topY+5,a=1.05+Math.sin(G.tick*.03+b.id)*.75,L=44,sp=.3; // v111 rule 7: 36px at .34 read as nothing under the night tint
+   c.save();c.globalCompositeOperation='lighter';
+   const g=c.createRadialGradient(lx,ly,1,lx,ly,L);g.addColorStop(0,'rgba(255,240,190,.6)');g.addColorStop(1,'rgba(255,240,190,0)');
+   c.fillStyle=g;c.beginPath();c.moveTo(lx,ly);c.lineTo(lx+Math.cos(a-sp)*L,ly+Math.sin(a-sp)*L*.55);c.lineTo(lx+Math.cos(a+sp)*L,ly+Math.sin(a+sp)*L*.55);c.closePath();c.fill();
+   c.fillStyle='rgba(255,245,210,.5)';c.beginPath();c.arc(lx,ly,2.6,0,7);c.fill();
+   c.restore();
+  }
  }
  else if(k==='radar'){
   const body={topY:HD*.55-14};
@@ -1529,11 +1629,47 @@ function bldLive(c,b,col){
   c.fillStyle='#4a4e54';c.fillRect(-.8,0,1.6,7);
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.5)';c.beginPath();c.ellipse(-3.4,-2.6,3.2,1.7,-.5,0,7);c.fill();c.restore();
   c.restore();
+  // v111: a green status lamp on the equipment box beside the cabin, a short
+  // tick every second - the box is baked as a prism at (S*.54, HD*.66), 7 high
+  if(bldBlink(30,4,b.id*5)){c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(120,255,140,.95)';c.beginPath();c.arc(S*.54,HD*.66-8,1.3,0,7);c.fill();c.fillStyle='rgba(120,255,140,.3)';c.beginPath();c.arc(S*.54,HD*.66-8,3.4,0,7);c.fill();c.restore();}
  }
  else if(k==='bunker'){
   const body={topY:HD*.55-12};
   const gar=b.garrison||[]; // v27.1: ghost snapshots carry an empty garrison
   if(gar.length){c.fillStyle='#fff';c.font='bold 10px sans-serif';c.textAlign='center';c.fillText(gar.length+'/'+garCap(b),0,body.topY-S*.5);c.textAlign='left';}
+  // v111: the periscope head turns - a slow scan that pauses at each end - and the
+  // firing slits glow warm from inside while men are garrisoned, brighter the fuller
+  // it is. The stub is baked at (-S*.06+1.3, topY-S*.36*.62-9.6); the head sits on it.
+  {const hx=-S*.06+1.3,hy=body.topY-S*.36*.62-9.8,a=.3+Math.sin(G.tick*.02+b.id)*1.5;
+   c.fillStyle='#2e3238';c.beginPath();c.ellipse(hx,hy,2.6,1.4,0,0,7);c.fill();
+   c.fillStyle='#9fd8ff';c.beginPath();c.ellipse(hx+Math.cos(a)*1.9,hy+Math.sin(a)*.9,.9,.6,0,0,7);c.fill();}
+  if(gar.length){
+   const P={cx:0,baseY:HD*.55,hw:S*.86,hd:HD*.86,H:12},seW=wallCorners(P,1),swW=wallCorners(P,-1);
+   const fill=Math.min(1,gar.length/Math.max(1,garCap(b))),ga=(.24+.12*Math.sin(G.tick*.2+b.id))*(.5+.5*fill);
+   c.save();c.globalCompositeOperation='lighter';c.fillStyle=`rgba(255,200,90,${ga.toFixed(3)})`;
+   quadPatch(c,seW,.16,.46,.38,.66);c.fill();quadPatch(c,seW,.52,.46,.74,.66);c.fill();quadPatch(c,swW,.24,.46,.5,.66);c.fill();
+   c.restore();
+  }
+ }
+ else if(k==='fwdpad'){
+  // v111: the windsock fills and droops with the shared breeze - the one building
+  // that tells you which way the wind blows. The mast is baked at (S*.5, py-HD*.1),
+  // 16 tall; the sock hangs from its tip. Direction is fixed downwind (+x) as the
+  // baked one was; only how FULL it is changes, so it never flips about.
+  const py=HD*.5-7,mx=S*.5,my=py-HD*.1-16;
+  const fill=.45+.55*(.5+.5*wind),len=9,droop=(1-fill)*5,fl=Math.sin(G.tick*.5+b.id)*.7*fill;
+  const tx=mx+len*fill+2,ty=my+droop;
+  c.fillStyle='#e8663a';c.beginPath();c.moveTo(mx,my);c.lineTo(tx,ty+2.4+fl);c.lineTo(tx,ty+5.6+fl);c.lineTo(mx,my+5);c.closePath();c.fill();
+  c.fillStyle='rgba(245,245,245,.85)';c.beginPath();
+  c.moveTo(mx+(tx-mx)*.49,my+(ty+2.4+fl-my)*.49);c.lineTo(mx+(tx-mx)*.71,my+(ty+2.4+fl-my)*.71);c.lineTo(mx+(tx-mx)*.71,my+5+(ty+5.6+fl-my-5)*.71);c.lineTo(mx+(tx-mx)*.49,my+5+(ty+5.6+fl-my-5)*.49);c.closePath();c.fill();
+  // ...and the green ring beats while a hurt friendly aircraft is on the pad.
+  // Same filter and the same footprint distance the repair loop in
+  // updateBuilding uses, read here and written nowhere.
+  if(b.p&&G.units&&G.units.some(u=>u.t&&u.t.fly&&u.hp>0&&u.hp<u.mhp&&!u.garrisoned&&u.p===b.p&&
+     (Math.max(0,Math.abs(u.x-b.x)-b.sz*.5)**2+Math.max(0,Math.abs(u.y-b.y)-b.sz*.5)**2)<=PAD_R*PAD_R)){
+   const ra=.25+.25*Math.sin(G.tick*.25+b.id);
+   c.save();c.globalCompositeOperation='lighter';c.strokeStyle=`rgba(120,255,150,${ra.toFixed(3)})`;c.lineWidth=3.5;c.beginPath();c.ellipse(0,py,S*.5,HD*.5,0,0,7);c.stroke();c.restore();
+  }
  }
  else if(k==='foundry'){
   // v87: the pour spout breathes. Same clock every other live overlay reads
@@ -1545,19 +1681,24 @@ function bldLive(c,b,col){
   g.addColorStop(0,'rgba(255,180,80,.75)');g.addColorStop(.5,'rgba(255,120,30,.3)');g.addColorStop(1,'rgba(255,110,20,0)');
   c.fillStyle=g;c.beginPath();c.ellipse(S*.22,body.topY+HD*.2,S*.5,HD*.5,0,0,7);c.fill();
   c.restore();c.globalAlpha=1;
+  // v111: the banded stack (baked at -S*.4, topY-40) works - thin smoke off
+  // its mouth leaning with the wind, and an ember glow in the throat
+  const stx=-S*.4,stop=body.topY-41;
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle=`rgba(255,140,60,${(.3+.15*Math.sin(G.tick*.3+b.id)).toFixed(3)})`;c.beginPath();c.ellipse(stx,stop+.5,3.8,1.6,0,0,7);c.fill();c.restore();
+  bldSmoke(c,stx,stop-1,4,b.id+2,{per:100,rise:28,wind,r0:1.8,r1:5.6,a0:.42,col:'150,140,132'}); // v111 rule 7: dark smoke vanished against the board's dark edge; a warm grey reads on grass AND on the dark
  }
  else if(k==='cmdpost'){
   // v86: the standard on the pole baked above it. Same wave the HQ and the Outpost
-  // pennants already use, so all three flags in the game move as one idea.
+  // pennants already use, so all three flags in the game move as one idea (v111: literally - bldWind).
   const ptop=HD*.55-13-34+1,px=S*.5;
-  const wv=Math.sin(G.tick*.11+b.id)*2.2;c.fillStyle=col;
+  const wv=wind*2.2;c.fillStyle=col;
   c.beginPath();c.moveTo(px,ptop);c.quadraticCurveTo(px-10,ptop+2+wv,px-17,ptop+5+wv);c.lineTo(px-16,ptop+11+wv);c.quadraticCurveTo(px-9,ptop+8,px,ptop+9);c.closePath();c.fill();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.22)';
   c.beginPath();c.moveTo(px,ptop);c.quadraticCurveTo(px-10,ptop+2+wv,px-17,ptop+5+wv);c.lineTo(px-16,ptop+7+wv);c.quadraticCurveTo(px-9,ptop+4,px,ptop+3);c.closePath();c.fill();c.restore();
  }
  else if(k==='outpost'){
   const body={topY:HD*.3-16},px=S*.34,ptop=body.topY-16;
-  const wv=Math.sin(G.tick*.12+b.id)*2;c.fillStyle=col;c.beginPath();c.moveTo(px,ptop);c.quadraticCurveTo(px+11,ptop+2+wv,px+18,ptop+5+wv);c.lineTo(px+17,ptop+10+wv);c.quadraticCurveTo(px+9,ptop+7,px,ptop+8);c.closePath();c.fill();
+  const wv=wind*2;c.fillStyle=col;c.beginPath();c.moveTo(px,ptop);c.quadraticCurveTo(px+11,ptop+2+wv,px+18,ptop+5+wv);c.lineTo(px+17,ptop+10+wv);c.quadraticCurveTo(px+9,ptop+7,px,ptop+8);c.closePath();c.fill();
  }
 }
 

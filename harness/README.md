@@ -1201,6 +1201,111 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v111 — every faction building moves a little (not part of a roadmap)
+
+The owner asked for a small, subtle animation on every faction building —
+"a flag fluttering, a glowing light, a little smoke" — with the barricades
+exempt. `tail_v111.js` (T96, 41 checks; the suite is **6,964**). **No trail
+moved and no repin was due**: `triage.sh` said "sim unchanged" on the final
+bytes, which is what a change confined to `bldLive` must say.
+
+### Measured first: ten of seventeen already moved
+
+Every building is drawn from a baked cell (a WebP texture since v95) and then
+`bldLive` paints whatever moves on top. Read off v110 before anything was
+touched, **ten of the seventeen faction buildings already had a live part** —
+the HQ, Command Post and Outpost flags, the Lab's dome and aerial, the
+Helipad's four corner lights, the Generator's panel, the Turbine's blades, the
+Guard Tower's turret, the Radar Tent's dish and the Foundry's spout — and
+**seven had nothing**: Barracks, Garage, Supply Depot, Radio Tower, Munitions
+Dump, Bunker (a garrison count is text, not motion) and Forward Pad. (The first
+draft of the plan said "eleven of eighteen"; T96.A derives the roster off `B`
+and counted seventeen — two walls, the nest and the level art are not faction
+buildings. The plan also gave the Radar Tent "its aerial" to blink; the aerial
+is the LAB's. The tent got a status lamp on its equipment box instead.)
+
+### What each one does now
+
+| building | v110 | v111 |
+|---|---|---|
+| Barracks | — | smoke off the stovepipe, leaning with the wind |
+| Garage | — | the work lamp hums on a bad wire; the roof stack puffs **only while a vehicle is queued** |
+| Supply Depot | — | the tarp's front hem lifts in the breeze |
+| Radio Tower | — | an aircraft-warning strobe: dark, then one red flash every two seconds |
+| Munitions Dump | — | a rotating amber hazard lamp on the warning sign |
+| Bunker | count text | the periscope head scans; the slits glow warm **while garrisoned**, brighter when fuller |
+| Forward Pad | — | the windsock fills and droops with the wind; the green ring beats **while a hurt aircraft is on it** |
+| HQ | flag | + an obstruction lamp winking on the mast tip |
+| Guard Tower | turret | + the eave spotlight sweeps a cone **at night only** |
+| Radar Tent | dish | + a green status lamp on the equipment box |
+| Foundry | spout | + smoke and an ember glow off the stack |
+| HQ / Command Post / Outpost | three flags on three clocks | the same flags on **one wind** |
+
+Three helpers sit beside `bldLive` in `20-render-library.js`: **`bldWind(b)`**,
+the one breeze (two slow sines plus a per-building ripple, so the base leans
+together and two flags never clone), **`bldSmoke`**, `n` rising puffs sharing
+one cycle, deterministic off `G.tick` and a seed, and **`bldBlink(per,on,ph)`**,
+a lamp on a duty cycle. Nothing here is a light SOURCE: every glow is a painted
+disc, so there is nothing new to fog-gate and the night pass is untouched. The
+four state-driven tells (exhaust, slits, cone, ring) read the sim —
+`b.queue`, `b.garrison`, `nightNow()`, and the SAME aircraft filter and
+footprint distance the repair loop in `updateBuilding` uses — and write nothing.
+
+### The windsock: one texture re-rendered
+
+The Forward Pad's sock was **baked into the hull**, so a live sock that drooped
+would have left the painted one showing through. It moved out of `bldBody`
+(the mast stays: it does not move) and `bld_fwdpad_blue.webp` plus its normal
+map were re-rendered through the v95 pipeline. **Before trusting it, the
+pipeline was run on two untouched siblings** (`bld_helipad_blue`,
+`bld_hq_green`) and compared to the committed files: **byte-identical**, so the
+one regenerated file is on exactly the footing of the other 217. Two traps:
+`playwright-core` 1.47 launches with `--headless=old`, which this Chromium
+refuses — point `CHROMIUM` at the `chrome-headless-shell` binary instead — and
+the dumper renders the whole roster, so the base directory was pruned to the
+one PNG before the two Python passes ran.
+
+### Rule 7, paid five times
+
+Every check in T96 passed on the first frame that was read, and five things were
+wrong in it:
+
+1. **Grey smoke at .26 alpha read as nothing.** Barracks smoke is pale
+   (`212,206,198`) at .44 now; the Foundry's "thin dark smoke" is a warm grey,
+   because dark smoke vanished against the board's dark edge.
+2. **The Garage's exhaust was invisible for a reason that was not the
+   painter.** `hud_shot.sh` runs in testing mode, where production is INSTANT,
+   so a queued jeep was built before the frame; and with testing off, the
+   `--virtual-time-budget=30000` lets the game loop run **~900 ticks past the
+   injected `G.tick`**, so the jeep was built anyway. A nine-tank queue posed
+   it. Recorded as trap 5 in the script's header: **the tick you set in `JS=` is
+   not the tick that renders.**
+3. **The tarp hem at ±1.4px did not register.** ±2.2 does.
+4. **The night cone at .34 alpha and 36px did not survive the night tint.**
+   .6 and 44px.
+5. **A `Proxy` around a real 2d context throws "Illegal invocation"** in
+   Chromium — the recorder that works under the shim does not work in the
+   browser. Patch `CanvasRenderingContext2D.prototype` for one call instead.
+
+### What the tail proves
+
+**A** derives the roster off `B`, demands a branch per building, and sweeps 120
+ticks at night to prove every one paints at least two different frames (at
+night because the tower's tick-driven part is its cone). **B** is rule 2: no
+`srand`/`rnd`/`Math.random` in the four functions, `G.rngS` and `hashState()`
+unchanged after painting every building of every army over forty ticks, and the
+same tick paints the same frame twice. **C**–**F** drive the four state tells
+both ways (idle/busy and under construction; empty/one man/full; day/night and
+testing mode's permanent noon; nothing/hurt friendly/healed/out of reach/enemy/a
+hurt JEEP). **F** also proves the sock's orange left `bldBody`, that the Blue
+texture is the only pad texture embedded, and that the sock reaches further in
+a gust than a lull. **G** is the one-wind claim: bounded, swinging, read once,
+the three old per-flag clocks gone, and the HQ and Command Post flags reading
+the same value on every tick sampled. **H** paints every building through the
+Field Manual's stub `G` and through the bare fixtures T8, T20.3 and T30.B still
+hand it. **I** is the smoke helper: deterministic, rising, fading, leaning
+downwind.
+
 ## v110 — the hotkey pass (not part of a roadmap)
 
 The owner asked for a review of the hotkey assignments, with two goals: keep as
@@ -6072,10 +6177,17 @@ check count still read 5,973. That is the failure mode this section exists to
 prevent, so: **a release that adds a tail adds a paragraph HERE as well as its
 own chapter above.**
 
-**The suite stands at 6,923 checks** (6,895 at v109, 6,862 at v108, 6,830 at
+**The suite stands at 6,964 checks** (6,923 at v110, 6,895 at v109, 6,862 at v108, 6,830 at
 v107.3, 6,810 at v107.2, 6,787 at v107.1, 6,716 at v107, 6,083 at v106, 6,039 at
 v105.1, 6,009 at v105, 5,973 at v104.4, 5,766 at v103, 5,694 at v102, 5,638 at
 v101, 5,587 at v100).
+
+v111 adds `tail_v111.js` (T96, 41 checks), riding segment 3. A derives the
+building roster off `B` and demands that every one paints two different frames
+across a 120-tick sweep; B is rule 2 driven (no seeded draw, hash unchanged,
+same tick same frame); C–F drive the four state-gated tells both ways (Garage
+exhaust, Bunker slits, night cone, repair ring); G is the one-wind claim; H the
+manual's stub and the bare fixtures; I the smoke helper. No trail moved.
 
 v110 adds `tail_v110.js` (T95, 26 checks), riding segment 3. A is the alphabet —
 fifteen letters, eight of them left-half, and the roster of rows that must
