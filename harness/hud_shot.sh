@@ -38,6 +38,13 @@
 #  4. TESTING MODE IS PINNED TO PERMANENT NOON inside dayPhase (v101), so DAY
 #     switches it off for you. That also restores the fog, which is usually what
 #     you wanted anyway if you are asking for night.
+#  5. THE TICK YOU SET IN JS IS NOT THE TICK THAT RENDERS (v111). The
+#     --virtual-time-budget below lets the game loop run ~30s (~900 ticks) past
+#     the injected renderCore(), and in testing mode a queued unit is built
+#     INSTANTLY - so "a Garage with a jeep on the bench" is an idle Garage by
+#     the time the frame is taken, and a blinking lamp is at whatever phase the
+#     clock reached. Pose a state that survives thirty seconds (TEST=0 and a
+#     nine-deep queue, say), and read a blink across two frames, not one.
 # The title is set to SHOT-READY / SHOT-FAIL <message>; --dump-dom instead of
 # --screenshot prints it when a frame comes back blank.
 set -e

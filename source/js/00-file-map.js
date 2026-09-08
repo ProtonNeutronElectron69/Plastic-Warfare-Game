@@ -84,6 +84,7 @@
        TANK TURRET ............................................... turret cells
        AA MISSILE RACK ........................................... AA truck rack cells
        BUILDING HULL PAINTER ..................................... bldBody
+       LIVE BUILDING PARTS (v111: every building moves) ......... bldLive / bldWind / bldSmoke / bldBlink
        TROOPERS .................................................. infantry cells
        UNITS ..................................................... per-key unit painters
        BUILDINGS ................................................. per-key building painters

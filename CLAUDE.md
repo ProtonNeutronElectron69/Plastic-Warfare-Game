@@ -7,7 +7,7 @@ touch anything — what the project is, where it stands, how to build, how to
 test, how to watch the bots, how to LOOK at a frame (rule 7's tools), and the
 rules that are load-bearing. Everything
 after that is the record: the roadmap chapters, then one section per standalone
-release NEWEST FIRST (v110 down to v89), then the balance baseline, then the
+release NEWEST FIRST (v111 down to v89), then the balance baseline, then the
 patterns worth copying. Read the record when you are about to touch the
 subsystem it describes; do not read it front to back.
 
@@ -55,9 +55,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v110, and what a fresh session does)
+## Where the game stands (v111, and what a fresh session does)
 
-The game is at **v110**, and every chapter below is finished work. All three
+The game is at **v111**, and every chapter below is finished work. All three
 roadmaps are COMPLETE: roadmap 1 (v79–v82, abilities), roadmap 2 (v85–v88.1,
 full faction-exclusive sets), roadmap 3 (v91–v96 + follow-ups v92.1/v96.1/v97,
 real art and real sound). Since then the releases are standalone owner passes and
@@ -76,6 +76,7 @@ down, newest first, and the chapter is where the reasoning lives.
 | **v108** | **item 5, ground** | every board's floor repainted as the real surface it is, by a per-pixel material swatch tiled in world space — NOT the sprite pipeline's textured plastic, by instruction |
 | **v109** | **item 5, finished** | the ground catches the light of explosions, fire and muzzle flashes (the renderer change v108 proved the roadmap wrong about), and all 60 decorative props got a detail pass |
 | v110 | owner pass | the hotkey review: build-menu letters are declared on the table row instead of handed out by position, so a thing carries one key everywhere; left-half keys 52% → 65% |
+| v111 | owner pass | every faction building moves a little: the seven that stood still got smoke, lamps, a hem, a periscope and a windsock; the ten that already moved got a second idea; one wind drives every flag |
 
 **Nothing above is in flight.** Each shipped as its own PR and merged, so a
 fresh session starts from `origin/main` with no handover state to reconstruct.
@@ -114,7 +115,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 6,923 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 6,964 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -128,7 +129,7 @@ whatever the owner asks for next is a fresh vNN starting from `origin/main`. If
 they are NOT green, stop and read the failure before touching anything: every
 check in this suite was put there by a release that paid for it.
 
-**The map generator was audited at v103 and nothing has touched it since** (v108/v109 repainted the ground and the props and v110 touched only the UI)
+**The map generator was audited at v103 and nothing has touched it since** (v108/v109 repainted the ground and the props, v110 touched only the UI and v111 only the buildings' live overlay)
 (the v103 section below). If you touch `makeMap`, run `harness/audit_maps.js` before and
 after — it counts every defect class the audit found, and the residual it should
 report is: 3-4 decor-sized art grazes, 2 line props lying in a spill, and one
@@ -184,7 +185,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,923 checks at v110.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,964 checks at v111.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -344,7 +345,8 @@ having walked fewer, and clean is the answer that stops an investigation.
    `seg.sh`. If you touched anything that draws, open the shipped file in a real
    Chromium and READ the screenshot: **`cd harness && ./hud_shot.sh out/f.png`**
    is one in-match frame with no npm and no server (`SELECT=`, `DAY=`, `JS=` and
-   `MAP=` pose it), `./map_shot.sh` is the whole board, and the bare recipe is in
+   `MAP=` pose it — and the tick you set in `JS=` is NOT the tick that renders,
+   the v111 trap: the loop runs ~30s of virtual time past it), `./map_shot.sh` is the whole board, and the bare recipe is in
    the Running section of `harness/README.md`. v100 paid for this rule twice in
    one release; v107 paid four times in one release.
 8. **Measure the mechanism, not the outcome.** Every AI pass that got this wrong
@@ -378,7 +380,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 6,923 checks. What is thin is everything AROUND it — how
+recorded soundtrack, 6,964 checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -648,6 +650,44 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v111 — every faction building moves a little (not part of a roadmap)
+
+The owner asked for a small, subtle animation on every faction building
+(barricades exempt): a flag in the wind, a glowing light, a little smoke.
+`tail_v111.js` (T96, 41 checks; the suite is 6,964 now); full evidence in the
+v111 section of `harness/README.md`. **No trail moved and no repin was due** —
+everything lives in `bldLive`, the live overlay painted over each baked cell.
+
+- **Measured first: ten of the seventeen already moved, seven did not.** The
+  Barracks, Garage, Supply Depot, Radio Tower, Munitions Dump, Bunker and
+  Forward Pad stood still. Each has one now (stovepipe smoke; a humming work
+  lamp and exhaust ONLY while a vehicle is queued; a tarp hem in the breeze; a
+  red strobe; a rotating hazard lamp; a scanning periscope and slits that glow
+  while garrisoned; a windsock and a ring that beats while an aircraft is being
+  repaired), and the ten carry a second idea (a mast lamp on the HQ, a night
+  spotlight on the tower, a status lamp on the Radar Tent, smoke off the
+  Foundry's stack).
+- **One wind.** `bldWind(b)` drives all three flags, the tarp and the windsock,
+  so a base leans together. `bldSmoke` and `bldBlink` are the other two helpers.
+- **The Forward Pad's texture was re-rendered** — the sock was baked into the
+  hull and had to move out for a live one to droop. The v95 pipeline was proved
+  to reproduce two untouched siblings byte-for-byte before the one file was
+  trusted.
+
+Three things worth carrying forward:
+
+- **THE TICK YOU POSE IN `hud_shot.sh` IS NOT THE TICK THAT RENDERS.** The
+  30-second virtual-time budget lets the game loop run ~900 ticks past the
+  injected `G.tick`, and testing mode builds a queued unit instantly — so a
+  "Garage with a jeep on the bench" was an idle Garage by the time the frame
+  was taken, and the exhaust looked broken while every check passed. Trap 5 in
+  the script's header now. Pose a state that survives thirty seconds.
+- **A recorder that works under the shim can throw in the browser.** A `Proxy`
+  over a real 2d context is an "Illegal invocation"; patch the prototype.
+- **Rule 7, five times in one release**: two smokes, a hem, a cone and a lamp
+  were all tuned by reading frames, and every one passed its check at the
+  invisible setting first.
 
 ## v110 — the hotkey pass (not part of a roadmap)
 

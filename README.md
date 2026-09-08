@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v110 it makes **6,923
+that the results come out identical every time. As of v111 it makes **6,964
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -117,7 +117,20 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 110**.
+The game is at **version 111**.
+
+**v111 — every building is a little bit alive.** Until now most buildings just
+sat there once they were built. Now every one of them does something small:
+smoke drifts off the Barracks' stovepipe, the Garage's work lamp hums on a bad
+wire and its roof stack puffs while a vehicle is on the bench, the Supply
+Depot's tarp lifts in the breeze, the Radio Tower's mast strobes red, a hazard
+lamp turns on top of the Munitions Dump's sign, the Bunker's periscope scans and
+its firing slits glow while there are men inside, the Forward Pad's windsock
+fills with the wind and its green ring beats while a helicopter is being
+repaired, the HQ's mast winks, the Guard Tower's spotlight sweeps at night, the
+Radar Tent has a blinking status lamp, and the Foundry's stack smokes. The
+flags on the HQ, Command Post and Outpost all wave in the same wind now instead
+of each on its own. None of it changes how anything plays.
 
 **v110 — the keyboard shortcuts make sense now.** Every tile in a build menu
 carries a letter you can press instead of clicking it, and until now that letter
