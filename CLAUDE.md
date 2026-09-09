@@ -7,7 +7,7 @@ touch anything — what the project is, where it stands, how to build, how to
 test, how to watch the bots, how to LOOK at a frame (rule 7's tools), and the
 rules that are load-bearing. Everything
 after that is the record: the roadmap chapters, then one section per standalone
-release NEWEST FIRST (v111 down to v89), then the balance baseline, then the
+release NEWEST FIRST (v112 down to v89), then the balance baseline, then the
 patterns worth copying. Read the record when you are about to touch the
 subsystem it describes; do not read it front to back.
 
@@ -55,9 +55,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v111, and what a fresh session does)
+## Where the game stands (v112, and what a fresh session does)
 
-The game is at **v111**, and every chapter below is finished work. All three
+The game is at **v112**, and every chapter below is finished work. All three
 roadmaps are COMPLETE: roadmap 1 (v79–v82, abilities), roadmap 2 (v85–v88.1,
 full faction-exclusive sets), roadmap 3 (v91–v96 + follow-ups v92.1/v96.1/v97,
 real art and real sound). Since then the releases are standalone owner passes and
@@ -77,6 +77,7 @@ down, newest first, and the chapter is where the reasoning lives.
 | **v109** | **item 5, finished** | the ground catches the light of explosions, fire and muzzle flashes (the renderer change v108 proved the roadmap wrong about), and all 60 decorative props got a detail pass |
 | v110 | owner pass | the hotkey review: build-menu letters are declared on the table row instead of handed out by position, so a thing carries one key everywhere; left-half keys 52% → 65% |
 | v111 | owner pass | every faction building moves a little: the seven that stood still got smoke, lamps, a hem, a periscope and a windsock; the ten that already moved got a second idea; one wind drives every flag |
+| v112 | owner pass | the invite handshake says what went wrong instead of hanging: measured with two real browsers first (a slow reply was never the failure), a longer wait for a public address, "Wi‑Fi only" and "Couldn't reach" in plain words, no relay by instruction |
 
 **Nothing above is in flight.** Each shipped as its own PR and merged, so a
 fresh session starts from `origin/main` with no handover state to reconstruct.
@@ -115,7 +116,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 6,964 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 7,010 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -129,7 +130,7 @@ whatever the owner asks for next is a fresh vNN starting from `origin/main`. If
 they are NOT green, stop and read the failure before touching anything: every
 check in this suite was put there by a release that paid for it.
 
-**The map generator was audited at v103 and nothing has touched it since** (v108/v109 repainted the ground and the props, v110 touched only the UI and v111 only the buildings' live overlay)
+**The map generator was audited at v103 and nothing has touched it since** (v108/v109 repainted the ground and the props, v110 touched only the UI, v111 only the buildings' live overlay and v112 only the lobby's handshake)
 (the v103 section below). If you touch `makeMap`, run `harness/audit_maps.js` before and
 after — it counts every defect class the audit found, and the residual it should
 report is: 3-4 decor-sized art grazes, 2 line props lying in a spill, and one
@@ -185,7 +186,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 6,964 checks at v111.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 7,010 checks at v112.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -207,7 +208,16 @@ SELECT=hq FAC=gray ./hud_shot.sh out/hq.png   # ...with a building's panel open
 DAY=night JS='spawnExplosion(hq.x+3,hq.y-3,2.4)' ./hud_shot.sh out/n.png
 ./map_shot.sh out 500000 0.42     # one whole-board PNG per map, then READ them
 cat shim_head.js game.js audit_maps.js > .audit.js && node .audit.js 40
+MODE=hostgone NODE_PATH=... CHROMIUM=... node net_rig.js 0 70   # TWO REAL BROWSERS through the real invite codes (v112)
 ```
+
+**`net_rig.js` is the netcode's rule-8 tool** (v112). The suite fakes
+`RTCPeerConnection`, so only two real Chromium windows can say what a handshake
+does: it mints, pastes, HOLDS the reply for N seconds, pastes it, and prints both
+sides' states and status lines. `MODE=hostgone` / `joinergone` kill one side
+first so the other's failure words can be read. It needs `playwright-core` on
+`NODE_PATH` and the `chrome-headless-shell` binary (its header says why). It
+measures; nothing it prints is pinned, and it cannot prove a network type.
 
 **`hud_shot.sh` was added at v110 because four releases in a row rebuilt it.**
 The npm-free Chromium recipe has been in `harness/README.md` since v100, but it
@@ -380,7 +390,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 6,964 checks. What is thin is everything AROUND it — how
+recorded soundtrack, 7,010 checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -650,6 +660,47 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v112 — the handshake says what went wrong (not part of a roadmap)
+
+The owner asked what could be done about the invite code, which often failed
+to connect players into the lobby; then set the rule: **peer to peer stays, no
+relay, and every message a player can see is short and plain.** `tail_v112.js`
+(T97, 46 checks; the suite is 7,010 now) and **`harness/net_rig.js`**, the
+measurement tool; full evidence in the v112 section of `harness/README.md`.
+**No trail moved and no repin was due.**
+
+- **Measured first, with two real Chromium windows.** A reply held back 0, 20,
+  45, 90 and 150 seconds connected every time in about a second: the joiner's
+  half of the handshake completes against the host's live offer before the host
+  has the reply, so a slow paste was NEVER the failure. What the rig did show:
+  a code minted with the address lookup unreachable shipped after the 4-second
+  cut-off with only a local address, and the lobby said nothing; and a link that
+  could not be made hung on "Connecting…" on both sides forever.
+- **The gather has two marks** (4 s if a public address is in hand, else 9 s),
+  each side remembers whether it found one (`pub`), and **one watcher**
+  (`rtcWatch`) turns the browser's states into four words: linked, slow,
+  failed, lost. The host frees a failed seat; the joiner clears a failed reply
+  and may paste the same code again.
+- **`LOB_MSG` is every word a player can read about it** — seven, none over 60
+  characters, none in the browser's vocabulary, and T97.F sweeps the rest of
+  the lobby for the same words.
+- **What is left is a relay's job**: the network types that refuse a direct
+  line (mobile data, campus and office networks) and, very likely, two players
+  in the same house. The owner declined a relay; the game says "Wi‑Fi only" and
+  "Couldn't reach" instead of hanging.
+
+Three things worth carrying forward:
+
+- **THE SUITE EXITS SYNCHRONOUSLY, so an async check never counts.** T97 runs
+  the timed helpers on a fake clock (replace `setTimeout`, fire by hand, count
+  the clears) and pins the async lobby paths by source shape; the rig proves
+  them for real.
+- **The rig can prove the handshake and the words, never a network type.** Two
+  windows on one machine share no router. Say which, every time.
+- **The measurement deleted a fix before it was written.** The plan had
+  "restart the attempt when the reply arrives late"; the rig showed there was
+  nothing to restart. Rule 8, for the netcode.
 
 ## v111 — every faction building moves a little (not part of a roadmap)
 
