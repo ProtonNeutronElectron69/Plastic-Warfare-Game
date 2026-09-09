@@ -692,8 +692,8 @@ release twice. `tail_v113.js` (T98, 32 checks; the suite is CHECKCOUNT now),
   (`AI_SUPPORT.runner`, one per ten fighters, cap two). The bike took his place
   in the quota, so Blue's row says `aiFloor:0` — its exclusives are human
   tools. That fixed the composition and not the trade (0.58); the hull did:
-  **hp .9 → .95**, and Blue trades at 0.78 and wins 25% of doctrine-neutral
-  matches, from 0.63 and 12%.
+  **hp .9 → .95**, and Blue trades at 0.78 in both seed sets (25% and 19% of
+  doctrine-neutral wins), from 0.63 and 12%.
 - **Gray traded near even once the doctrine was held still** (0.99–1.12,
   19–25%); its 12% was mostly the deal. What it owned was an economy tax: the
   speed modifier scaled its trucks. **`noFacSpeed:1` on the Dump Truck** —

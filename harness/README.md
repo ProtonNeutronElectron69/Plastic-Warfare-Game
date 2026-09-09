@@ -1307,8 +1307,9 @@ time, so every variant below is the same bytes.
   says the bot has no signature piece to hold the line with, and the ordinary
   value draw buys ~20 bikes on merit. With no quota and the hull still at −10%
   Blue traded at **0.58** and won 6%: the composition was never the whole
-  story. At −5% it traded at **0.78 and won 25%** (seeds 101) and
-  BFINAL2_PLACEHOLDER (seeds 4200). The speed stays; the card says −5%.
+  story. At −5% it traded at **0.78 and won 25%** (seeds 101) and **0.78 and
+  19%** (seeds 4200) — the trade rate reproduced to the second decimal. The
+  speed stays; the card says −5%.
 - **Gray: nothing on the FAC row; `noFacSpeed:1` on the Dump Truck.** With
   the doctrine held still Gray traded at 0.99–1.12 and won 19–25%: close to
   even, and its 12% in the default batch was mostly the doctrine deal (15 of

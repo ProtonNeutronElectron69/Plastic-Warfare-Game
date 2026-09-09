@@ -18,7 +18,7 @@ const FAC={
     them as a fifth of its army; aiFloor:0 says Blue has no signature piece a bot
     should hold the line with (the Runner is support now, in 17-ai.js). With
     that alone Blue still traded at 0.58: the other cause is the hull. At -5%
-    it traded at 0.78 and won 25%, twice in two seed sets. The speed stays. */
+    it traded at 0.78 in both seed sets (25% and 19% of wins). The speed stays. */
  blue:{name:'Blue Army',color:'#4a7de0',mods:{cost:1,hp:.95,dmg:1,speed:1.15},aiFloor:0,desc:'+15% speed, lighter plastic (-5% HP).',uu:['bike','chinook','runner'],ub:['turbine','fwdpad']},
  bug:{name:'Wildlife',color:'#6e5a2a',mods:{cost:1,hp:1,dmg:1,speed:1},desc:'',uu:[],ub:[]}
 };
