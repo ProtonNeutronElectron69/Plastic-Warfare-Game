@@ -161,8 +161,8 @@ function lobSetupRows(show){
 function lobClose(){
  if(LOB_NT){clearTimeout(LOB_NT);LOB_NT=null}
  if(LOBBY){
-  for(const r of (LOBBY.rows||[]))if(r.pc)try{r.pc.close()}catch(e){}
-  if(LOBBY.join&&LOBBY.join.pc)try{LOBBY.join.pc.close()}catch(e){}
+  for(const r of (LOBBY.rows||[])){if(r.unwatch){r.unwatch();r.unwatch=null}if(r.pc)try{r.pc.close()}catch(e){}}
+  if(LOBBY.join){if(LOBBY.join.unwatch){LOBBY.join.unwatch();LOBBY.join.unwatch=null}if(LOBBY.join.pc)try{LOBBY.join.pc.close()}catch(e){}}
  }
  LOBBY=null;
  document.getElementById('netPanel').style.display='none';
@@ -360,8 +360,10 @@ function lobInviteNote(code){
  const stale=LOBBY.rows.filter(r=>r.role==='open'&&r.state!=='connected'&&!r.blob).length;
  if(!code)return 'Press Create lobby code, then send the one code to everyone.';
  const seats=LOBBY.rows.filter(r=>r.role==='open'&&r.state!=='connected'&&r.blob).length;
+ const local=LOBBY.rows.some(r=>r.role==='open'&&r.state!=='connected'&&r.blob&&r.pub===false); // v112
  return 'Lobby '+lobLidStr()+' \u00b7 '+code.length+' characters \u00b7 '+seats+' free seat'+(seats===1?'':'s')
-  +(stale?' \u00b7 '+stale+' newly opened slot'+(stale===1?'':'s')+' still need a refresh':'');
+  +(stale?' \u00b7 '+stale+' newly opened slot'+(stale===1?'':'s')+' still need a refresh':'')
+  +(local?' \u00b7 Wi\u2011Fi only':'');
 }
 function lobPaintInvite(copy){
  const ta=document.getElementById('lobCode');if(!ta)return;
@@ -390,12 +392,40 @@ async function lobMintInvites(){ // one gather per seat that has no live offer
     continue;
    }
    if(r.pc)try{r.pc.close()}catch(e){}
-   r.pc=got.pc;r.blob=got.blob;r.state='invited';
+   if(r.unwatch){r.unwatch();r.unwatch=null}
+   r.pc=got.pc;r.blob=got.blob;r.pub=got.pub;r.state='invited';
   }catch(e){lobHostStat('Could not build an invite: '+(e&&e.message?e.message:e))}
  }
  if(b)b.disabled=false;
  lobPaintInvite(true);
+ /* v112: a code with no internet address in it is not broken, but it only
+    reaches the host's own network - say so once, right here, instead of
+    letting a friend across town paste it and wait. */
+ if(LOBBY.rows.some(r=>r.role==='open'&&r.state!=='connected'&&r.blob&&r.pub===false))
+  lobHostStat(LOB_MSG.hostLocal);
  lobRefresh();
+}
+/* v112: every word a player can see about a link that is not going well, in one
+   place. Short, and none of the browser's own vocabulary. */
+const LOB_MSG={
+ hostLocal:'This code only works on your own Wi\u2011Fi.',
+ joinLocal:'This code only works on the host\u2019s Wi\u2011Fi.',
+ replyLocal:'Your reply only works on the same Wi\u2011Fi.',
+ hostSlow:seat=>'Still trying to reach '+seat+'\u2026',
+ hostFail:seat=>'Couldn\u2019t reach '+seat+'. Make a new lobby code and try again.',
+ joinSlow:'Still trying to reach the host\u2026',
+ joinFail:'Couldn\u2019t reach the host. Ask for a new lobby code.',
+};
+function lobHostLink(r,seat,s){ // v112: the host's side of one friend's link
+ if(!LOBBY||LOBBY.mode!=='host'||LOBBY.rows.indexOf(r)<0||r.state==='connected')return;
+ if(s==='slow')lobHostStat(LOB_MSG.hostSlow(lobSeatName(seat)));
+ else if(s==='failed'||s==='lost'){ // a link made and then dropped before the channel opened is a failure to the lobby (net_rig.js MODE=hostdrop found the gap)
+  if(r.unwatch){r.unwatch();r.unwatch=null}
+  if(r.pc)try{r.pc.close()}catch(e){}
+  r.pc=null;r.blob=null;r.pub=undefined;r.state='idle';   // the seat wants a fresh offer now
+  lobHostStat(LOB_MSG.hostFail(lobSeatName(seat)));
+  lobRefresh();
+ }
 }
 /* ONE box for every friend's reply: the code says which lobby and which seat it
    answers, so nothing has to be matched up by hand. */
@@ -419,6 +449,8 @@ function lobTakeReply(ta){
  rtcTakeAnswer(row.pc,it.desc).then(()=>{
   if(!LOBBY||LOBBY.mode!=='host')return;
   LOBBY.lastReply='';ta.value='';
+  if(row.unwatch)row.unwatch();
+  row.unwatch=rtcWatch(row.pc,s=>lobHostLink(row,it.seat,s));   // v112
  }).catch(e=>lobHostStat('That reply did not take: '+(e&&e.message?e.message:e)));
 }
 
@@ -510,6 +542,7 @@ function lobRenderSlots(){
  });
 }
 function lobHostChanOpen(r,ch){
+ if(r.unwatch){r.unwatch();r.unwatch=null}   // v112: the link is made
  r.ch=ch;r.state='connected';r.peerName='Ally';r.peerFac='';r.ready=false;
  ch.onmessage=ev=>{
   let m;try{m=JSON.parse(ev.data)}catch(e){return}
@@ -644,12 +677,29 @@ async function lobJoinAnswer(){
  catch(e){lobJoinStat('Could not build a reply: '+(e&&e.message?e.message:e));return}
  if(!LOBBY||LOBBY.mode!=='join'||LOBBY.seat!==want){try{got.pc.close()}catch(e){}return} // they moved seats mid-gather
  LOBBY.join.pc=got.pc;
+ if(LOBBY.join.unwatch)LOBBY.join.unwatch();
+ LOBBY.join.unwatch=rtcWatch(got.pc,s=>lobJoinLink(s));   // v112
  const code=pw2Wrap(PW2_REPLY,lid,[{seat:want,blob:got.blob}]);
  if(out)out.value=code;
  if(outRow)outRow.style.display='';
- lobJoinStat(lobCopy(code)
+ /* v112: two notes a joiner needs before sending: the host's code reaches only
+    the host's network, or their own reply reaches only this one */
+ const note=!sdpPublic(it.desc.sdp)?' '+LOB_MSG.joinLocal:(got.pub===false?' '+LOB_MSG.replyLocal:'');
+ lobJoinStat((lobCopy(code)
   ?'\u2705 Reply copied to your clipboard \u2014 send it to the host and wait here.'
-  :'\u2705 Reply ready \u2014 copy the box above, send it to the host and wait here.');
+  :'\u2705 Reply ready \u2014 copy the box above, send it to the host and wait here.')+note);
+}
+function lobJoinLink(s){ // v112: the joiner's side of the link, before the channel opens
+ if(!LOBBY||LOBBY.mode!=='join'||LOBBY.join.ch)return;
+ if(s==='slow')lobJoinStat(LOB_MSG.joinSlow);
+ else if(s==='failed'||s==='lost'){
+  if(LOBBY.join.unwatch){LOBBY.join.unwatch();LOBBY.join.unwatch=null}
+  if(LOBBY.join.pc)try{LOBBY.join.pc.close()}catch(e){}
+  LOBBY.join.pc=null;LOBBY.lastInvite='';   // pasting the same code again is allowed to retry
+  const out=document.getElementById('lobOut'),outRow=document.getElementById('lobOutRow');
+  if(out)out.value='';if(outRow)outRow.style.display='none';
+  lobJoinStat(LOB_MSG.joinFail);
+ }
 }
 
 function lobJoinStat(s){const e=document.getElementById('lobJoinStat');if(e)e.textContent=s}
@@ -660,6 +710,7 @@ function lobJoinSendPick(){
 function lobJoinChanOpen(ch){
  if(!LOBBY||LOBBY.mode!=='join')return;
  LOBBY.join.ch=ch;
+ if(LOBBY.join.unwatch){LOBBY.join.unwatch();LOBBY.join.unwatch=null}   // v112: the link is made
  lobJoinSeats();   // v57: seat picking is over, the chips go away
  lobJoinStat('✅ Connected to the host — pick your army, then ready up.');
  lobJoinSendPick();

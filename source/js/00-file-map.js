@@ -100,6 +100,7 @@
      NETWORK CORE ................................................ chunked snapshot transfer, resync
      COMPACT SDP CODEC ........................................... PW2 binary signalling codec
      WEBRTC GLUE (browser only) .................................. peer connection wiring
+       v112: the two-mark gather, the public-address flag, rtcWatch  rtcGather / sdpPublic / rtcWatch
      INPUT ....................................................... mouse + keyboard
      AUDIO PANEL (v104.2) ........................................ v104.2: the mute button's Music and Effects faders - setVol, sfxBus, stored in localStorage
      RENDER ...................................................... render()

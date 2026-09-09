@@ -1201,6 +1201,146 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v112 — the handshake says what went wrong (not part of a roadmap)
+
+The owner asked whether anything could be done about the invite code, which
+"often fails to connect players into the lobby, but once connected seems stable
+enough", and then set the constraint: **the game stays peer to peer, no relay,
+and every message a player might see is short and not technical.**
+`tail_v112.js` (T97, 46 checks; the suite is **7,010**) and
+**`harness/net_rig.js`**, the measurement tool the release is built on. **No
+trail moved and no repin was due**: `triage.sh` said "sim unchanged" — the
+network glue names neither `srand` nor `hashState`, and T97.G asserts it.
+
+### Measured first, with two real browsers
+
+The headless suite fakes `RTCPeerConnection`, so nothing in `seg.sh` can say
+what a real handshake does. `net_rig.js` opens two Chromium contexts on the
+shipped file, mints a lobby code in one, pastes it in the other, HOLDS the reply
+for N seconds and then pastes it into the host, printing both sides' connection
+states and status lines. The first suspect — a reply that sits in a group chat
+too long — was the one the owner's symptom fitted best. It is refuted:
+
+| reply held for | result | time to connect after the paste |
+|---|---|---|
+| 0 s | connected | 1.1 s |
+| 20 s | connected | 1.4 s |
+| 45 s | connected | 0.1 s |
+| 90 s | connected | 1.1 s |
+| 150 s | connected | 1.1 s |
+
+The timelines say why: **the joiner's half of the handshake completes against
+the host's live offer before the host has the reply** (the joiner's checks are
+signed with the host's own password, which the offer carries, so the host can
+validate them with no answer applied). Only the final encryption step waits
+for the paste, and it still works after two and a half minutes. Chromium only;
+Firefox was not available to the rig, and there is no router between two
+windows on one machine, so a lobby code that sits unpasted on the HOST's side
+for a long time is the one window the rig cannot exercise.
+
+What the rig DID show, in every run: the sandbox cannot reach the address
+lookup service, so **every code was minted after the 4-second cut-off with only
+a local address in it, and the lobby said nothing.** That is the "lookup blocked
+or slow" case on a real network, and the code it produces can only ever work on
+the host's own Wi‑Fi, silently. The code also told a third story that fits the
+symptom and cannot be measured here: Chromium hides a player's real local
+address behind a name that only resolves on the same network, and many home
+routers block that lookup between devices and refuse to route a connection from
+inside the house back in through the public address — so two players in the
+same house are likelier to fail than two in different houses. Both of those,
+and the network-type failures (mobile data, campus and office networks), are
+only cured by a relay, which the owner declined. What v112 does is everything
+short of that.
+
+### The change
+
+- **`rtcGather` has two marks instead of one.** At `RTC_GATHER_MS` (4 s, the
+  old cut-off) it settles IF the description already carries a public address;
+  otherwise it holds on to `RTC_GATHER_MAX_MS` (9 s) for one. No slower than
+  v57 when the lookup answered, over twice as patient when it has not.
+- **Each side remembers whether it found one.** `sdpPublic()` reads it off the
+  description (server-reflexive or relay, nothing else — a relay is not
+  configured, but the reader would honour one), `rtcMakeOffer`/`rtcMakeAnswer`
+  return it as `pub`, and the host's row keeps it. The note under the lobby
+  code says **Wi‑Fi only** while any seat's offer lacks one; the mint's status
+  line says it in words; the joiner is told when the code they pasted has no
+  internet address, or when their own reply has none.
+- **`rtcWatch(pc,on)` is the one watcher.** It turns the browser's two state
+  machines into four words, once each and only while the link is being made:
+  `linked` (the browsers can reach each other; the channel follows once the
+  host has the reply), `slow` (nothing at `RTC_CONNECT_MS`, 20 s), `failed` (the
+  browser gave up, a closed connection, or nothing at `RTC_GIVEUP_MS`, 50 s) and
+  `lost`. It returns a stop function, and its timers are unref'd so a headless
+  run is not held open by a lobby it has already closed.
+- **The host frees a seat whose link failed** (offer closed, blob gone, row back
+  to idle, so "Refresh lobby code" mints a fresh offer) and says so. **The
+  joiner clears a reply whose link failed** and allows the same code to be
+  pasted again to retry.
+- **`LOB_MSG` is every word a player can read about it**, seven of them, none
+  over 60 characters, none in the browser's vocabulary (T97.F sweeps the rest
+  of the lobby's status lines for the same words, so a future message has to
+  keep the rule):
+  *This code only works on your own Wi‑Fi. · This code only works on the host's
+  Wi‑Fi. · Your reply only works on the same Wi‑Fi. · Still trying to reach
+  Slot 2… · Couldn't reach Slot 2. Make a new lobby code and try again. · Still
+  trying to reach the host… · Couldn't reach the host. Ask for a new lobby code.*
+
+### The rig, on the finished build
+
+Four scenarios, each two real Chromium windows on the shipped v112 file (the
+sandbox has no route to the address lookup, so every code here is Wi‑Fi only,
+which is itself the first thing each run proves):
+
+| scenario | what the rig does | what the player reads | when |
+|---|---|---|---|
+| `ok`, reply held 5–10 s | nothing goes wrong | host: *This code only works on your own Wi‑Fi.* — note: *Wi‑Fi only*; joiner: *…This code only works on the host's Wi‑Fi.*; then *Connected to the host* | 0.7 s after the paste |
+| `hostgone` | the host's offer is closed BEFORE the joiner pastes (an unreachable host) | joiner: *Couldn't reach the host. Ask for a new lobby code.* | 6.7 s after the reply was built |
+| `hostdrop` | closed AFTER the joiner built its reply (a link made, then dropped) | joiner: the same | 6.3 s after the drop |
+| `joinergone` | the joiner's reply is dead when the host pastes it | host: *Connecting Slot 2…* then *Couldn't reach Slot 2. Make a new lobby code and try again.*, and the seat is freed | 15.6 s after the paste |
+
+**The `hostdrop` row is the release's own rule-8 payment.** The first cut of
+the rig closed the host's offer after the reply was built, expecting the joiner
+to say it could not reach the host — and the joiner said nothing for seventy
+seconds. Its timeline showed why: its link had already been MADE (checks
+succeed against a live offer, above), so the watcher reported `lost`, not
+`failed`, and neither side's lobby had a word for `lost` before the channel
+opened. Every check passed. The fix is one clause on each side (`lost` before
+the channel is a failure), T97.D/E pin it, and the rig keeps both modes.
+
+### Five things worth carrying forward
+
+- **The suite exits synchronously** (`tail_end.js` calls `process.exit` at the
+  foot of the concatenation), so an async check never counts. T97 runs the two
+  timed helpers on a FAKE CLOCK — `setTimeout` is replaced for the length of a
+  check and fired by hand, and `clearTimeout` calls are counted, which is how
+  "the gather finished" is observed without awaiting a promise. The async lobby
+  paths are pinned by their source shape and proved by the rig.
+- **`lobSeatName(seat)` labels the first FRIEND row "Slot 2"**, because the host
+  is slot 1 and `it.seat` is 1-based. Two checks expected "Slot 1" first.
+- **`playwright-core` 1.47 launches with `--headless=old`**, which this Chromium
+  refuses; the rig takes `CHROMIUM=` and the `chrome-headless-shell` binary is
+  the one that works. And the lobby copies codes to the clipboard, which
+  headless refuses — the `pageerror` lines are noise, and the rig says so.
+- **Two browser windows on one machine share no router.** The rig can prove
+  the handshake's own behaviour and the words a player reads; it cannot prove
+  a network type. Say which, every time.
+- **The owner's constraint reshaped the release, and the measurement reshaped
+  it again.** The first plan had a "restart the attempt when the reply arrives
+  late"; the rig showed there was nothing to restart, and the plan lost it
+  before a line was written. Rule 8, for the netcode.
+
+### What the tail proves
+
+**A** `sdpPublic` on hand-built descriptions and on a description reconstructed
+from a real code. **B** the two-mark gather on the fake clock, every branch.
+**C** the watcher's four words, once each, the marks, and the stop. **D** the
+host's note, status, `slow`, `failed` (seat freed), and that a connected seat
+ignores a late word; the wiring by source shape. **E** the joiner's `slow`,
+`failed` (reply cleared, retry allowed), and that an open channel ignores a late
+word. **F** the words: seven, short, plain, and the rest of the lobby swept.
+**G** what did not change: two lookup servers and no relay, the code format,
+the rig outside `seg.sh`, no `srand`/`hashState` in the glue.
+
 ## v111 — every faction building moves a little (not part of a roadmap)
 
 The owner asked for a small, subtle animation on every faction building —
@@ -6177,10 +6317,18 @@ check count still read 5,973. That is the failure mode this section exists to
 prevent, so: **a release that adds a tail adds a paragraph HERE as well as its
 own chapter above.**
 
-**The suite stands at 6,964 checks** (6,923 at v110, 6,895 at v109, 6,862 at v108, 6,830 at
+**The suite stands at 7,010 checks** (6,964 at v111, 6,923 at v110, 6,895 at v109, 6,862 at v108, 6,830 at
 v107.3, 6,810 at v107.2, 6,787 at v107.1, 6,716 at v107, 6,083 at v106, 6,039 at
 v105.1, 6,009 at v105, 5,973 at v104.4, 5,766 at v103, 5,694 at v102, 5,638 at
 v101, 5,587 at v100).
+
+v112 adds `tail_v112.js` (T97, 46 checks), riding segment 3, and `harness/net_rig.js`
+beside it — two real Chromium windows through the real codes, a measurement
+tool outside `seg.sh`. A–C are the three helpers (`sdpPublic`, the two-mark
+`rtcGather`, `rtcWatch`) on a fake clock; D–E the host's and the joiner's words
+and what each does to a failed seat; F the seven messages, short and plain,
+with a jargon sweep over the rest of the lobby; G what did not change (no
+relay, same code format). No trail moved.
 
 v111 adds `tail_v111.js` (T96, 41 checks), riding segment 3. A derives the
 building roster off `B` and demands that every one paints two different frames

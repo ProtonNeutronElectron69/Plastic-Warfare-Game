@@ -1,13 +1,54 @@
 /* ---------------- WEBRTC GLUE (browser only) ---------------- */
 const RTC_CFG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}]};
-function rtcGather(pc){ // non-trickle: wait for the full candidate set (or 4s)
+/* v112 THE HANDSHAKE SAYS WHAT WENT WRONG. Measured first with two real Chromium
+   windows (harness/net_rig.js): a reply held back for 150 s still connects in a
+   second, because the joiner's half of the handshake completes against the
+   host's live offer BEFORE the host has the reply - so a slow paste was never
+   the failure. What the rig did show is that every code minted with the
+   address lookup unreachable shipped after the 4 s cut-off with only a local
+   address in it, and the lobby said nothing. So: the gather waits longer for a
+   PUBLIC address (and no longer than before once it has one), each side
+   remembers whether it found one, and rtcWatch turns the browser's connection
+   states into the few words the lobby needs. Still no server, still no relay. */
+const RTC_GATHER_MS=4000;     // settle here if a public address is already in hand
+const RTC_GATHER_MAX_MS=9000; // ...else keep waiting for one this long
+const RTC_CONNECT_MS=20000;   // "still trying" after this; the link is called off at RTC_GIVEUP_MS
+const RTC_GIVEUP_MS=50000;
+function sdpPublic(sdp){ // does this description carry an address reachable from the internet?
+ return /a=candidate:\S+ \d+ (?:udp|UDP) \d+ \S+ \d+ typ (?:srflx|relay)/.test(String(sdp||''));
+}
+function rtcGather(pc,ms,maxMs){ // non-trickle: wait for the full candidate set, or long enough
+ ms=ms==null?RTC_GATHER_MS:ms;maxMs=maxMs==null?RTC_GATHER_MAX_MS:maxMs;
  return new Promise(res=>{
   if(pc.iceGatheringState==='complete')return res();
-  const to=setTimeout(res,4000);
-  pc.addEventListener('icegatheringstatechange',()=>{
-   if(pc.iceGatheringState==='complete'){clearTimeout(to);res()}
-  });
+  let done=false;
+  const fin=()=>{if(done)return;done=true;clearTimeout(t1);clearTimeout(t2);res()};
+  const t1=setTimeout(()=>{if(sdpPublic(pc.localDescription&&pc.localDescription.sdp))fin()},ms);
+  const t2=setTimeout(fin,maxMs);
+  pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete')fin()});
  });
+}
+/* One watcher per link. Reports, once each and only while the link is still
+   being made: 'linked' (the browsers can reach each other; the channel follows
+   once the host has the reply), 'slow' (nothing yet after ms), 'failed' (the
+   browser gave up, or nothing after giveMs), 'lost' (a made link dropped).
+   Returns a function that stops it. Timers are unref'd so a headless run is
+   not held open by a lobby it has already closed. */
+function rtcWatch(pc,on,ms,giveMs){
+ ms=ms==null?RTC_CONNECT_MS:ms;giveMs=giveMs==null?RTC_GIVEUP_MS:giveMs;
+ let linked=false,over=false;
+ const say=s=>{if(over)return;if(s==='failed'||s==='lost')over=true;on(s)};
+ const look=()=>{
+  const i=pc.iceConnectionState,c=pc.connectionState;
+  if(i==='failed'||c==='failed'||i==='closed'||c==='closed')say('failed');
+  else if(i==='connected'||i==='completed'||c==='connected'){if(!linked){linked=true;say('linked')}}
+  else if((i==='disconnected'||c==='disconnected')&&linked)say('lost');
+ };
+ pc.addEventListener('iceconnectionstatechange',look);pc.addEventListener('connectionstatechange',look);
+ const t1=setTimeout(()=>{if(!linked)say('slow')},ms),t2=setTimeout(()=>{if(!linked)say('failed')},giveMs);
+ for(const t of [t1,t2])if(t&&t.unref)t.unref();
+ look();
+ return ()=>{over=true;clearTimeout(t1);clearTimeout(t2)};
 }
 async function rtcMakeOffer(onChan){ // host, one per open seat; the blob is bundled by lobInviteCode
  const pc=new RTCPeerConnection(RTC_CFG);
@@ -15,7 +56,7 @@ async function rtcMakeOffer(onChan){ // host, one per open seat; the blob is bun
  ch.onopen=()=>onChan(ch);
  await pc.setLocalDescription(await pc.createOffer());
  await rtcGather(pc);
- return {pc:pc,ch:ch,blob:sdpBlob(pc.localDescription)};
+ return {pc:pc,ch:ch,blob:sdpBlob(pc.localDescription),pub:sdpPublic(pc.localDescription.sdp)};
 }
 async function rtcTakeAnswer(pc,desc){
  await pc.setRemoteDescription(desc);
@@ -26,7 +67,7 @@ async function rtcMakeAnswer(desc,onChan){ // joiner, against the seat it picked
  await pc.setRemoteDescription(desc);
  await pc.setLocalDescription(await pc.createAnswer());
  await rtcGather(pc);
- return {pc:pc,blob:sdpBlob(pc.localDescription)};
+ return {pc:pc,blob:sdpBlob(pc.localDescription),pub:sdpPublic(pc.localDescription.sdp)};
 }
 
 /* ---------------- INPUT ---------------- */

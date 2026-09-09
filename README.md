@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v111 it makes **6,964
+that the results come out identical every time. As of v112 it makes **7,010
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -117,7 +117,21 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 111**.
+The game is at **version 112**.
+
+**v112 — the online lobby tells you what went wrong.** Online play is still
+player to player with no server in between, exactly as before. What changed is
+what happens when a connection does not come together. The game now waits a
+little longer for your network to hand it an internet address before it makes a
+lobby code, and if it never gets one it says so: a code marked **Wi‑Fi only**
+will only reach friends on the same network as you, and a friend pasting such a
+code is told the same. A connection that is taking too long says "Still trying",
+and one that cannot be made says "Couldn't reach" and asks for a new lobby code
+instead of sitting on "Connecting" forever. Behind this was a measurement with
+two real browsers: a reply held back for two and a half minutes still connected
+in a second, so a slow paste was never the problem. What remains is the kind of
+network that refuses direct connections (mobile data, many workplaces, and
+often two players in the same house), which only a relay server could fix.
 
 **v111 — every building is a little bit alive.** Until now most buildings just
 sat there once they were built. Now every one of them does something small:
