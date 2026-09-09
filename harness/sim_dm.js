@@ -47,7 +47,21 @@ const real = G.players.filter(p => p.fac !== 'bug');
 if (real.length !== WATCH_ARMIES) stop('expected ' + WATCH_ARMIES + ' armies, seated ' + real.length + '.');
 if (new Set(real.map(p => p.fac)).size !== real.length) stop('two armies share a faction.');
 if (real.some(p => !p.ai)) stop('an army was seated without an AI brain - watch mode did not take.');
-if (new Set(real.map(p => p.ai.profile)).size !== real.length) stop('a behaviour profile was dealt twice.');
+/* v113: PROFS=aggressive,balanced,turtle,defensive forces the doctrine deal, seat
+   by seat, for a CONTROLLED batch - the seeded draw above deals doctrines
+   unevenly across armies (measured at v113: Blue drew the dead 'defensive'
+   doctrine 12 times in 32, Tan 5), so an army's win rate and its doctrines' win
+   rates cannot be separated without holding one of them still. A forced deal
+   may repeat a doctrine (all four seats 'balanced' is the army-only design), so
+   the distinct-deal gate below is skipped for it. The brains are re-made after
+   newGame, so the srand stream differs from an unforced match's; the batch is
+   still deterministic from (seed, PROFS). */
+const PROFS = (process.env.PROFS || '').split(',').map(s => s.trim()).filter(Boolean);
+if (PROFS.length) {
+  if (PROFS.length !== real.length) stop('PROFS names ' + PROFS.length + ' doctrines for ' + real.length + ' seats.');
+  for (const k of PROFS) if (!AI_PROFILES[k]) stop('no such doctrine: ' + k);
+  real.forEach((p, i) => { p.ai = makeAIBrain(PROFS[i]); });
+} else if (new Set(real.map(p => p.ai.profile)).size !== real.length) stop('a behaviour profile was dealt twice.');
 
 const rec = new Map();
 for (const p of real) {
@@ -69,9 +83,15 @@ makeBuilding = function (key, p, tx, ty, instant) {
 
 let t = 0;
 const elim = {};
+/* v113: a per-minute series of each army's mined total and army size, so a
+   batch can say WHEN an economy falls behind rather than only that it did */
+const series = new Map(real.map(p => [p.i, { mined: [], army: [], outposts: [] }]));
 while (t < MAXT && !G.over) {
   update(DT); t++;
   for (const p of real) if (!p.alive && elim[p.fac] == null) elim[p.fac] = t;
+  if (t % 1800 === 0) for (const p of real) { const s = series.get(p.i);
+    s.mined.push(Math.round(p.stats.mined || 0)); s.army.push(p.units.filter(u => u.t.dm && !u.garrisoned).length);
+    s.outposts.push(p.blds.filter(b => b.key === 'outpost' && b.prog >= 1).length); }
 }
 makeUnit = realMakeUnit; makeBuilding = realMakeBuilding;
 
@@ -99,6 +119,7 @@ console.log(JSON.stringify({
       ubBuilt: sum(r.builtB, k => FAC[p.fac].ub.indexOf(k) >= 0),
       supportBuilt: sum(r.builtU, k => !!AI_SUPPORT[k]),
       builtU: r.builtU, builtB: r.builtB, startU: r.startU, startB: r.startB,
+      minedT: series.get(p.i).mined, armyT: series.get(p.i).army, outpostsT: series.get(p.i).outposts,
     };
   }),
 }));
