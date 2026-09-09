@@ -1343,6 +1343,19 @@ time, so every variant below is the same bytes.
 - **"Restart the doctrines' wave clock"** — the mechanism was never the wave
   clock. Deleted before a line was written, like v112's late-reply restart.
 
+### Five older checks, three pinned to noon and two restated
+
+The doctrine table's two new draws per brain move the seeded stream, so three
+fixtures that assert DAYTIME facts booted at night: `T13.4` (a Guard Tower
+sees 9 by day and 4.5 at night, and the HQ footprint's far corner is 6.4
+away), `T56.C` (`vi0 + FLAT_VI` is a daytime sum) and `T58.E` (`U.grunt.vi +
+RNET_VI`, twice). Each took the v101 remedy, a one-line `G.dayOff=0`. And two
+checks (`T29.A`, `T59.H`) asserted "every support unit is unarmed" as a proxy
+for "the combat pick never draws a support key"; the Runner is ARMED support
+(dm 4.5), so both now assert the pick's own exclusion (the roster filter and
+the `AI_SUPPORT[k]||U[k].noTrain` skip in `aiTick`) and keep the unarmed rule
+for the rest. Rule 5 both ways, and neither loosened.
+
 ### Traps
 
 - **`makeAIBrain` jitters ARRAYS.** A `[base,jitter]` pair added to a profile

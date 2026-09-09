@@ -142,7 +142,7 @@ ok('T13 snapshot tag bumped',(()=>{fresh13(320000);return JSON.parse(saveState()
 }
 
 /* ---------- T13.4 canPlaceUI vision gate on the anywhere HQ ---------- */
-{fresh13(320004);
+{fresh13(320004);G.dayOff=0; // v113: the doctrine table's two new draws per brain moved this seed's day clock to night, where a tower sees 4.5 and not 9 - a daytime fact, pinned to noon (the v101 remedy)
  const p=G.human,hq=p.blds.find(b=>b.key==='hq');
  ok('T13 HQ has the anywhere flag',!!B.hq.anywhere);
  const N=G.map.N;let dark=null;

@@ -334,7 +334,7 @@ function put85(k, p, x, y) { const u = makeUnit(k, p, x, y); u.state = 'idle'; u
 
   /* the auras are read off position at the point of use and write nothing, so
      neither of them may appear on a unit that does not carry the capability */
-  G = null; newGame(cfg85('blue', 850109));
+  G = null; newGame(cfg85('blue', 850109)); G.dayOff = 0; // v113: night since the doctrine table's draws moved; U.grunt.vi+RNET_VI is a daytime sum, so noon is pinned (the v101 remedy)
   const p3 = G.human;
   const r3 = put85('runner', p3, 20, 20), g3 = put85('grunt', p3, 21, 20);
   r3.spr = true;
