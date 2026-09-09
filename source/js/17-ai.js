@@ -221,6 +221,11 @@ function aiArmyCap(p){
                own price and reload have moved twice since. Deliberately
                profile-independent - every personality wants the same 18%. */
 const AI_EXPLORE=0.08, AI_SAT_A=0.6, AI_RICH_P=1200, AI_FAC_FLOOR=0.18;
+/* v113: the floor is per army when the FAC row says so (aiFloor), else the
+   default above. Measured: Blue's exclusives are human-skill pieces (a bike that
+   evades only while moving, a transport the bot never loads, a signals man) and
+   an 18% floor spent a fifth of its army on them. */
+function facFloor(p){const f=FAC[p.fac]&&FAC[p.fac].aiFloor;return f==null?AI_FAC_FLOOR:f}
 /* v89: the composition classes aiUnitClass can return, in a FIXED order. The
    reserve below picks the neediest of them, and picking by object-key iteration
    would make that choice depend on which class the bot happened to unlock first.
@@ -437,7 +442,7 @@ function aiPickUnit(p,pr,opts){
     faction with two exclusives still chooses BETWEEN them on merit. Ranks below
     the AA insurance above: that answers a threat, this answers a doctrine.
     Consumes no rng, so it cannot desync two clients in lockstep. */
- if(aiFacShare(p)<AI_FAC_FLOOR){
+ if(aiFacShare(p)<facFloor(p)){
   const uu=FAC[p.fac].uu,fx=pool.filter(k=>uu.indexOf(k)>=0);
   if(fx.length)pool=fx;
  }
@@ -738,7 +743,7 @@ function aiTick(p){
  /* v63: read the faction floor ONCE per tick rather than per building - it is a
     property of the army, not of the producer, and the loop below must not see it
     change halfway through. */
- const gFacShort=aiFacShare(p)<AI_FAC_FLOOR;
+ const gFacShort=aiFacShare(p)<facFloor(p);
  /* v89: while a class is short and its own producer is standing there unable to
     pay, every producer that CANNOT supply that class must leave the price of the
     cheapest such unit in the bank. Re-derived per tick from the tables, p.res and

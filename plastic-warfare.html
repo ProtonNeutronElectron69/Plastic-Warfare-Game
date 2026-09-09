@@ -728,7 +728,7 @@ canvas{display:block}
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v112';
+const GAME_VER='v113';
 const GAME_DATE='2026-09-09';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
@@ -7903,7 +7903,7 @@ function makeUnit(key,p,x,y,srcBld){
  if(prodBldOf(key)==='garage'&&p.blds&&p.blds.some(b=>b.t.foundry&&b.prog>=1&&b.hp>0))fhp=1+FOUNDRY_HP;
  const hp=Math.round(t.hp*m.hp*buff*fhp);
  const u={id:EID++,kind:'unit',key,t,p,x,y,hp,mhp:hp,
-  dm:t.dm*m.dmg*buff,sp:t.sp*m.speed,face:srand()*6.28,tface:0,
+  dm:t.dm*m.dmg*buff,sp:t.sp*(t.noFacSpeed?1:m.speed),face:srand()*6.28,tface:0, // v113: a row may opt out of the army's speed modifier (noFacSpeed)
   upg:buff>1,
   state:'idle',path:null,wp:0,target:null,cool:0,anchor:{x,y},stuck:0,lastProg:{x,y},
   cargo:0,cargoT:null,node:null,flag:null,lastHit:'b',rot:0,sel:false,ai:{},mining:false,parkAtHQ:false,flash:0,flashAng:0,
@@ -13129,6 +13129,11 @@ function aiArmyCap(p){
                own price and reload have moved twice since. Deliberately
                profile-independent - every personality wants the same 18%. */
 const AI_EXPLORE=0.08, AI_SAT_A=0.6, AI_RICH_P=1200, AI_FAC_FLOOR=0.18;
+/* v113: the floor is per army when the FAC row says so (aiFloor), else the
+   default above. Measured: Blue's exclusives are human-skill pieces (a bike that
+   evades only while moving, a transport the bot never loads, a signals man) and
+   an 18% floor spent a fifth of its army on them. */
+function facFloor(p){const f=FAC[p.fac]&&FAC[p.fac].aiFloor;return f==null?AI_FAC_FLOOR:f}
 /* v89: the composition classes aiUnitClass can return, in a FIXED order. The
    reserve below picks the neediest of them, and picking by object-key iteration
    would make that choice depend on which class the bot happened to unlock first.
@@ -13345,7 +13350,7 @@ function aiPickUnit(p,pr,opts){
     faction with two exclusives still chooses BETWEEN them on merit. Ranks below
     the AA insurance above: that answers a threat, this answers a doctrine.
     Consumes no rng, so it cannot desync two clients in lockstep. */
- if(aiFacShare(p)<AI_FAC_FLOOR){
+ if(aiFacShare(p)<facFloor(p)){
   const uu=FAC[p.fac].uu,fx=pool.filter(k=>uu.indexOf(k)>=0);
   if(fx.length)pool=fx;
  }
@@ -13646,7 +13651,7 @@ function aiTick(p){
  /* v63: read the faction floor ONCE per tick rather than per building - it is a
     property of the army, not of the producer, and the loop below must not see it
     change halfway through. */
- const gFacShort=aiFacShare(p)<AI_FAC_FLOOR;
+ const gFacShort=aiFacShare(p)<facFloor(p);
  /* v89: while a class is short and its own producer is standing there unable to
     pay, every producer that CANNOT supply that class must leave the price of the
     cheapest such unit in the bank. Re-derived per tick from the tables, p.res and

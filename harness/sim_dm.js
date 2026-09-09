@@ -49,6 +49,15 @@ for (const k of (process.env.V113_OFF || '').split(',').map(s => s.trim()).filte
   else if (k === 'gray') FAC.gray.mods.dmg = .95;
   else stop('V113_OFF: no such change: ' + k);
 }
+/* ...and V113_SET="FAC.blue.aiFloor=0.08;U.truck.noFacSpeed=1" sets any field on the
+   mutable tables before the match, for a variant that has no committed knob yet */
+for (const kv of (process.env.V113_SET || '').split(';').map(s => s.trim()).filter(Boolean)) {
+  const m = /^([A-Za-z_][\w.]*)=(.+)$/.exec(kv); if (!m) stop('V113_SET: bad assignment: ' + kv);
+  const path = m[1].split('.'), roots = { FAC, U, B, AI_PROFILES, AI_SUPPORT, RESEARCH };
+  let o = roots[path[0]]; if (!o) stop('V113_SET: unknown table: ' + path[0]);
+  for (let i = 1; i < path.length - 1; i++) { if (o[path[i]] == null) stop('V113_SET: no such field: ' + kv); o = o[path[i]]; }
+  o[path[path.length - 1]] = JSON.parse(m[2]);
+}
 G = null;
 newGame({ map: MAP, mode: 'dm', diff: 'normal', fac: FAC0, seed: SEED, watch: true });
 
