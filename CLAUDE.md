@@ -117,7 +117,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: CHECKCOUNT checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 7,042 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -187,7 +187,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. CHECKCOUNT checks at v113.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 7,042 checks at v113.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -391,7 +391,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, CHECKCOUNT checks. What is thin is everything AROUND it — how
+recorded soundtrack, 7,042 checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -668,7 +668,7 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 
 The owner asked for a pass on the two armies that do not win and the two bot
 doctrines that never do. Measured first, and the measurement reshaped the
-release twice. `tail_v113.js` (T98, 32 checks; the suite is CHECKCOUNT now),
+release twice. `tail_v113.js` (T98, 32 checks; the suite is 7,042 now),
 `probe_v113.sh` and `balance_report.py`; full evidence in the v113 section of
 `harness/README.md`. **Every trail moved and all five tables were recut** —
 `recut_v113` / `repin_v113` are the pair in the tree.

@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v113 it makes **CHECKCOUNT
+that the results come out identical every time. As of v113 it makes **7,042
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
