@@ -29,7 +29,9 @@ run() { # dir N profs-function
 }
 allbal() { echo "balanced,balanced,balanced,balanced"; }
 latin() { i=$1; out=""; s=0; while [ "$s" -lt 4 ]; do k=$(( (i + s) % 5 + 1 )); out="$out$(echo "$PROFS_ALL" | cut -d' ' -f$k),"; s=$((s+1)); done; echo "${out%,}"; }
-run sim_out_A "$N_A" allbal
-run sim_out_C "$N_C" latin
-echo "=== A: every seat 'balanced' (the army on its own)"; python3 balance_report.py sim_out_A
-echo; echo "=== C: doctrines dealt evenly across armies"; python3 balance_report.py sim_out_C
+OUT_A="${OUT_A:-sim_out_A}"; OUT_C="${OUT_C:-sim_out_C}"   # name the output dirs, so variants can sit side by side (N_A=0 or N_C=0 skips a design)
+[ "$N_A" -gt 0 ] && run "$OUT_A" "$N_A" allbal
+[ "$N_C" -gt 0 ] && run "$OUT_C" "$N_C" latin
+[ "$N_A" -gt 0 ] && { echo "=== A: every seat 'balanced' (the army on its own)  V113_OFF=${V113_OFF:-}"; python3 balance_report.py "$OUT_A"; }
+[ "$N_C" -gt 0 ] && { echo; echo "=== C: doctrines dealt evenly across armies  V113_OFF=${V113_OFF:-}"; python3 balance_report.py "$OUT_C"; }
+exit 0

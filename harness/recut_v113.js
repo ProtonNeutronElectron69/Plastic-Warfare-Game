@@ -1,7 +1,15 @@
-/* recut_v106.js - regenerate the five hash-trail baselines v106 moved.
+/* recut_v113.js - regenerate the five hash-trail baselines v113 moved.
  *
- *   cat shim_head.js game.js recut_v106.js > rc106.js && node rc106.js > cut_v106.json
- *   python3 repin_v106.py cut_v106.json
+ * (Carried forward from the v106 pair, which is the ORDINARY shape: the five
+ * trail tables only, the 42-pin layout gate as a refusal. v113 is the balance
+ * pass - Gray's damage modifier, the Signal Runner as a support unit, and the
+ * two defensive doctrines' expansion clock - and every one of those is a
+ * simulation change that reaches the 900-tick trail window, so every trail
+ * moves and every table is recut. The v106 reasoning below is kept as the
+ * record of the shape.)
+ *
+ *   cat shim_head.js game.js recut_v113.js > rc113.js && node rc113.js > cut_v113.json
+ *   python3 repin_v113.py cut_v113.json
  *
  * v106 teaches the bots six unit abilities they never used (Roadmap 4 item 4).
  * That is a SIMULATION change - a charging Bull, a sprinting squad and a smoking

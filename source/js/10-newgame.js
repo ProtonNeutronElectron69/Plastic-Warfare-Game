@@ -45,7 +45,7 @@ function makeAIBrain(profKey){
   staging:null,defend:0,lastHurt:-999,
   // v22: expansion timer replaces the old one-shot outpost flag; defensive/turtle
   // profiles expand too, just much later (delayed-expand instead of never)
-  nextExpand:pr.expand?55+srand()*70:250+srand()*180,
+  nextExpand:(pr.expandAt||(pr.expand?[55,70]:[250,180]))[0]+srand()*(pr.expandAt||(pr.expand?[55,70]:[250,180]))[1], // v113: read off the profile's own expandAt; the fallback is the v22 pair for a profile that lacks one. ONE draw, as before
   nextSkirm:50+srand()*70,
   stagePt:null,stageT:0,
   waveId:0,waveT:0,

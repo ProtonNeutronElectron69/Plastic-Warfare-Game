@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""repin_v106.py - write the recut_v106 tables into the tails that pin them.
+"""repin_v113.py - write the recut_v113 tables into the tails that pin them.
 
-    cat shim_head.js game.js recut_v106.js > rc106.js && node rc106.js > cut_v106.json
-    python3 repin_v106.py cut_v106.json
+(Carried forward from v106's pair for v113, the balance pass: a faction
+modifier, a support-list change and a doctrine clock all move every trail.
+The v106 record below is kept as the shape.)
+
+    cat shim_head.js game.js recut_v113.js > rc113.js && node rc113.js > cut_v113.json
+    python3 repin_v113.py cut_v113.json
 
 FIVE tables across five files, and NO layout table - v106 teaches the bots six
 unit abilities, which moves every hash trail and must not move a single board.
-v103 was the exception that recut the layout pins too; recut_v106 walks all 42 of
+v103 was the exception that recut the layout pins too; recut_v113 walks all 42 of
 them as a refusal and would have cut nothing had one moved.
 
     BASE45_TRAILS   tail_v43.js   T23.A
@@ -23,14 +27,14 @@ only then written out, so a failure part-way leaves every tail untouched.
 The v76 repin cut two of the trail tables wrong because the recut assumed every
 table is captured by "boot a match and hash it" - BASE43_DESK is not, it needs
 the Gunner-at-90 fixture, and BASE45_AI needs the human seat handed to the AI
-first. recut_v106 reproduces both, and this script verifies the shape of what it
+first. recut_v113 reproduces both, and this script verifies the shape of what it
 was handed (key sets and sample counts) before writing a byte.
 """
 import json
 import re
 import sys
 
-CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v106.json'
+CUT = sys.argv[1] if len(sys.argv) > 1 else 'cut_v113.json'
 cut = json.load(open(CUT, encoding='utf-8'))
 
 # ---- shape gate: refuse a cut that does not look like the tables it replaces --
@@ -55,7 +59,7 @@ if any(len(v) != 3 for v in cut['BASE45_AI'].values()):
 if len(cut['BASE43_DESK']) != 26:
     sys.exit('BASE43_DESK should hold 26 samples (2400/90), got %d' % len(cut['BASE43_DESK']))
 if cut['BASE45_TRAILS'] != cut['BASE62_TRAILS']:
-    sys.exit('the two tan tables disagree - recut_v106 should have caught this')
+    sys.exit('the two tan tables disagree - recut_v113 should have caught this')
 
 
 def obj(table, indent):

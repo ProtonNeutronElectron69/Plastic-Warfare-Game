@@ -40,6 +40,15 @@ if (!MAPS[MAP]) stop('no such map: ' + MAP + '. Have: ' + Object.keys(MAPS).join
 if (MAPS[MAP].survOnly) stop(MAP + ' is wave-defense only and cannot host a deathmatch.');
 if (!FAC[FAC0] || FAC0 === 'bug') stop('no such army: ' + FAC0);
 
+/* v113: V113_OFF=expand,runner,gray reverts any of the release's three
+   candidate changes at run time, so one build measures each on its own against
+   the v112 baseline (the tables are mutable objects; the constants are not). */
+for (const k of (process.env.V113_OFF || '').split(',').map(s => s.trim()).filter(Boolean)) {
+  if (k === 'expand') { AI_PROFILES.defensive.expandAt = [250, 180]; AI_PROFILES.turtle.expandAt = [250, 180]; }
+  else if (k === 'runner') delete AI_SUPPORT.runner;
+  else if (k === 'gray') FAC.gray.mods.dmg = .95;
+  else stop('V113_OFF: no such change: ' + k);
+}
 G = null;
 newGame({ map: MAP, mode: 'dm', diff: 'normal', fac: FAC0, seed: SEED, watch: true });
 

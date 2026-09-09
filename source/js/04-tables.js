@@ -9,7 +9,7 @@
 const FAC={
  green:{name:'Green Army',color:'#4caf50',mods:{cost:.92,hp:1,dmg:1,speed:1},desc:'Balanced forces, 8% cheaper everything.',uu:['sarge','mortar','cmdtruck','balloon'],ub:['radar','cmdpost']},
  tan:{name:'Tan Army',color:'#d2b074',mods:{cost:1,hp:1,dmg:1.15,speed:.95},desc:'+15% damage, slightly slower.',uu:['flamer','bulltank','firebomb'],ub:['dump','foundry']},
- gray:{name:'Gray Army',color:'#9b9ba3',mods:{cost:1,hp:1.2,dmg:.95,speed:.92},desc:'+20% toughness, slightly slower.',uu:['sniper','arty','choktaw'],ub:['bunker','hbarricade']},
+ gray:{name:'Gray Army',color:'#9b9ba3',mods:{cost:1,hp:1.2,dmg:1,speed:.92},/* v113: dmg .95 -> 1. Toughness was paid for twice, in speed AND damage; measured with every seat on one doctrine Gray traded at 0.99 and won 19% */desc:'+20% toughness, slightly slower.',uu:['sniper','arty','choktaw'],ub:['bunker','hbarricade']},
  blue:{name:'Blue Army',color:'#4a7de0',mods:{cost:1,hp:.9,dmg:1,speed:1.15},desc:'+15% speed, lighter plastic (-10% HP).',uu:['bike','chinook','runner'],ub:['turbine','fwdpad']},
  bug:{name:'Wildlife',color:'#6e5a2a',mods:{cost:1,hp:1,dmg:1,speed:1},desc:'',uu:[],ub:[]}
 };
