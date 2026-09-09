@@ -88,17 +88,37 @@ section('T98.C facFloor: the faction quota reads the FAC row first');
 }
 
 /* ---------- D: a row may sit out the army's speed modifier ---------- */
-section('T98.D noFacSpeed: makeUnit honours the flag');
+section('T98.D noFacSpeed: the Dump Truck sits out every army\'s speed modifier; the fighters do not');
 {
+ ok('T98.D the truck row carries the flag, and no other row does', U.truck.noFacSpeed===1&&Object.keys(U).every(k=>k==='truck'||!U[k].noFacSpeed));
  G=null;newGame({map:'backyard',mode:'dm',diff:'normal',fac:'gray',opp:1,seed:660113});
  const p=G.human,base=U.truck.sp;
- const a=makeUnit('truck',p,p.start.x+3,p.start.y+3);
- ok('T98.D without the flag a Gray truck rolls at the army\'s speed', Math.abs(a.sp-base*FAC.gray.mods.speed)<1e-9&&FAC.gray.mods.speed<1);
- const had=U.truck.noFacSpeed;U.truck.noFacSpeed=1;
  const b=makeUnit('truck',p,p.start.x+4,p.start.y+3);
- if(had==null)delete U.truck.noFacSpeed;else U.truck.noFacSpeed=had;
- ok('T98.D with it, at the table\'s', Math.abs(b.sp-base)<1e-9);
- kill(a);kill(b);
+ ok('T98.D a Gray truck rolls at the table\'s speed, not 92% of it', Math.abs(b.sp-base)<1e-9&&FAC.gray.mods.speed===.92);
+ const g=makeUnit('grunt',p,p.start.x+5,p.start.y+3);
+ ok('T98.D ...while a Gray grunt is still 92% of his', Math.abs(g.sp-U.grunt.sp*.92)<1e-9);
+ delete U.truck.noFacSpeed;
+ const a=makeUnit('truck',p,p.start.x+3,p.start.y+3);
+ U.truck.noFacSpeed=1;
+ ok('T98.D (the flag is the whole mechanism: without it the truck rolls at the army\'s speed)', Math.abs(a.sp-base*.92)<1e-9);
+ kill(a);kill(b);kill(g);
+ G=null;newGame({map:'backyard',mode:'dm',diff:'normal',fac:'blue',opp:1,seed:660113});
+ const t2=makeUnit('truck',G.human,G.human.start.x+3,G.human.start.y+3);
+ ok('T98.D it cuts both ways: a Blue truck no longer rolls 15% faster either', Math.abs(t2.sp-base)<1e-9&&FAC.blue.mods.speed===1.15);
+ kill(t2);
+}
+
+/* ---------- E: the rows that ship ---------- */
+section('T98.E Blue is -5% hull with no bot quota; Gray is exactly as it was');
+{
+ ok('T98.E Blue: hp .95, speed 1.15, cost 1, dmg 1, aiFloor 0 - transcribed, so the next re-price declares itself here', FAC.blue.mods.hp===.95&&FAC.blue.mods.speed===1.15&&FAC.blue.mods.cost===1&&FAC.blue.mods.dmg===1&&FAC.blue.aiFloor===0);
+ ok('T98.E Blue\'s card says -5%', /-5% HP/.test(FAC.blue.desc)&&!/-10%/.test(FAC.blue.desc));
+ ok('T98.E Gray: hp 1.2, dmg .95, speed .92 - the damage change was measured and REVERTED', FAC.gray.mods.hp===1.2&&FAC.gray.mods.dmg===.95&&FAC.gray.mods.speed===.92&&FAC.gray.aiFloor==null);
+ ok('T98.E Green and Tan are untouched', FAC.green.mods.cost===.92&&FAC.green.mods.hp===1&&FAC.tan.mods.dmg===1.15&&FAC.tan.mods.speed===.95&&FAC.green.aiFloor==null&&FAC.tan.aiFloor==null);
+ G=null;newGame({map:'backyard',mode:'dm',diff:'normal',fac:'blue',opp:1,seed:660113});
+ const p=G.human;
+ ok('T98.E a Blue grunt is 95% of the table\'s hull', makeUnit('grunt',p,p.start.x+3,p.start.y+3).mhp===Math.round(U.grunt.hp*.95));
+ ok('T98.E and Blue\'s bot has no floor: facFloor reads 0, so the Barracks pool is never narrowed to an exclusive', facFloor(p)===0);
 }
 
 /* ---------- F: the instruments ---------- */

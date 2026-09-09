@@ -7,7 +7,7 @@ touch anything — what the project is, where it stands, how to build, how to
 test, how to watch the bots, how to LOOK at a frame (rule 7's tools), and the
 rules that are load-bearing. Everything
 after that is the record: the roadmap chapters, then one section per standalone
-release NEWEST FIRST (v112 down to v89), then the balance baseline, then the
+release NEWEST FIRST (v113 down to v89), then the balance baseline, then the
 patterns worth copying. Read the record when you are about to touch the
 subsystem it describes; do not read it front to back.
 
@@ -55,9 +55,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v112, and what a fresh session does)
+## Where the game stands (v113, and what a fresh session does)
 
-The game is at **v112**, and every chapter below is finished work. All three
+The game is at **v113**, and every chapter below is finished work. All three
 roadmaps are COMPLETE: roadmap 1 (v79–v82, abilities), roadmap 2 (v85–v88.1,
 full faction-exclusive sets), roadmap 3 (v91–v96 + follow-ups v92.1/v96.1/v97,
 real art and real sound). Since then the releases are standalone owner passes and
@@ -78,6 +78,7 @@ down, newest first, and the chapter is where the reasoning lives.
 | v110 | owner pass | the hotkey review: build-menu letters are declared on the table row instead of handed out by position, so a thing carries one key everywhere; left-half keys 52% → 65% |
 | v111 | owner pass | every faction building moves a little: the seven that stood still got smoke, lamps, a hem, a periscope and a windsock; the ten that already moved got a second idea; one wind drives every flag |
 | v112 | owner pass | the invite handshake says what went wrong instead of hanging: measured with two real browsers first (a slow reply was never the failure), a longer wait for a public address, "Wi‑Fi only" and "Couldn't reach" in plain words, no relay by instruction |
+| **v113** | **item 3 in part, item 7** | the balance pass, measured with the doctrine held still: the two defensive doctrines were starving (an outpost three minutes late), Blue was fielding an army of signals men, Gray's trucks paid its speed tax; `defensive` 0% → 25%, Blue 0.63 → 0.78 on the trade |
 
 **Nothing above is in flight.** Each shipped as its own PR and merged, so a
 fresh session starts from `origin/main` with no handover state to reconstruct.
@@ -116,7 +117,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 7,010 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: CHECKCOUNT checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -186,7 +187,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 7,010 checks at v112.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. CHECKCOUNT checks at v113.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -289,10 +290,10 @@ five baseline tables behind the 42-pin layout gate. Copy the current
 `recut_vNN.js` / `repin_vNN.py` pair forward to the new version and delete the
 old one; only the current release's one-shots ship.
 
-**The pair in the tree is `recut_v106` / `repin_v106`** — the pair is carried
+**The pair in the tree is `recut_v113` / `repin_v113`** — the pair is carried
 forward by the release that MOVES the trails, not by every release. Do not read
 the version on those two files as the version of the game; read it as "the last
-release that had to repin". v106's pair is the ORDINARY shape and the one to copy:
+release that had to repin". v113 carried v106's pair forward unchanged in shape, and that shape is the ORDINARY one to copy:
 it recuts the five trail tables only, and it walks the 42-pin layout gate as a
 REFUSAL. v103's pair (now retired) was the one exception — it recut the layout
 pins too and ran that gate as its own inverse, because v103 changed map
@@ -390,7 +391,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 7,010 checks. What is thin is everything AROUND it — how
+recorded soundtrack, CHECKCOUNT checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -546,19 +547,21 @@ still empty; item 1 has since answered it.)
 original plan was barks → maps → armies. Item 4 shipped at v106, two of item 2's
 boards at v107 and item 5 whole at v108–v109, so what remains of that plan is:
 
-- **the armies pass (item 3)** — Blue, then Gray. This is now the top of the
-  list on the original ranking's own terms: it is the highest-impact item left,
-  it is the one you can MEASURE, and half the armies have been unpickable since
-  the v103 baseline with nothing aimed at them in seven releases. Read the
-  balance chapter below and run `probe_v89.sh` before touching a price.
+- **the armies pass (item 3)** — **DELIVERED IN PART at v113** (Blue's hull and
+  the bot's use of its exclusives; Gray's economy; and the finding that the
+  balance table had been mixing army with doctrine). What is left of it is
+  Green's overshoot (44–50% with the doctrine held still, left alone by
+  instruction) and any human-play verdict. `probe_v113.sh` is the instrument now.
 - **the barks** — the rest of item 1, still the smallest unstarted job on the
   list, and small enough to ride with anything else;
 - **the rest of item 2** — a small two-player board (the shortest match the game
   can currently offer is a four-corner 64) and a second survival board, because
   Wave Survival is still one board wide.
-- **items 6 and 7 together** — a stalemate needs a way to end and `turtle` needs
-  a way to win, and the v103 review already noticed those are the same problem
-  from two sides.
+- **items 6 and 7 together** — **item 7 DELIVERED at v113**: the two defensive
+  doctrines were starving (an outpost three minutes late), not mis-timed, and
+  win their share now. Item 6 is what v113 left visible: with those armies alive
+  at minute twenty, 7 of 20 controlled matches ran out the clock (the clock
+  already resolves for the biggest base standing, since v69).
 
 None of that is agreed; it is what the v103 review would do next if it were
 re-run today. **Re-measure before acting on any of it** — the balance table is
@@ -660,6 +663,62 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v113 — the balance pass: Blue, Gray, and the two defensive doctrines (Roadmap 4 item 3 in part, item 7)
+
+The owner asked for a pass on the two armies that do not win and the two bot
+doctrines that never do. Measured first, and the measurement reshaped the
+release twice. `tail_v113.js` (T98, 32 checks; the suite is CHECKCOUNT now),
+`probe_v113.sh` and `balance_report.py`; full evidence in the v113 section of
+`harness/README.md`. **Every trail moved and all five tables were recut** —
+`recut_v113` / `repin_v113` are the pair in the tree.
+
+- **The default batch cannot be read.** `newGame` deals the five doctrines by a
+  seeded shuffle, and over 32 matches Blue drew the 0-for-29 `defensive`
+  doctrine 12 times and Tan 5. `PROFS=` on `sim_dm.js` forces the deal, and
+  `probe_v113.sh` runs two CONTROLLED designs: A (every seat `balanced`, so
+  only the army varies) and C (doctrines dealt evenly). Every number below is
+  from those, on the same bytes, each change alone against the v112 baseline.
+- **The two defensive doctrines were starving, not slow.** Their first outpost
+  came 2.5–4.3 minutes in against everyone else's 0.5–1.2, so from MINUTE TWO
+  they mined ~2,000 a minute against 3,000–3,800, their armies were spent by
+  minute five, and they never rebuilt. `expandAt` on the profile (later than
+  the others, not three minutes later): `defensive` 0/16 → 3/16, `turtle`
+  1/16 → 3/16 on that change alone; with everything on, the five doctrines
+  read 38 / 25 / 25 / 19 / 19. An outpost is not a doctrine; it is the economy.
+- **Blue's most-built unit was the Signal Runner** (44 a match, 82 with the
+  doctrine held still), the unit the table calls weaker than a Grunt, because
+  the faction floor narrowed the Barracks pool to him. He is support now
+  (`AI_SUPPORT.runner`, one per ten fighters, cap two). The bike took his place
+  in the quota, so Blue's row says `aiFloor:0` — its exclusives are human
+  tools. That fixed the composition and not the trade (0.58); the hull did:
+  **hp .9 → .95**, and Blue trades at 0.78 and wins 25% of doctrine-neutral
+  matches, from 0.63 and 12%.
+- **Gray traded near even once the doctrine was held still** (0.99–1.12,
+  19–25%); its 12% was mostly the deal. What it owned was an economy tax: the
+  speed modifier scaled its trucks. **`noFacSpeed:1` on the Dump Truck** —
+  every army's economy runs at stock speed — lifted Gray's mining 9% and its
+  trade by 0.05 over two seed sets. `dmg .95 → 1` was tried and REVERTED: four
+  runs, no signal.
+- **Green is left alone** by instruction, at 44–50% of doctrine-neutral wins.
+  The v90 "scale the reserves by the cost modifier" hypothesis is refuted: the
+  production probe by army shows the reserve refusing Green MORE than anyone;
+  its edge is eight percent more army for the same mining, compounding.
+
+Four things worth carrying forward:
+
+- **HOLD ONE VARIABLE STILL BEFORE READING THE OTHER.** Nine releases of
+  balance tables mixed army with doctrine. The forced deal is one line; the
+  controlled designs are the instrument every future balance claim should use.
+- **A per-minute series finds WHEN; a per-match total only finds THAT.**
+  "Mined 40% less" pointed at trucks and piles; "2,000 a minute from minute
+  two, no outpost until minute five" pointed at one clock.
+- **`makeAIBrain` jitters ARRAYS ±20% per element** and spends a draw on each,
+  so a `[base,jitter]` pair on a profile is itself jittered — fine, it is what
+  `repeat` gets, but a range check that forgot it failed, and it is part of why
+  every trail moved.
+- **Sixteen matches resolve ±2 wins.** Gray read 6% and 25% between variants
+  it did not own. Two seed sets before believing a Gray number.
 
 ## v112 — the handshake says what went wrong (not part of a roadmap)
 
@@ -1854,7 +1913,16 @@ Three notes for whoever goes next:
   Measured again at v90 over 64 matches, defensive recovered to 14.6% and turtle did
   not move (14.5%). See the v90 balance baseline below.
 
-## Where the balance actually stands (32 matches, RE-MEASURED at v103)
+## Where the balance actually stands (32 matches, RE-MEASURED at v103; SUPERSEDED at v113)
+
+**Read the v113 chapter above first.** It re-measured on v112 (the ordering
+below held: Tan 47%, Green 31%, Gray 12%, Blue 9%), then showed the table
+below mixes army with doctrine — the seeded deal handed Blue the 0-for-29
+doctrine 12 times in 32 — and rebuilt the instrument (`probe_v113.sh`, the
+doctrine held still). With the doctrine held still on v112: Green 44%, Tan 25%,
+Gray 19%, Blue 12%. After v113: Blue trades 0.78 (was 0.63) and Gray's economy
+runs at stock speed. Reproduce with `cd harness && ./probe_v113.sh`. The v103
+table stays for its reasoning and the shape of what moved.
 
 **Read this before acting on any faction claim elsewhere in this file or in the
 harness README.** The v90 section that used to head this chapter said its own

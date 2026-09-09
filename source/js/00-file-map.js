@@ -68,6 +68,7 @@
      BUILDING UPDATE ............................................. production, research, economy
      PROJECTILES ................................................. updateProjs
      AI .......................................................... aiTick, doctrine, build order, call-downs
+       v113: per-army quota, the Runner as support ................. facFloor / AI_SUPPORT.runner (expandAt on AI_PROFILES, noFacSpeed on U.truck)
        AI TACTICAL HELPERS ....................................... influence map, threat triage, spot picking
        COUNTER-AWARE PRODUCTION .................................. composition targets, weapon mix, air caps
      GHOST STORE ................................................. last-seen enemy memory
