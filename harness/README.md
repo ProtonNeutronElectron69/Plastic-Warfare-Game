@@ -1381,15 +1381,84 @@ v22's, the two defensive ones sit later and inside the old floor, fifty brains
 per doctrine land in the jittered band, a turtle never reaches 250, one srand
 draw on the line. **B** the Runner as support: on the list, out of the floor's
 numerator and denominator (ten grunts + ten runners read 0%), and DRIVEN — a
-Blue seat handed to a bot with the tech, the plastic and the supply queues one
-runner for ten fighters and two for thirty, never more; the rule's shape is
-the medic's and is gated on the support flag. **C** `facFloor` reads the row
-first and both floor sites go through it. **D** `noFacSpeed`: the truck row
-alone carries it; a Gray truck rolls at stock while a Gray grunt is 92%; the
-flag is the mechanism; a Blue truck no longer rolls 15% fast. **E** the rows
-that ship, transcribed: Blue's five numbers and its card, Gray exactly as v112,
-Green and Tan untouched; a Blue grunt at 95% hull; Blue's floor 0. **F** the
-instruments exist, do the three things, and are not in `seg.sh`.
+Blue seat handed to a bot with the tech, the plastic and the supply fields two
+runners for ten fighters and six for thirty, never more (the fixture delivers
+each queued runner between ticks, because `supTrain` fills a producer to three
+orders and a queue count is bounded by that, not by the allowance); the rule's
+shape is the medic's and is gated on the support flag. **C** the quota is one
+constant for every army: 18%, no FAC row carries an `aiFloor`, no `facFloor`
+door exists, and both floor sites compare the share to `AI_FAC_FLOOR`. **D**
+`noFacSpeed`: the truck row alone carries it; a Gray truck rolls at stock while
+a Gray grunt is 92%; the flag is the mechanism; a Blue truck no longer rolls
+15% fast. **E** the rows that ship, transcribed: Green at .95 and its card at
+5%, Blue's four numbers and its −10% card with no floor field, Gray exactly as
+v112, Tan untouched; a Blue grunt at 90% hull; a Green grunt at 95% price.
+**F** the instruments exist, do the three things, and are not in `seg.sh`.
+
+### The owner's decisions on the draft, and what shipped
+
+The draft above was put to the owner as a draft PR, and the owner chose the
+levers rather than the measured ones on two of its four findings:
+
+| finding | the draft shipped | the owner chose | ships |
+|---|---|---|---|
+| Green at 44–50% of doctrine-neutral wins | left alone, by the original instruction | trim the discount | **cost .92 → .95** (5% cheaper, was 8%) |
+| Blue at 0.63 on the trade | hull −10% → −5%, and no bot quota (`aiFloor:0`) | keep the hull, keep the quota | **hp .9, no `aiFloor` field, `facFloor` removed** |
+| Blue's bot fielding Runners as a fifth of its army | the Runner as support, one per ten fighters, cap two | agreed, allowance raised | **two per ten fighters, no separate ceiling** (`2*floor(army/10)`) |
+| Gray's trucks taxed by its speed modifier | trucks exempt (`noFacSpeed`) | agreed | as the draft |
+| the two defensive doctrines starving | `expandAt` on the profile | agreed | as the draft |
+
+`facFloor` is deleted rather than kept as a door no row declares: a field a
+bot could quietly opt out through is the shape v105.1's `LAB_ORDER` warned
+about, and T98.C now asserts the opposite — one constant, no row opts out.
+
+**Measured once more on the shipped bytes, for the record** (rule 6: this is
+what the levers did in one batch each, not a verdict; sixteen matches resolve
+±2 wins and the seeded seat map deals the doctrines unevenly):
+
+| design A, every seat `balanced`, seeds 101 | wins/16 | K/L | mined/match | exclusives (share of units) |
+|---|---|---|---|---|
+| Green (cost .95) | 7 (44%) | 1.25 | 37.3k | 33% |
+| Tan | 5 (31%) | 1.16 | 35.3k | 48% |
+| Gray (trucks exempt) | 3 (19%) | 0.95 | 28.1k | 26% |
+| Blue (hull −10%, quota, Runner support ×2) | 1 (6%) | 0.61 | 27.6k | 49% |
+
+- **Green did not move inside this batch** at 5%: 44% and 1.25, against 44%
+  and 1.19 on the v112 draft's baseline. Three percent of price is a small
+  lever against an edge that compounds on mining, and one batch cannot see it;
+  the v90 mechanism note still stands (its edge is more army for the same
+  mining, and the reserves refuse it more than anyone).
+- **Blue is back at its v112 shape**: 0.61 on the trade against 0.63 before
+  the release and 0.78 on the draft. That is what keeping the hull predicts —
+  the draft measured the Runner-as-support change alone at 0.67 and found the
+  rest was the hull. The Runner allowance at two per ten reads 49% exclusives
+  built (the quota's bikes plus the support runners), against 52 Runners of 82
+  exclusives on v112 and 0 on the draft.
+- **Gray holds** at 19% / 0.95 with its trucks exempt (19% / 0.99 base, 25% /
+  1.13 on the draft's seeds-101 run): inside the noise, as recorded above.
+
+| design C, doctrines dealt evenly, seeds 101 | wins/16 | K/L | drawn by Gray+Blue |
+|---|---|---|---|
+| aggressive | 6 (38%) | 1.06 | 11 of 16 |
+| turtle | 6 (38%) | 1.20 | 9 of 16 |
+| balanced | 5 (31%) | 1.08 | 4 of 16 |
+| harasser | 2 (12%) | 0.77 | 8 of 16 |
+| defensive | 1 (6%) | 0.78 | **8 of 16** (Gray 6, Blue 2) |
+
+`turtle` reads 38% on the shipped bytes (1 of 16 on v112, 3 of 16 with
+`expandAt` alone); `defensive` reads 1 of 16 here, and eleven of its sixteen
+draws landed on the two armies at 10% — the seat map is seeded, so a doctrine
+dealt mostly to weak armies reads weak. The draft's all-on run of C (25%
+defensive, 25% turtle) was on the same seeds with Blue at 0.78; with Blue back
+at 0.61, whichever doctrine Blue draws most loses most. Four of twenty matches
+ran out the clock (seven of twenty on the draft), the Roadmap 4 item 6 note
+above. Army totals in C: Green 45%, Tan 35%, Gray 10%, Blue 10%.
+
+**What this means for the next balance pass**: the doctrine fix is in and
+holds (`turtle` especially); Blue's trade rate is the open item, and the
+draft's measurement says the hull is the lever that moves it, which the owner
+has declined for now. Play-test first — the bot-versus-bot instrument cannot
+say what a person feels a −10% hull as.
 
 
 ## v112 — the handshake says what went wrong (not part of a roadmap)
