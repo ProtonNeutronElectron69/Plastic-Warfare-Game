@@ -1206,8 +1206,8 @@ exact bug: exit 2, and the message names the block.
 The owner asked for a pass on the two armies that do not win and the two bot
 doctrines that never do, and asked what to suggest. Rule 8 first, and it
 reshaped the release twice; then the owner reviewed the measured draft and
-chose the levers (the last section of this chapter). `tail_v113.js` (T98, 33
-checks; the suite is **7,043**), plus
+chose the levers (the last section of this chapter). `tail_v113.js` (T98, 34
+checks; the suite is **7,044**), plus
 three instruments: `PROFS=` on `sim_dm.js`, `probe_v113.sh` and
 `balance_report.py`. **Every trail moved and all five tables were recut**
 (`recut_v113` / `repin_v113`, carried forward from v106's pair): a faction
@@ -1312,7 +1312,9 @@ time, so every variant below is the same bytes.
   story. At −5% it traded at **0.78 and won 25%** (seeds 101) and **0.78 and
   19%** (seeds 4200) — the trade rate reproduced to the second decimal. The
   speed stays; the card says −5%.
-- **Gray: nothing on the FAC row; `noFacSpeed:1` on the Dump Truck.** With
+- **Gray: nothing on the FAC row; `noSpeedTax:1` on the Dump Truck** (the
+  draft's `noFacSpeed`; renamed when the owner gave Blue's trucks their bonus
+  back, below). With
   the doctrine held still Gray traded at 0.99–1.12 and won 19–25%: close to
   even, and its 12% in the default batch was mostly the doctrine deal (15 of
   its 32 draws were the two dead ones). What it does own is an economy tax
@@ -1388,9 +1390,9 @@ orders and a queue count is bounded by that, not by the allowance); the rule's
 shape is the medic's and is gated on the support flag. **C** the quota is one
 constant for every army: 18%, no FAC row carries an `aiFloor`, no `facFloor`
 door exists, and both floor sites compare the share to `AI_FAC_FLOOR`. **D**
-`noFacSpeed`: the truck row alone carries it; a Gray truck rolls at stock while
-a Gray grunt is 92%; the flag is the mechanism; a Blue truck no longer rolls
-15% fast. **E** the rows that ship, transcribed: Green at .95 and its card at
+`noSpeedTax`: the truck row alone carries it; a Gray truck rolls at stock while
+a Gray grunt is 92%; the flag is the mechanism; a Blue truck KEEPS its 15% and
+so does a Blue grunt. **E** the rows that ship, transcribed: Green at .95 and its card at
 5%, Blue's four numbers and its −10% card with no floor field, Gray exactly as
 v112, Tan untouched; a Blue grunt at 90% hull; a Green grunt at 95% price.
 **F** the instruments exist, do the three things, and are not in `seg.sh`.
@@ -1405,7 +1407,7 @@ levers rather than the measured ones on two of its four findings:
 | Green at 44–50% of doctrine-neutral wins | left alone, by the original instruction | trim the discount | **cost .92 → .95** (5% cheaper, was 8%) |
 | Blue at 0.63 on the trade | hull −10% → −5%, and no bot quota (`aiFloor:0`) | keep the hull, keep the quota | **hp .9, no `aiFloor` field, `facFloor` removed** |
 | Blue's bot fielding Runners as a fifth of its army | the Runner as support, one per ten fighters, cap two | agreed, allowance raised | **two per ten fighters, no separate ceiling** (`2*floor(army/10)`) |
-| Gray's trucks taxed by its speed modifier | trucks exempt (`noFacSpeed`) | agreed | as the draft |
+| Gray's trucks taxed by its speed modifier | trucks exempt (`noFacSpeed`, bonus and penalty alike) | agreed, then Blue's bonus restored | **`noSpeedTax`: a truck sits out a speed PENALTY and keeps a BONUS** (`max(1, m.speed)`); Gray's and Tan's at stock, Blue's +15% |
 | the two defensive doctrines starving | `expandAt` on the profile | agreed | as the draft |
 
 `facFloor` is deleted rather than kept as a door no row declares: a field a
@@ -1447,7 +1449,10 @@ Over both seed sets, shipped against v112: Tan 14/32 (was 10), Green 11/32
   +15% truck edge away with the same line — the draft recorded that as
   costing Blue nothing WITH the −5% hull. Without it, it shows. **The hull is
   the lever the measurement points at, and the owner has declined it**; that
-  is recorded here, not argued, and the play-test is the verdict that counts.
+  is recorded here, not argued. On reading this table the owner gave Blue's
+  trucks their 15% back (`noSpeedTax`, the row above) and asked for no further
+  batch, so the shipped Blue is this table's Blue plus its truck edge,
+  unmeasured by instruction.
 - **Gray reads 19% then 12%** (0.95 / 0.98) with its trucks exempt, against
   19% then 25% (0.99 / 1.12) on v112: inside the ±2-win noise both times, and
   the mining gain is real on both (28.1k / 27.2k against 27.5k on the base's
@@ -6593,16 +6598,16 @@ check count still read 5,973. That is the failure mode this section exists to
 prevent, so: **a release that adds a tail adds a paragraph HERE as well as its
 own chapter above.**
 
-**The suite stands at 7,043 checks** (7,010 at v112, 6,964 at v111, 6,923 at v110, 6,895 at v109, 6,862 at v108, 6,830 at
+**The suite stands at 7,044 checks** (7,010 at v112, 6,964 at v111, 6,923 at v110, 6,895 at v109, 6,862 at v108, 6,830 at
 v107.3, 6,810 at v107.2, 6,787 at v107.1, 6,716 at v107, 6,083 at v106, 6,039 at
 v105.1, 6,009 at v105, 5,973 at v104.4, 5,766 at v103, 5,694 at v102, 5,638 at
 v101, 5,587 at v100).
 
-v113 adds `tail_v113.js` (T98, 33 checks), riding segment 3, and three
+v113 adds `tail_v113.js` (T98, 34 checks), riding segment 3, and three
 instruments beside it: `PROFS=` / `V113_OFF=` / `V113_SET=` on `sim_dm.js`,
 `probe_v113.sh` (the controlled designs A and C) and `balance_report.py`. A is
 the expansion clock, B the Runner as support (driven, two per ten fighters), C
-the quota as one constant for every army, D `noFacSpeed`, E the rows that
+the quota as one constant for every army, D `noSpeedTax`, E the rows that
 ship (Green .95, Blue .9), F the instruments. One older arm was restated on
 a coincidence it had stood on since v90 (`T42.D`, below in the chapter). **Every trail moved and
 all five tables were recut** — `recut_v113` / `repin_v113` are the pair in the

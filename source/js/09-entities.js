@@ -25,7 +25,7 @@ function makeUnit(key,p,x,y,srcBld){
  if(prodBldOf(key)==='garage'&&p.blds&&p.blds.some(b=>b.t.foundry&&b.prog>=1&&b.hp>0))fhp=1+FOUNDRY_HP;
  const hp=Math.round(t.hp*m.hp*buff*fhp);
  const u={id:EID++,kind:'unit',key,t,p,x,y,hp,mhp:hp,
-  dm:t.dm*m.dmg*buff,sp:t.sp*(t.noFacSpeed?1:m.speed),face:srand()*6.28,tface:0, // v113: a row may opt out of the army's speed modifier (noFacSpeed)
+  dm:t.dm*m.dmg*buff,sp:t.sp*(t.noSpeedTax?Math.max(1,m.speed):m.speed),face:srand()*6.28,tface:0, // v113: a row may sit out the army's speed PENALTY and keep its bonus (noSpeedTax)
   upg:buff>1,
   state:'idle',path:null,wp:0,target:null,cool:0,anchor:{x,y},stuck:0,lastProg:{x,y},
   cargo:0,cargoT:null,node:null,flag:null,lastHit:'b',rot:0,sel:false,ai:{},mining:false,parkAtHQ:false,flash:0,flashAng:0,

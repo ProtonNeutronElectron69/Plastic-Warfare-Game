@@ -117,7 +117,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 7,043 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 7,044 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -187,7 +187,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 7,043 checks at v113.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 7,044 checks at v113.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -391,7 +391,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 7,043 checks. What is thin is everything AROUND it — how
+recorded soundtrack, 7,044 checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -670,8 +670,8 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 The owner asked for a pass on the two armies that do not win and the two bot
 doctrines that never do. Measured first, and the measurement reshaped the
 release twice; then the owner reviewed the measured draft and chose different
-levers on two of its four findings (below). `tail_v113.js` (T98, 33 checks;
-the suite is 7,043 now), `probe_v113.sh` and `balance_report.py`; full
+levers on two of its four findings (below). `tail_v113.js` (T98, 34 checks;
+the suite is 7,044 now), `probe_v113.sh` and `balance_report.py`; full
 evidence in the v113 section of `harness/README.md`. **Every trail moved and
 all five tables were recut** — `recut_v113` / `repin_v113` are the pair in
 the tree.
@@ -701,9 +701,11 @@ the tree.
   the Blue row is v112's with the Runner rule beside it.
 - **Gray traded near even once the doctrine was held still** (0.99–1.12,
   19–25%); its 12% was mostly the deal. What it owned was an economy tax: the
-  speed modifier scaled its trucks. **`noFacSpeed:1` on the Dump Truck** —
-  every army's economy runs at stock speed — lifted Gray's mining 9% and its
-  trade by 0.05 over two seed sets. `dmg .95 → 1` was tried and REVERTED: four
+  speed modifier scaled its trucks. **`noSpeedTax:1` on the Dump Truck** —
+  a truck sits out a speed PENALTY and keeps a speed BONUS, so Gray's and
+  Tan's roll at stock and **Blue's keep their 15%** (the owner's decision; the
+  draft had taken Blue's edge with Gray's tax) — lifted Gray's mining 9% and
+  its trade by 0.05 over two seed sets. `dmg .95 → 1` was tried and REVERTED: four
   runs, no signal.
 - **Green's discount is 5%, was 8%** (`cost .92 → .95`) — the owner's lever,
   chosen on the draft's finding that Green sat at 44–50% of doctrine-neutral
@@ -716,9 +718,10 @@ the tree.
   chapter in `harness/README.md`. Green did not move at 5% inside the noise;
   Gray's trade is as before with its mining up; **Blue reads 0.61 and 0.56 on
   the trade, below its v112 0.63 and 0.71** — the kept hull, the kept quota
-  and the truck rule (which takes Blue's +15% truck edge with Gray's tax)
-  together. The hull is the lever the measurement points at; the owner
-  declined it, and the play-test is the verdict that counts.
+  and, in that batch, a truck rule that took Blue's +15% truck edge with
+  Gray's tax. The owner then gave Blue's trucks their 15% back (`noSpeedTax`
+  keeps a bonus), unmeasured by instruction. The hull is the lever the
+  measurement points at; the owner declined it.
 
 Four things worth carrying forward:
 
@@ -1944,7 +1947,8 @@ doctrine 12 times in 32 — and rebuilt the instrument (`probe_v113.sh`, the
 doctrine held still). With the doctrine held still on v112: Green 44%, Tan 25%,
 Gray 19%, Blue 12%. What v113 ships (the owner's levers on that draft): Green
 pays 5% less instead of 8%, Blue's Runner is support at two per ten fighters,
-every army's trucks run at stock speed, and Blue's hull stays at −10%. The
+no army's trucks pay its speed penalty (Blue's keep their 15%), and Blue's
+hull stays at −10%. The
 measured result on the shipped bytes is the last table of the v113 section in
 `harness/README.md`. Reproduce with `cd harness && ./probe_v113.sh`. The v103
 table stays for its reasoning and the shape of what moved.

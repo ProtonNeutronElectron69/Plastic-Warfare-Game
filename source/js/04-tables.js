@@ -71,13 +71,15 @@ const U={
     damage table in the file to say nothing new.
     noPace keeps him out of MEDIC_HEAL_RATE's floor - see the note there. */
  runner:{hk:'v',n:'Signal Runner',a:'inf',hp:46,dm:4.5,rg:3.2,rt:.9,sp:2.5,vi:7,cp:62,ce:0,bt:4,w:'b',noPace:1,rnet:1,sprint:1,tech:'u_runner',d:`Signals rather than fights, and is weaker than a Grunt for it. Radio Net: friendly infantry within ${RNET_R} tiles gain +${RNET_VI} sight. Sprint: all of them gain ${Math.round(SPRINT_SPD*100)}% speed, but none may fire`},
- truck:{noFacSpeed:1,hk:'r',n:'Dump Truck',a:'truck',hp:130,dm:0,rg:0,rt:0,sp:2.7,vi:5,cp:20,ce:0,bt:8,w:0,d:'Harvests resources'},
-/* v113: noFacSpeed on the Dump Truck. An army's speed modifier is a FIGHTING
+ truck:{noSpeedTax:1,hk:'r',n:'Dump Truck',a:'truck',hp:130,dm:0,rg:0,rt:0,sp:2.7,vi:5,cp:20,ce:0,bt:8,w:0,d:'Harvests resources'},
+/* v113: noSpeedTax on the Dump Truck. An army's speed modifier is a FIGHTING
    trait; through v112 it also scaled every truck, so Gray mined ~8% less than
    the same start under any other colour and Blue ~15% more. Measured over two
    seed sets with the doctrine held still: exempting trucks lifted Gray's mining
-   28.5k -> 31.0k a match and its trade rate 1.05 -> 1.10, and cost Blue
-   nothing it was winning with. Every army's economy runs at stock speed now. */
+   28.5k -> 31.0k a match and its trade rate 1.05 -> 1.10. The flag means a
+   row sits out a speed PENALTY and keeps a speed BONUS (makeUnit takes
+   max(1, m.speed) for it): Gray's and Tan's trucks roll at stock, Blue's keep
+   their 15% - the owner's decision, so Blue's economy edge stays its own. */
  medic:{hk:'m',n:'Medic Truck',a:'truck',hp:135,dm:0,rg:0,rt:0,sp:2.3,vi:6,cp:150,ce:20,bt:11,w:0,heal:1,healR:2,tech:'u_medic',d:`Unarmed. Heals allied units and buildings within ${MEDIC_HEAL_RADIUS} tiles`}, // v29: paces the grunt
  // v78: hp 115 -> 132.25 (+15%, effective hull 88 -> 101) and rt .5 -> .425
  // (-15% reload, DPS 7.26 -> 8.54). 132.25 is the exact +15% rather than a

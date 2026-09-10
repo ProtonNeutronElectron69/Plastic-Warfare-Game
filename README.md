@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v113 it makes **7,043
+that the results come out identical every time. As of v113 it makes **7,044
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -132,8 +132,9 @@ describes as weaker than a Grunt, because a rule meant to make each army use
 its signature units had nothing else to reach for; the Runner is treated as a
 support unit now, two for every ten fighters, and the signature-unit rule
 stays for every army. Gray's slowness was quietly taxing its economy too,
-since its Dump Trucks were slowed along with its army; every army's trucks run
-at the same speed now. And Green, which had been winning the most by a clear
+since its Dump Trucks were slowed along with its army; no army's trucks are
+slowed by its army's speed penalty now, while Blue's keep their 15% head start.
+And Green, which had been winning the most by a clear
 margin, now pays 5% less for everything instead of 8%. Blue's plastic stays
 10% lighter, as it always was.
 

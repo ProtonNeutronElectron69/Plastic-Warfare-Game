@@ -95,24 +95,26 @@ section('T98.C the faction quota is AI_FAC_FLOOR for every army; no row opts out
  ok('T98.C both readers of the floor compare the share to the constant', (aiPickUnit.toString().match(/aiFacShare\(p\)<AI_FAC_FLOOR/g)||[]).length===1&&(aiTick.toString().match(/aiFacShare\(p\)<AI_FAC_FLOOR/g)||[]).length===1);
 }
 
-/* ---------- D: a row may sit out the army's speed modifier ---------- */
-section('T98.D noFacSpeed: the Dump Truck sits out every army\'s speed modifier; the fighters do not');
+/* ---------- D: a row may sit out the army's speed PENALTY and keep its bonus ---------- */
+section('T98.D noSpeedTax: the Dump Truck sits out a speed penalty and keeps a speed bonus; the fighters take both');
 {
- ok('T98.D the truck row carries the flag, and no other row does', U.truck.noFacSpeed===1&&Object.keys(U).every(k=>k==='truck'||!U[k].noFacSpeed));
+ ok('T98.D the truck row carries the flag, and no other row does', U.truck.noSpeedTax===1&&Object.keys(U).every(k=>k==='truck'||!U[k].noSpeedTax));
  G=null;newGame({map:'backyard',mode:'dm',diff:'normal',fac:'gray',opp:1,seed:660113});
  const p=G.human,base=U.truck.sp;
  const b=makeUnit('truck',p,p.start.x+4,p.start.y+3);
  ok('T98.D a Gray truck rolls at the table\'s speed, not 92% of it', Math.abs(b.sp-base)<1e-9&&FAC.gray.mods.speed===.92);
  const g=makeUnit('grunt',p,p.start.x+5,p.start.y+3);
  ok('T98.D ...while a Gray grunt is still 92% of his', Math.abs(g.sp-U.grunt.sp*.92)<1e-9);
- delete U.truck.noFacSpeed;
+ delete U.truck.noSpeedTax;
  const a=makeUnit('truck',p,p.start.x+3,p.start.y+3);
- U.truck.noFacSpeed=1;
+ U.truck.noSpeedTax=1;
  ok('T98.D (the flag is the whole mechanism: without it the truck rolls at the army\'s speed)', Math.abs(a.sp-base*.92)<1e-9);
  kill(a);kill(b);kill(g);
  G=null;newGame({map:'backyard',mode:'dm',diff:'normal',fac:'blue',opp:1,seed:660113});
  const t2=makeUnit('truck',G.human,G.human.start.x+3,G.human.start.y+3);
- ok('T98.D it cuts both ways: a Blue truck no longer rolls 15% faster either', Math.abs(t2.sp-base)<1e-9&&FAC.blue.mods.speed===1.15);
+ ok('T98.D it does NOT cut both ways: a Blue truck keeps its 15% (the owner\'s decision; the draft had taken it)', Math.abs(t2.sp-base*1.15)<1e-9&&FAC.blue.mods.speed===1.15);
+ const t3=makeUnit('grunt',G.human,G.human.start.x+4,G.human.start.y+3);
+ ok('T98.D ...and a Blue grunt is 15% faster too, as always', Math.abs(t3.sp-U.grunt.sp*1.15)<1e-9);kill(t3);
  kill(t2);
 }
 

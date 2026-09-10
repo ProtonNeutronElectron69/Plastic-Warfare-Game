@@ -47,10 +47,10 @@ for (const k of (process.env.V113_OFF || '').split(',').map(s => s.trim()).filte
   if (k === 'expand') { AI_PROFILES.defensive.expandAt = [250, 180]; AI_PROFILES.turtle.expandAt = [250, 180]; }
   else if (k === 'runner') delete AI_SUPPORT.runner;
   else if (k === 'green') FAC.green.mods.cost = .92;   // the owner's re-price; Blue's hull and quota are as v112 already
-  else if (k === 'truck') delete U.truck.noFacSpeed;
+  else if (k === 'truck') delete U.truck.noSpeedTax;
   else stop('V113_OFF: no such change: ' + k);
 }
-/* ...and V113_SET="FAC.blue.aiFloor=0.08;U.truck.noFacSpeed=1" sets any field on the
+/* ...and V113_SET="FAC.green.mods.cost=0.92;U.truck.noSpeedTax=1" sets any field on the
    mutable tables before the match, for a variant that has no committed knob yet */
 for (const kv of (process.env.V113_SET || '').split(';').map(s => s.trim()).filter(Boolean)) {
   const m = /^([A-Za-z_][\w.]*)=(.+)$/.exec(kv); if (!m) stop('V113_SET: bad assignment: ' + kv);
