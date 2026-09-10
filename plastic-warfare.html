@@ -678,6 +678,7 @@ canvas{display:block}
      BUILDING UPDATE ............................................. production, research, economy
      PROJECTILES ................................................. updateProjs
      AI .......................................................... aiTick, doctrine, build order, call-downs
+       v113: the Runner as support ................................ AI_SUPPORT.runner (expandAt on AI_PROFILES, noSpeedTax on U.truck, cost/hp on FAC)
        AI TACTICAL HELPERS ....................................... influence map, threat triage, spot picking
        COUNTER-AWARE PRODUCTION .................................. composition targets, weapon mix, air caps
      GHOST STORE ................................................. last-seen enemy memory
@@ -728,8 +729,8 @@ canvas{display:block}
    a human to read. Neither is sim state: nothing here is hashed, serialized or
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
-const GAME_VER='v112';
-const GAME_DATE='2026-09-09';
+const GAME_VER='v113';
+const GAME_DATE='2026-09-10';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
    the version that nothing tied back to the first, which is the trap this whole
@@ -948,6 +949,15 @@ function mineDmg(d){return MINE_DMG*Math.max(0,1-d/MINE_R);}
                  half of armyTilt, which only ever biased the CHOICE between things
                  the bot could already afford - and the cheap unit is affordable
                  first, so the pricey one never got a tick where it was the option.
+     expandAt    v113: [base,jitter] AI-ticks before the bot claims its first outpost.
+                 Through v112 the two non-expanding doctrines waited 250+180r
+                 (2.5-4.3 min) against everyone else's 55+70r, and the controlled
+                 batch showed what that cost: from MINUTE TWO they mined ~2,000 a
+                 minute against 3,000-3,800, their armies were spent by minute
+                 five, and at that income they never rebuilt - 'defensive' won 0
+                 of 45 matches across every batch. An outpost is not a doctrine,
+                 it is the economy: a turtle still turtles with a second drop-off.
+                 So they expand LATER than the others, not three minutes later.
    NOTE: timing fields are in AI-TICKS. aiTick runs ~every 0.6s, so e.g. firstPush:45 ≈ 27s.
 */
 /* v89 AIR RETUNE. The v59 target mixes were written before anything measured
@@ -968,11 +978,11 @@ function mineDmg(d){return MINE_DMG*Math.max(0,1-d/MINE_R);}
    before the first gunship arrives rather than after it. It stays dormant until a
    rival can fly at all, so an all-ground match still carries no dead weight. */
 const AI_PROFILES={
- aggressive:{aggro:1.25,pushBase:6, pushGrow:2,pushCap:30,firstPush:48, repeat:[34,22], defendHold:150,defendFrac:0.10,scout:true, scoutEvery:60, harass:true, harassEvery:26,harassSize:[2,3],expand:true, vsAI:1.0,armyTilt:'cheap',mixWant:{inf:0.60,veh:0.25,air:0.15},aa:[1,2],towers:1,buyTilt:0.00},
- balanced:  {aggro:1.0, pushBase:7, pushGrow:3,pushCap:28,firstPush:81, repeat:[55,34], defendHold:220,defendFrac:0.18,scout:true, scoutEvery:80, harass:true, harassEvery:46,harassSize:[2,3],expand:true, vsAI:1.1,armyTilt:'heavy',mixWant:{inf:0.42,veh:0.32,air:0.26},aa:[2,3],towers:3,buyTilt:0.30},
- defensive: {aggro:0.7, pushBase:11,pushGrow:4,pushCap:26,firstPush:120,repeat:[78,48], defendHold:330,defendFrac:0.35,scout:false,scoutEvery:130,harass:false,harassEvery:130,harassSize:[2,2],expand:false,vsAI:1.0,armyTilt:'heavy',mixWant:{inf:0.32,veh:0.46,air:0.22},aa:[2,4],towers:4,buyTilt:0.50},
- harasser:  {aggro:0.95,pushBase:9, pushGrow:2,pushCap:22,firstPush:98, repeat:[60,38], defendHold:190,defendFrac:0.15,scout:true, scoutEvery:34, harass:true, harassEvery:20,harassSize:[3,4],expand:true, vsAI:1.2,armyTilt:'fast', mixWant:{inf:0.33,veh:0.29,air:0.38},aa:[2,3],towers:2,buyTilt:0.15},
- turtle:    {aggro:0.55,pushBase:14,pushGrow:4,pushCap:30,firstPush:150,repeat:[95,60], defendHold:380,defendFrac:0.45,scout:false,scoutEvery:170,harass:false,harassEvery:170,harassSize:[2,2],expand:false,vsAI:0.9,armyTilt:'range',mixWant:{inf:0.50,veh:0.30,air:0.20},aa:[2,4],towers:5,buyTilt:0.60}
+ aggressive:{aggro:1.25,pushBase:6, pushGrow:2,pushCap:30,firstPush:48, repeat:[34,22], defendHold:150,defendFrac:0.10,scout:true, scoutEvery:60, harass:true, harassEvery:26,harassSize:[2,3],expand:true, expandAt:[55,70], vsAI:1.0,armyTilt:'cheap',mixWant:{inf:0.60,veh:0.25,air:0.15},aa:[1,2],towers:1,buyTilt:0.00},
+ balanced:  {aggro:1.0, pushBase:7, pushGrow:3,pushCap:28,firstPush:81, repeat:[55,34], defendHold:220,defendFrac:0.18,scout:true, scoutEvery:80, harass:true, harassEvery:46,harassSize:[2,3],expand:true, expandAt:[55,70], vsAI:1.1,armyTilt:'heavy',mixWant:{inf:0.42,veh:0.32,air:0.26},aa:[2,3],towers:3,buyTilt:0.30},
+ defensive: {aggro:0.7, pushBase:11,pushGrow:4,pushCap:26,firstPush:120,repeat:[78,48], defendHold:330,defendFrac:0.35,scout:false,scoutEvery:130,harass:false,harassEvery:130,harassSize:[2,2],expand:false,expandAt:[100,80],vsAI:1.0,armyTilt:'heavy',mixWant:{inf:0.32,veh:0.46,air:0.22},aa:[2,4],towers:4,buyTilt:0.50},
+ harasser:  {aggro:0.95,pushBase:9, pushGrow:2,pushCap:22,firstPush:98, repeat:[60,38], defendHold:190,defendFrac:0.15,scout:true, scoutEvery:34, harass:true, harassEvery:20,harassSize:[3,4],expand:true, expandAt:[55,70], vsAI:1.2,armyTilt:'fast', mixWant:{inf:0.33,veh:0.29,air:0.38},aa:[2,3],towers:2,buyTilt:0.15},
+ turtle:    {aggro:0.55,pushBase:14,pushGrow:4,pushCap:30,firstPush:150,repeat:[95,60], defendHold:380,defendFrac:0.45,scout:false,scoutEvery:170,harass:false,harassEvery:170,harassSize:[2,2],expand:false,expandAt:[120,90],vsAI:0.9,armyTilt:'range',mixWant:{inf:0.50,veh:0.30,air:0.20},aa:[2,4],towers:5,buyTilt:0.60}
 };
 /* ---------------- DIFFICULTY ----------------
    The PROFILES above decide HOW a bot plays (build order, wave timing, scouting,
@@ -4050,9 +4060,19 @@ function musTick(){
    and the trails could prove the move changed nothing. Wildlife carries an empty
    array rather than an empty string for the same reason uu is already []. */
 const FAC={
- green:{name:'Green Army',color:'#4caf50',mods:{cost:.92,hp:1,dmg:1,speed:1},desc:'Balanced forces, 8% cheaper everything.',uu:['sarge','mortar','cmdtruck','balloon'],ub:['radar','cmdpost']},
+ green:{name:'Green Army',color:'#4caf50',mods:{cost:.95,hp:1,dmg:1,speed:1},desc:'Balanced forces, 5% cheaper everything.',uu:['sarge','mortar','cmdtruck','balloon'],ub:['radar','cmdpost']},
  tan:{name:'Tan Army',color:'#d2b074',mods:{cost:1,hp:1,dmg:1.15,speed:.95},desc:'+15% damage, slightly slower.',uu:['flamer','bulltank','firebomb'],ub:['dump','foundry']},
  gray:{name:'Gray Army',color:'#9b9ba3',mods:{cost:1,hp:1.2,dmg:.95,speed:.92},desc:'+20% toughness, slightly slower.',uu:['sniper','arty','choktaw'],ub:['bunker','hbarricade']},
+ /* v113. GREEN cost .92 -> .95 and BLUE hp stays at .9, both by the owner's
+    decision on the measured draft. The draft (harness/README.md, v113) measured
+    Green at 44-50% of doctrine-neutral wins on eight percent more army for the
+    same mining, and Blue at 0.63 on the trade with a -10% hull; it shipped Blue
+    at -5% (0.78 in both seed sets) and left Green alone. The owner chose the
+    other lever: trim Green's discount to 5% and keep Blue's hull at -10%. What
+    Blue keeps from the draft is the bot's side - the Signal Runner is support
+    (17-ai.js, two per ten fighters), not a line fighter the faction quota
+    narrows the Barracks to. The quota itself stays at AI_FAC_FLOOR for every
+    army, Blue included, by the same decision. The speed stays. */
  blue:{name:'Blue Army',color:'#4a7de0',mods:{cost:1,hp:.9,dmg:1,speed:1.15},desc:'+15% speed, lighter plastic (-10% HP).',uu:['bike','chinook','runner'],ub:['turbine','fwdpad']},
  bug:{name:'Wildlife',color:'#6e5a2a',mods:{cost:1,hp:1,dmg:1,speed:1},desc:'',uu:[],ub:[]}
 };
@@ -4104,7 +4124,15 @@ const U={
     damage table in the file to say nothing new.
     noPace keeps him out of MEDIC_HEAL_RATE's floor - see the note there. */
  runner:{hk:'v',n:'Signal Runner',a:'inf',hp:46,dm:4.5,rg:3.2,rt:.9,sp:2.5,vi:7,cp:62,ce:0,bt:4,w:'b',noPace:1,rnet:1,sprint:1,tech:'u_runner',d:`Signals rather than fights, and is weaker than a Grunt for it. Radio Net: friendly infantry within ${RNET_R} tiles gain +${RNET_VI} sight. Sprint: all of them gain ${Math.round(SPRINT_SPD*100)}% speed, but none may fire`},
- truck:{hk:'r',n:'Dump Truck',a:'truck',hp:130,dm:0,rg:0,rt:0,sp:2.7,vi:5,cp:20,ce:0,bt:8,w:0,d:'Harvests resources'},
+ truck:{noSpeedTax:1,hk:'r',n:'Dump Truck',a:'truck',hp:130,dm:0,rg:0,rt:0,sp:2.7,vi:5,cp:20,ce:0,bt:8,w:0,d:'Harvests resources'},
+/* v113: noSpeedTax on the Dump Truck. An army's speed modifier is a FIGHTING
+   trait; through v112 it also scaled every truck, so Gray mined ~8% less than
+   the same start under any other colour and Blue ~15% more. Measured over two
+   seed sets with the doctrine held still: exempting trucks lifted Gray's mining
+   28.5k -> 31.0k a match and its trade rate 1.05 -> 1.10. The flag means a
+   row sits out a speed PENALTY and keeps a speed BONUS (makeUnit takes
+   max(1, m.speed) for it): Gray's and Tan's trucks roll at stock, Blue's keep
+   their 15% - the owner's decision, so Blue's economy edge stays its own. */
  medic:{hk:'m',n:'Medic Truck',a:'truck',hp:135,dm:0,rg:0,rt:0,sp:2.3,vi:6,cp:150,ce:20,bt:11,w:0,heal:1,healR:2,tech:'u_medic',d:`Unarmed. Heals allied units and buildings within ${MEDIC_HEAL_RADIUS} tiles`}, // v29: paces the grunt
  // v78: hp 115 -> 132.25 (+15%, effective hull 88 -> 101) and rt .5 -> .425
  // (-15% reload, DPS 7.26 -> 8.54). 132.25 is the exact +15% rather than a
@@ -7894,7 +7922,7 @@ function makeUnit(key,p,x,y,srcBld){
  if(prodBldOf(key)==='garage'&&p.blds&&p.blds.some(b=>b.t.foundry&&b.prog>=1&&b.hp>0))fhp=1+FOUNDRY_HP;
  const hp=Math.round(t.hp*m.hp*buff*fhp);
  const u={id:EID++,kind:'unit',key,t,p,x,y,hp,mhp:hp,
-  dm:t.dm*m.dmg*buff,sp:t.sp*m.speed,face:srand()*6.28,tface:0,
+  dm:t.dm*m.dmg*buff,sp:t.sp*(t.noSpeedTax?Math.max(1,m.speed):m.speed),face:srand()*6.28,tface:0, // v113: a row may sit out the army's speed PENALTY and keep its bonus (noSpeedTax)
   upg:buff>1,
   state:'idle',path:null,wp:0,target:null,cool:0,anchor:{x,y},stuck:0,lastProg:{x,y},
   cargo:0,cargoT:null,node:null,flag:null,lastHit:'b',rot:0,sel:false,ai:{},mining:false,parkAtHQ:false,flash:0,flashAng:0,
@@ -8080,7 +8108,7 @@ function makeAIBrain(profKey){
   staging:null,defend:0,lastHurt:-999,
   // v22: expansion timer replaces the old one-shot outpost flag; defensive/turtle
   // profiles expand too, just much later (delayed-expand instead of never)
-  nextExpand:pr.expand?55+srand()*70:250+srand()*180,
+  nextExpand:(pr.expandAt||(pr.expand?[55,70]:[250,180]))[0]+srand()*(pr.expandAt||(pr.expand?[55,70]:[250,180]))[1], // v113: read off the profile's own expandAt; the fallback is the v22 pair for a profile that lacks one. ONE draw, as before
   nextSkirm:50+srand()*70,
   stagePt:null,stageT:0,
   waveId:0,waveT:0,
@@ -13026,7 +13054,14 @@ function aiUnitClass(k){
    is exactly what it buys for the Chinook. The two hand-typed copies of this list
    that used to sit in aiTick now read the table instead - they named the same four
    keys and would have quietly answered "line fighter" for these two. */
-const AI_SUPPORT={truck:1,medic:1,apc:1,chinook:1,cmdtruck:1,balloon:1};
+/* v113: the Signal Runner joins the support list. The row itself says he "signals
+   rather than fights, and is weaker than a Grunt for it", yet he was Blue's
+   most-built unit - 44 a match, 82 under the 'balanced' doctrine - because the
+   faction floor narrows the Barracks pool to Blue's one Barracks exclusive and
+   he was the only thing in it. As support he is neither a line fighter nor a
+   share of the floor, and the block below fields him the way it fields medics:
+   a couple, for the Radio Net, never an army of them. */
+const AI_SUPPORT={truck:1,medic:1,apc:1,chinook:1,cmdtruck:1,balloon:1,runner:1};
 /* v75 AI ARMY CEILING, DERIVED FROM SUPPLY.
    The v69 ceiling grew on ai.t alone - 12 + minutes/3, clamped at 52 - and had no
    relationship to the supply system at all. Measured over 17,607 building-tick
@@ -13782,6 +13817,11 @@ function aiTick(p){
  else if(hasTech(p,'u_apc')&&p.units.filter(u=>u.key==='apc').length+qCount('apc')<Math.min(2,Math.floor(infN/10)))supTrain('apc','garage');
  // Chinook: Blue's air ferry, one, once there is a squad worth carrying
  if(hasTech(p,'u_chinook')&&infN>=8&&p.units.filter(u=>u.key==='chinook').length+qCount('chinook')<1)supTrain('chinook','helipad');
+ /* v113: Signal Runners, two per 10 fighters - a Radio Net over the squad, not a
+    squad of radios. The draft fielded one per ten with a cap of two; the owner
+    raised the allowance to two per ten, so it scales with the army the way the
+    medic's does and has no separate ceiling. */
+ if(AI_SUPPORT.runner&&hasTech(p,'u_runner')&&p.units.filter(u=>u.key==='runner').length+qCount('runner')<2*Math.floor(army.length/10))supTrain('runner','barracks');
  /* v86: Green's two support vehicles, one each, on the same shape as the Chinook
     line above. Both are gated on there being an ARMY to support rather than on a
     clock: a Broadcast over nobody and a High Ground over nobody are both worth

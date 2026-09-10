@@ -1201,6 +1201,287 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v113 — the balance pass: Blue, Gray, and the two defensive doctrines (Roadmap 4 item 3, in part, and item 7)
+
+The owner asked for a pass on the two armies that do not win and the two bot
+doctrines that never do, and asked what to suggest. Rule 8 first, and it
+reshaped the release twice; then the owner reviewed the measured draft and
+chose the levers (the last section of this chapter). `tail_v113.js` (T98, 34
+checks; the suite is **7,044**), plus
+three instruments: `PROFS=` on `sim_dm.js`, `probe_v113.sh` and
+`balance_report.py`. **Every trail moved and all five tables were recut**
+(`recut_v113` / `repin_v113`, carried forward from v106's pair): a faction
+modifier, a support-list change and a doctrine clock all reach the 900-tick
+window.
+
+### The default batch reproduced v103 — and showed it could not be read
+
+Two 16-match `sim.sh` batches on v112 (seeds 101 and 4200, the v103 recipe on
+six maps):
+
+| army | wins/32 | K/L | mined/match | exclusives built |
+|---|---|---|---|---|
+| Tan | 15 (47%) | 1.46 | 34,166 | 44 |
+| Green | 10 (31%) | 1.04 | 31,048 | 35 |
+| Gray | 4 (12%) | 0.90 | 23,880 | 22 |
+| Blue | 3 (9%) | 0.54 | 21,691 | **68** |
+
+| doctrine | drawn | wins | K/L | mined/s alive |
+|---|---|---|---|---|
+| balanced | 26 | 12 (46%) | 1.38 | 44.4 |
+| aggressive | 23 | 8 (35%) | 1.07 | 42.9 |
+| harasser | 25 | 8 (32%) | 1.22 | 42.7 |
+| turtle | 25 | 4 (16%) | 0.72 | 31.4 |
+| defensive | 29 | **0** | 0.54 | 26.0 |
+
+**The two tables cannot be read apart.** `newGame` deals the five doctrines by
+a seeded shuffle, and across 32 matches Blue drew `defensive` 12 times and Tan
+5; Gray drew the two dead doctrines 15 times in 32. An army's win rate in the
+default batch is partly its doctrine deal. So the release built its instruments
+before touching a number: `PROFS=a,b,c,d` forces the deal seat by seat, and
+`probe_v113.sh` runs two designs — **A**, every seat on `balanced`, so only the
+army varies; **C**, four of five doctrines per match by a Latin rotation, so
+every army meets every doctrine about equally (the seat-to-army map is itself
+seeded, so "about": 2–6 draws per cell, not 4). Each match record also carries a
+per-minute series of mined plastic, army size and outposts now, so a batch can
+say WHEN, not only whether.
+
+### What the controlled batches said
+
+**A, v112, every seat `balanced`:** Green 44%, Tan 25%, Gray 19%, Blue 12%;
+K/L 1.19 / 1.11 / 0.99 / 0.63. With the doctrine held still Gray trades even
+and Blue does not. Blue built **82 exclusives of 237 units** — 52 Signal
+Runners and 30 Scout Bikes.
+
+**C, v112, doctrines dealt evenly:** `defensive` 0 of 16, `turtle` 1 of 16.
+The per-minute series is the finding:
+
+| mined per minute | m1 | m2 | m3 | m4 | m5 | m6 | m8 | m10 |
+|---|---|---|---|---|---|---|---|---|
+| aggressive | 1918 | 3048 | 3293 | 3841 | 3867 | 3657 | 2118 | 2394 |
+| balanced | 1993 | 2983 | 3111 | 3536 | 3598 | 3633 | 2948 | 2036 |
+| harasser | 1867 | 2951 | 3298 | 3633 | 3777 | 3768 | 2795 | 2460 |
+| turtle | 2046 | 2393 | 2138 | 2354 | 2526 | 2774 | 1779 | 1162 |
+| defensive | 2015 | 2245 | 2079 | 1894 | 1881 | 2585 | 1622 | 819 |
+
+**The gap opens at minute two**, long before any pile depletes, and the
+outpost series says why: the expanders hold one outpost from minute two, the
+two defensive doctrines none until minute five. `makeAIBrain` gave a
+non-expanding profile `250+180r` AI-ticks before its first outpost (2.5–4.3
+minutes) against `55+70r` (0.5–1.2). A second drop-off halves every truck's
+trip; without one the doctrine mines two thirds of everyone else's income,
+its army (13 at minute three) is spent by minute five (5, then 3), and at
+2,000 a minute it never rebuilds. **An outpost is not a doctrine; it is the
+economy.** Not one of several earlier timing passes could have found this,
+because the wave clock was never the mechanism.
+
+### The changes, each measured alone against that baseline
+
+One build carries all of them; `V113_OFF=expand,runner,gray` and
+`V113_SET=table.field=value` on `sim_dm.js` revert or set any of them at run
+time, so every variant below is the same bytes.
+
+- **`expandAt` on the profile** (`[100,80]` defensive, `[120,90]` turtle,
+  `[55,70]` the rest — later than the others, not three minutes later).
+  Design C, this change alone: `defensive` 0/16 → **3/16**, `turtle` 1/16 →
+  **3/16**; K/L 0.60 → 0.92 and 0.68 → 0.83; mined 19.2k → 27.9k and 22.9k →
+  29.3k per match. The five doctrines read 38 / 31 / 19 / 19 / 19. With all
+  the release's changes on, C read harasser 38%, defensive 25%, turtle 25%,
+  aggressive 19%, balanced 19% — flat — and **7 of 20 matches ran out the
+  clock** against 1 of 20 before, because armies that used to die at minute
+  five now stand at minute twenty. That is Roadmap 4 item 6's territory (the
+  clock already resolves for the biggest base standing, since v69) and is
+  recorded, not touched.
+  `makeAIBrain` jitters every array field ±20% per element, so the pair reads
+  through the same treatment `repeat` and `aa` get — two more srand draws per
+  brain, which is part of why every trail moved.
+- **The Signal Runner is a support unit** (`AI_SUPPORT.runner`, fielded one
+  per ten fighters, cap two, the medic's shape). The row says he "signals
+  rather than fights, and is weaker than a Grunt for it"; the faction floor
+  narrowed Blue's Barracks pool to him alone. Design A, this change alone:
+  Runners 52 → 0 per match, Blue 12% → 19%, K/L 0.63 → 0.67 — and Scout Bikes
+  30 → 53, because the bike is now Blue's only quota-eligible piece and dies
+  fast enough that the live share never clears the floor.
+- **Blue: `aiFloor:0`, and hp `.9 → .95`.** An 8% floor still bought 46 bikes
+  a match (the live share never clears any floor a bike is the only member
+  of). Blue's three exclusives are human tools — a bike that evades only while
+  moving, a transport the bot never loads, a signals man — so the FAC row
+  says the bot has no signature piece to hold the line with, and the ordinary
+  value draw buys ~20 bikes on merit. With no quota and the hull still at −10%
+  Blue traded at **0.58** and won 6%: the composition was never the whole
+  story. At −5% it traded at **0.78 and won 25%** (seeds 101) and **0.78 and
+  19%** (seeds 4200) — the trade rate reproduced to the second decimal. The
+  speed stays; the card says −5%.
+- **Gray: nothing on the FAC row; `noSpeedTax:1` on the Dump Truck** (the
+  draft's `noFacSpeed`; renamed when the owner gave Blue's trucks their bonus
+  back, below). With
+  the doctrine held still Gray traded at 0.99–1.12 and won 19–25%: close to
+  even, and its 12% in the default batch was mostly the doctrine deal (15 of
+  its 32 draws were the two dead ones). What it does own is an economy tax
+  nobody meant: the speed modifier scaled its trucks, so a Gray start mined
+  ~8% less than the same start under any other colour. Trucks sit out every
+  army's speed modifier now. Two seed sets, doctrine held still:
+
+  | Gray | wins | K/L | mined/match |
+  |---|---|---|---|
+  | trucks modified (base, seeds 101 / 4200) | 19% / 25% | 0.99 / 1.12 | 29.4k / 27.5k |
+  | trucks exempt (seeds 101 / 4200) | 25% / 19% | 1.13 / 1.07 | 30.5k / 31.6k |
+
+  +9% mining (the 8% penalty, back), +0.05 on the trade, wins inside the
+  noise. Blue loses its +15% truck edge by the same rule and its two numbers
+  did not move (19% / 19%). `dmg .95 → 1` was tried first and is below.
+
+### What did not survive measurement
+
+- **"Scale the bot's plastic reserves by the army's cost modifier"** (the v90
+  hypothesis for Green's overshoot, carried in this file since). The
+  production probe by army says Green is refused by the reserve MORE than
+  anyone (7–13% of producer-ticks against 0.4–3%) and is out of plastic LEAST
+  (6–18% against Gray's 16–36%). Green's edge is simply eight percent more
+  army for the same mining, compounding; a reserve tweak would not move it.
+  Green sat at 44–50% of design-A wins throughout and is left alone by
+  instruction — the ask was Blue, Gray and the doctrines.
+- **"Gray pays for toughness twice, in speed AND damage"**: `dmg .95 → 1`
+  read 6%, 12%, 12%, 25% across four design-A runs against 19% on the base —
+  noise, no signal, and the first-round commit that carried it is REVERTED.
+- **"Restart the doctrines' wave clock"** — the mechanism was never the wave
+  clock. Deleted before a line was written, like v112's late-reply restart.
+
+### Five older checks, three pinned to noon and two restated
+
+The doctrine table's two new draws per brain move the seeded stream, so three
+fixtures that assert DAYTIME facts booted at night: `T13.4` (a Guard Tower
+sees 9 by day and 4.5 at night, and the HQ footprint's far corner is 6.4
+away), `T56.C` (`vi0 + FLAT_VI` is a daytime sum) and `T58.E` (`U.grunt.vi +
+RNET_VI`, twice). Each took the v101 remedy, a one-line `G.dayOff=0`. And two
+checks (`T29.A`, `T59.H`) asserted "every support unit is unarmed" as a proxy
+for "the combat pick never draws a support key"; the Runner is ARMED support
+(dm 4.5), so both now assert the pick's own exclusion (the roster filter and
+the `AI_SUPPORT[k]||U[k].noTrain` skip in `aiTick`) and keep the unarmed rule
+for the rest. Rule 5 both ways, and neither loosened.
+
+### Traps
+
+- **`makeAIBrain` jitters ARRAYS.** A `[base,jitter]` pair added to a profile
+  is itself jittered ±20% per element, and costs two srand draws per brain.
+  Fine — it is what `repeat` gets — but a range check that forgot it failed.
+- **A run-time override is a mutable object's field.** `V113_OFF` and
+  `V113_SET` work because `AI_PROFILES`, `AI_SUPPORT`, `FAC` and `U` are
+  `const` OBJECTS; a `const` number cannot be overridden this way, which is why
+  the expansion clock became a profile field rather than a tunable.
+- **A 16-match design-A batch resolves ±2 wins.** Gray moved 6% ↔ 25% between
+  variants that differ by nothing Gray owns. Two seed sets before believing a
+  Gray number; the house rule, again.
+- **The Latin rotation is not a Latin square** once the seat-to-army map is
+  seeded: the doctrine draw per army came out 2–6 per cell rather than 4.
+  Balanced enough to read; recorded so nobody quotes it as exact.
+
+### What the tail proves
+
+**A** the expansion clock: every profile carries the pair, the expanders keep
+v22's, the two defensive ones sit later and inside the old floor, fifty brains
+per doctrine land in the jittered band, a turtle never reaches 250, one srand
+draw on the line. **B** the Runner as support: on the list, out of the floor's
+numerator and denominator (ten grunts + ten runners read 0%), and DRIVEN — a
+Blue seat handed to a bot with the tech, the plastic and the supply fields two
+runners for ten fighters and six for thirty, never more (the fixture delivers
+each queued runner between ticks, because `supTrain` fills a producer to three
+orders and a queue count is bounded by that, not by the allowance); the rule's
+shape is the medic's and is gated on the support flag. **C** the quota is one
+constant for every army: 18%, no FAC row carries an `aiFloor`, no `facFloor`
+door exists, and both floor sites compare the share to `AI_FAC_FLOOR`. **D**
+`noSpeedTax`: the truck row alone carries it; a Gray truck rolls at stock while
+a Gray grunt is 92%; the flag is the mechanism; a Blue truck KEEPS its 15% and
+so does a Blue grunt. **E** the rows that ship, transcribed: Green at .95 and its card at
+5%, Blue's four numbers and its −10% card with no floor field, Gray exactly as
+v112, Tan untouched; a Blue grunt at 90% hull; a Green grunt at 95% price.
+**F** the instruments exist, do the three things, and are not in `seg.sh`.
+
+### The owner's decisions on the draft, and what shipped
+
+The draft above was put to the owner as a draft PR, and the owner chose the
+levers rather than the measured ones on two of its four findings:
+
+| finding | the draft shipped | the owner chose | ships |
+|---|---|---|---|
+| Green at 44–50% of doctrine-neutral wins | left alone, by the original instruction | trim the discount | **cost .92 → .95** (5% cheaper, was 8%) |
+| Blue at 0.63 on the trade | hull −10% → −5%, and no bot quota (`aiFloor:0`) | keep the hull, keep the quota | **hp .9, no `aiFloor` field, `facFloor` removed** |
+| Blue's bot fielding Runners as a fifth of its army | the Runner as support, one per ten fighters, cap two | agreed, allowance raised | **two per ten fighters, no separate ceiling** (`2*floor(army/10)`) |
+| Gray's trucks taxed by its speed modifier | trucks exempt (`noFacSpeed`, bonus and penalty alike) | agreed, then Blue's bonus restored | **`noSpeedTax`: a truck sits out a speed PENALTY and keeps a BONUS** (`max(1, m.speed)`); Gray's and Tan's at stock, Blue's +15% |
+| the two defensive doctrines starving | `expandAt` on the profile | agreed | as the draft |
+
+`facFloor` is deleted rather than kept as a door no row declares: a field a
+bot could quietly opt out through is the shape v105.1's `LAB_ORDER` warned
+about, and T98.C now asserts the opposite — one constant, no row opts out.
+
+**Measured once more on the shipped bytes, for the record** (rule 6: this is
+what the levers did in one batch each, not a verdict; sixteen matches resolve
+±2 wins and the seeded seat map deals the doctrines unevenly):
+
+| design A, every seat `balanced`, seeds 101 | wins/16 | K/L | mined/match | exclusives (share of units) |
+|---|---|---|---|---|
+| Green (cost .95) | 7 (44%) | 1.25 | 37.3k | 33% |
+| Tan | 5 (31%) | 1.16 | 35.3k | 48% |
+| Gray (trucks exempt) | 3 (19%) | 0.95 | 28.1k | 26% |
+| Blue (hull −10%, quota, Runner support ×2) | 1 (6%) | 0.61 | 27.6k | 49% |
+
+| design A, seeds 4200 | wins/16 | K/L | mined/match | v112 on the same seeds |
+|---|---|---|---|---|
+| Tan | 9 (56%) | 1.59 | 37.4k | 6 (38%), 1.27 |
+| Green (cost .95) | 4 (25%) | 0.96 | 29.7k | 3 (19%), 0.88 |
+| Gray (trucks exempt) | 2 (12%) | 0.98 | 27.2k | 4 (25%), 1.12 |
+| Blue (hull −10%, quota, Runner support ×2) | 1 (6%) | 0.56 | 24.5k | 3 (19%), 0.71 |
+
+Over both seed sets, shipped against v112: Tan 14/32 (was 10), Green 11/32
+(was 10), Gray 5/32 (was 7), Blue **2/32 (was 5)**.
+
+- **Green did not move** at 5%: 44% then 25% against 44% then 19% on v112's
+  same seeds, K/L 1.25 / 0.96 against 1.19 / 0.88. Three percent of price is a
+  small lever against an edge that compounds on mining, and two batches cannot
+  see it; the v90 mechanism note still stands (its edge is more army for the
+  same mining, and the reserves refuse it more than anyone).
+- **Blue is below its v112 shape, on both seed sets**: 0.61 and 0.56 on the
+  trade against 0.63 and 0.71 before the release, and 0.78 / 0.78 on the
+  draft. Two things the decision keeps and one it adds explain it: the hull
+  stays at −10% (the draft measured the Runner change alone at 0.67 and found
+  the rest was the hull), the quota keeps the bot buying bikes (49% / 47%
+  exclusives built), and the truck rule that lifts Gray's mining takes Blue's
+  +15% truck edge away with the same line — the draft recorded that as
+  costing Blue nothing WITH the −5% hull. Without it, it shows. **The hull is
+  the lever the measurement points at, and the owner has declined it**; that
+  is recorded here, not argued. On reading this table the owner gave Blue's
+  trucks their 15% back (`noSpeedTax`, the row above) and asked for no further
+  batch, so the shipped Blue is this table's Blue plus its truck edge,
+  unmeasured by instruction.
+- **Gray reads 19% then 12%** (0.95 / 0.98) with its trucks exempt, against
+  19% then 25% (0.99 / 1.12) on v112: inside the ±2-win noise both times, and
+  the mining gain is real on both (28.1k / 27.2k against 27.5k on the base's
+  second set). Its trade rate is the same as before the release.
+
+| design C, doctrines dealt evenly, seeds 101 | wins/16 | K/L | drawn by Gray+Blue |
+|---|---|---|---|
+| aggressive | 6 (38%) | 1.06 | 11 of 16 |
+| turtle | 6 (38%) | 1.20 | 9 of 16 |
+| balanced | 5 (31%) | 1.08 | 4 of 16 |
+| harasser | 2 (12%) | 0.77 | 8 of 16 |
+| defensive | 1 (6%) | 0.78 | **8 of 16** (Gray 6, Blue 2) |
+
+`turtle` reads 38% on the shipped bytes (1 of 16 on v112, 3 of 16 with
+`expandAt` alone); `defensive` reads 1 of 16 here, and eleven of its sixteen
+draws landed on the two armies at 10% — the seat map is seeded, so a doctrine
+dealt mostly to weak armies reads weak. The draft's all-on run of C (25%
+defensive, 25% turtle) was on the same seeds with Blue at 0.78; with Blue back
+at 0.61, whichever doctrine Blue draws most loses most. Four of twenty matches
+ran out the clock (seven of twenty on the draft), the Roadmap 4 item 6 note
+above. Army totals in C: Green 45%, Tan 35%, Gray 10%, Blue 10%.
+
+**What this means for the next balance pass**: the doctrine fix is in and
+holds (`turtle` especially); Blue's trade rate is the open item, and the
+draft's measurement says the hull is the lever that moves it, which the owner
+has declined for now. Play-test first — the bot-versus-bot instrument cannot
+say what a person feels a −10% hull as.
+
+
 ## v112 — the handshake says what went wrong (not part of a roadmap)
 
 The owner asked whether anything could be done about the invite code, which
@@ -6317,10 +6598,20 @@ check count still read 5,973. That is the failure mode this section exists to
 prevent, so: **a release that adds a tail adds a paragraph HERE as well as its
 own chapter above.**
 
-**The suite stands at 7,010 checks** (6,964 at v111, 6,923 at v110, 6,895 at v109, 6,862 at v108, 6,830 at
+**The suite stands at 7,044 checks** (7,010 at v112, 6,964 at v111, 6,923 at v110, 6,895 at v109, 6,862 at v108, 6,830 at
 v107.3, 6,810 at v107.2, 6,787 at v107.1, 6,716 at v107, 6,083 at v106, 6,039 at
 v105.1, 6,009 at v105, 5,973 at v104.4, 5,766 at v103, 5,694 at v102, 5,638 at
 v101, 5,587 at v100).
+
+v113 adds `tail_v113.js` (T98, 34 checks), riding segment 3, and three
+instruments beside it: `PROFS=` / `V113_OFF=` / `V113_SET=` on `sim_dm.js`,
+`probe_v113.sh` (the controlled designs A and C) and `balance_report.py`. A is
+the expansion clock, B the Runner as support (driven, two per ten fighters), C
+the quota as one constant for every army, D `noSpeedTax`, E the rows that
+ship (Green .95, Blue .9), F the instruments. One older arm was restated on
+a coincidence it had stood on since v90 (`T42.D`, below in the chapter). **Every trail moved and
+all five tables were recut** — `recut_v113` / `repin_v113` are the pair in the
+tree now.
 
 v112 adds `tail_v112.js` (T97, 46 checks), riding segment 3, and `harness/net_rig.js`
 beside it — two real Chromium windows through the real codes, a measurement

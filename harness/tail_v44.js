@@ -22,10 +22,10 @@ section('T24 v44: medic station keeping');
    repin_v73.py for the instrumented counts and for why the four tables that
    passed unedited are blind to a unit-stat edit rather than evidence of one. */
 const BASE45_AI={
-  'backyard:dm:normal:green:3:441001': [1327758669, 2125161326, 1535185726],
-  'kitchen:ctf:hard:tan:2:441002': [2669979650, 1482588125, 1895703532],
-  'sandbox:koth:easy:gray:3:441003': [2970013812, 3279791525, 1578374986],
-  'livingroom:dm:hard:blue:3:441004': [2424791243, 1206293607, 4063237499],
+  'backyard:dm:normal:green:3:441001': [3598058489, 1539288572, 1838268867],
+  'kitchen:ctf:hard:tan:2:441002': [2065990266, 1481954880, 2796172050],
+  'sandbox:koth:easy:gray:3:441003': [1113269030, 276140694, 3251284520],
+  'livingroom:dm:hard:blue:3:441004': [1511944837, 848383326, 657576045],
 };
 // every key a v43 medic could carry into a snapshot (captured from the v43 build),
 // plus 'mesc': the v44.1 order tag, movement-only and deliberately unhashed. It is

@@ -101,7 +101,7 @@ function quiet82(map, seed, W, H) {
 
 /* ---------- C: Flat Out ---------- */
 {
-  const S = quiet82('kitchen', 8202);
+  const S = quiet82('kitchen', 8202); G.dayOff = 0; // v113: this seed boots at night since the doctrine table's draws moved; vi0+FLAT_VI is a daytime sum, so noon is pinned (the v101 remedy)
   const bk = makeUnit('bike', G.human, S.A.x + 3, S.A.y + 5);
   const en = makeUnit('grunt', S.foe, S.A.x + 5, S.A.y + 5);
   const sp0 = spOf(bk), vi0 = viOf(bk);

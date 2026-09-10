@@ -25,7 +25,7 @@ you use during the battle.
 
 | Army | Character | Exclusive units | Exclusive buildings | Own call-in |
 |---|---|---|---|---|
-| 🟢 **Green Army** | Balanced — everything costs 8% less | Sarge, Mortar Squad, Command Truck, Observation Balloon | Radar Tent, Command Post | Supply Drop |
+| 🟢 **Green Army** | Balanced — everything costs 5% less | Sarge, Mortar Squad, Command Truck, Observation Balloon | Radar Tent, Command Post | Supply Drop |
 | 🟤 **Tan Army** | +15% damage, slightly slower | Flamethrower, "Bull" Heavy Tank, Firebomb Heli | Munitions Dump, Foundry | Napalm Strike |
 | ⚪ **Gray Army** | +20% tougher, slightly slower | Sniper, Rocket Artillery, Choktaw Heli | Bunker, Heavy Barricade | Smokescreen |
 | 🔵 **Blue Army** | +15% speed, lighter plastic (−10% health) | Scout Bike, Chinook, Signal Runner | Wind Turbine, Forward Pad | Rapid Redeploy |
@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v112 it makes **7,010
+that the results come out identical every time. As of v113 it makes **7,044
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -117,7 +117,26 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 112**.
+The game is at **version 113**.
+
+**v113 — the armies and the bots that never won.** Before changing a number the
+game was made to play itself a few hundred times with the computer players'
+personalities dealt out evenly, and that alone overturned some old beliefs.
+The two cautious bot personalities were not too slow to attack; they were
+broke, because they waited three minutes longer than everyone else to claim a
+second mining site, and an army that mines two thirds as much never recovers
+from its first real fight. They expand a little later than the rest now, not
+three minutes later, and they win their share. Blue's computer player was
+spending a fifth of its army on Signal Runners, a unit the game itself
+describes as weaker than a Grunt, because a rule meant to make each army use
+its signature units had nothing else to reach for; the Runner is treated as a
+support unit now, two for every ten fighters, and the signature-unit rule
+stays for every army. Gray's slowness was quietly taxing its economy too,
+since its Dump Trucks were slowed along with its army; no army's trucks are
+slowed by its army's speed penalty now, while Blue's keep their 15% head start.
+And Green, which had been winning the most by a clear
+margin, now pays 5% less for everything instead of 8%. Blue's plastic stays
+10% lighter, as it always was.
 
 **v112 — the online lobby tells you what went wrong.** Online play is still
 player to player with no server in between, exactly as before. What changed is

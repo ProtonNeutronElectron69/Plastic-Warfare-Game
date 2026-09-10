@@ -45,6 +45,15 @@
                  half of armyTilt, which only ever biased the CHOICE between things
                  the bot could already afford - and the cheap unit is affordable
                  first, so the pricey one never got a tick where it was the option.
+     expandAt    v113: [base,jitter] AI-ticks before the bot claims its first outpost.
+                 Through v112 the two non-expanding doctrines waited 250+180r
+                 (2.5-4.3 min) against everyone else's 55+70r, and the controlled
+                 batch showed what that cost: from MINUTE TWO they mined ~2,000 a
+                 minute against 3,000-3,800, their armies were spent by minute
+                 five, and at that income they never rebuilt - 'defensive' won 0
+                 of 45 matches across every batch. An outpost is not a doctrine,
+                 it is the economy: a turtle still turtles with a second drop-off.
+                 So they expand LATER than the others, not three minutes later.
    NOTE: timing fields are in AI-TICKS. aiTick runs ~every 0.6s, so e.g. firstPush:45 ≈ 27s.
 */
 /* v89 AIR RETUNE. The v59 target mixes were written before anything measured
@@ -65,11 +74,11 @@
    before the first gunship arrives rather than after it. It stays dormant until a
    rival can fly at all, so an all-ground match still carries no dead weight. */
 const AI_PROFILES={
- aggressive:{aggro:1.25,pushBase:6, pushGrow:2,pushCap:30,firstPush:48, repeat:[34,22], defendHold:150,defendFrac:0.10,scout:true, scoutEvery:60, harass:true, harassEvery:26,harassSize:[2,3],expand:true, vsAI:1.0,armyTilt:'cheap',mixWant:{inf:0.60,veh:0.25,air:0.15},aa:[1,2],towers:1,buyTilt:0.00},
- balanced:  {aggro:1.0, pushBase:7, pushGrow:3,pushCap:28,firstPush:81, repeat:[55,34], defendHold:220,defendFrac:0.18,scout:true, scoutEvery:80, harass:true, harassEvery:46,harassSize:[2,3],expand:true, vsAI:1.1,armyTilt:'heavy',mixWant:{inf:0.42,veh:0.32,air:0.26},aa:[2,3],towers:3,buyTilt:0.30},
- defensive: {aggro:0.7, pushBase:11,pushGrow:4,pushCap:26,firstPush:120,repeat:[78,48], defendHold:330,defendFrac:0.35,scout:false,scoutEvery:130,harass:false,harassEvery:130,harassSize:[2,2],expand:false,vsAI:1.0,armyTilt:'heavy',mixWant:{inf:0.32,veh:0.46,air:0.22},aa:[2,4],towers:4,buyTilt:0.50},
- harasser:  {aggro:0.95,pushBase:9, pushGrow:2,pushCap:22,firstPush:98, repeat:[60,38], defendHold:190,defendFrac:0.15,scout:true, scoutEvery:34, harass:true, harassEvery:20,harassSize:[3,4],expand:true, vsAI:1.2,armyTilt:'fast', mixWant:{inf:0.33,veh:0.29,air:0.38},aa:[2,3],towers:2,buyTilt:0.15},
- turtle:    {aggro:0.55,pushBase:14,pushGrow:4,pushCap:30,firstPush:150,repeat:[95,60], defendHold:380,defendFrac:0.45,scout:false,scoutEvery:170,harass:false,harassEvery:170,harassSize:[2,2],expand:false,vsAI:0.9,armyTilt:'range',mixWant:{inf:0.50,veh:0.30,air:0.20},aa:[2,4],towers:5,buyTilt:0.60}
+ aggressive:{aggro:1.25,pushBase:6, pushGrow:2,pushCap:30,firstPush:48, repeat:[34,22], defendHold:150,defendFrac:0.10,scout:true, scoutEvery:60, harass:true, harassEvery:26,harassSize:[2,3],expand:true, expandAt:[55,70], vsAI:1.0,armyTilt:'cheap',mixWant:{inf:0.60,veh:0.25,air:0.15},aa:[1,2],towers:1,buyTilt:0.00},
+ balanced:  {aggro:1.0, pushBase:7, pushGrow:3,pushCap:28,firstPush:81, repeat:[55,34], defendHold:220,defendFrac:0.18,scout:true, scoutEvery:80, harass:true, harassEvery:46,harassSize:[2,3],expand:true, expandAt:[55,70], vsAI:1.1,armyTilt:'heavy',mixWant:{inf:0.42,veh:0.32,air:0.26},aa:[2,3],towers:3,buyTilt:0.30},
+ defensive: {aggro:0.7, pushBase:11,pushGrow:4,pushCap:26,firstPush:120,repeat:[78,48], defendHold:330,defendFrac:0.35,scout:false,scoutEvery:130,harass:false,harassEvery:130,harassSize:[2,2],expand:false,expandAt:[100,80],vsAI:1.0,armyTilt:'heavy',mixWant:{inf:0.32,veh:0.46,air:0.22},aa:[2,4],towers:4,buyTilt:0.50},
+ harasser:  {aggro:0.95,pushBase:9, pushGrow:2,pushCap:22,firstPush:98, repeat:[60,38], defendHold:190,defendFrac:0.15,scout:true, scoutEvery:34, harass:true, harassEvery:20,harassSize:[3,4],expand:true, expandAt:[55,70], vsAI:1.2,armyTilt:'fast', mixWant:{inf:0.33,veh:0.29,air:0.38},aa:[2,3],towers:2,buyTilt:0.15},
+ turtle:    {aggro:0.55,pushBase:14,pushGrow:4,pushCap:30,firstPush:150,repeat:[95,60], defendHold:380,defendFrac:0.45,scout:false,scoutEvery:170,harass:false,harassEvery:170,harassSize:[2,2],expand:false,expandAt:[120,90],vsAI:0.9,armyTilt:'range',mixWant:{inf:0.50,veh:0.30,air:0.20},aa:[2,4],towers:5,buyTilt:0.60}
 };
 /* ---------------- DIFFICULTY ----------------
    The PROFILES above decide HOW a bot plays (build order, wave timing, scouting,

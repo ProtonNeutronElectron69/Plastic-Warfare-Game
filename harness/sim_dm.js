@@ -40,6 +40,25 @@ if (!MAPS[MAP]) stop('no such map: ' + MAP + '. Have: ' + Object.keys(MAPS).join
 if (MAPS[MAP].survOnly) stop(MAP + ' is wave-defense only and cannot host a deathmatch.');
 if (!FAC[FAC0] || FAC0 === 'bug') stop('no such army: ' + FAC0);
 
+/* v113: V113_OFF=expand,runner,green,truck reverts any of the release's changes
+   at run time, so one build measures each on its own against the v112 baseline
+   (the tables are mutable objects; the constants are not). */
+for (const k of (process.env.V113_OFF || '').split(',').map(s => s.trim()).filter(Boolean)) {
+  if (k === 'expand') { AI_PROFILES.defensive.expandAt = [250, 180]; AI_PROFILES.turtle.expandAt = [250, 180]; }
+  else if (k === 'runner') delete AI_SUPPORT.runner;
+  else if (k === 'green') FAC.green.mods.cost = .92;   // the owner's re-price; Blue's hull and quota are as v112 already
+  else if (k === 'truck') delete U.truck.noSpeedTax;
+  else stop('V113_OFF: no such change: ' + k);
+}
+/* ...and V113_SET="FAC.green.mods.cost=0.92;U.truck.noSpeedTax=1" sets any field on the
+   mutable tables before the match, for a variant that has no committed knob yet */
+for (const kv of (process.env.V113_SET || '').split(';').map(s => s.trim()).filter(Boolean)) {
+  const m = /^([A-Za-z_][\w.]*)=(.+)$/.exec(kv); if (!m) stop('V113_SET: bad assignment: ' + kv);
+  const path = m[1].split('.'), roots = { FAC, U, B, AI_PROFILES, AI_SUPPORT, RESEARCH };
+  let o = roots[path[0]]; if (!o) stop('V113_SET: unknown table: ' + path[0]);
+  for (let i = 1; i < path.length - 1; i++) { if (o[path[i]] == null) stop('V113_SET: no such field: ' + kv); o = o[path[i]]; }
+  o[path[path.length - 1]] = JSON.parse(m[2]);
+}
 G = null;
 newGame({ map: MAP, mode: 'dm', diff: 'normal', fac: FAC0, seed: SEED, watch: true });
 
@@ -47,7 +66,21 @@ const real = G.players.filter(p => p.fac !== 'bug');
 if (real.length !== WATCH_ARMIES) stop('expected ' + WATCH_ARMIES + ' armies, seated ' + real.length + '.');
 if (new Set(real.map(p => p.fac)).size !== real.length) stop('two armies share a faction.');
 if (real.some(p => !p.ai)) stop('an army was seated without an AI brain - watch mode did not take.');
-if (new Set(real.map(p => p.ai.profile)).size !== real.length) stop('a behaviour profile was dealt twice.');
+/* v113: PROFS=aggressive,balanced,turtle,defensive forces the doctrine deal, seat
+   by seat, for a CONTROLLED batch - the seeded draw above deals doctrines
+   unevenly across armies (measured at v113: Blue drew the dead 'defensive'
+   doctrine 12 times in 32, Tan 5), so an army's win rate and its doctrines' win
+   rates cannot be separated without holding one of them still. A forced deal
+   may repeat a doctrine (all four seats 'balanced' is the army-only design), so
+   the distinct-deal gate below is skipped for it. The brains are re-made after
+   newGame, so the srand stream differs from an unforced match's; the batch is
+   still deterministic from (seed, PROFS). */
+const PROFS = (process.env.PROFS || '').split(',').map(s => s.trim()).filter(Boolean);
+if (PROFS.length) {
+  if (PROFS.length !== real.length) stop('PROFS names ' + PROFS.length + ' doctrines for ' + real.length + ' seats.');
+  for (const k of PROFS) if (!AI_PROFILES[k]) stop('no such doctrine: ' + k);
+  real.forEach((p, i) => { p.ai = makeAIBrain(PROFS[i]); });
+} else if (new Set(real.map(p => p.ai.profile)).size !== real.length) stop('a behaviour profile was dealt twice.');
 
 const rec = new Map();
 for (const p of real) {
@@ -69,9 +102,15 @@ makeBuilding = function (key, p, tx, ty, instant) {
 
 let t = 0;
 const elim = {};
+/* v113: a per-minute series of each army's mined total and army size, so a
+   batch can say WHEN an economy falls behind rather than only that it did */
+const series = new Map(real.map(p => [p.i, { mined: [], army: [], outposts: [] }]));
 while (t < MAXT && !G.over) {
   update(DT); t++;
   for (const p of real) if (!p.alive && elim[p.fac] == null) elim[p.fac] = t;
+  if (t % 1800 === 0) for (const p of real) { const s = series.get(p.i);
+    s.mined.push(Math.round(p.stats.mined || 0)); s.army.push(p.units.filter(u => u.t.dm && !u.garrisoned).length);
+    s.outposts.push(p.blds.filter(b => b.key === 'outpost' && b.prog >= 1).length); }
 }
 makeUnit = realMakeUnit; makeBuilding = realMakeBuilding;
 
@@ -99,6 +138,7 @@ console.log(JSON.stringify({
       ubBuilt: sum(r.builtB, k => FAC[p.fac].ub.indexOf(k) >= 0),
       supportBuilt: sum(r.builtU, k => !!AI_SUPPORT[k]),
       builtU: r.builtU, builtB: r.builtB, startU: r.startU, startB: r.startB,
+      minedT: series.get(p.i).mined, armyT: series.get(p.i).army, outpostsT: series.get(p.i).outposts,
     };
   }),
 }));

@@ -555,8 +555,9 @@ function bld86(k, p, tx, ty) { const b = makeBuilding(k, p, tx, ty, true); b.pro
   const bot = G.players.find(p => p.ai);
   ok('T59.H both new units are support in the bot\'s eyes, so neither votes on composition',
     !!AI_SUPPORT.cmdtruck && !!AI_SUPPORT.balloon);
-  ok('T59.H ...and neither can be drawn by the combat pick, which scores damage per plastic',
-    Object.keys(U).filter(k => AI_SUPPORT[k]).every(k => !(U[k].dm > 0)));
+  ok('T59.H ...and neither can be drawn by the combat pick, which refuses support keys by the table (v113: the Runner is armed support, so the unarmed proxy is stated for the rest and the table read for all)',
+    !(U.cmdtruck.dm > 0) && !(U.balloon.dm > 0) && aiTick.toString().indexOf('AI_SUPPORT[k]||U[k].noTrain)continue')>=0 &&
+    Object.keys(U).filter(k => AI_SUPPORT[k] && k !== 'runner').every(k => !(U[k].dm > 0)));
 
   /* BROADCAST: opened on a firefight the truck is already parked beside, closed
      again the moment it stops, so it is never a permanent pin. */

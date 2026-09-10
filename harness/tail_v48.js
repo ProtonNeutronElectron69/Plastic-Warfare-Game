@@ -53,9 +53,15 @@ function foe48(p){return G.players.find(q=>q!==p&&q.alive&&!allied(q,p))}
  ok('T29.A carriers and medics are support, not line fighters',
     src.includes('!AI_SUPPORT[u.key]&&!u.garrisoned')&&
     ['truck','medic','apc','chinook'].every(k=>!!AI_SUPPORT[k]));
+ /* v113: the Signal Runner joined AI_SUPPORT and he is ARMED (dm 4.5), so
+    "every support unit is unarmed" stopped being true - it was only ever a
+    proxy for the claim, which is that the pick never draws a support key. The
+    pick refuses them BY THE TABLE (AI_SUPPORT[k]||U[k].noTrain), so that is
+    what is asserted now, and the unarmed rule is kept for the rest. */
  ok('T29.A the combat pick still excludes every carrier',
     src.includes('roster(p,b.key).filter(k=>!AI_SUPPORT[k])')&&
-    Object.keys(U).filter(k=>AI_SUPPORT[k]).every(k=>!(U[k].dm>0)));
+    aiTick.toString().indexOf('AI_SUPPORT[k]||U[k].noTrain)continue')>=0&&
+    Object.keys(U).filter(k=>AI_SUPPORT[k]&&k!=='runner').every(k=>!(U[k].dm>0)));
  ok('T29.A the AI never touches the magnifying glass',
     !src.includes('radioMagnify'));
  ok('T29.A entrenched gunners are barred from all three errand pools',

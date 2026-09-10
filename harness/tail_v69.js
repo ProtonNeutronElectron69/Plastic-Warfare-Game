@@ -376,7 +376,7 @@ section('T48 v69: supply ladder, gunner price, AI bank pressure, deathmatch cloc
     const gr = G.human, grWorth = dmBaseWorth(gr);
     G = null; newGame(cfg69('backyard', 'dm', 690005, 1, 'tan'));
     const tn = G.human, tnWorth = dmBaseWorth(tn);
-    ok('T48.E Green\'s 8% discount does not make its identical base worth less',
+    ok('T48.E Green\'s discount (8% then, 5% since v113) does not make its identical base worth less',
        FAC.green.mods.cost < 1 && grWorth === tnWorth);
   }
 

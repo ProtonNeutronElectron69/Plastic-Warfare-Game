@@ -7,9 +7,19 @@
    and the trails could prove the move changed nothing. Wildlife carries an empty
    array rather than an empty string for the same reason uu is already []. */
 const FAC={
- green:{name:'Green Army',color:'#4caf50',mods:{cost:.92,hp:1,dmg:1,speed:1},desc:'Balanced forces, 8% cheaper everything.',uu:['sarge','mortar','cmdtruck','balloon'],ub:['radar','cmdpost']},
+ green:{name:'Green Army',color:'#4caf50',mods:{cost:.95,hp:1,dmg:1,speed:1},desc:'Balanced forces, 5% cheaper everything.',uu:['sarge','mortar','cmdtruck','balloon'],ub:['radar','cmdpost']},
  tan:{name:'Tan Army',color:'#d2b074',mods:{cost:1,hp:1,dmg:1.15,speed:.95},desc:'+15% damage, slightly slower.',uu:['flamer','bulltank','firebomb'],ub:['dump','foundry']},
  gray:{name:'Gray Army',color:'#9b9ba3',mods:{cost:1,hp:1.2,dmg:.95,speed:.92},desc:'+20% toughness, slightly slower.',uu:['sniper','arty','choktaw'],ub:['bunker','hbarricade']},
+ /* v113. GREEN cost .92 -> .95 and BLUE hp stays at .9, both by the owner's
+    decision on the measured draft. The draft (harness/README.md, v113) measured
+    Green at 44-50% of doctrine-neutral wins on eight percent more army for the
+    same mining, and Blue at 0.63 on the trade with a -10% hull; it shipped Blue
+    at -5% (0.78 in both seed sets) and left Green alone. The owner chose the
+    other lever: trim Green's discount to 5% and keep Blue's hull at -10%. What
+    Blue keeps from the draft is the bot's side - the Signal Runner is support
+    (17-ai.js, two per ten fighters), not a line fighter the faction quota
+    narrows the Barracks to. The quota itself stays at AI_FAC_FLOOR for every
+    army, Blue included, by the same decision. The speed stays. */
  blue:{name:'Blue Army',color:'#4a7de0',mods:{cost:1,hp:.9,dmg:1,speed:1.15},desc:'+15% speed, lighter plastic (-10% HP).',uu:['bike','chinook','runner'],ub:['turbine','fwdpad']},
  bug:{name:'Wildlife',color:'#6e5a2a',mods:{cost:1,hp:1,dmg:1,speed:1},desc:'',uu:[],ub:[]}
 };
@@ -61,7 +71,15 @@ const U={
     damage table in the file to say nothing new.
     noPace keeps him out of MEDIC_HEAL_RATE's floor - see the note there. */
  runner:{hk:'v',n:'Signal Runner',a:'inf',hp:46,dm:4.5,rg:3.2,rt:.9,sp:2.5,vi:7,cp:62,ce:0,bt:4,w:'b',noPace:1,rnet:1,sprint:1,tech:'u_runner',d:`Signals rather than fights, and is weaker than a Grunt for it. Radio Net: friendly infantry within ${RNET_R} tiles gain +${RNET_VI} sight. Sprint: all of them gain ${Math.round(SPRINT_SPD*100)}% speed, but none may fire`},
- truck:{hk:'r',n:'Dump Truck',a:'truck',hp:130,dm:0,rg:0,rt:0,sp:2.7,vi:5,cp:20,ce:0,bt:8,w:0,d:'Harvests resources'},
+ truck:{noSpeedTax:1,hk:'r',n:'Dump Truck',a:'truck',hp:130,dm:0,rg:0,rt:0,sp:2.7,vi:5,cp:20,ce:0,bt:8,w:0,d:'Harvests resources'},
+/* v113: noSpeedTax on the Dump Truck. An army's speed modifier is a FIGHTING
+   trait; through v112 it also scaled every truck, so Gray mined ~8% less than
+   the same start under any other colour and Blue ~15% more. Measured over two
+   seed sets with the doctrine held still: exempting trucks lifted Gray's mining
+   28.5k -> 31.0k a match and its trade rate 1.05 -> 1.10. The flag means a
+   row sits out a speed PENALTY and keeps a speed BONUS (makeUnit takes
+   max(1, m.speed) for it): Gray's and Tan's trucks roll at stock, Blue's keep
+   their 15% - the owner's decision, so Blue's economy edge stays its own. */
  medic:{hk:'m',n:'Medic Truck',a:'truck',hp:135,dm:0,rg:0,rt:0,sp:2.3,vi:6,cp:150,ce:20,bt:11,w:0,heal:1,healR:2,tech:'u_medic',d:`Unarmed. Heals allied units and buildings within ${MEDIC_HEAL_RADIUS} tiles`}, // v29: paces the grunt
  // v78: hp 115 -> 132.25 (+15%, effective hull 88 -> 101) and rt .5 -> .425
  // (-15% reload, DPS 7.26 -> 8.54). 132.25 is the exact +15% rather than a

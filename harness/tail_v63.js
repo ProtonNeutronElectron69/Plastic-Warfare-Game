@@ -282,6 +282,16 @@ const FACS63 = ['green', 'tan', 'gray', 'blue'];
     for (let i = 0; i < 4; i++) put63('mortar', s.p, 30 + i, 30);
     for (let i = 0; i < 4; i++) put63('grunt', s.p, 30 + i, 32);
     s.p.res.p = Math.round(mc * 0.75);
+    /* v113: the v90 savings tilt (buyTilt) is a SEPARATE lever from the floor's
+       wait, and this seeded brain carries a turtle's (0.57). Its hold on a Grunt
+       is bTilt*(topP-price), and with the bank set at 0.75x the Mortar's price the
+       margin over that hold was 0.7 plastic at Green's 8% discount - a coincidence
+       this arm had been standing on since v90. At v113's 5% the same bank is 0.1
+       UNDER it and the Grunt is refused for a reason that has nothing to do with
+       the floor. Disarmed here on the surcharge's precedent above (the brain's
+       profile is a per-bot copy, so nothing leaks), so the arm tests the claim
+       in its own name: over the floor, the FLOOR's wait switches off. */
+    s.p.ai.pr.buyTilt = 0;
     ok('T42.D the army is over the floor', aiFacShare(s.p) > AI_FAC_FLOOR);
     for (let i = 0; i < 5; i++) aiTick(s.p);
     ok(`T42.D over the floor the wait switches off and production resumes (queue ${s.bar.queue.length})`,
