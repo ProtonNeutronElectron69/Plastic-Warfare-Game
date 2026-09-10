@@ -711,10 +711,14 @@ the tree.
   had left Green alone by the original instruction. The v90 "scale the reserves
   by the cost modifier" hypothesis is refuted either way: the production probe
   by army shows the reserve refusing Green MORE than anyone.
-- **What shipped, measured once more on the final bytes** (design A, seeds
-  101; design C, seeds 101): the table is in the v113 section of
-  `harness/README.md`. Sixteen matches resolve ±2 wins, so read it as the
-  direction, not the verdict; the owner's verdict is the play-test.
+- **What shipped, measured once more on the final bytes** (design A on two
+  seed sets, design C on one): the tables are the last section of the v113
+  chapter in `harness/README.md`. Green did not move at 5% inside the noise;
+  Gray's trade is as before with its mining up; **Blue reads 0.61 and 0.56 on
+  the trade, below its v112 0.63 and 0.71** — the kept hull, the kept quota
+  and the truck rule (which takes Blue's +15% truck edge with Gray's tax)
+  together. The hull is the lever the measurement points at; the owner
+  declined it, and the play-test is the verdict that counts.
 
 Four things worth carrying forward:
 

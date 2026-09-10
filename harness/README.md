@@ -1423,19 +1423,35 @@ what the levers did in one batch each, not a verdict; sixteen matches resolve
 | Gray (trucks exempt) | 3 (19%) | 0.95 | 28.1k | 26% |
 | Blue (hull −10%, quota, Runner support ×2) | 1 (6%) | 0.61 | 27.6k | 49% |
 
-- **Green did not move inside this batch** at 5%: 44% and 1.25, against 44%
-  and 1.19 on the v112 draft's baseline. Three percent of price is a small
-  lever against an edge that compounds on mining, and one batch cannot see it;
-  the v90 mechanism note still stands (its edge is more army for the same
-  mining, and the reserves refuse it more than anyone).
-- **Blue is back at its v112 shape**: 0.61 on the trade against 0.63 before
-  the release and 0.78 on the draft. That is what keeping the hull predicts —
-  the draft measured the Runner-as-support change alone at 0.67 and found the
-  rest was the hull. The Runner allowance at two per ten reads 49% exclusives
-  built (the quota's bikes plus the support runners), against 52 Runners of 82
-  exclusives on v112 and 0 on the draft.
-- **Gray holds** at 19% / 0.95 with its trucks exempt (19% / 0.99 base, 25% /
-  1.13 on the draft's seeds-101 run): inside the noise, as recorded above.
+| design A, seeds 4200 | wins/16 | K/L | mined/match | v112 on the same seeds |
+|---|---|---|---|---|
+| Tan | 9 (56%) | 1.59 | 37.4k | 6 (38%), 1.27 |
+| Green (cost .95) | 4 (25%) | 0.96 | 29.7k | 3 (19%), 0.88 |
+| Gray (trucks exempt) | 2 (12%) | 0.98 | 27.2k | 4 (25%), 1.12 |
+| Blue (hull −10%, quota, Runner support ×2) | 1 (6%) | 0.56 | 24.5k | 3 (19%), 0.71 |
+
+Over both seed sets, shipped against v112: Tan 14/32 (was 10), Green 11/32
+(was 10), Gray 5/32 (was 7), Blue **2/32 (was 5)**.
+
+- **Green did not move** at 5%: 44% then 25% against 44% then 19% on v112's
+  same seeds, K/L 1.25 / 0.96 against 1.19 / 0.88. Three percent of price is a
+  small lever against an edge that compounds on mining, and two batches cannot
+  see it; the v90 mechanism note still stands (its edge is more army for the
+  same mining, and the reserves refuse it more than anyone).
+- **Blue is below its v112 shape, on both seed sets**: 0.61 and 0.56 on the
+  trade against 0.63 and 0.71 before the release, and 0.78 / 0.78 on the
+  draft. Two things the decision keeps and one it adds explain it: the hull
+  stays at −10% (the draft measured the Runner change alone at 0.67 and found
+  the rest was the hull), the quota keeps the bot buying bikes (49% / 47%
+  exclusives built), and the truck rule that lifts Gray's mining takes Blue's
+  +15% truck edge away with the same line — the draft recorded that as
+  costing Blue nothing WITH the −5% hull. Without it, it shows. **The hull is
+  the lever the measurement points at, and the owner has declined it**; that
+  is recorded here, not argued, and the play-test is the verdict that counts.
+- **Gray reads 19% then 12%** (0.95 / 0.98) with its trucks exempt, against
+  19% then 25% (0.99 / 1.12) on v112: inside the ±2-win noise both times, and
+  the mining gain is real on both (28.1k / 27.2k against 27.5k on the base's
+  second set). Its trade rate is the same as before the release.
 
 | design C, doctrines dealt evenly, seeds 101 | wins/16 | K/L | drawn by Gray+Blue |
 |---|---|---|---|
