@@ -16,8 +16,12 @@
    - Blue's most-built unit was the Signal Runner (44 a match; 82 with every
      seat on 'balanced'), the unit the table calls weaker than a Grunt, because
      the faction floor narrowed the Barracks pool to him. He is support now.
-   The Blue and Gray numbers that ship are pinned in the sections that name
-   them; every row of the measurement is in harness/README.md.
+   The owner reviewed the measured draft and chose the levers: Green's discount
+   trimmed 8% -> 5% (the draft left Green alone), Blue's hull kept at -10% (the
+   draft shipped -5%), the Runner allowance raised to two per ten fighters (the
+   draft: one per ten, cap two), and the faction quota kept for every army (the
+   draft gave Blue none). The numbers that ship are pinned in the sections that
+   name them; every row of the measurement is in harness/README.md.
    ==========================================================================*/
 section('T98 v113: the balance pass');
 
@@ -64,27 +68,31 @@ section('T98.B the Signal Runner is a support unit to the bot: never a line figh
  for(let i=0;i<4;i++){const d=makeBuilding('supply',p,Math.floor(p.start.x)-6+i*3,Math.floor(p.start.y)-6,true);d.prog=1;} // supply for a thirty-man army: trainUnit refuses past the cap
  ok('T98.B (fixture) the seat has a brain and room to train', !!p.ai&&supFree(p)>=20);
  const runnersQueued=()=>p.blds.reduce((n,b)=>n+b.queue.filter(k=>k==='runner').length,0)+p.units.filter(u=>u.key==='runner'&&u.hp>0).length;
+ /* supTrain fills a producer only to three orders (v75), so a count of the QUEUE
+    is bounded by that and not by the allowance; between ticks each queued runner
+    is delivered as a live one, the way a running match would. */
+ const deliver=()=>{for(const b of p.blds)if(b.queue)for(let i=b.queue.length-1;i>=0;i--)if(b.queue[i]==='runner'){b.queue.splice(i,1);makeUnit('runner',p,b.x+1,b.y+1);}};
  for(const u of p.units.slice())if(u.key==='runner')kill(u);
- for(let i=0;i<40;i++)aiTick(p);
+ for(let i=0;i<40;i++){aiTick(p);deliver();}
  const small=runnersQueued();
  for(let i=0;i<20;i++)makeUnit('grunt',p,p.start.x+2+i*.3,p.start.y+4);   // 30 fighters now
- for(let i=0;i<40;i++)aiTick(p);
+ for(let i=0;i<40;i++){aiTick(p);deliver();}
  const large=runnersQueued();
- ok(`T98.B ten fighters earn one runner, thirty earn two, never more (${small}, ${large})`, small<=1&&large>=1&&large<=2);
- ok('T98.B the rule is the medic\'s shape and is gated on the support flag, so V113_OFF=runner in the simulator reverts it whole', /AI_SUPPORT\.runner&&hasTech\(p,'u_runner'\)[^\n]*Math\.min\(2,Math\.floor\(army\.length\/10\)\)\)supTrain\('runner','barracks'\)/.test(aiTick.toString()));
+ ok(`T98.B ten fighters earn two runners, thirty earn six, never more (${small}, ${large})`, small===2&&large===6);
+ ok('T98.B the rule is the medic\'s shape and is gated on the support flag, so V113_OFF=runner in the simulator reverts it whole', /AI_SUPPORT\.runner&&hasTech\(p,'u_runner'\)[^\n]*2\*Math\.floor\(army\.length\/10\)\)supTrain\('runner','barracks'\)/.test(aiTick.toString()));
  ok('T98.B the runner keeps his row: Blue\'s Barracks exclusive, an infantryman, the Radio Net and Sprint', FAC.blue.uu.includes('runner')&&U.runner.a==='inf'&&U.runner.rnet===1&&U.runner.sprint===1);
 }
 
-/* ---------- C: the floor is per army when the row says so ---------- */
-section('T98.C facFloor: the faction quota reads the FAC row first');
+/* ---------- C: the quota is one number for every army ----------
+   The draft carried a per-army door (facFloor, read off an aiFloor field on the
+   FAC row) and set Blue's to 0. The owner kept the quota, so the door is gone
+   rather than left as a field no row declares: both floor sites read the
+   constant, and no FAC row may opt out. */
+section('T98.C the faction quota is AI_FAC_FLOOR for every army; no row opts out');
 {
- G=null;newGame({map:'backyard',mode:'dm',diff:'normal',fac:'tan',opp:1,seed:660113});
- const p=G.human;
- ok('T98.C an army without aiFloor gets the default', facFloor(p)===AI_FAC_FLOOR&&AI_FAC_FLOOR===0.18);
- const had=FAC.tan.aiFloor;FAC.tan.aiFloor=0.5;
- ok('T98.C ...and one with it gets its own', facFloor(p)===0.5);
- if(had==null)delete FAC.tan.aiFloor;else FAC.tan.aiFloor=had;
- ok('T98.C both readers of the floor go through it: no site compares the share to the constant directly', !/aiFacShare\(p\)<AI_FAC_FLOOR/.test(aiPickUnit.toString()+aiTick.toString())&&(aiTick.toString().match(/facFloor\(p\)/g)||[]).length>=1&&(aiPickUnit.toString().match(/facFloor\(p\)/g)||[]).length>=1);
+ ok('T98.C the constant is the agreed 18%', AI_FAC_FLOOR===0.18);
+ ok('T98.C no FAC row carries an aiFloor, and no facFloor door exists', Object.keys(FAC).every(k=>FAC[k].aiFloor==null)&&typeof facFloor==='undefined');
+ ok('T98.C both readers of the floor compare the share to the constant', (aiPickUnit.toString().match(/aiFacShare\(p\)<AI_FAC_FLOOR/g)||[]).length===1&&(aiTick.toString().match(/aiFacShare\(p\)<AI_FAC_FLOOR/g)||[]).length===1);
 }
 
 /* ---------- D: a row may sit out the army's speed modifier ---------- */
@@ -109,16 +117,18 @@ section('T98.D noFacSpeed: the Dump Truck sits out every army\'s speed modifier;
 }
 
 /* ---------- E: the rows that ship ---------- */
-section('T98.E Blue is -5% hull with no bot quota; Gray is exactly as it was');
+section('T98.E the rows that ship: Green 5% cheaper, Blue -10% hull under the quota, Gray exactly as it was');
 {
- ok('T98.E Blue: hp .95, speed 1.15, cost 1, dmg 1, aiFloor 0 - transcribed, so the next re-price declares itself here', FAC.blue.mods.hp===.95&&FAC.blue.mods.speed===1.15&&FAC.blue.mods.cost===1&&FAC.blue.mods.dmg===1&&FAC.blue.aiFloor===0);
- ok('T98.E Blue\'s card says -5%', /-5% HP/.test(FAC.blue.desc)&&!/-10%/.test(FAC.blue.desc));
+ ok('T98.E Blue: hp .9, speed 1.15, cost 1, dmg 1, no aiFloor - the owner kept the -10% hull; transcribed, so the next re-price declares itself here', FAC.blue.mods.hp===.9&&FAC.blue.mods.speed===1.15&&FAC.blue.mods.cost===1&&FAC.blue.mods.dmg===1&&FAC.blue.aiFloor==null);
+ ok('T98.E Blue\'s card says -10%', /-10% HP/.test(FAC.blue.desc)&&!/-5% HP/.test(FAC.blue.desc));
  ok('T98.E Gray: hp 1.2, dmg .95, speed .92 - the damage change was measured and REVERTED', FAC.gray.mods.hp===1.2&&FAC.gray.mods.dmg===.95&&FAC.gray.mods.speed===.92&&FAC.gray.aiFloor==null);
- ok('T98.E Green and Tan are untouched', FAC.green.mods.cost===.92&&FAC.green.mods.hp===1&&FAC.tan.mods.dmg===1.15&&FAC.tan.mods.speed===.95&&FAC.green.aiFloor==null&&FAC.tan.aiFloor==null);
+ ok('T98.E Green: cost .95 (was .92, the owner\'s re-price), and its card says 5%', FAC.green.mods.cost===.95&&FAC.green.mods.hp===1&&FAC.green.mods.dmg===1&&FAC.green.mods.speed===1&&/5% cheaper/.test(FAC.green.desc)&&!/8%/.test(FAC.green.desc));
+ ok('T98.E Tan is untouched', FAC.tan.mods.cost===1&&FAC.tan.mods.dmg===1.15&&FAC.tan.mods.speed===.95&&FAC.tan.mods.hp===1);
  G=null;newGame({map:'backyard',mode:'dm',diff:'normal',fac:'blue',opp:1,seed:660113});
  const p=G.human;
- ok('T98.E a Blue grunt is 95% of the table\'s hull', makeUnit('grunt',p,p.start.x+3,p.start.y+3).mhp===Math.round(U.grunt.hp*.95));
- ok('T98.E and Blue\'s bot has no floor: facFloor reads 0, so the Barracks pool is never narrowed to an exclusive', facFloor(p)===0);
+ ok('T98.E a Blue grunt is 90% of the table\'s hull', makeUnit('grunt',p,p.start.x+3,p.start.y+3).mhp===Math.round(U.grunt.hp*.9));
+ G=null;newGame({map:'backyard',mode:'dm',diff:'normal',fac:'green',opp:1,seed:660113});
+ ok('T98.E a Green grunt costs 95% of the table\'s price', ucost(G.human,'grunt').p===Math.round(U.grunt.cp*.95));
 }
 
 /* ---------- F: the instruments ---------- */

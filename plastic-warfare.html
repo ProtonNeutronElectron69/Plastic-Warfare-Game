@@ -678,7 +678,7 @@ canvas{display:block}
      BUILDING UPDATE ............................................. production, research, economy
      PROJECTILES ................................................. updateProjs
      AI .......................................................... aiTick, doctrine, build order, call-downs
-       v113: per-army quota, the Runner as support ................. facFloor / AI_SUPPORT.runner (expandAt on AI_PROFILES, noFacSpeed on U.truck)
+       v113: the Runner as support ................................ AI_SUPPORT.runner (expandAt on AI_PROFILES, noFacSpeed on U.truck, cost/hp on FAC)
        AI TACTICAL HELPERS ....................................... influence map, threat triage, spot picking
        COUNTER-AWARE PRODUCTION .................................. composition targets, weapon mix, air caps
      GHOST STORE ................................................. last-seen enemy memory
@@ -730,7 +730,7 @@ canvas{display:block}
    sent over the wire, and a peer on a different build is caught by the protocol
    check that already exists rather than by this. Bump BOTH every release. */
 const GAME_VER='v113';
-const GAME_DATE='2026-09-09';
+const GAME_DATE='2026-09-10';
 /* the same version as a NUMBER, for the save-snapshot tag. That tag was a
    hand-typed `v:86` in saveState twelve releases after v86 - a second copy of
    the version that nothing tied back to the first, which is the trap this whole
@@ -4060,19 +4060,20 @@ function musTick(){
    and the trails could prove the move changed nothing. Wildlife carries an empty
    array rather than an empty string for the same reason uu is already []. */
 const FAC={
- green:{name:'Green Army',color:'#4caf50',mods:{cost:.92,hp:1,dmg:1,speed:1},desc:'Balanced forces, 8% cheaper everything.',uu:['sarge','mortar','cmdtruck','balloon'],ub:['radar','cmdpost']},
+ green:{name:'Green Army',color:'#4caf50',mods:{cost:.95,hp:1,dmg:1,speed:1},desc:'Balanced forces, 5% cheaper everything.',uu:['sarge','mortar','cmdtruck','balloon'],ub:['radar','cmdpost']},
  tan:{name:'Tan Army',color:'#d2b074',mods:{cost:1,hp:1,dmg:1.15,speed:.95},desc:'+15% damage, slightly slower.',uu:['flamer','bulltank','firebomb'],ub:['dump','foundry']},
  gray:{name:'Gray Army',color:'#9b9ba3',mods:{cost:1,hp:1.2,dmg:.95,speed:.92},desc:'+20% toughness, slightly slower.',uu:['sniper','arty','choktaw'],ub:['bunker','hbarricade']},
- /* v113 BLUE. hp .9 -> .95, and aiFloor:0. Measured with every seat on one
-    doctrine (harness/probe_v113.sh design A): Blue traded at 0.63 and won 12%.
-    Two causes, one of them the bot's. Its three exclusives are HUMAN tools - a
-    bike that evades only while moving, a transport the bot never loads, a
-    signals man weaker than a Grunt - and the faction floor made the bot field
-    them as a fifth of its army; aiFloor:0 says Blue has no signature piece a bot
-    should hold the line with (the Runner is support now, in 17-ai.js). With
-    that alone Blue still traded at 0.58: the other cause is the hull. At -5%
-    it traded at 0.78 in both seed sets (25% and 19% of wins). The speed stays. */
- blue:{name:'Blue Army',color:'#4a7de0',mods:{cost:1,hp:.95,dmg:1,speed:1.15},aiFloor:0,desc:'+15% speed, lighter plastic (-5% HP).',uu:['bike','chinook','runner'],ub:['turbine','fwdpad']},
+ /* v113. GREEN cost .92 -> .95 and BLUE hp stays at .9, both by the owner's
+    decision on the measured draft. The draft (harness/README.md, v113) measured
+    Green at 44-50% of doctrine-neutral wins on eight percent more army for the
+    same mining, and Blue at 0.63 on the trade with a -10% hull; it shipped Blue
+    at -5% (0.78 in both seed sets) and left Green alone. The owner chose the
+    other lever: trim Green's discount to 5% and keep Blue's hull at -10%. What
+    Blue keeps from the draft is the bot's side - the Signal Runner is support
+    (17-ai.js, two per ten fighters), not a line fighter the faction quota
+    narrows the Barracks to. The quota itself stays at AI_FAC_FLOOR for every
+    army, Blue included, by the same decision. The speed stays. */
+ blue:{name:'Blue Army',color:'#4a7de0',mods:{cost:1,hp:.9,dmg:1,speed:1.15},desc:'+15% speed, lighter plastic (-10% HP).',uu:['bike','chinook','runner'],ub:['turbine','fwdpad']},
  bug:{name:'Wildlife',color:'#6e5a2a',mods:{cost:1,hp:1,dmg:1,speed:1},desc:'',uu:[],ub:[]}
 };
 const U0AURA=0.15; // v82: the Chinook's infantry aura, named ABOVE the table so its own info card can state the figure the row sets rather than a retyped copy of it
@@ -13145,11 +13146,6 @@ function aiArmyCap(p){
                own price and reload have moved twice since. Deliberately
                profile-independent - every personality wants the same 18%. */
 const AI_EXPLORE=0.08, AI_SAT_A=0.6, AI_RICH_P=1200, AI_FAC_FLOOR=0.18;
-/* v113: the floor is per army when the FAC row says so (aiFloor), else the
-   default above. Measured: Blue's exclusives are human-skill pieces (a bike that
-   evades only while moving, a transport the bot never loads, a signals man) and
-   an 18% floor spent a fifth of its army on them. */
-function facFloor(p){const f=FAC[p.fac]&&FAC[p.fac].aiFloor;return f==null?AI_FAC_FLOOR:f}
 /* v89: the composition classes aiUnitClass can return, in a FIXED order. The
    reserve below picks the neediest of them, and picking by object-key iteration
    would make that choice depend on which class the bot happened to unlock first.
@@ -13366,7 +13362,7 @@ function aiPickUnit(p,pr,opts){
     faction with two exclusives still chooses BETWEEN them on merit. Ranks below
     the AA insurance above: that answers a threat, this answers a doctrine.
     Consumes no rng, so it cannot desync two clients in lockstep. */
- if(aiFacShare(p)<facFloor(p)){
+ if(aiFacShare(p)<AI_FAC_FLOOR){
   const uu=FAC[p.fac].uu,fx=pool.filter(k=>uu.indexOf(k)>=0);
   if(fx.length)pool=fx;
  }
@@ -13667,7 +13663,7 @@ function aiTick(p){
  /* v63: read the faction floor ONCE per tick rather than per building - it is a
     property of the army, not of the producer, and the loop below must not see it
     change halfway through. */
- const gFacShort=aiFacShare(p)<facFloor(p);
+ const gFacShort=aiFacShare(p)<AI_FAC_FLOOR;
  /* v89: while a class is short and its own producer is standing there unable to
     pay, every producer that CANNOT supply that class must leave the price of the
     cheapest such unit in the bank. Re-derived per tick from the tables, p.res and
@@ -13819,8 +13815,11 @@ function aiTick(p){
  else if(hasTech(p,'u_apc')&&p.units.filter(u=>u.key==='apc').length+qCount('apc')<Math.min(2,Math.floor(infN/10)))supTrain('apc','garage');
  // Chinook: Blue's air ferry, one, once there is a squad worth carrying
  if(hasTech(p,'u_chinook')&&infN>=8&&p.units.filter(u=>u.key==='chinook').length+qCount('chinook')<1)supTrain('chinook','helipad');
- // v113: Signal Runners, one per 10 fighters, cap 2 - a Radio Net over the squad, not a squad of radios
- if(AI_SUPPORT.runner&&hasTech(p,'u_runner')&&p.units.filter(u=>u.key==='runner').length+qCount('runner')<Math.min(2,Math.floor(army.length/10)))supTrain('runner','barracks');
+ /* v113: Signal Runners, two per 10 fighters - a Radio Net over the squad, not a
+    squad of radios. The draft fielded one per ten with a cap of two; the owner
+    raised the allowance to two per ten, so it scales with the army the way the
+    medic's does and has no separate ceiling. */
+ if(AI_SUPPORT.runner&&hasTech(p,'u_runner')&&p.units.filter(u=>u.key==='runner').length+qCount('runner')<2*Math.floor(army.length/10))supTrain('runner','barracks');
  /* v86: Green's two support vehicles, one each, on the same shape as the Chinook
     line above. Both are gated on there being an ARMY to support rather than on a
     clock: a Broadcast over nobody and a High Ground over nobody are both worth

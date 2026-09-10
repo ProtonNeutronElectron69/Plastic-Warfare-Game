@@ -221,11 +221,6 @@ function aiArmyCap(p){
                own price and reload have moved twice since. Deliberately
                profile-independent - every personality wants the same 18%. */
 const AI_EXPLORE=0.08, AI_SAT_A=0.6, AI_RICH_P=1200, AI_FAC_FLOOR=0.18;
-/* v113: the floor is per army when the FAC row says so (aiFloor), else the
-   default above. Measured: Blue's exclusives are human-skill pieces (a bike that
-   evades only while moving, a transport the bot never loads, a signals man) and
-   an 18% floor spent a fifth of its army on them. */
-function facFloor(p){const f=FAC[p.fac]&&FAC[p.fac].aiFloor;return f==null?AI_FAC_FLOOR:f}
 /* v89: the composition classes aiUnitClass can return, in a FIXED order. The
    reserve below picks the neediest of them, and picking by object-key iteration
    would make that choice depend on which class the bot happened to unlock first.
@@ -442,7 +437,7 @@ function aiPickUnit(p,pr,opts){
     faction with two exclusives still chooses BETWEEN them on merit. Ranks below
     the AA insurance above: that answers a threat, this answers a doctrine.
     Consumes no rng, so it cannot desync two clients in lockstep. */
- if(aiFacShare(p)<facFloor(p)){
+ if(aiFacShare(p)<AI_FAC_FLOOR){
   const uu=FAC[p.fac].uu,fx=pool.filter(k=>uu.indexOf(k)>=0);
   if(fx.length)pool=fx;
  }
@@ -743,7 +738,7 @@ function aiTick(p){
  /* v63: read the faction floor ONCE per tick rather than per building - it is a
     property of the army, not of the producer, and the loop below must not see it
     change halfway through. */
- const gFacShort=aiFacShare(p)<facFloor(p);
+ const gFacShort=aiFacShare(p)<AI_FAC_FLOOR;
  /* v89: while a class is short and its own producer is standing there unable to
     pay, every producer that CANNOT supply that class must leave the price of the
     cheapest such unit in the bank. Re-derived per tick from the tables, p.res and
@@ -895,8 +890,11 @@ function aiTick(p){
  else if(hasTech(p,'u_apc')&&p.units.filter(u=>u.key==='apc').length+qCount('apc')<Math.min(2,Math.floor(infN/10)))supTrain('apc','garage');
  // Chinook: Blue's air ferry, one, once there is a squad worth carrying
  if(hasTech(p,'u_chinook')&&infN>=8&&p.units.filter(u=>u.key==='chinook').length+qCount('chinook')<1)supTrain('chinook','helipad');
- // v113: Signal Runners, one per 10 fighters, cap 2 - a Radio Net over the squad, not a squad of radios
- if(AI_SUPPORT.runner&&hasTech(p,'u_runner')&&p.units.filter(u=>u.key==='runner').length+qCount('runner')<Math.min(2,Math.floor(army.length/10)))supTrain('runner','barracks');
+ /* v113: Signal Runners, two per 10 fighters - a Radio Net over the squad, not a
+    squad of radios. The draft fielded one per ten with a cap of two; the owner
+    raised the allowance to two per ten, so it scales with the army the way the
+    medic's does and has no separate ceiling. */
+ if(AI_SUPPORT.runner&&hasTech(p,'u_runner')&&p.units.filter(u=>u.key==='runner').length+qCount('runner')<2*Math.floor(army.length/10))supTrain('runner','barracks');
  /* v86: Green's two support vehicles, one each, on the same shape as the Chinook
     line above. Both are gated on there being an ARMY to support rather than on a
     clock: a Broadcast over nobody and a High Ground over nobody are both worth

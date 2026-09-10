@@ -78,7 +78,7 @@ down, newest first, and the chapter is where the reasoning lives.
 | v110 | owner pass | the hotkey review: build-menu letters are declared on the table row instead of handed out by position, so a thing carries one key everywhere; left-half keys 52% → 65% |
 | v111 | owner pass | every faction building moves a little: the seven that stood still got smoke, lamps, a hem, a periscope and a windsock; the ten that already moved got a second idea; one wind drives every flag |
 | v112 | owner pass | the invite handshake says what went wrong instead of hanging: measured with two real browsers first (a slow reply was never the failure), a longer wait for a public address, "Wi‑Fi only" and "Couldn't reach" in plain words, no relay by instruction |
-| **v113** | **item 3 in part, item 7** | the balance pass, measured with the doctrine held still: the two defensive doctrines were starving (an outpost three minutes late), Blue was fielding an army of signals men, Gray's trucks paid its speed tax; `defensive` 0% → 25%, Blue 0.63 → 0.78 on the trade |
+| **v113** | **item 3 in part, item 7** | the balance pass, measured with the doctrine held still: the two defensive doctrines were starving (an outpost three minutes late), Blue was fielding an army of signals men, Gray's trucks paid its speed tax. The owner reviewed the measured draft and chose the levers: Green's discount 8% → 5%, Blue's hull kept at −10%, the Runner as support at two per ten fighters, the exclusive-unit quota kept for every army |
 
 **Nothing above is in flight.** Each shipped as its own PR and merged, so a
 fresh session starts from `origin/main` with no handover state to reconstruct.
@@ -117,7 +117,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 7,042 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 7,043 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -187,7 +187,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 7,042 checks at v113.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 7,043 checks at v113.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -391,7 +391,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 7,042 checks. What is thin is everything AROUND it — how
+recorded soundtrack, 7,043 checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -547,11 +547,12 @@ still empty; item 1 has since answered it.)
 original plan was barks → maps → armies. Item 4 shipped at v106, two of item 2's
 boards at v107 and item 5 whole at v108–v109, so what remains of that plan is:
 
-- **the armies pass (item 3)** — **DELIVERED IN PART at v113** (Blue's hull and
-  the bot's use of its exclusives; Gray's economy; and the finding that the
-  balance table had been mixing army with doctrine). What is left of it is
-  Green's overshoot (44–50% with the doctrine held still, left alone by
-  instruction) and any human-play verdict. `probe_v113.sh` is the instrument now.
+- **the armies pass (item 3)** — **DELIVERED IN PART at v113** (Green's discount
+  trimmed to 5%; the bot's use of Blue's exclusives; Gray's economy; and the
+  finding that the balance table had been mixing army with doctrine). Blue's
+  hull stays at −10% by the owner's decision, so Blue's trade rate is the
+  open question, and the human-play verdict is the other. `probe_v113.sh` is
+  the instrument now.
 - **the barks** — the rest of item 1, still the smallest unstarted job on the
   list, and small enough to ride with anything else;
 - **the rest of item 2** — a small two-player board (the shortest match the game
@@ -668,10 +669,12 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 
 The owner asked for a pass on the two armies that do not win and the two bot
 doctrines that never do. Measured first, and the measurement reshaped the
-release twice. `tail_v113.js` (T98, 32 checks; the suite is 7,042 now),
-`probe_v113.sh` and `balance_report.py`; full evidence in the v113 section of
-`harness/README.md`. **Every trail moved and all five tables were recut** —
-`recut_v113` / `repin_v113` are the pair in the tree.
+release twice; then the owner reviewed the measured draft and chose different
+levers on two of its four findings (below). `tail_v113.js` (T98, 33 checks;
+the suite is 7,043 now), `probe_v113.sh` and `balance_report.py`; full
+evidence in the v113 section of `harness/README.md`. **Every trail moved and
+all five tables were recut** — `recut_v113` / `repin_v113` are the pair in
+the tree.
 
 - **The default batch cannot be read.** `newGame` deals the five doctrines by a
   seeded shuffle, and over 32 matches Blue drew the 0-for-29 `defensive`
@@ -689,21 +692,29 @@ release twice. `tail_v113.js` (T98, 32 checks; the suite is 7,042 now),
 - **Blue's most-built unit was the Signal Runner** (44 a match, 82 with the
   doctrine held still), the unit the table calls weaker than a Grunt, because
   the faction floor narrowed the Barracks pool to him. He is support now
-  (`AI_SUPPORT.runner`, one per ten fighters, cap two). The bike took his place
-  in the quota, so Blue's row says `aiFloor:0` — its exclusives are human
-  tools. That fixed the composition and not the trade (0.58); the hull did:
-  **hp .9 → .95**, and Blue trades at 0.78 in both seed sets (25% and 19% of
-  doctrine-neutral wins), from 0.63 and 12%.
+  (`AI_SUPPORT.runner`, **two per ten fighters**, the medic's shape with no
+  separate ceiling — the draft had one per ten, cap two, and the owner raised
+  it). The draft ALSO gave Blue's bot no quota (`aiFloor:0`) and softened the
+  hull to −5%, and measured Blue at 0.78 on the trade with both; **the owner
+  kept the quota for every army and kept the hull at −10%**, so neither
+  ships: `facFloor` is gone rather than left as a field no row declares, and
+  the Blue row is v112's with the Runner rule beside it.
 - **Gray traded near even once the doctrine was held still** (0.99–1.12,
   19–25%); its 12% was mostly the deal. What it owned was an economy tax: the
   speed modifier scaled its trucks. **`noFacSpeed:1` on the Dump Truck** —
   every army's economy runs at stock speed — lifted Gray's mining 9% and its
   trade by 0.05 over two seed sets. `dmg .95 → 1` was tried and REVERTED: four
   runs, no signal.
-- **Green is left alone** by instruction, at 44–50% of doctrine-neutral wins.
-  The v90 "scale the reserves by the cost modifier" hypothesis is refuted: the
-  production probe by army shows the reserve refusing Green MORE than anyone;
-  its edge is eight percent more army for the same mining, compounding.
+- **Green's discount is 5%, was 8%** (`cost .92 → .95`) — the owner's lever,
+  chosen on the draft's finding that Green sat at 44–50% of doctrine-neutral
+  wins on eight percent more army for the same mining, compounding. The draft
+  had left Green alone by the original instruction. The v90 "scale the reserves
+  by the cost modifier" hypothesis is refuted either way: the production probe
+  by army shows the reserve refusing Green MORE than anyone.
+- **What shipped, measured once more on the final bytes** (design A, seeds
+  101; design C, seeds 101): the table is in the v113 section of
+  `harness/README.md`. Sixteen matches resolve ±2 wins, so read it as the
+  direction, not the verdict; the owner's verdict is the play-test.
 
 Four things worth carrying forward:
 
@@ -719,6 +730,13 @@ Four things worth carrying forward:
   every trail moved.
 - **Sixteen matches resolve ±2 wins.** Gray read 6% and 25% between variants
   it did not own. Two seed sets before believing a Gray number.
+- **A FIXTURE CAN STAND ON A COINCIDENCE FOR TWENTY RELEASES.** `T42.D`'s
+  over-the-floor arm (v63) set its bank at 0.75× the Mortar's price; v90 added
+  the savings tilt, and this seeded brain is a turtle's, so the Grunt had to
+  clear `bTilt·(topP−price)` too — which it did by **0.7 plastic** at Green's
+  8%. At 5% it missed by 0.1, and the arm failed for a reason with nothing to
+  do with the floor. Restated, not loosened: the tilt is disarmed in that arm
+  the way the surcharge already was, so the check tests the claim in its name.
 
 ## v112 — the handshake says what went wrong (not part of a roadmap)
 
@@ -1920,8 +1938,11 @@ below held: Tan 47%, Green 31%, Gray 12%, Blue 9%), then showed the table
 below mixes army with doctrine — the seeded deal handed Blue the 0-for-29
 doctrine 12 times in 32 — and rebuilt the instrument (`probe_v113.sh`, the
 doctrine held still). With the doctrine held still on v112: Green 44%, Tan 25%,
-Gray 19%, Blue 12%. After v113: Blue trades 0.78 (was 0.63) and Gray's economy
-runs at stock speed. Reproduce with `cd harness && ./probe_v113.sh`. The v103
+Gray 19%, Blue 12%. What v113 ships (the owner's levers on that draft): Green
+pays 5% less instead of 8%, Blue's Runner is support at two per ten fighters,
+every army's trucks run at stock speed, and Blue's hull stays at −10%. The
+measured result on the shipped bytes is the last table of the v113 section in
+`harness/README.md`. Reproduce with `cd harness && ./probe_v113.sh`. The v103
 table stays for its reasoning and the shape of what moved.
 
 **Read this before acting on any faction claim elsewhere in this file or in the

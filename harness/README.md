@@ -1205,7 +1205,9 @@ exact bug: exit 2, and the message names the block.
 
 The owner asked for a pass on the two armies that do not win and the two bot
 doctrines that never do, and asked what to suggest. Rule 8 first, and it
-reshaped the release twice. `tail_v113.js` (T98, 32 checks; the suite is **7,042**), plus
+reshaped the release twice; then the owner reviewed the measured draft and
+chose the levers (the last section of this chapter). `tail_v113.js` (T98, 33
+checks; the suite is **7,043**), plus
 three instruments: `PROFS=` on `sim_dm.js`, `probe_v113.sh` and
 `balance_report.py`. **Every trail moved and all five tables were recut**
 (`recut_v113` / `repin_v113`, carried forward from v106's pair): a faction
@@ -6506,16 +6508,18 @@ check count still read 5,973. That is the failure mode this section exists to
 prevent, so: **a release that adds a tail adds a paragraph HERE as well as its
 own chapter above.**
 
-**The suite stands at 7,042 checks** (7,010 at v112, 6,964 at v111, 6,923 at v110, 6,895 at v109, 6,862 at v108, 6,830 at
+**The suite stands at 7,043 checks** (7,010 at v112, 6,964 at v111, 6,923 at v110, 6,895 at v109, 6,862 at v108, 6,830 at
 v107.3, 6,810 at v107.2, 6,787 at v107.1, 6,716 at v107, 6,083 at v106, 6,039 at
 v105.1, 6,009 at v105, 5,973 at v104.4, 5,766 at v103, 5,694 at v102, 5,638 at
 v101, 5,587 at v100).
 
-v113 adds `tail_v113.js` (T98, 32 checks), riding segment 3, and three
+v113 adds `tail_v113.js` (T98, 33 checks), riding segment 3, and three
 instruments beside it: `PROFS=` / `V113_OFF=` / `V113_SET=` on `sim_dm.js`,
 `probe_v113.sh` (the controlled designs A and C) and `balance_report.py`. A is
-the expansion clock, B the Runner as support (driven), C `facFloor`, D
-`noFacSpeed`, E the rows that ship, F the instruments. **Every trail moved and
+the expansion clock, B the Runner as support (driven, two per ten fighters), C
+the quota as one constant for every army, D `noFacSpeed`, E the rows that
+ship (Green .95, Blue .9), F the instruments. One older arm was restated on
+a coincidence it had stood on since v90 (`T42.D`, below in the chapter). **Every trail moved and
 all five tables were recut** — `recut_v113` / `repin_v113` are the pair in the
 tree now.
 
