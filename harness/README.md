@@ -1201,6 +1201,144 @@ compiles the page's script block with `new Function` before writing (compiles, d
 not run) and refuses to emit a page that cannot execute. Verified by injecting that
 exact bug: exit 2, and the message names the block.
 
+## v114 — four graphical upgrades to the building animations (not part of a roadmap)
+
+The owner asked, playing v113, for four things about the v111 building overlay:
+the Guard Tower's spotlight "significantly bigger" and actually illuminating the
+night-restricted view in a cone; the Barracks' smoke much bigger and denser, the
+Foundry's and the Garage's bigger still and BOTH running continuously (not tied
+to any build queue); every fluttering flag somewhat larger and more noticeable;
+and Blue's Wind Turbine 50% taller with 75% larger blades. `tail_v114.js` (T99,
+53 checks; the suite is **7,097**). **No trail moved and no repin was due**:
+`triage.sh` read "sim unchanged" on the first build and on the last, because
+every change lives in `bldLive`, `bldBody`, one bake box and the tint pass of
+`renderCore`.
+
+### What changed, and where
+
+| ask | v111 | v114 | where |
+|---|---|---|---|
+| the tower's beam | a painted `lighter` wedge, 44px long, .3 rad half-spread, alpha .6 | `SPOT_L` 150px, `SPOT_SP` .48 rad, AND a hole cut in the night tint (below) | `bldLive` records into `NIGHT_CONES`; `nightMask` / `nightWedge` beside it; `renderCore`'s tint line |
+| Barracks smoke | 4 puffs, r 1.6→5.2, alpha .44 | 14 puffs, r 2.6→14, alpha .6, `dense` | `bldLive` barracks branch |
+| Garage exhaust | 3 puffs, r 1.4→4.4, ONLY while the queue is live | 16 puffs, r 3→18, alpha .62, `dense`, continuous | garage branch (no `b.queue` read left) |
+| Foundry stack | 4 puffs, r 1.8→5.6 | 20 puffs, r 3.4→24, alpha .6, `dense` | foundry branch |
+| the flags | three hand-copied 21×10 / 17×9 / 18×8 pennants | one painter, `bldFlag`, at `FLAG_K` 1.45 (the two short poles at .85 of that), sway scaled the same, a dark edge, the v111 highlight | `bldFlag`; the hq / cmdpost / outpost branches |
+| the turbine | mast to −40, blades 19 | `TURB_HUB_Y` −63 (46.4px of mast → 69.4, ×1.50), `TURB_BLADE` 33.25 (×1.75), broader roots, two more flanges, a bigger hub | `bldBody` turbine (baked, re-rendered), `bldLive` turbine (the rotor), `BLD_BOX.turbine` |
+
+Two small things rode along: `bldSmoke` gained a `dense` option (a second,
+smaller, more opaque core per puff and a flatter fade) that is OFF by default,
+so the v111 fixture in T96.I and any plain caller paint exactly what they did;
+and `drawBld`'s HP bar and upgrade chevron sit at 96 above a turbine now
+instead of 46/54, which was through the blades.
+
+### The spotlight is a hole in the night, not a brighter wedge
+
+The night is one multiply fill over the finished world canvas (v101), and a
+`lighter` wedge painted INSIDE the sprite band cannot undo a multiply that
+happens after it: v111's cone was a warm glow ON the darkness, which is why it
+read as a lamp and never as light on the ground. v114 does the arithmetic the
+other way round. While the band draws, a Guard Tower's overlay pushes its
+beam's geometry (lamp position in iso pixels, angle, length, spread) onto
+`NIGHT_CONES`; renderCore clears that list at the top of the frame and, at the
+tint line, multiplies by `nightMask` instead of by the plain fill whenever the
+list is non-empty. `nightMask` fills a scratch canvas with the phase's tint,
+opaque, then erases each cone with `destination-out` through a radial fall-off
+(two wedges: the full spread at .55, a narrower one at 1, so the edge is soft),
+and hands the canvas to the same `multiply` under the same `globalAlpha` T78.D
+pins. Where the sheet is erased the multiply skips, and the ground inside the
+beam keeps its daylight; the v111 wedge is still painted over it at .42 as the
+lamp's own warmth. The no-cone frame is the v101 `fillRect`, byte for byte.
+
+**It is vision-gated the way every light has been since v96.** A cone is
+recorded only for a FINISHED tower whose tile the viewer can see
+(`fogAt===2`); a remembered ghost under the fog fails that (its tile is 1),
+and the manual's stub and the older tails' bare `{key,sz,id}` fixtures have no
+position at all, so they record nothing and throw nothing. T99.D drives all
+five gates.
+
+**What it deliberately does NOT do.** The owner's words were "illuminate the
+night time restricted vision", and this reads them as the PICTURE: the beam
+lights the ground you can already see. It does not extend what a unit can see
+at night — `NIGHT_VI_MUL`, `viOf`, `bviOf` and the fog stamp are untouched,
+and T99.D pins that none of them knows the cone list. A tower whose beam
+revealed a cone of the map at night would be a sim change, a balance change
+and a trail mover, and it is a separate release if the owner wants it.
+
+### The turbine: one texture re-rendered, on v111's footing
+
+The mast is baked, so a taller mast is a new `bld_turbine_blue.webp` and a new
+normal map. As at v111 (the windsock), the pipeline was proved BEFORE it was
+trusted: with `playwright-core` installed in the session's scratchpad
+(`NODE_PATH=` to it, `CHROMIUM=` at the `chrome-headless-shell` binary, the
+v111/v112 trap) `dump_base_v95.js` rendered all 218 base sprites off the
+unchanged v113 painters, the set was pruned to three — `bld_helipad_blue`,
+`bld_hq_green` and `bld_turbine_blue` itself — and `material_v95.py` plus
+`normal_v96.py` reproduced all three committed files **byte-identical**
+(`git status assets/` printed nothing). Then the painter moved, the dump ran
+again, was pruned to the one turbine, and the two passes and `embed_img.py`
+wrote the one pair: the bake box went from `[-38,-54,38,36]` to
+`[-38,-78,38,36]`, so the texture measures 304×456 instead of 304×360, which
+T99.A reads out of the WebP headers of BOTH the texture and its normal map —
+a stale pair fails there whatever the painter says.
+
+### Rule 7, paid three times
+
+1. **The first cone (110px, .42 rad) read as a modest patch** in a night
+   frame. 150 / .48 reads as a searchlight — a lit wedge across the lawn with
+   the grass at day brightness inside it.
+2. **The first smoke (8 / 9 / 11 puffs, top radius 9.5 / 11 / 13) read as a
+   wisp**, only a little bigger than v111's, and the reason was the FADE, not
+   the radius: `a0·(1−ph)` leaves the big old puffs at the top nearly
+   transparent, and a column whose top is see-through reads as a thread
+   whatever its width. Under `dense` the fade is `(1−ph)^.6`, the counts are
+   14 / 16 / 20 and the top radii 14 / 18 / 24, and the three stacks read in
+   the order the owner asked for (Foundry, then Garage, then Barracks).
+3. **The first night frame was the DEFEAT screen.** `DAY=` switches testing
+   mode off (trap 4), the 30 s virtual-time budget runs the CPU's opening, and
+   a human with two Grunts loses their base before the shot. `OPP=0` poses a
+   night frame; recorded here because trap 5 says the tick you set is not the
+   tick that renders, and this is the same trap with an army in it.
+
+The flags were right in the first frame, read in a 3× crop — and the part that
+made them "more noticeable" was not the 1.45 but the one-pixel dark edge: a
+green flag on a green roof at any size is a shape with no outline.
+
+### Two pins restated, not loosened (rule 5 both ways)
+
+- **T96.C** pinned "puffs while the queue is live, none when idle" — the
+  Garage's exhaust as a state tell. The owner reversed that claim ("going
+  continuously, not tied to any build queue"), so the three arms now pin the
+  OPPOSITE — idle, busy and half-built paint the same column — the way v104.2
+  rewrote the sting's spectator arm when its claim reversed on purpose. The
+  work lamp's arms are untouched; the lamp is the Garage's only tell now.
+- **T96.G**'s wind reader hand-transcribed the v111 pennant's geometry (a
+  control point 2px below the pole tip, sway 2.5 / 2.2). It reads the scale
+  back now (`2·K`, `amp·FLAG_K`) and still demands the HQ and the Command
+  Post agree on the wind to two decimals.
+
+### What the tail proves
+
+**A** the two turbine ratios off the v111 numbers, the baked mast reaching the
+hub and no longer stopping at −40, the flanges climbing it, the live rotor
+translated to the same hub with nine `lineTo` at the blade length, the box
+clearing the hub, the WebP dimensions of texture and normal map against the
+box at `SS`, the Blue-only file set, and the two `drawBld` offsets. **B**
+`FLAG_K ≥ 1.4`, the three `bldFlag` calls and the three old paths gone, each
+flag's reach off its own log ≥ 1.4× v111's 21 / 17 / 18, the dark edge and the
+highlight on all three, the HQ flag's 300-tick sway measured at `FLAG_K` times
+v111's, and the fly directions kept. **C** per-frame disc counts (≥ 24 / 28 /
+36 against 4 / 3 / 4), the Barracks' top radius ≥ 1.8× v111's, the Foundry >
+Garage > Barracks order, the Garage identical idle / busy / half-built with no
+`b.queue` read in its branch, exactly three `dense` callers, and `dense` off by
+default with its fade measured flatter at 80% of a puff's life. **D** the
+cone against 44 / .3, one cone recorded for a finished visible tower at night
+(anchored on the lamp), none by day, under construction, under fog or for a
+bare fixture, the sweep, `nightMask` under a recorder (the sheet, the four
+cuts at .55 / 1, the screen-space anchor `(x−cx)·z`, the nine-step fan), the
+tint line's shape and order, and the vision numbers untouched. **E** rule 2:
+no seeded call in the five painters, and srand plus the hash unmoved after
+painting everything at night and building a mask.
+
 ## v113 — the balance pass: Blue, Gray, and the two defensive doctrines (Roadmap 4 item 3, in part, and item 7)
 
 The owner asked for a pass on the two armies that do not win and the two bot
@@ -6598,10 +6736,20 @@ check count still read 5,973. That is the failure mode this section exists to
 prevent, so: **a release that adds a tail adds a paragraph HERE as well as its
 own chapter above.**
 
-**The suite stands at 7,044 checks** (7,010 at v112, 6,964 at v111, 6,923 at v110, 6,895 at v109, 6,862 at v108, 6,830 at
+**The suite stands at 7,097 checks** (7,044 at v113, 7,010 at v112, 6,964 at v111, 6,923 at v110, 6,895 at v109, 6,862 at v108, 6,830 at
 v107.3, 6,810 at v107.2, 6,787 at v107.1, 6,716 at v107, 6,083 at v106, 6,039 at
 v105.1, 6,009 at v105, 5,973 at v104.4, 5,766 at v103, 5,694 at v102, 5,638 at
 v101, 5,587 at v100).
+
+v114 adds `tail_v114.js` (T99, 53 checks), riding segment 3. A is the Wind
+Turbine (the two ratios, the re-rendered texture measured out of its WebP
+headers), B the flags (one painter, `FLAG_K`, the reach and the sway measured
+off the logs), C the smoke (counts, radii, the Foundry > Garage > Barracks
+order, the Garage continuous, `dense` opt-in), D the Guard Tower's beam (the
+cone recorded only for a finished visible tower at night, `nightMask` under a
+recorder, the tint line, vision untouched), E rule 2. Two v111 arms were
+restated: T96.C's claim was reversed by the owner's ask, T96.G's reader
+learned the scale. **No trail moved.**
 
 v113 adds `tail_v113.js` (T98, 34 checks), riding segment 3, and three
 instruments beside it: `PROFS=` / `V113_OFF=` / `V113_SET=` on `sim_dm.js`,

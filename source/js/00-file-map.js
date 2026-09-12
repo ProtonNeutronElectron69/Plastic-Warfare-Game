@@ -86,6 +86,7 @@
        AA MISSILE RACK ........................................... AA truck rack cells
        BUILDING HULL PAINTER ..................................... bldBody
        LIVE BUILDING PARTS (v111: every building moves) ......... bldLive / bldWind / bldSmoke / bldBlink
+       v114: the tower's beam is a hole in the night ............ NIGHT_CONES / nightMask (bldLive records, renderCore's tint pass cuts); bldFlag; TURB_HUB_Y, FLAG_K, SPOT_L
        TROOPERS .................................................. infantry cells
        UNITS ..................................................... per-key unit painters
        BUILDINGS ................................................. per-key building painters

@@ -81,15 +81,20 @@ section('T96.B the animations read G.tick and the building id, never srand()');
  ok('T96.B one tick paints the same frame twice: two lockstep clients draw the same smoke', same);
 }
 
-/* ---------- C: the Garage smokes only while it is building something ---------- */
-section('T96.C the Garage\'s exhaust is a tell: puffs while the queue is live, none when idle');
+/* ---------- C: the Garage's exhaust - a tell at v111, continuous since v114 ---------- */
+/* v114 RESTATED, not loosened: v111 pinned "puffs while the queue is live,
+   none when idle" and the owner reversed that claim ("going continuously, not
+   tied to any build queue"), so the three arms now pin the OPPOSITE - the
+   column is the same in every state - and T99.C carries the sizes. The work
+   lamp's arms are v111's, untouched. */
+section('T96.C the Garage\'s exhaust runs continuously (v114; it was a queue tell at v111), and the lamp hums either way');
 {
  G=null;newGame({map:'backyard',mode:'dm',diff:'normal',fac:'green',opp:1,seed:660111});
  const puffs=log=>log.filter(s=>s.indexOf('fill:rgba(168,168,176')===0).length;
  const idle=stub111('garage'),busy=Object.assign(stub111('garage'),{queue:['jeep']});
- ok('T96.C idle: no exhaust', puffs(bldLog111(idle))===0);
- ok('T96.C a vehicle on the bench: three puffs a frame', puffs(bldLog111(busy))===3);
- ok('T96.C a Garage still under construction does not smoke, whatever is queued', puffs(bldLog111(Object.assign({},busy,{prog:.5})))===0);
+ ok('T96.C idle: the stack smokes (v111 pinned zero here; the owner reversed the claim at v114)', puffs(bldLog111(idle))>0);
+ ok('T96.C a vehicle on the bench: the same column, not a different one', puffs(bldLog111(busy))===puffs(bldLog111(idle)));
+ ok('T96.C a Garage still under construction smokes the same - the stack reads no state at all now', puffs(bldLog111(Object.assign({},busy,{prog:.5})))===puffs(bldLog111(idle)));
  const lamp=log=>log.some(s=>s.indexOf('fill:rgba(255,232,160')===0);
  ok('T96.C the work lamp glows either way', lamp(bldLog111(idle))&&lamp(bldLog111(busy)));
  // the flicker: over 200 ticks the lamp's alpha dips (the bad wire) at least once and hums the rest
@@ -170,8 +175,9 @@ section('T96.G bldWind is the one breeze every flag, the tarp and the sock read'
  ok('T96.G the three old per-flag clocks are gone from bldLive', !/Math\.sin\(G\.tick\*\.1[12]\+b\.id\)\*2/.test(bl));
  ok('T96.G the wind is read ONCE at the head of bldLive and every branch that needs it reads that', (bl.match(/bldWind\(/g)||[]).length===1 && (bl.match(/\bwind\b/g)||[]).length>=8);
  // functional: the HQ's flag and the Command Post's flag lean the same way on the same tick
- const wv=(k,amp)=>{const log=bldLog111(stub111(k));const q=log.find(s=>s.indexOf('quadraticCurveTo:')===0);const m=log.find(s=>s.indexOf('moveTo:')===0);return (parseFloat(q.split(':')[1].split(',')[1])-parseFloat(m.split(':')[1].split(',')[1])-2)/amp};
- let agree=true;for(let t=0;t<200;t+=13){G.tick=t;if(Math.abs(wv('hq',2.5)-wv('cmdpost',2.2))>.01)agree=false;} // the log rounds to 2 decimals
+ // v114: the flags are painted by bldFlag at scale K (the curve's first control point sits 2*K below the pole tip) with a sway of amp*FLAG_K; the helper reads both back, restated rather than loosened
+ const wv=(k,amp,K)=>{const log=bldLog111(stub111(k));const q=log.find(s=>s.indexOf('quadraticCurveTo:')===0);const m=log.find(s=>s.indexOf('moveTo:')===0);return (parseFloat(q.split(':')[1].split(',')[1])-parseFloat(m.split(':')[1].split(',')[1])-2*K)/(amp*FLAG_K)};
+ let agree=true;for(let t=0;t<200;t+=13){G.tick=t;if(Math.abs(wv('hq',2.5,FLAG_K)-wv('cmdpost',2.2,FLAG_K*.85))>.01)agree=false;} // the log rounds to 2 decimals
  ok('T96.G the HQ and the Command Post flags read the same wind value on every tick sampled', agree);
 }
 
