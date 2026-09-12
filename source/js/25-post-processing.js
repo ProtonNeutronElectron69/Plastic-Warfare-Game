@@ -161,6 +161,7 @@ function renderCore(){
  const shx=(Math.random()-.5)*G.shake,shy=(Math.random()-.5)*G.shake,cx=G.cam.x+shx,cy=G.cam.y+shy;
  // everything in the world is drawn in a single scaled+translated space
  c.setTransform(z,0,0,z,-cx*z,-cy*z);c.imageSmoothingEnabled=true;
+ NIGHT_CONES.length=0; // v114: this frame's spotlight beams, recorded by bldLive as the band draws, spent by the tint pass below
  c.drawImage(G.terr,0,0);
  /* v109: the floor catches the frame's lights - explosions, burning ground,
     muzzle flashes, flame - laid straight onto the terrain before anything
@@ -487,7 +488,12 @@ function renderCore(){
     controls. globalAlpha under 'multiply' mixes toward dst*tint, so tintA is
     "how far into this phase's light", and the day row's 0 is the identity. */
  const ph101=dayPhase();
- if(ph101.tintA>0){c.save();c.globalCompositeOperation='multiply';c.globalAlpha=ph101.tintA;c.fillStyle=ph101.tint;c.fillRect(0,0,view.width,view.height);c.restore();}
+ if(ph101.tintA>0){c.save();c.globalCompositeOperation='multiply';c.globalAlpha=ph101.tintA;c.fillStyle=ph101.tint;
+  /* v114: a frame with spotlight beams multiplies by nightMask - the same tint
+     as an opaque sheet with each recorded cone erased through a fall-off - so
+     the beam is a hole in the night; a frame with none is the v101 fillRect. */
+  if(NIGHT_CONES.length)c.drawImage(nightMask(ph101,cx,cy,z),0,0);else c.fillRect(0,0,view.width,view.height);
+  c.restore();}
  if(worldCv&&!glComposite())compositePost();
  v71Fills();
  if(G.placing)drawGhost(vc,G.cam.x,G.cam.y);

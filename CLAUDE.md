@@ -7,7 +7,7 @@ touch anything — what the project is, where it stands, how to build, how to
 test, how to watch the bots, how to LOOK at a frame (rule 7's tools), and the
 rules that are load-bearing. Everything
 after that is the record: the roadmap chapters, then one section per standalone
-release NEWEST FIRST (v113 down to v89), then the balance baseline, then the
+release NEWEST FIRST (v114 down to v89), then the balance baseline, then the
 patterns worth copying. Read the record when you are about to touch the
 subsystem it describes; do not read it front to back.
 
@@ -55,9 +55,9 @@ straight in a browser.
 The owner has **no coding experience**. Explain things in plain language. Do not
 lead with implementation detail unless asked.
 
-## Where the game stands (v113, and what a fresh session does)
+## Where the game stands (v114, and what a fresh session does)
 
-The game is at **v113**, and every chapter below is finished work. All three
+The game is at **v114**, and every chapter below is finished work. All three
 roadmaps are COMPLETE: roadmap 1 (v79–v82, abilities), roadmap 2 (v85–v88.1,
 full faction-exclusive sets), roadmap 3 (v91–v96 + follow-ups v92.1/v96.1/v97,
 real art and real sound). Since then the releases are standalone owner passes and
@@ -79,6 +79,7 @@ down, newest first, and the chapter is where the reasoning lives.
 | v111 | owner pass | every faction building moves a little: the seven that stood still got smoke, lamps, a hem, a periscope and a windsock; the ten that already moved got a second idea; one wind drives every flag |
 | v112 | owner pass | the invite handshake says what went wrong instead of hanging: measured with two real browsers first (a slow reply was never the failure), a longer wait for a public address, "Wi‑Fi only" and "Couldn't reach" in plain words, no relay by instruction |
 | **v113** | **item 3 in part, item 7** | the balance pass, measured with the doctrine held still: the two defensive doctrines were starving (an outpost three minutes late), Blue was fielding an army of signals men, Gray's trucks paid its speed tax. The owner reviewed the measured draft and chose the levers: Green's discount 8% → 5%, Blue's hull kept at −10%, the Runner as support at two per ten fighters, the exclusive-unit quota kept for every army |
+| v114 | owner pass | four graphical upgrades to v111's building animations: the Guard Tower's beam is three times as long and a real hole in the night (the ground inside it keeps its daylight; what a unit can SEE is untouched), the Barracks, Garage and Foundry smoke in earnest and the two shops run continuously, every flag is 1.45× with a dark edge, Blue's turbine is 50% taller with 75% longer blades (one texture re-rendered) |
 
 **Nothing above is in flight.** Each shipped as its own PR and merged, so a
 fresh session starts from `origin/main` with no handover state to reconstruct.
@@ -117,7 +118,7 @@ is no handover state to reconstruct — start from a clean read:
 
 ```sh
 cd harness && ./build.sh && ./triage.sh     # ~30s: proves the tree is sound
-QUIET=1 ./seg.sh all                        # ~400s: 7,044 checks, expect 0 failures
+QUIET=1 ./seg.sh all                        # ~400s: 7,097 checks, expect 0 failures
 ```
 
 **One known flake, and it is not yours.** `T43.M` fails roughly one run in four,
@@ -131,7 +132,7 @@ whatever the owner asks for next is a fresh vNN starting from `origin/main`. If
 they are NOT green, stop and read the failure before touching anything: every
 check in this suite was put there by a release that paid for it.
 
-**The map generator was audited at v103 and nothing has touched it since** (v108/v109 repainted the ground and the props, v110 touched only the UI, v111 only the buildings' live overlay and v112 only the lobby's handshake)
+**The map generator was audited at v103 and nothing has touched it since** (v108/v109 repainted the ground and the props, v110 touched only the UI, v111 only the buildings' live overlay, v112 only the lobby's handshake, v113 the AI and four table rows, and v114 only the overlay, one bake box and the night tint pass)
 (the v103 section below). If you touch `makeMap`, run `harness/audit_maps.js` before and
 after — it counts every defect class the audit found, and the residual it should
 report is: 3-4 decor-sized art grazes, 2 line props lying in a spill, and one
@@ -187,7 +188,7 @@ a doc comment edited after the last build is enough to fail `--check`.
 
 ```sh
 ./triage.sh              # ~25s: "did the simulation move, and which tails care?"
-QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 7,044 checks at v113.
+QUIET=1 ./seg.sh all     # full suite in parallel, ~400s. 7,097 checks at v114.
 QUIET=1 ./seg.sh 1       # or a single segment: 1, 2a, 2b, 2c, 3
 python3 verify_v58.py    # 32 extra source-text checks, not part of seg.sh
 ```
@@ -391,7 +392,7 @@ marked MEASURED and the evidence is in the v103 measurement section of
 25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
 counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
 queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 7,044 checks. What is thin is everything AROUND it — how
+recorded soundtrack, 7,097 checks. What is thin is everything AROUND it — how
 many places you can play, and whether all four armies are worth picking. Every
 item below is content, presentation or tuning; none of them needs a new system
 invented. (Written at v103, when the "what does it sound like" leg of that was
@@ -664,6 +665,50 @@ landed with the trails untouched; a render change that moves a trail has a bug.
 - **The one supersample constant is `SS`** in `20-render-library.js`; the
   offline RS is 2×SS. T74.C reads real WebP header dimensions and fails if the
   committed set is at the wrong grid.
+
+## v114 — four graphical upgrades to the building animations (not part of a roadmap)
+
+The owner asked, playing v113, for four things about v111's building overlay,
+and each is delivered as asked. `tail_v114.js` (T99, 53 checks; the suite is
+7,097 now); full evidence in the v114 section of `harness/README.md`. **No
+trail moved and no repin was due** — `bldLive`, `bldBody`, one bake box and
+the tint pass of `renderCore`.
+
+- **The Guard Tower's beam is a hole in the night.** `SPOT_L`/`SPOT_SP`
+  (150px, .48 rad; was 44/.3), and instead of a glow painted ON the dark, the
+  overlay records each visible tower's cone in `NIGHT_CONES` and the tint pass
+  multiplies by `nightMask` — the phase's tint as an opaque sheet with every
+  cone erased through a fall-off — so the ground inside the beam keeps its
+  daylight. Vision-gated on `fogAt===2` like every light since v96; a frame
+  with no cones is the v101 `fillRect` unchanged. **It changes no vision
+  number**: the owner's "illuminate the night time restricted vision" was read
+  as the picture, and a cone of real night vision is a sim change for another
+  release if wanted.
+- **The smoke is smoke.** Barracks 14 puffs to a top radius of 14 (was 4 to
+  5.2), Garage 16 to 18 and CONTINUOUS (v111 tied it to the queue; the work
+  lamp is its only tell now), Foundry 20 to 24 — the order the owner asked
+  for. `bldSmoke`'s new `dense` option (a core per puff, a flatter fade) is
+  off by default.
+- **One flag painter.** `bldFlag` replaces three hand-copied pennants, at
+  `FLAG_K` 1.45 with the sway scaled the same and a dark edge — the edge, not
+  the size, is what makes a green flag show on a green roof.
+- **Blue's turbine**: `TURB_HUB_Y` −63 (the mast ×1.50) and `TURB_BLADE` 33.25
+  (×1.75), shared by the baked painter and the live rotor; the texture and
+  normal map re-rendered on v111's footing (the pipeline reproduced three
+  committed files byte-identical before the painter moved).
+
+Three things worth carrying forward:
+
+- **A `lighter` GLOW INSIDE THE BAND CANNOT LIGHT A FLOOR THE TINT DARKENS
+  AFTERWARDS.** To light the ground at night you have to take the night away
+  where the light is: erase the tint sheet, then multiply. Same shape as v109's
+  ground glow (drawn UNDER what stands on it), one seam later in the frame.
+- **A FADE DECIDES WHAT A COLUMN LOOKS LIKE MORE THAN A RADIUS DOES.** Doubling
+  the smoke's radius left it a wisp; flattening the alpha fade made it smoke.
+  Read the frame before turning the size knob again.
+- **A NIGHT FRAME NEEDS `OPP=0`.** `DAY=` turns testing mode off, the virtual
+  clock runs the CPU's opening, and the human's base is gone before the shot
+  (the v111 trap with an army in it).
 
 ## v113 — the balance pass: Blue, Gray, and the two defensive doctrines (Roadmap 4 item 3 in part, item 7)
 

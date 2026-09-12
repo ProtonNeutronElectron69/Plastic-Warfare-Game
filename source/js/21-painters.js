@@ -866,7 +866,7 @@ function drawBld(c,b){
  c.restore();
  // upgraded building tell: a small gold chevron badge floating above it
  if(b.upg&&b.prog>=1){
-  const by=sy-(k==='hq'?78:k==='guardtower'?72:54)-2;
+  const by=sy-(k==='hq'?78:k==='guardtower'?72:k==='turbine'?96:54)-2; // v114: the turbine's rotor reaches ~96 above its centre now
   c.save();c.translate(sx,by);
   const ps=.9+.12*Math.sin(G.tick*.18+b.id);
   c.fillStyle='rgba(255,210,77,.95)';c.strokeStyle='rgba(90,60,0,.6)';c.lineWidth=1.4;
@@ -875,7 +875,7 @@ function drawBld(c,b){
   c.restore();
  }
  if(pr<1){c.fillStyle='rgba(0,0,0,.55)';rr(c,sx-20,sy+6,40,5,2.5);c.fill();c.fillStyle='#ffd24d';rr(c,sx-19,sy+7,38*pr,3,1.5);c.fill();}
- if(b.sel||b.hp<b.mhp)drawHP(c,sx,sy-(k==='hq'?70:k==='guardtower'?64:46),b.hp/b.mhp);
+ if(b.sel||b.hp<b.mhp)drawHP(c,sx,sy-(k==='hq'?70:k==='guardtower'?64:k==='turbine'?96:46),b.hp/b.mhp); // v114: over the taller turbine, not through its blades
  if(b.sel&&b.t.prod&&b.p.human){const rx=isoX(b.rally.x,b.rally.y),ry=isoY(b.rally.x,b.rally.y);c.strokeStyle='rgba(255,236,110,.8)';c.lineWidth=2;c.beginPath();c.moveTo(rx,ry);c.lineTo(rx,ry-16);c.stroke();c.fillStyle='rgba(255,236,110,.8)';c.beginPath();c.moveTo(rx,ry-16);c.lineTo(rx+10,ry-12);c.lineTo(rx,ry-8);c.closePath();c.fill();}
 }
 

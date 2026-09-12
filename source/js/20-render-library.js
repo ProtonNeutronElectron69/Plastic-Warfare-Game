@@ -200,9 +200,30 @@ const VEH_BOX={truck:[-18,-14,18,14],medic:[-18,-14,18,14],jeep:[-15,-13,15,13],
 const BARR_BOX={barricade:[-14,-17,14,13],hbarricade:[-19,-23,19,16]};
 const BLD_BOX={hq:[-102,-80,102,86],barracks:[-70,-52,70,62],lab:[-70,-48,70,62],garage:[-102,-64,102,86],
  supply:[-68,-54,68,62],
- helipad:[-102,-30,102,86],generator:[-70,-34,70,62],turbine:[-38,-54,38,36],guardtower:[-38,-66,38,36],
+ helipad:[-102,-30,102,86],generator:[-70,-34,70,62],turbine:[-38,-78,38,36],guardtower:[-38,-66,38,36],
  radar:[-70,-44,70,62],radiotower:[-70,-78,70,62],dump:[-70,-38,70,62],bunker:[-70,-34,70,62],outpost:[-70,-40,70,62],
  cmdpost:[-70,-56,70,62],foundry:[-70,-58,70,62]};
+/* v114 (owner's ask - four graphical upgrades to the v111 building animations).
+   Numbers the baked painter and the live overlay SHARE, so the two halves of
+   a building cannot drift apart:
+   - TURB_HUB_Y / TURB_BLADE: the Wind Turbine's hub sits 50% higher up the
+     mast (46.4px of mast became 69.4 - the mast is baked, so its texture and
+     normal map were re-rendered; the BLD_BOX above grew with it) and each of
+     the three blades is 75% longer (19 -> 33.25; the rotor is live, in bldLive).
+   - FLAG_K: every fluttering standard (HQ, Command Post, Outpost) is painted
+     through bldFlag at 1.45x its v111 size, with the sway scaled the same.
+   - SPOT_L / SPOT_SP: the Guard Tower's night beam, 44px/.3rad at v111, is
+     150px/.48rad now AND is a real hole in the night: bldLive records each
+     visible tower's cone in NIGHT_CONES and renderCore's tint pass (nightMask)
+     cuts the cones out of the multiply fill, so the ground inside the beam
+     shows at day brightness. It is still not a light SOURCE and it changes no
+     vision number: NIGHT_VI_MUL is untouched, and the cone is recorded only
+     for a tower the viewer can see (fogAt===2), the same gate every light
+     has carried since v96. */
+const TURB_HUB_Y=-63, TURB_BLADE=33.25;
+const FLAG_K=1.45;
+const SPOT_L=150, SPOT_SP=.48; // v114 rule 7: 110/.42 read as a modest patch in a night frame; 150/.48 reads as a searchlight
+const NIGHT_CONES=[]; // {x,y,a,L,sp} in iso pixels; cleared by renderCore at the top of every frame, filled by bldLive
 function bakeCell(x0,y0,x1,y1,paint){
  const w=x1-x0,h=y1-y0;
  const cv=document.createElement('canvas');cv.width=Math.ceil(w*SS);cv.height=Math.ceil(h*SS);
@@ -1154,8 +1175,8 @@ function bldBody(c,k,col,sz){
   c.fillStyle='#565b62';c.beginPath();c.ellipse(0,baseTopY-4,7.5,3.4,0,0,7);c.fill();
   c.fillStyle='#22262b';rr(c,-1.8,baseTopY-3.2,3.6,3,1.2);c.fill();
   c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.18)';c.beginPath();c.ellipse(-2.4,baseTopY-4.6,2.6,1.1,0,0,7);c.fill();c.restore();
-  (function(){const g=c.createLinearGradient(-4,0,4,0);g.addColorStop(0,'#d6dbe1');g.addColorStop(.5,'#fbfdff');g.addColorStop(1,'#aeb4bc');c.fillStyle=g;c.beginPath();c.moveTo(-3.4,baseTopY);c.lineTo(3.4,baseTopY);c.lineTo(1.5,-40);c.lineTo(-1.5,-40);c.closePath();c.fill();})();
-  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.4)';c.beginPath();c.moveTo(-3,baseTopY);c.lineTo(-1.2,baseTopY);c.lineTo(-.6,-40);c.lineTo(-1.4,-40);c.closePath();c.fill();c.restore();
+  (function(){const g=c.createLinearGradient(-4,0,4,0);g.addColorStop(0,'#d6dbe1');g.addColorStop(.5,'#fbfdff');g.addColorStop(1,'#aeb4bc');c.fillStyle=g;c.beginPath();c.moveTo(-3.4,baseTopY);c.lineTo(3.4,baseTopY);c.lineTo(1.5,TURB_HUB_Y);c.lineTo(-1.5,TURB_HUB_Y);c.closePath();c.fill();})(); // v114: the mast climbs to TURB_HUB_Y (was -40)
+  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.4)';c.beginPath();c.moveTo(-3,baseTopY);c.lineTo(-1.2,baseTopY);c.lineTo(-.6,TURB_HUB_Y);c.lineTo(-1.4,TURB_HUB_Y);c.closePath();c.fill();c.restore();
   /* v97: service hardware at the foot - anchor bolts around the collar, a
      hazard band on it, and mast segment flanges up the tower */
   c.save();c.globalAlpha=.7;c.fillStyle='#2a2e34';
@@ -1163,7 +1184,7 @@ function bldBody(c,k,col,sz){
   c.restore();
   for(let i2=0;i2<4;i2++){c.fillStyle=i2%2?'#191919':'#ffd24d';const xx=-7.5+i2*3.75;c.fillRect(xx,baseTopY-2.4,3.75,1.4);}
   c.save();c.globalAlpha=.5;c.strokeStyle='#9aa0a8';c.lineWidth=1;
-  for(const yy of [-12,-24,-34]){const w2=3.4-(-yy)*.045;c.beginPath();c.moveTo(-w2,yy);c.lineTo(w2,yy);c.stroke();}
+  for(const yy of [-12,-24,-36,-48,-58]){const w2=3.4-(-yy)*.03;c.beginPath();c.moveTo(-w2,yy);c.lineTo(w2,yy);c.stroke();} // v114: two more flanges up the taller mast, the taper re-read off the new height
   c.restore();
   // nacelle + blades
 
@@ -1506,6 +1527,19 @@ function bldWind(b){ // -1..1: a slow swell, a slower gust, and a per-building r
  return Math.sin(t*.11)*.62+Math.sin(t*.037)*.28+Math.sin(t*.31+id)*.10;
 }
 function bldBlink(per,on,ph){return ((G.tick+(ph||0))%per)<on} // a lamp that is ON for `on` ticks of every `per`
+/* v114: the one standard. The HQ, the Command Post and the Outpost each used to
+   carry their own near-copy of a 21x10 pennant; this paints that pennant from
+   the pole tip (px,py) flying toward `dir` (+1 right, -1 left) at scale K,
+   swaying by `wv` (already scaled by the caller), with a dark edge so a
+   faction-coloured flag reads against its own faction-coloured roof - which
+   was the whole reason the v111 flags were easy to miss - and the v111
+   highlight along its upper half. */
+function bldFlag(c,col,px,py,dir,K,wv){
+ const X=u=>px+dir*u*K,Y=v=>py+v*K;
+ c.fillStyle=col;c.beginPath();c.moveTo(px,py);c.quadraticCurveTo(X(13),Y(2)+wv,X(21),Y(6)+wv);c.lineTo(X(19),Y(12)+wv);c.quadraticCurveTo(X(11),Y(9),px,Y(10));c.closePath();c.fill();
+ c.save();c.strokeStyle='rgba(20,16,12,.45)';c.lineWidth=1;c.stroke();c.restore();
+ c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.25)';c.beginPath();c.moveTo(px,py);c.quadraticCurveTo(X(13),Y(2)+wv,X(21),Y(6)+wv);c.lineTo(X(20),Y(8)+wv);c.quadraticCurveTo(X(11),Y(5),px,Y(4));c.closePath();c.fill();c.restore();
+}
 /* rising puffs: n of them share one `per`-tick cycle, staggered, each born at
    (x,y), growing from r0 to r1 and fading, leaning with `wind` as it climbs.
    Deterministic off G.tick + seed, so two clients draw the same smoke. */
@@ -1513,10 +1547,49 @@ function bldSmoke(c,x,y,n,seed,o){
  o=o||{};const per=o.per||80,rise=o.rise||20,wind=o.wind||0,r0=o.r0||1.5,r1=o.r1||4,a0=o.a0||.3,col=o.col||'150,146,142';
  for(let i=0;i<n;i++){
   const ph=((G.tick+seed*7+Math.floor(i*per/n))%per)/per;   // 0..1 of this puff's life
-  const yy=y-ph*rise, xx=x+wind*ph*ph*7+Math.sin(ph*6.28+i*1.7)*1.1;
-  const r=r0+(r1-r0)*ph, a=a0*(1-ph)*Math.min(1,ph*5);
+  const yy=y-ph*rise, xx=x+wind*ph*ph*7*(rise/20)+Math.sin(ph*6.28+i*1.7)*1.1*(r1/4); // v114: a taller column leans further and wanders wider, in proportion
+  const r=r0+(r1-r0)*ph, a=a0*(o.dense?Math.pow(1-ph,.6):(1-ph))*Math.min(1,ph*5); // v114 rule 7: under `dense` the fade is flatter - a linear fade left the big old puffs transparent, and a column whose top is see-through reads as a wisp whatever its radius
   c.fillStyle=`rgba(${col},${a.toFixed(3)})`;c.beginPath();c.ellipse(xx,yy,r,r*.8,0,0,7);c.fill();
+  /* v114: `dense` gives every puff a second, smaller, more opaque core, set a
+     little off-centre so the column reads as a mass of smoke rather than a
+     string of rings. Off by default: the v111 callers and T96.I's fixture get
+     exactly the puffs they had. */
+  if(o.dense){c.fillStyle=`rgba(${col},${Math.min(1,a*1.5).toFixed(3)})`;c.beginPath();c.ellipse(xx+Math.cos(i*2.3)*r*.2,yy+Math.sin(i*1.9)*r*.15,r*.58,r*.46,0,0,7);c.fill();}
  }
+}
+/* v114: the night with the spotlights cut out of it. renderCore's tint pass
+   used to be one multiply fillRect; when a frame has recorded beams it draws
+   THIS canvas under the same multiply and the same globalAlpha instead - an
+   opaque sheet of the phase's tint with each cone erased (destination-out)
+   through a radial fall-off, so the multiply skips the beam and the ground
+   inside it keeps its daylight. Two wedges per cone: the full spread at .55
+   and a narrower one at 1, for a soft-edged beam. The cones are in iso pixels
+   (bldLive records them in the building's own frame); cx/cy/z are the frame's
+   camera, the same numbers the band and the light collector use. Nothing here
+   reads srand (rule 2) and nothing is stored between frames but the canvas. */
+let NIGHT_CV=null;
+function nightWedge(n,X,Y,a,sp,R){
+ n.beginPath();n.moveTo(X,Y);
+ for(let i=0;i<=8;i++){const an=a-sp+2*sp*i/8;n.lineTo(X+Math.cos(an)*R,Y+Math.sin(an)*R*.55);}
+ n.closePath();
+}
+function nightMask(ph,cx,cy,z){
+ const W=view.width,H=view.height;
+ if(!NIGHT_CV)NIGHT_CV=document.createElement('canvas');
+ if(NIGHT_CV.width!==W||NIGHT_CV.height!==H){NIGHT_CV.width=W;NIGHT_CV.height=H;}
+ const n=NIGHT_CV.getContext('2d');
+ n.setTransform(1,0,0,1,0,0);n.globalCompositeOperation='source-over';n.globalAlpha=1;
+ n.clearRect(0,0,W,H);n.fillStyle=ph.tint;n.fillRect(0,0,W,H);
+ n.globalCompositeOperation='destination-out';
+ for(const q of NIGHT_CONES){
+  const X=(q.x-cx)*z,Y=(q.y-cy)*z,R=q.L*z;
+  const g=n.createRadialGradient(X,Y,0,X,Y,R);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.5,'rgba(0,0,0,.85)');g.addColorStop(1,'rgba(0,0,0,0)');
+  n.fillStyle=g;
+  n.globalAlpha=.55;nightWedge(n,X,Y,q.a,q.sp,R);n.fill();
+  n.globalAlpha=1;nightWedge(n,X,Y,q.a,q.sp*.6,R);n.fill();
+ }
+ n.globalAlpha=1;n.globalCompositeOperation='source-over';
+ return NIGHT_CV;
 }
 function bldLive(c,b,col){
  const k=b.key,sz=b.sz,S=sz*HW,HD=sz*HH;
@@ -1524,8 +1597,7 @@ function bldLive(c,b,col){
  const wind=bldWind(b);
  if(k==='hq'){
   const mx=-S*.5, mtop=HD*.55-60;
- const wv=wind*2.5;c.fillStyle=col;c.beginPath();c.moveTo(mx,mtop);c.quadraticCurveTo(mx+13,mtop+2+wv,mx+21,mtop+6+wv);c.lineTo(mx+19,mtop+12+wv);c.quadraticCurveTo(mx+11,mtop+9,mx,mtop+10);c.closePath();c.fill();
-  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.25)';c.beginPath();c.moveTo(mx,mtop);c.quadraticCurveTo(mx+13,mtop+2+wv,mx+21,mtop+6+wv);c.lineTo(mx+20,mtop+8+wv);c.quadraticCurveTo(mx+11,mtop+5,mx,mtop+4);c.closePath();c.fill();c.restore();
+  bldFlag(c,col,mx,mtop,1,FLAG_K,wind*2.5*FLAG_K); // v114: the 21x10 standard at FLAG_K, the sway scaled with it
   // v111: an obstruction lamp on the mast tip - a short red wink, slower than the Radio Tower's
   if(bldBlink(90,6,b.id*11)){c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,70,50,.95)';c.beginPath();c.arc(mx,mtop-1,1.5,0,7);c.fill();c.fillStyle='rgba(255,90,60,.35)';c.beginPath();c.arc(mx,mtop-1,4.2,0,7);c.fill();c.restore();}
  }
@@ -1533,7 +1605,7 @@ function bldLive(c,b,col){
   // v111: the stovepipe through the SW slope draws. The pipe's cap is baked at
   // (spx, spy0-13.5) in bldBody; the smoke starts just above it and leans with the wind.
   const spx=-S*.34,spy=(HD*.55-12)-HD*.1-14.5;
-  bldSmoke(c,spx,spy,4,b.id,{per:96,rise:24,wind,r0:1.6,r1:5.2,a0:.44,col:'212,206,198'}); // v111 rule 7: .26 grey read as nothing in a frame; pale and .44 reads as a chimney
+  bldSmoke(c,spx,spy,14,b.id,{per:120,rise:48,wind,r0:2.6,r1:14,a0:.6,col:'212,206,198',dense:1}); // v111 rule 7: .26 grey read as nothing in a frame; pale and .44 reads as a chimney. v114 (owner): much bigger and denser - twice the puffs, near twice the radius, a core in each
  }
  else if(k==='lab'){
   const body={topY:HD*.55-20};
@@ -1543,13 +1615,15 @@ function bldLive(c,b,col){
  }
  else if(k==='garage'){
   // v111: the work lamp over the lintel is on a bad wire - a soft hum with the
-  // odd dip - and the roof stack breathes exhaust ONLY while the shop is busy,
-  // so a puffing Garage is a Garage with something on the bench.
+  // odd dip. v111 ALSO tied the roof stack's exhaust to the queue (a puffing
+  // Garage was a Garage with something on the bench); v114 UNTIED it on the
+  // owner's instruction - the stack runs continuously, bigger and denser than
+  // the Barracks' stovepipe - so the lamp is the Garage's only state tell now.
   const seW=wallCorners({cx:0,baseY:HD*.55,hw:S*.84,hd:HD*.84,H:24},1),lp=qp(seW,.53,.86),lx=lp.x+4.6,ly=lp.y-3.4;
   const dip=((G.tick*7+b.id*13)%97)<3?.3:1;
   const la=(.2+.08*Math.sin(G.tick*.9+b.id))*dip;
   c.save();c.globalCompositeOperation='lighter';c.fillStyle=`rgba(255,232,160,${la.toFixed(3)})`;c.beginPath();c.arc(lx,ly,4.6,0,7);c.fill();c.restore();
-  if(b.queue&&b.queue.length&&(b.prog==null||b.prog>=1))bldSmoke(c,S*.26,-31,3,b.id+1,{per:42,rise:17,wind,r0:1.4,r1:4.4,a0:.55,col:'168,168,176'}); // v111 rule 7: a dark exhaust vanished against the off-board black
+  bldSmoke(c,S*.26,-31,16,b.id+1,{per:110,rise:60,wind,r0:3,r1:18,a0:.62,col:'168,168,176',dense:1}); // v111 rule 7: a dark exhaust vanished against the off-board black. v114: continuous, and bigger than the Barracks' (owner)
  }
  else if(k==='supply'){
   // v111: the tarp's front hem lifts in the breeze. The baked skirt hangs 6px off
@@ -1595,10 +1669,14 @@ function bldLive(c,b,col){
   c.save();c.globalCompositeOperation='lighter';const pulse=.45+Math.sin(G.tick*.15+b.id)*.3;c.globalAlpha=pulse;c.fillStyle='#fff04d';quadPatch(c,wallCorners(P,1),.24,.14,.46,.7);c.fill();c.restore();
  }
  else if(k==='turbine'){
-  c.save();c.translate(0,-40);c.rotate(G.tick*.06+b.id);
-  for(let i=0;i<3;i++){c.rotate(Math.PI*2/3);const bg=c.createLinearGradient(0,0,0,-19);bg.addColorStop(0,'#ffffff');bg.addColorStop(1,'#b8bec6');c.fillStyle=bg;c.beginPath();c.moveTo(-1.5,0);c.lineTo(1.5,0);c.lineTo(.6,-19);c.lineTo(-.5,-19);c.closePath();c.fill();}
+  // v114: the rotor rides the hub the baked mast now reaches (TURB_HUB_Y), and
+  // each blade is TURB_BLADE long - 75% more than v111's 19 - with a root
+  // broadened to match, so a longer blade does not read as a longer needle.
+  c.save();c.translate(0,TURB_HUB_Y);c.rotate(G.tick*.06+b.id);
+  for(let i=0;i<3;i++){c.rotate(Math.PI*2/3);const bg=c.createLinearGradient(0,0,0,-TURB_BLADE);bg.addColorStop(0,'#ffffff');bg.addColorStop(1,'#b8bec6');c.fillStyle=bg;c.beginPath();c.moveTo(-2.4,0);c.lineTo(2.4,0);c.lineTo(1,-TURB_BLADE);c.lineTo(-.8,-TURB_BLADE);c.closePath();c.fill();
+   c.save();c.globalAlpha=.35;c.strokeStyle='#6a7078';c.lineWidth=.8;c.beginPath();c.moveTo(-2.4,0);c.lineTo(-.8,-TURB_BLADE);c.stroke();c.restore();} // a trailing-edge line so the blade keeps a silhouette against a pale sky
   c.restore();
-  plSphere(c,'#e4e8ec',0,-40,3,1,false);
+  plSphere(c,'#e4e8ec',0,TURB_HUB_Y,4,1,false);
  }
  else if(k==='guardtower'){
   const plat={topY:-32};
@@ -1610,12 +1688,20 @@ function bldLive(c,b,col){
   c.fillStyle='#1a1a1c';c.beginPath();c.ellipse(Math.cos(a2)*16,gy-1+Math.sin(a2)*8,1.4,1.6,0,0,7);c.fill();
   glint(c,-2,gy-2,.8);
   // v111: the spotlight under the eave (baked at -S*.6, plat.topY+5) sweeps a
-  // narrow cone across the front at NIGHT only - by day it is a lamp nobody has
-  // switched on. A painted wedge, not a light source: nothing to fog-gate.
+  // cone across the front at NIGHT only - by day it is a lamp nobody has
+  // switched on. v114 (owner): the cone is SPOT_L/SPOT_SP now (150px, .48rad;
+  // was 44/.3) and it is no longer only a painted wedge: a finished tower the
+  // viewer can SEE records its beam in NIGHT_CONES, and renderCore's tint pass
+  // cuts that wedge out of the night (nightMask), so the ground inside it shows
+  // at day brightness. The gate is fogAt===2 - a remembered ghost under the fog
+  // and the manual's stub both fail it - which is the rule every light has
+  // carried since v96: light through fog is a wallhack. What a unit can SEE is
+  // untouched (NIGHT_VI_MUL, viOf): this is a picture of a lamp, not a lamp.
   if(nightNow()){
-   const lx=-S*.6,ly=plat.topY+5,a=1.05+Math.sin(G.tick*.03+b.id)*.75,L=44,sp=.3; // v111 rule 7: 36px at .34 read as nothing under the night tint
+   const lx=-S*.6,ly=plat.topY+5,a=1.05+Math.sin(G.tick*.03+b.id)*.75,L=SPOT_L,sp=SPOT_SP;
+   if(typeof b.x==='number'&&(b.prog==null||b.prog>=1)&&fogAt(b.x,b.y)===2)NIGHT_CONES.push({x:isoX(b.x,b.y)+lx,y:isoY(b.x,b.y)+ly,a,L,sp});
    c.save();c.globalCompositeOperation='lighter';
-   const g=c.createRadialGradient(lx,ly,1,lx,ly,L);g.addColorStop(0,'rgba(255,240,190,.6)');g.addColorStop(1,'rgba(255,240,190,0)');
+   const g=c.createRadialGradient(lx,ly,1,lx,ly,L);g.addColorStop(0,'rgba(255,240,190,.42)');g.addColorStop(1,'rgba(255,240,190,0)'); // the lamp's own warmth over the cut-out; v111's .6 doubled up with the hole
    c.fillStyle=g;c.beginPath();c.moveTo(lx,ly);c.lineTo(lx+Math.cos(a-sp)*L,ly+Math.sin(a-sp)*L*.55);c.lineTo(lx+Math.cos(a+sp)*L,ly+Math.sin(a+sp)*L*.55);c.closePath();c.fill();
    c.fillStyle='rgba(255,245,210,.5)';c.beginPath();c.arc(lx,ly,2.6,0,7);c.fill();
    c.restore();
@@ -1685,20 +1771,18 @@ function bldLive(c,b,col){
   // its mouth leaning with the wind, and an ember glow in the throat
   const stx=-S*.4,stop=body.topY-41;
   c.save();c.globalCompositeOperation='lighter';c.fillStyle=`rgba(255,140,60,${(.3+.15*Math.sin(G.tick*.3+b.id)).toFixed(3)})`;c.beginPath();c.ellipse(stx,stop+.5,3.8,1.6,0,0,7);c.fill();c.restore();
-  bldSmoke(c,stx,stop-1,4,b.id+2,{per:100,rise:28,wind,r0:1.8,r1:5.6,a0:.42,col:'150,140,132'}); // v111 rule 7: dark smoke vanished against the board's dark edge; a warm grey reads on grass AND on the dark
+  bldSmoke(c,stx,stop-1,20,b.id+2,{per:130,rise:80,wind,r0:3.4,r1:24,a0:.6,col:'150,140,132',dense:1}); // v111 rule 7: dark smoke vanished against the board's dark edge; a warm grey reads on grass AND on the dark. v114: the biggest column in the game (owner: bigger than the Garage's)
  }
  else if(k==='cmdpost'){
   // v86: the standard on the pole baked above it. Same wave the HQ and the Outpost
   // pennants already use, so all three flags in the game move as one idea (v111: literally - bldWind).
+  // v114: painted by bldFlag, flying LEFT off its pole, at .85 of the HQ's scale (its pole is shorter).
   const ptop=HD*.55-13-34+1,px=S*.5;
-  const wv=wind*2.2;c.fillStyle=col;
-  c.beginPath();c.moveTo(px,ptop);c.quadraticCurveTo(px-10,ptop+2+wv,px-17,ptop+5+wv);c.lineTo(px-16,ptop+11+wv);c.quadraticCurveTo(px-9,ptop+8,px,ptop+9);c.closePath();c.fill();
-  c.save();c.globalCompositeOperation='lighter';c.fillStyle='rgba(255,255,255,.22)';
-  c.beginPath();c.moveTo(px,ptop);c.quadraticCurveTo(px-10,ptop+2+wv,px-17,ptop+5+wv);c.lineTo(px-16,ptop+7+wv);c.quadraticCurveTo(px-9,ptop+4,px,ptop+3);c.closePath();c.fill();c.restore();
+  bldFlag(c,col,px,ptop,-1,FLAG_K*.85,wind*2.2*FLAG_K);
  }
  else if(k==='outpost'){
   const body={topY:HD*.3-16},px=S*.34,ptop=body.topY-16;
-  const wv=wind*2;c.fillStyle=col;c.beginPath();c.moveTo(px,ptop);c.quadraticCurveTo(px+11,ptop+2+wv,px+18,ptop+5+wv);c.lineTo(px+17,ptop+10+wv);c.quadraticCurveTo(px+9,ptop+7,px,ptop+8);c.closePath();c.fill();
+  bldFlag(c,col,px,ptop,1,FLAG_K*.85,wind*2*FLAG_K); // v114: bldFlag, at the Command Post's scale
  }
 }
 

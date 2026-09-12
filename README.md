@@ -87,7 +87,7 @@ playing against another person.
 This project has an unusually thorough safety net for a game of its size. The
 harness runs the real game code with the graphics stripped out, simulating
 thousands of turns of play across every map, mode and difficulty, and checks
-that the results come out identical every time. As of v113 it makes **7,044
+that the results come out identical every time. As of v114 it makes **7,097
 individual checks** across its five segments.
 
 That is what makes it safe to keep changing the game: if a change breaks
@@ -117,7 +117,19 @@ and there is no way to edit the wrong copy by accident.
 
 ## Version history
 
-The game is at **version 113**.
+The game is at **version 114**.
+
+**v114 — the buildings put on a show.** Four visual upgrades, all asked for
+after playing v113. The Guard Tower's spotlight is three times as long and now
+truly lights the ground at night: inside its sweeping cone the lawn is in
+daylight while everything around it stays dark (it is a picture of light; it
+does not let your soldiers see any further). The Barracks' stovepipe, the
+Garage's roof stack and the Foundry's chimney all pour out real smoke now,
+biggest on the Foundry, and the two workshops smoke all the time rather than
+only while something is being built. Every flag on an HQ, Command Post or
+Outpost is half again as large, sways more, and has a dark edge so it stands
+out against its own building. And Blue's Wind Turbine is half again as tall
+with blades three-quarters longer. Nothing about how a match plays changed.
 
 **v113 — the armies and the bots that never won.** Before changing a number the
 game was made to play itself a few hundred times with the computer players'
