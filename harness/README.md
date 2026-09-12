@@ -27,11 +27,11 @@ at v97 and nothing is outstanding. Practical route:
 - **The roadmap chapters (immediately below):** the record of what each phase was
   told to build and what it cost. Useful when you touch a subsystem one of them
   built; not a to-do list.
-- **What could come NEXT:** `## Roadmap 4` in `../CLAUDE.md` — a tentative,
-  unagreed shortlist written at v103, four of whose twelve items rest on the
-  measurement section below. Four of the twelve have since shipped in whole or in
-  part (1 bar its barks at v104, 4 at v106, two of 2's boards at v107, 5 whole at
-  v108–v109). It is the only forward-looking chapter either file carries.
+- **What could come NEXT:** `## Roadmap 4` in `../CLAUDE.md` — two items since
+  the owner's cut of 2026-09-12: the infantry barks and a fifth army. The v103
+  shortlist it replaced is history now; its delivered items have chapters, and
+  the rest were struck by the owner. It is the only forward-looking chapter
+  either file carries.
 
 Everything in here is written as a claim someone paid for. When a section and a
 heading disagree, the section is usually the one that was updated - and both are

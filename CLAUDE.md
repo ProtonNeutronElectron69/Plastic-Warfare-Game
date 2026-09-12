@@ -13,12 +13,11 @@ subsystem it describes; do not read it front to back.
 
 **The one exception to "it is all record":** `## Roadmap 4` is the only
 FORWARD-looking chapter in this file. Roadmaps 1-3 are finished history; roadmap
-4 is a tentative, unagreed menu of what could come next, written at v103. Four
-of its twelve items have since shipped in whole or in part — 1 (music, bar its
-barks) at v104, 4 at v106, two of 2's boards at v107, and 5 whole at v108–v109 —
-and each of those carries a DELIVERED banner naming the release. The other eight
-are untouched. If the owner asks "what should I build", that is the section, and
-the ranking at the foot of it is restated against what is actually left.
+4 is what could come next, and since the owner's cut of 2026-09-12 it holds
+exactly TWO items: the infantry barks and a fifth army. Everything else the
+v103 review proposed was either delivered (each delivery is a chapter below)
+or struck from the list by the owner. If the owner asks "what should I build",
+that is the section.
 
 ## The shape of the project
 
@@ -84,33 +83,16 @@ down, newest first, and the chapter is where the reasoning lives.
 **Nothing above is in flight.** Each shipped as its own PR and merged, so a
 fresh session starts from `origin/main` with no handover state to reconstruct.
 
-**Known open fronts.** The full menu is **Roadmap 4** below — twelve items,
-ranked, written after a whole-game review at v103. **Four of the twelve have
-shipped in whole or in part** — item 1's music half (v104–v104.4), item 4
-(v106), two of item 2's boards (v107) and item 5 whole (v108 the ground, v109
-the lighting and the props); the barks and the other eight items are untouched. The
-headline of it: the systems layer is finished, and what is thin is content (six
-PvP maps and one survival board) and balance (two of four armies do not work).
-Presentation was the third leg of that and is mostly answered — the game has a
-score, since v108 real floors and since v109 floors that catch the light and
-props with real detail; what is left is one sound that is still the browser's
-own text-to-speech voice. (v105 repainted the MENU's
-parade ground and gave the Field Manual the same backdrop; neither is the
-in-match ground, so item 5 is untouched by it.)
+**Known open fronts.** The full menu is **Roadmap 4** below, and since the
+owner's cut of 2026-09-12 it is two items long:
 
-- **Map ART, as opposed to map LAYOUT** — Roadmap 4 item 5, **finished at
-  v109**. The owner deferred map art from v97's detail pass and v103 fixed
-  where things are PUT, not how they are drawn. Since v108 the ground (`G.terr`)
-  is a per-pixel material per theme; since v109 it is lit by the frame's lights
-  (`groundGlow`, `LIGHTV.ground`) and every prop painter carries its detail.
-  Still procedural throughout, by instruction. Nothing on this front is open.
-- **Balance** — Roadmap 4 item 3, and it is **re-measured at v103**: the
-  balance section below now carries 32 fresh matches instead of the eleven-release-old
-  v90 percentages. Short version: Green 47%, Tan 34%, Gray 9%, Blue 9%.
-- **The infantry BARKS** — the tail of Roadmap 4 item 1, and the only part of
-  it left. Selecting a soldier speaks through `speechSynthesis`, the browser's
-  own TTS voice, which is the one sound in the game outside its art direction.
-  Ten recorded barks retire it, and the v92 pipeline takes them unchanged.
+- **The infantry BARKS** — the tail of the v104 soundtrack work, and the only
+  part of it left. Selecting a soldier speaks through `speechSynthesis`, the
+  browser's own TTS voice, which is the one sound in the game outside its art
+  direction. Ten recorded barks retire it, and the v92 pipeline takes them
+  unchanged.
+- **A fifth army.** The machinery takes one without inventing anything; the
+  Roadmap 4 section says what a row costs and what to check first.
 - `T26.C`'s air-value question is still open, and is untouched by any of it.
 
 **What a fresh session actually does first.** Nothing here is in flight, so there
@@ -367,207 +349,46 @@ having walked fewer, and clean is the answer that stops an investigation.
    because `sim.sh`'s outcomes could not distinguish "never chose air" from
    "chose air and could not pay for it".
 
-## Roadmap 4 — the tentative shortlist (proposed at v103; four items shipped)
+## Roadmap 4 — what is left (two items, by the owner's cut of 2026-09-12)
 
-**Nothing here is agreed and nothing here is in flight.** This is the menu that
-came out of a whole-game review at v103, written when the owner said they were
-running out of ideas. FOUR of the twelve have since shipped in whole or in part:
-item 1 (v104–v104.4, bar its barks), **item 4 (v106)**, two of item 2's five
-boards (v107) and **item 5 whole** (v108 the ground, v109 the lighting and the
-props). The other eight are exactly as written — and item 4 is a warning about
-how they were written, because its own inventory of the code was out of date by
-two releases when the review made it, and item 9 below was simply wrong about
-half of what it asked for. **Measure before you build**: every item here is
-eighteen months of releases old, and two of the twelve have now been caught
-describing a game that had already moved.
+**Nothing here is agreed and nothing here is in flight.** The v103 whole-game
+review proposed twelve items; the owner reviewed that list on 2026-09-12, after
+v114, and struck everything from it except the two below. Of the ten struck,
+five had been delivered in whole or in part and carry their own chapters in
+this file (the bots' unit abilities at v106; two of the five battlefields, the
+Bathroom Floor and The Attic, at v107; the ground and the props at v108–v109;
+the balance pass and the two defensive doctrines at v113), and what was left of
+those (a small two-player board, a second survival board, Blue's trade rate)
+went with them; the other five (a way for a stalemate to end, per-map weather,
+an idle-worker key, a campaign, and terrain height) were dropped without being
+started. **Do not reintroduce any of them on your own**; if the owner wants one
+back, it comes back as their ask. The release chapters below still cite the old
+item numbers in their headings, because those were the names at the time they
+shipped.
 
-It is ranked by return on effort, and four of the twelve items rest on
-measurements taken at the time rather than on opinion — those are
-marked MEASURED and the evidence is in the v103 measurement section of
-`harness/README.md`. The full write-up, with the reasoning and the charts, is the
-"v104 Shortlist" artifact:
-<https://claude.ai/code/artifact/7573b0e0-b949-4c73-a70a-e08f8bb6fc2d>
+The two that remain, in the order the notes have always suggested:
 
-**The framing, because it decides the ranking.** The SYSTEMS layer is finished:
-25 trainable units, 19 buildings, four armies with full exclusive sets, a 9×6
-counter matrix, veterancy, a finite economy, four modes, patrol/attack-move/order
-queues, day/night, lockstep netcode, textured and per-pixel-lit sprites, a
-recorded soundtrack, 7,097 checks. What is thin is everything AROUND it — how
-many places you can play, and whether all four armies are worth picking. Every
-item below is content, presentation or tuning; none of them needs a new system
-invented. (Written at v103, when the "what does it sound like" leg of that was
-still empty; item 1 has since answered it.)
-
-### Band 1 — highest return
-
-1. ~~**Music.**~~ **DELIVERED at v104, refined through v104.4** — four Old Guard
-   Fife and Drum Corps tracks (menu / build / combat / victory), public domain as
-   works of the US federal government, ducking under gunfire through
-   `COMBAT_DUCK_T` exactly as this entry predicted, plus Music and Effects faders
-   on the audio button. The reasoning, the four owner passes and every trap are
-   in the v104 chapter below and in `harness/README.md`; nothing about the score
-   is outstanding.
-   **What IS still open is the second half of this item, the BARKS.** Infantry
+1. **The infantry barks.** The second half of the v104 soundtrack item. Infantry
    selection speaks through `speechSynthesis` — the browser's own text-to-speech
    voice, and the one sound in the game outside its art direction. Ten recorded
    barks retire it, the v92 pipeline (render offline, embed as base64) takes them
    unchanged, and `sfxBus` already exists to hang them off. It is the smallest
-   unstarted job on this list.
-   *Impact medium (barks only) · effort low · balance risk none.*
-2. **More battlefields.** **TWO DELIVERED at v107** — the Bathroom Floor and
-   The Attic, the latter the first 2v2 board and the first with destructible
-   level art; see the v107 chapter for what that took (three leaks in one
-   bathtub, all found by a flood fill). The small two-player board and the
-   second survival board named below are still open. The original note:
-   Four PvP maps and ONE survival map, against 25 units
-   and four armies. Maps are the best value on the list: every one reuses the
-   existing props, painters, hazards and wildlife; each is point-symmetric by
-   construction so it carries almost no balance risk; and `makeMap` has just come
-   out of the v103 audit, so it is the cleanest it has ever been. Themes that fit
-   the fiction: bathroom tiles, a garage workbench, a bookshelf (the first map
-   with real corridors), a patio, a picnic table. **Two specific gaps:** Wave
-   Survival is one board wide, so the whole mode is one experience; and every map
-   is a four-corner 64 or 72, so a small two-player board would make a ten-minute
-   match possible, which is currently the shortest thing the game offers.
-   *Impact high · effort medium each · balance risk low.*
-3. **Fix Blue, then Gray.** MEASURED at v103, 32 matches: Blue and Gray win 9%
-   each against an even share of 25%. See the balance section below for the table
-   and the shapes. Half the armies are not worth picking, and this is the most
-   tractable item here because it is the one you can measure — `probe_v89.sh`
-   before touching a price, per rule 8. *Impact high · effort medium · balance
-   risk: it IS the balance.*
-4. ~~**Teach the bots the other eight unit abilities.**~~ **DELIVERED at v106.**
-   Its inventory was WRONG, which the release records: Called Shot was driven at
-   v81 and Broadcast at v86, so the real count was 5 driven and 6 not, and
-   "Ripple Fire at a clump" was refuted by measurement (better even against one
-   man; always-on is right, as v81 had already said). Six are driven now and the
-   probe that proves it is `harness/probe_v106.sh`. What is NOT done and is
-   measured as a separate problem: a bot transport is loaded 0.0% of the time, so
-   Air Assault has no occasion, and a bot's Command Truck sits with the base, so
-   Broadcast rarely fires — both are positioning, not abilities. The original
-   note, kept because its reasoning is still the argument for the item:
-   MEASURED: `aiTick` drives
-   3 of the 11 rows in `UNIT_TOGGLES` — `entrench`, `rally`, `valve`. It never
-   uses `smokeCap`, `cshot`, `ripple`, `throttle`, `flat`, `aslt`, `sprint` or
-   `bcast`. (It handles the BUILDING abilities well: garrisons, Lockdown,
-   Overdrive, Pour, Regroup, the uplink, the balloon bail-out and every
-   `RADIO_ABILITIES` call-down.) So a CPU Gray never fires a Called Shot, a CPU
-   Tan never charges the Bull, a CPU Blue never sprints — the abilities that give
-   each army its character are exactly the ones a player never sees used against
-   them. Two payoffs from one job: Hard gets harder without touching a stat, and
-   the player learns their own roster by being on the receiving end. Some are
-   nearly free (Ripple Fire at a clump, Scramble on aircraft heading home);
-   `throttle` needs real judgement, because it silences both of the Bull's guns.
-   Measure the MECHANISM (per-ability usage counts), not the win rate.
-   *Impact high · effort medium · balance risk: raises bot strength.*
-
-### Band 2 — worth doing
-
-5. ~~**Texture the ground.**~~ **DELIVERED at v108 — as a repaint, not as
-   textures**, because the owner did not want the floor to read as the units'
-   textured plastic. And the note below is WRONG on one point: the ground would
-   NOT "pick up the existing lighting for free" — the per-pixel lights live in
-   the sprite band pass and the terrain is composited beneath it, so lighting
-   the ground was a renderer change — **delivered at v109**, along with the
-   props' detail pass, which closes this item. The original note, kept for its
-   reasoning: The one visual layer roadmap 3 never reached, and the
-   largest surface on screen. The four-script pipeline (`dump_base_v95.js` →
-   `material_v95.py` → `normal_v96.py` → `embed_img.py`) points at ground tiles
-   with no new machinery — five themes, a handful of variants each — and they
-   would pick up the v96 band lighting for free, so the lawn would catch an
-   explosion's glow the way a tank already does. Band 2 rather than band 1 on
-   scope honesty, not on value. *Impact high (visual) · effort high · risk none.*
-6. **Give a stalemate a way to end.** MEASURED: 6 of 32 matches ran out the
-   clock; median length 13–16 minutes. The economy is already finite (nodes
-   deplete and are removed, wrecks pay back 50%) but nothing escalates when the
-   map is stripped. Cheapest first: **score the timeout** so it resolves for
-   whoever is ahead rather than as a shrug; **wake the wildlife** with a late
-   nest surge, which reuses `SURV_WAVES` machinery and fits the fiction; or
-   shrink the board, which is the most dramatic and least in keeping.
-   *Impact medium · effort low · balance risk low.*
-7. **Revive the two defensive doctrines.** MEASURED: `turtle` won 3 of 26 and
-   `defensive` 3 of 27, against ~38% for the aggressive pair. v90 fixed
-   `defensive` by moving `firstPush` and it has slipped back; `turtle` has
-   responded to nothing across several passes, which is itself the finding — a
-   doctrine that only turtles cannot win a game whose victory condition is
-   elimination. It may need a WAY to win rather than better numbers, which makes
-   this and item 6 the same problem from two sides. *Impact medium · effort low ·
-   balance risk medium.*
-8. **Weather, per map.** v101 proved the seam: one multiply fill over the
-   finished world canvas, in the single place both the WebGL compositor and the
-   2d fallback consume. Rain on the kitchen tiles, a dust haze over the sandbox,
-   a draught through the carpet fibres. Keep it COSMETIC — the moment rain slows
-   movement it is a second day/night cycle to balance, and this is meant to be
-   the cheap one. *Impact medium · effort low · risk none if cosmetic.*
-9. **One missing key — and this item was HALF WRONG when it was written.** It
-   asked for "select my idle Dump Truck" and "select my whole army". **The second
-   one has existed since v42**: Space selects your whole army (trucks stay put,
-   medics come along), the Field Manual documents it, and `23-net-input.js` has
-   the branch. Corrected at the v110 documentation pass; the item is a warning
-   about the whole chapter, which was compiled from a v103 reading of the code
-   and has now been caught wrong twice (see item 4).
-   What IS still missing is the idle-worker key, and it pays for itself
-   constantly because a truck that finishes a pile and stands still is invisible
-   until income quietly stops.
-   **The keyboard room this item claimed is gone**: after v110 the build-menu
-   alphabet is fifteen letters with exactly ONE spare (`k`), and every other
-   letter of a–z is bound — so a new global command needs a letter freed, the way
-   v110 freed `b` by moving the blast preview to the backtick, or a non-letter
-   key. *Impact small but daily · effort low · risk none.*
-
-### Band 3 — big swings (each a project, not a release)
-
-10. **A campaign, or any reason to play in order.** Nothing persists between
-    matches except the minimap size (`pw_mmsize` is the only `localStorage` key
-    in the game). Every ingredient exists — four modes, victory conditions, the
-    wave table, testing mode, spectate. What is missing is the frame: a dozen
-    hand-set scenarios with a stated objective ("hold the counter five minutes
-    with no Barracks", "kill the nest before dawn", "win with Blue"). The small
-    version is a scenario list plus a completed flag and is genuinely achievable;
-    it would change what the game IS. *Impact: changes the game · effort high ·
-    balance risk low.*
-11. **A fifth army.** The machinery takes one without inventing anything: an army
-    is a `FAC` row, three exclusive units, two exclusive buildings and one
-    `RADIO_ABILITIES` row carrying `fac`. It is in band 3 only because **two of
-    the four you have do not work** — adding a fifth first means three armies
-    nobody picks instead of two. Do item 3 first and this becomes attractive,
-    because roadmap 2 already debugged the process. *Impact medium · effort high ·
-    balance risk high.*
-12. **Height.** The board is perfectly flat; "High Ground" exists as a name (the
-    balloon's `HIGH_RG` aura) and nowhere as terrain. Real elevation is the most
-    transformative mechanic still missing and by a distance the most dangerous
-    thing on this list — it touches pathfinding, line of sight, projectile arcs,
-    the fog, the sprite sort order and every painter, and it would put the
-    deterministic simulation (the genuinely hard, genuinely tested part of the
-    project) back on the table. **The honest advice is don't**, unless the next
-    six months are meant to be that. A cheaper 80%: a few impassable raised props
-    that block line of sight, so cover means something without the ground moving.
-    *Impact transformative · effort very high · balance risk destabilising.*
-
-**The order proposed, RESTATED at v110 against what is actually left.** The
-original plan was barks → maps → armies. Item 4 shipped at v106, two of item 2's
-boards at v107 and item 5 whole at v108–v109, so what remains of that plan is:
-
-- **the armies pass (item 3)** — **DELIVERED IN PART at v113** (Green's discount
-  trimmed to 5%; the bot's use of Blue's exclusives; Gray's economy; and the
-  finding that the balance table had been mixing army with doctrine). Blue's
-  hull stays at −10% by the owner's decision, so Blue's trade rate is the
-  open question, and the human-play verdict is the other. `probe_v113.sh` is
-  the instrument now.
-- **the barks** — the rest of item 1, still the smallest unstarted job on the
-  list, and small enough to ride with anything else;
-- **the rest of item 2** — a small two-player board (the shortest match the game
-  can currently offer is a four-corner 64) and a second survival board, because
-  Wave Survival is still one board wide.
-- **items 6 and 7 together** — **item 7 DELIVERED at v113**: the two defensive
-  doctrines were starving (an outpost three minutes late), not mis-timed, and
-  win their share now. Item 6 is what v113 left visible: with those armies alive
-  at minute twenty, 7 of 20 controlled matches ran out the clock (the clock
-  already resolves for the biggest base standing, since v69).
-
-None of that is agreed; it is what the v103 review would do next if it were
-re-run today. **Re-measure before acting on any of it** — the balance table is
-seven releases old and the class-share numbers predate two new maps.
+   unstarted job in the project and small enough to ride with anything else.
+   *Impact medium · effort low · balance risk none.*
+2. **A fifth army.** The machinery takes one without inventing anything: an army
+   is a `FAC` row, three exclusive units, two exclusive buildings and one
+   `RADIO_ABILITIES` row carrying `fac`, and roadmap 2 (v85–v88.1) already
+   debugged the process one army at a time. Two cautions from the record before
+   starting. First, the v103 review ranked this last because two of the four
+   existing armies did not win; v113 moved most of that, but Blue's trade rate is
+   still measured below even (its hull stays at −10% by the owner's decision), so
+   **re-measure with `probe_v113.sh` first** and know what a fifth row is being
+   added beside. Second, a new unit or building trips every derived pin on
+   purpose — rule 4's aggregate constants (`MEDIC_HEAL_RATE`, `SUP_U`), the
+   texture roster (T71.A), the parade lanes (T86.A), the declared hotkey (T95.A,
+   and the build menu has exactly one spare letter, `k`) — and each is a
+   conscious edit, never a loosened one. *Impact medium · effort high · balance
+   risk high.*
 
 ## Roadmap 3 — real art and real sound (COMPLETE, v91–v97)
 
@@ -2037,7 +1858,8 @@ different boards. Pass the four-map deal by hand if you need the table again.
   26 and `defensive` 3 of 27, against `harasser` 9/24 and `aggressive` 9/23
   (~38%). v90 recorded `defensive` recovering to 14.6% when `firstPush` moved; it
   has slipped back. `turtle` has now failed to respond to several passes, which
-  is the finding: see Roadmap 4 item 7.
+  is the finding — answered at v113, where both doctrines turned out to be
+  starving rather than mis-timed.
 
 **Two caveats, and the first is the project's own house rule.** Sixteen matches
 is a hint, not a verdict — but both batches agree on the ORDERING and the gap
@@ -2051,8 +1873,7 @@ same one every previous baseline used.
 air 7.2–7.5%, AA 2.1–2.3%. v89 moved air from 3.6% to 8.6% and it has held near
 that; nothing about the class mix looks broken.
 
-**Match length:** median 769–994 seconds, and **6 of 32 ran out the clock** —
-Roadmap 4 item 6.
+**Match length:** median 769–994 seconds, and **6 of 32 ran out the clock.**
 
 The v90 reasoning is kept below rather than deleted, because the mechanisms it
 records are still the best guesses at WHY, and because the older numbers show
